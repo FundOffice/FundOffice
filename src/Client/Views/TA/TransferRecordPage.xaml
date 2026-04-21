@@ -1,0 +1,1190 @@
+﻿<UserControl
+    x:Class="FMO.TransferRecordPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
+    d:DesignHeight="450"
+    d:DesignWidth="1200"
+    mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:TransferRecordPageViewModel />
+    </UserControl.DataContext>
+    <UserControl.Resources>
+        <Style x:Key="CenterText" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="shared:MaskService.IsMask" Value="True" />
+        </Style>
+
+        <Style x:Key="RightText" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="shared:MaskService.IsMask" Value="True" />
+        </Style>
+
+        <Style x:Key="LeftText" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="shared:MaskService.IsMask" Value="True" />
+        </Style>
+
+        <local:BindingProxy x:Key="proxy" Data="{Binding}" />
+
+
+        <DataTemplate x:Key="StringFilterTemplate">
+            <Border Background="WhiteSmoke">
+                <DockPanel MaxHeight="600">
+                    <DockPanel DockPanel.Dock="Top">
+                        <Button
+                            hc:IconElement.Geometry="{StaticResource f.xmark}"
+                            Command="{Binding ClearCommand}"
+                            Style="{StaticResource ButtonIcon.Small}" />
+                        <hc:TextBox hc:InfoElement.Placeholder="搜索" Text="{Binding SearchKey, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                    </DockPanel>
+                    <ListBox
+                        Margin="0,3,0,0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ItemsSource="{Binding FilterSource.View}"
+                        Style="{StaticResource ListBoxCustom}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox
+                                    Margin="0,4"
+                                    Content="{Binding Title}"
+                                    IsChecked="{Binding IsSelected}" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+    <Grid>
+
+        <!--  首部  -->
+        <hc:UniformSpacingPanel
+            Margin="450,8,0,0"
+            VerticalAlignment="Top"
+            Panel.ZIndex="99"
+            Spacing="5">
+
+            <!--  数据缺失提示  -->
+            <DockPanel>
+                <DockPanel local:HelpService.Help="外部客户缺失订单：认申购/赎回" local:HelpService.Offset="-45,10">
+                    <Viewbox Width="15" Height="15">
+                        <Path Data="{StaticResource f.feather-pointed}" Fill="Red" />
+                    </Viewbox>
+                    <TextBlock
+                        VerticalAlignment="Bottom"
+                        FontSize="10"
+                        Foreground="Red">
+                        <Run Text="{Binding LackOrderBuyCount}" />
+                        <Run Text="/" />
+                        <Run Text="{Binding LackOrderSellCount}" />
+                    </TextBlock>
+                </DockPanel>
+
+
+                <DockPanel local:HelpService.Help="管理人自己产品互投缺失订单数" local:HelpService.Offset="40,10">
+                    <Viewbox
+                        Width="15"
+                        Height="15"
+                        Margin="10,0,0,0">
+                        <Path Data="{StaticResource f.feather-pointed}" Fill="Gray" />
+                    </Viewbox>
+                    <TextBlock
+                        VerticalAlignment="Bottom"
+                        FontSize="10"
+                        Text="{Binding LackOrderCount2}" />
+                </DockPanel>
+
+                <!--<Viewbox
+                    Width="15"
+                    Height="15"
+                    Margin="4,0">
+                    <Path Data="{StaticResource f.file-circle-plus}" Fill="Black" />
+                </Viewbox>
+
+
+                <Viewbox
+                    Width="15"
+                    Height="15"
+                    Margin="4,0">
+                    <Path Data="{StaticResource f.clipboard-check}" Fill="Black" />
+                </Viewbox>-->
+
+            </DockPanel>
+
+
+            <CheckBox
+                Content="显示全部类型"
+                IsChecked="{Binding ShowOnlySignable, Converter={StaticResource Boolean2BooleanReConverter}}"
+                Visibility="{Binding IsRecordTabSelected, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+            <Button
+                Margin="10,0"
+                hc:IconElement.Geometry="{StaticResource f.plus}"
+                Command="{Binding AddTARecordCommand}"
+                Content="录入"
+                Style="{StaticResource ButtonDefault}"
+                Visibility="{Binding IsOrderTablSelected, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+            <!--<Button
+                Background="PaleGoldenrod"
+                Command="{Binding CalcFeeCommand}"
+                Content="费用计算器" />-->
+
+            <Button Command="{Binding RebuildTransferRelationCommand}" Content="重新关联交易" />
+
+            <!--  tip  -->
+            <DockPanel DockPanel.Dock="Right" Visibility="{Binding DataHasError, Converter={StaticResource Boolean2VisibilityConverter}}">
+                <ContentControl Content="{Binding .}">
+                    <ContentControl.ContentTemplate>
+                        <DataTemplate>
+                            <DockPanel>
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontSize="16"
+                                    Foreground="Red"
+                                    Text="数据有异常" />
+                                <Popup
+                                    x:Name="pop"
+                                    AllowsTransparency="True"
+                                    HorizontalOffset="120"
+                                    Placement="Left"
+                                    StaysOpen="False"
+                                    VerticalOffset="30">
+                                    <Border Background="Orange">
+                                        <ListBox
+                                            Margin="20,10"
+                                            Background="Transparent"
+                                            BorderBrush="Transparent"
+                                            FontSize="15"
+                                            ItemsSource="{Binding ErrorMessage}"
+                                            Style="{StaticResource ListBoxCustom}" />
+                                    </Border>
+                                </Popup>
+                            </DockPanel>
+                            <DataTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="pop" Property="IsOpen" Value="True" />
+                                </Trigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ContentControl.ContentTemplate>
+                </ContentControl>
+                <Button
+                    Margin="8,0"
+                    Command="{Binding TryHandleDataErrorCommand}"
+                    Content="尝试处理" />
+            </DockPanel>
+
+
+            <!--  搜索  -->
+            <!--<hc:SimplePanel Margin="10,0">
+                <TextBox
+                    MinWidth="260"
+                    Padding="4"
+                    HorizontalContentAlignment="Center"
+                    Style="{StaticResource TextBox.Small}"
+                    Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                <Viewbox
+                    Height="16"
+                    Margin="5,0"
+                    HorizontalAlignment="Right">
+                    <Path Data="{StaticResource f.magnifying-glass}" Fill="Black" />
+                </Viewbox>
+            </hc:SimplePanel>-->
+        </hc:UniformSpacingPanel>
+
+        <TabControl
+            Margin="0,8"
+            SelectedIndex="{Binding TabIndex}"
+            Style="{StaticResource TabControlCapsule}">
+            <TabControl.Template>
+                <ControlTemplate TargetType="{x:Type TabControl}">
+                    <Grid
+                        Name="templateRoot"
+                        Background="{TemplateBinding Background}"
+                        ClipToBounds="true"
+                        SnapsToDevicePixels="true">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Name="ColumnDefinition0" />
+                            <ColumnDefinition Name="ColumnDefinition1" Width="0" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Name="RowDefinition0" Height="Auto" />
+                            <RowDefinition Name="RowDefinition1" Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!--  使用 TabPanel 替代 UniformGrid  -->
+                        <TabPanel
+                            x:Name="headerPanel"
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Margin="0"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Background="Transparent"
+                            IsItemsHost="true" />
+
+                        <Border
+                            x:Name="contentPanel"
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Margin="0,6,0,0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter
+                                x:Name="PART_SelectedContentHost"
+                                Margin="0"
+                                ContentSource="SelectedContent"
+                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <!--  触发器部分保持不变  -->
+                        <Trigger Property="TabControl.TabStripPlacement" Value="Bottom">
+                            <Setter TargetName="RowDefinition0" Property="Height" Value="*" />
+                            <Setter TargetName="RowDefinition1" Property="Height" Value="Auto" />
+                            <Setter TargetName="headerPanel" Property="Grid.Row" Value="1" />
+                            <Setter TargetName="contentPanel" Property="Margin" Value="0,0,0,6" />
+                            <Setter TargetName="contentPanel" Property="Grid.Row" Value="0" />
+                        </Trigger>
+                        <Trigger Property="TabControl.TabStripPlacement" Value="Left">
+                            <Setter TargetName="RowDefinition0" Property="Height" Value="*" />
+                            <Setter TargetName="RowDefinition1" Property="Height" Value="0" />
+                            <Setter TargetName="ColumnDefinition0" Property="Width" Value="Auto" />
+                            <Setter TargetName="ColumnDefinition1" Property="Width" Value="*" />
+                            <Setter TargetName="headerPanel" Property="Grid.Column" Value="0" />
+                            <Setter TargetName="headerPanel" Property="Grid.Row" Value="0" />
+                            <!--  注意：TabPanel 不支持 UniformGrid 的 Rows/Columns 属性，但会根据方向自动布局  -->
+                            <Setter TargetName="contentPanel" Property="Grid.Column" Value="1" />
+                            <Setter TargetName="contentPanel" Property="Grid.Row" Value="0" />
+                            <Setter TargetName="contentPanel" Property="Margin" Value="6,0,0,0" />
+                        </Trigger>
+                        <Trigger Property="TabControl.TabStripPlacement" Value="Right">
+                            <Setter TargetName="RowDefinition0" Property="Height" Value="*" />
+                            <Setter TargetName="RowDefinition1" Property="Height" Value="0" />
+                            <Setter TargetName="ColumnDefinition0" Property="Width" Value="*" />
+                            <Setter TargetName="ColumnDefinition1" Property="Width" Value="Auto" />
+                            <Setter TargetName="headerPanel" Property="Grid.Column" Value="1" />
+                            <Setter TargetName="headerPanel" Property="Grid.Row" Value="0" />
+                            <!--  注意：TabPanel 不支持 UniformGrid 的 Rows/Columns 属性，但会根据方向自动布局  -->
+                            <Setter TargetName="contentPanel" Property="Grid.Column" Value="0" />
+                            <Setter TargetName="contentPanel" Property="Grid.Row" Value="0" />
+                            <Setter TargetName="contentPanel" Property="Margin" Value="0,0,6,0" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </TabControl.Template>
+
+            <TabItem Header="募集户流水">
+                <DataGrid
+                    AutoGenerateColumns="False"
+                    EnableRowVirtualization="True"
+                    IsReadOnly="True"
+                    ItemsSource="{Binding TranscationSource.View}"
+                    Style="{StaticResource DataGrid.Small}"
+                    VirtualizingStackPanel.IsVirtualizing="True"
+                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Binding="{Binding Time, StringFormat=yyyy.MM.dd  HH:mm:ss}" Header="时间" />
+                        <DataGridTextColumn
+                            Binding="{Binding This}"
+                            ElementStyle="{StaticResource LeftText}"
+                            Header="本方" />
+
+
+                        <DataGridTextColumn Binding="{Binding Direction}" Header="方向" />
+
+                        <DataGridTextColumn
+                            Binding="{Binding CounterName}"
+                            ElementStyle="{StaticResource LeftText}"
+                            Header="对方户名" />
+                        <DataGridTextColumn
+                            Binding="{Binding CounterNo}"
+                            ElementStyle="{StaticResource LeftText}"
+                            Header="对方账号" />
+
+                        <DataGridTextColumn Binding="{Binding Amount}" Header="金额" />
+                        <DataGridTextColumn
+                            Binding="{Binding Remark}"
+                            ElementStyle="{StaticResource LeftText}"
+                            Header="备注" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem Visibility="Hidden" />
+
+            <TabItem>
+                <TabItem.Header>
+                    <DockPanel Margin="0,0,5,0" LastChildFill="False">
+                        <Viewbox
+                            Width="15"
+                            Height="15"
+                            Margin="4,0">
+                            <Path Data="{StaticResource f.feather-pointed}" Fill="Black" />
+                        </Viewbox>
+                        <TextBlock Text="订单" />
+                    </DockPanel>
+                </TabItem.Header>
+                <DataGrid
+                    AutoGenerateColumns="False"
+                    EnableRowVirtualization="True"
+                    IsReadOnly="True"
+                    ItemsSource="{Binding OrderSource.View}"
+                    Style="{StaticResource DataGrid.NoSelect}"
+                    VirtualizingStackPanel.IsVirtualizing="True"
+                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+                    <DataGrid.RowStyle>
+                        <Style BasedOn="{StaticResource NoSelectDataGridRowStyle}" TargetType="DataGridRow">
+
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsAborted}" Value="True">
+                                    <Setter Property="Background" Value="DarkGray" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Binding="{Binding Id}" />
+
+
+
+                        <!--<DataGridTemplateColumn>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+
+                                    <Button
+                                        x:Name="actionPanel"
+                                        hc:IconElement.Geometry="{StaticResource f.pen}"
+                                        BorderThickness="0"
+                                        Command="{Binding ModifyOrderCommand}"
+                                        CommandParameter="{Binding .}"
+                                        Foreground="Black"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="Collapsed" />
+
+                                    <DataTemplate.Triggers>
+                        -->
+                        <!--  监听行的鼠标悬停状态  -->
+                        <!--
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                                            <Setter TargetName="actionPanel" Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>-->
+
+                        <DataGridTemplateColumn>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <hc:UniformSpacingPanel Spacing="5">
+                                        <Viewbox Width="15" Height="15">
+                                            <Path x:Name="req" Data="{StaticResource f.file-circle-minus}" />
+                                        </Viewbox>
+                                        <Viewbox Width="15" Height="15">
+                                            <Path x:Name="rec" Data="{StaticResource f.clipboard-check}" />
+                                        </Viewbox>
+                                    </hc:UniformSpacingPanel>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsApplyed}" Value="False">
+                                            <Setter TargetName="req" Property="Fill" Value="Red" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsConfirmed}" Value="False">
+                                            <Setter TargetName="rec" Property="Fill" Value="Red" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Binding="{Binding Date, StringFormat=yyyy-MM-dd}" Header="日期" />
+
+
+                        <DataGridTemplateColumn
+                            shared:FilterColumn.FilterSource="{Binding Data.InvestorNameFilter, Source={StaticResource proxy}}"
+                            shared:FilterColumn.Header="投资人"
+                            shared:FilterColumn.PopupContentTemplate="{StaticResource StringFilterTemplate}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <DockPanel Background="Transparent" LastChildFill="False">
+                                        <shared:CopyableTextBlock MinWidth="70" Text="{Binding InvestorName}" />
+                                        <Button
+                                            x:Name="goto"
+                                            hc:IconElement.Geometry="{StaticResource f.paper-plane}"
+                                            Command="{Binding OpenInvestorViewCommand}"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            Visibility="Collapsed" />
+                                    </DockPanel>
+                                    <DataTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="goto" Property="Visibility" Value="Visible" />
+                                        </Trigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn
+                            Binding="{Binding Type, Converter={StaticResource EnumDescriptionConverter}}"
+                            ElementStyle="{StaticResource CenterText}"
+                            Header="类型" />
+
+
+                        <DataGridTemplateColumn
+                            shared:FilterColumn.FilterSource="{Binding Data.FundNameFilter, Source={StaticResource proxy}}"
+                            shared:FilterColumn.Header="产品"
+                            shared:FilterColumn.PopupContentTemplate="{StaticResource StringFilterTemplate}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <DockPanel Background="Transparent" LastChildFill="False">
+                                        <shared:CopyableTextBlock Text="{Binding FundName}" />
+                                        <Button
+                                            x:Name="goto"
+                                            hc:IconElement.Geometry="{StaticResource f.paper-plane}"
+                                            Command="{Binding OpenFundCommand}"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            Visibility="Collapsed" />
+                                    </DockPanel>
+                                    <DataTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="goto" Property="Visibility" Value="Visible" />
+                                        </Trigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn
+                            Binding="{Binding ShareClass}"
+                            ElementStyle="{StaticResource CenterText}"
+                            Header="份额类别" />
+                        <DataGridTextColumn
+                            Binding="{Binding Number, StringFormat=N2}"
+                            ElementStyle="{StaticResource RightText}"
+                            Header="金额/份额" />
+
+                        <DataGridTemplateColumn Header="数据源">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <hc:SimplePanel>
+
+                                        <TextBlock
+                                            x:Name="txt"
+                                            Style="{StaticResource CenterText}"
+                                            Text="{Binding Source}" />
+
+                                        <hc:SimplePanel x:Name="actionPanel" Visibility="Collapsed">
+                                            <Button
+                                                x:Name="btn"
+                                                hc:IconElement.Geometry="{StaticResource f.cloud-arrow-down}"
+                                                BorderThickness="0"
+                                                Command="{Binding DataContext.SyncOrderCommand, RelativeSource={RelativeSource AncestorType=local:TransferRecordPage}}"
+                                                CommandParameter="{Binding .}"
+                                                Foreground="RoyalBlue"
+                                                Style="{StaticResource ButtonIcon.Small}"
+                                                ToolTip="从平台下载数据" />
+
+                                            <Button
+                                                x:Name="edit"
+                                                hc:IconElement.Geometry="{StaticResource f.pen}"
+                                                BorderThickness="0"
+                                                Command="{Binding ModifyOrderCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Foreground="Black"
+                                                Style="{StaticResource ButtonIcon.Small}"
+                                                Visibility="Collapsed" />
+                                        </hc:SimplePanel>
+                                    </hc:SimplePanel>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsEditable}" Value="true">
+                                            <Setter TargetName="btn" Property="Visibility" Value="Collapsed" />
+                                            <Setter TargetName="edit" Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                        <!--  监听行的鼠标悬停状态  -->
+
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                                            <Setter TargetName="txt" Property="Visibility" Value="Collapsed" />
+                                            <Setter TargetName="actionPanel" Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+
+                        <DataGridTemplateColumn Header="申请单">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.file}"
+                                        BorderThickness="0"
+                                        Command="{Binding OpenFileCommand}"
+                                        CommandParameter="{Binding OrderSheet}"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="{Binding OrderSheet, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="基金合同">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.file}"
+                                        BorderThickness="0"
+                                        Command="{Binding OpenFileCommand}"
+                                        CommandParameter="{Binding Contract}"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="{Binding Contract, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+
+                        <DataGridTemplateColumn Header="风险揭示书">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.file}"
+                                        BorderThickness="0"
+                                        Command="{Binding OpenFileCommand}"
+                                        CommandParameter="{Binding RiskDiscloure}"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="{Binding RiskDiscloure, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="风险匹配告知">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.file}"
+                                        BorderThickness="0"
+                                        Command="{Binding OpenFileCommand}"
+                                        CommandParameter="{Binding RiskPair}"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="{Binding RiskPair, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="双录">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.file}"
+                                        BorderThickness="0"
+                                        Command="{Binding OpenFileCommand}"
+                                        CommandParameter="{Binding Videotape}"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="{Binding Videotape, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="回访">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.file}"
+                                        BorderThickness="0"
+                                        Command="{Binding OpenFileCommand}"
+                                        CommandParameter="{Binding Review}"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="{Binding Review, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!--  删除  -->
+                        <DataGridTemplateColumn>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <UniformGrid
+                                        x:Name="actionPanel"
+                                        Rows="1"
+                                        Visibility="Collapsed">
+
+                                        <ToggleButton
+                                            Command="{Binding DataContext.AbortOrderCommand, RelativeSource={RelativeSource AncestorType=local:TransferRecordPage}}"
+                                            CommandParameter="{Binding .}"
+                                            IsChecked="{Binding IsAborted}"
+                                            Style="{StaticResource ToggleButtonFlip.Small}">
+                                            <Viewbox Height="16" ToolTip="废弃订单">
+                                                <Path Data="{StaticResource f.ban}" Fill="Red" />
+                                            </Viewbox>
+                                            <hc:StatusSwitchElement.CheckedElement>
+                                                <Viewbox Height="16" ToolTip="恢复订单">
+                                                    <Path Data="{StaticResource f.reply}" Fill="Black" />
+                                                </Viewbox>
+                                            </hc:StatusSwitchElement.CheckedElement>
+                                        </ToggleButton>
+                                        <Button
+                                            hc:IconElement.Geometry="{StaticResource f.trash}"
+                                            BorderThickness="0"
+                                            Command="{Binding DataContext.DeleteOrderCommand, RelativeSource={RelativeSource AncestorType=local:TransferRecordPage}}"
+                                            CommandParameter="{Binding .}"
+                                            Foreground="Red"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            Visibility="{Binding IsAborted, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                    </UniformGrid>
+                                    <DataTemplate.Triggers>
+                                        <!--  监听行的鼠标悬停状态  -->
+                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                                            <Setter TargetName="actionPanel" Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+
+
+
+
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem>
+                <TabItem.Header>
+                    <DockPanel LastChildFill="False">
+                        <Viewbox
+                            Width="15"
+                            Height="15"
+                            Margin="4,0">
+                            <Path Data="{StaticResource f.file-circle-plus}" Fill="Black" />
+                        </Viewbox>
+                        <TextBlock Text="交易申请" />
+                    </DockPanel>
+                </TabItem.Header>
+
+                <DataGrid
+                    hc:DataGridAttach.ShowRowNumber="True"
+                    AutoGenerateColumns="False"
+                    BorderThickness="0"
+                    EnableRowVirtualization="True"
+                    IsReadOnly="True"
+                    ItemsSource="{Binding RequestsSource.View}"
+                    Style="{StaticResource DataGrid.NoSelect}"
+                    VirtualizingStackPanel.IsVirtualizing="True"
+                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+
+                    <DataGrid.RowStyle>
+                        <Style BasedOn="{StaticResource NoSelectDataGridRowStyle}" TargetType="DataGridRow">
+
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsOrderRequired}" Value="False">
+                                    <Setter Property="Background" Value="#e1e1e1" />
+                                </DataTrigger>
+                                <!--<DataTrigger Binding="{Binding IsCanceled}" Value="True">
+                                    <Setter Property="Background" Value="Coral" />
+                                </DataTrigger>-->
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+
+                                    <Button
+                                        x:Name="del"
+                                        hc:IconElement.Geometry="{StaticResource f.trash}"
+                                        Command="{Binding DataContext.DeleteRequestCommand, RelativeSource={RelativeSource AncestorType=local:TransferRecordPage}}"
+                                        CommandParameter="{Binding .}"
+                                        Foreground="Red"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="Collapsed" />
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Source}" Value="manual">
+                                            <Setter TargetName="del" Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn shared:FilterColumn.FilterSource="{Binding Data.OrderStatusFilter, Source={StaticResource proxy}}" shared:FilterColumn.PopupContentTemplate="{StaticResource StringFilterTemplate}">
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <hc:SimplePanel>
+                                        <Button
+                                            hc:IconElement.Geometry="{StaticResource f.feather-pointed}"
+                                            hc:IconElement.Height="15"
+                                            hc:IconElement.Width="15"
+                                            Command="{Binding ViewOrderCommand}"
+                                            Foreground="Green"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            Visibility="{Binding HasOrder, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                        <Viewbox
+                                            x:Name="fea"
+                                            Height="15"
+                                            Visibility="Collapsed">
+                                            <Path
+                                                x:Name="co"
+                                                Data="{StaticResource f.feather-pointed}"
+                                                Fill="Red" />
+                                        </Viewbox>
+                                        <hc:SimplePanel
+                                            x:Name="clear"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Visibility="Collapsed">
+                                            <Ellipse
+                                                Width="18"
+                                                Height="18"
+                                                Fill="Black" />
+                                            <TextBlock
+                                                Margin="3,2"
+                                                VerticalAlignment="Center"
+                                                Background="Transparent"
+                                                FontSize="11"
+                                                Foreground="White"
+                                                Text="清" />
+                                        </hc:SimplePanel>
+                                    </hc:SimplePanel>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsSameManager}" Value="True">
+                                            <Setter TargetName="co" Property="Fill" Value="Gray" />
+                                        </DataTrigger>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding LackOrder}" Value="True" />
+                                                <Condition Binding="{Binding IsLiquidating}" Value="True" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter TargetName="clear" Property="Visibility" Value="Visible" />
+                                            <Setter TargetName="fea" Property="Visibility" Value="Collapsed" />
+                                        </MultiDataTrigger>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding LackOrder}" Value="True" />
+                                                <Condition Binding="{Binding IsLiquidating}" Value="False" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter TargetName="clear" Property="Visibility" Value="Collapsed" />
+                                            <Setter TargetName="fea" Property="Visibility" Value="Visible" />
+                                        </MultiDataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+
+                        <DataGridTextColumn Binding="{Binding RequestDate, StringFormat=yyyy-MM-dd}" Header="日期" />
+                        <DataGridTextColumn
+                            Binding="{Binding FundCode}"
+                            ElementStyle="{StaticResource LeftText}"
+                            Header="代码" />
+
+                        <DataGridTemplateColumn
+                            shared:FilterColumn.FilterSource="{Binding Data.FundNameFilter, Source={StaticResource proxy}}"
+                            shared:FilterColumn.Header="产品"
+                            shared:FilterColumn.PopupContentTemplate="{StaticResource StringFilterTemplate}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <DockPanel Background="Transparent" LastChildFill="False">
+                                        <shared:CopyableTextBlock Text="{Binding FundName}" />
+                                        <Button
+                                            x:Name="goto"
+                                            hc:IconElement.Geometry="{StaticResource f.paper-plane}"
+                                            Command="{Binding OpenFundCommand}"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            Visibility="Collapsed" />
+                                    </DockPanel>
+                                    <DataTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="goto" Property="Visibility" Value="Visible" />
+                                        </Trigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn
+                            Binding="{Binding ShareClass}"
+                            ElementStyle="{StaticResource CenterText}"
+                            Header="份额" />
+
+                        <DataGridTemplateColumn
+                            shared:FilterColumn.FilterSource="{Binding Data.InvestorNameFilter, Source={StaticResource proxy}}"
+                            shared:FilterColumn.Header="投资人"
+                            shared:FilterColumn.PopupContentTemplate="{StaticResource StringFilterTemplate}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <DockPanel Background="Transparent" LastChildFill="False">
+                                        <shared:CopyableTextBlock MinWidth="70" Text="{Binding InvestorName}" />
+                                        <Button
+                                            x:Name="goto"
+                                            hc:IconElement.Geometry="{StaticResource f.paper-plane}"
+                                            Command="{Binding OpenInvestorViewCommand}"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            Visibility="Collapsed" />
+                                    </DockPanel>
+                                    <DataTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="goto" Property="Visibility" Value="Visible" />
+                                        </Trigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Header="证件">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <shared:CopyableTextBlock IsMasked="True" Text="{Binding InvestorIdentity}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn
+                            Binding="{Binding RequestType}"
+                            ElementStyle="{StaticResource CenterText}"
+                            Header="类型" />
+                        <DataGridTextColumn
+                            Binding="{Binding RequestShare, Converter={StaticResource ZeroToBlankConverter}}"
+                            ElementStyle="{StaticResource RightText}"
+                            Header="份额" />
+                        <DataGridTextColumn
+                            Binding="{Binding RequestAmount, Converter={StaticResource ZeroToBlankConverter}}"
+                            ElementStyle="{StaticResource RightText}"
+                            Header="金额" />
+                        <DataGridTextColumn
+                            Binding="{Binding Agency}"
+                            ElementStyle="{StaticResource CenterText}"
+                            Header="销售" />
+
+                        <DataGridTemplateColumn Header="数据源">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button
+                                        Command="{Binding ViewJsonCommand}"
+                                        Content="{Binding Source}"
+                                        Style="{StaticResource ButtonCustom}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!--<DataGridTextColumn
+                            Binding="{Binding ExternalId}"
+                            ElementStyle="{StaticResource LeftText}"
+                            Header="外部ID" />-->
+
+                        <DataGridTemplateColumn>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock
+                                        Foreground="Coral"
+                                        Text="申请已撤回"
+                                        Visibility="{Binding IsCanceled, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <TabItem>
+                <TabItem.Header>
+                    <DockPanel LastChildFill="False">
+                        <Viewbox
+                            Width="15"
+                            Height="15"
+                            Margin="4,0">
+                            <Path Data="{StaticResource f.clipboard-check}" Fill="Black" />
+                        </Viewbox>
+                        <TextBlock Text="交易确认" />
+                    </DockPanel>
+                </TabItem.Header>
+                <DataGrid
+                    d:DataContext="{d:DesignInstance CreateList=True,
+                                                     Type=local:TransferRecordViewModel}"
+                    hc:DataGridAttach.ShowRowNumber="True"
+                    AutoGenerateColumns="False"
+                    BorderThickness="0"
+                    EnableRowVirtualization="True"
+                    IsReadOnly="True"
+                    ItemsSource="{Binding RecordsSource.View}"
+                    Style="{StaticResource DataGrid.NoSelect}"
+                    VirtualizingStackPanel.IsVirtualizing="True"
+                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+                    <DataGrid.RowStyle>
+                        <Style BasedOn="{StaticResource NoSelectDataGridRowStyle}" TargetType="DataGridRow">
+
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsFailed}" Value="True">
+                                    <Setter Property="Background" Value="Coral" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <hc:SimplePanel>
+                                        <Button
+                                            hc:IconElement.Geometry="{StaticResource f.file-pdf}"
+                                            Command="{Binding DataContext.OpenConfirmFileCommand, RelativeSource={RelativeSource AncestorType=local:TransferRecordPage}}"
+                                            CommandParameter="{Binding File}"
+                                            Foreground="Blue"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            Visibility="{Binding FileExists, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+
+
+                                        <Button
+                                            x:Name="del"
+                                            hc:IconElement.Geometry="{StaticResource f.trash}"
+                                            Command="{Binding DataContext.DeleteRecordCommand, RelativeSource={RelativeSource AncestorType=local:TransferRecordPage}}"
+                                            CommandParameter="{Binding .}"
+                                            Foreground="Red"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            Visibility="Collapsed" />
+
+                                    </hc:SimplePanel>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Source}" Value="manual">
+                                            <Setter TargetName="del" Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn shared:FilterColumn.FilterSource="{Binding Data.OrderStatusFilter, Source={StaticResource proxy}}" shared:FilterColumn.PopupContentTemplate="{StaticResource StringFilterTemplate}">
+
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <hc:SimplePanel>
+                                        <Button
+                                            hc:IconElement.Geometry="{StaticResource f.feather-pointed}"
+                                            hc:IconElement.Height="15"
+                                            hc:IconElement.Width="15"
+                                            Command="{Binding ViewOrderCommand}"
+                                            Foreground="Green"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            Visibility="{Binding HasOrder, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                        <!--<Viewbox
+                                            x:Name="fea"
+                                            Height="15"
+                                            Visibility="Collapsed">
+                                            <Path
+                                                x:Name="co"
+                                                Data="{StaticResource f.feather-pointed}"
+                                                Fill="Red" />
+                                        </Viewbox>-->
+                                        <Button
+                                            x:Name="fea"
+                                            hc:IconElement.Geometry="{StaticResource f.circle-nodes}"
+                                            hc:IconElement.Height="15"
+                                            hc:IconElement.Width="15"
+                                            Command="{Binding ViewOrderCommand}"
+                                            Foreground="Red"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            Visibility="Collapsed" />
+                                        <hc:SimplePanel
+                                            x:Name="clear"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Visibility="Collapsed">
+                                            <Ellipse
+                                                Width="18"
+                                                Height="18"
+                                                Fill="Black" />
+                                            <TextBlock
+                                                Margin="3,2"
+                                                VerticalAlignment="Center"
+                                                Background="Transparent"
+                                                FontSize="11"
+                                                Foreground="White"
+                                                Text="清" />
+                                        </hc:SimplePanel>
+                                    </hc:SimplePanel>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding IsSameManager}" Value="True">
+                                            <Setter TargetName="fea" Property="Foreground" Value="Gray" />
+                                        </DataTrigger>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding LackOrder}" Value="True" />
+                                                <Condition Binding="{Binding IsLiquidating}" Value="True" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter TargetName="clear" Property="Visibility" Value="Visible" />
+                                            <Setter TargetName="fea" Property="Visibility" Value="Collapsed" />
+                                        </MultiDataTrigger>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding LackOrder}" Value="True" />
+                                                <Condition Binding="{Binding IsLiquidating}" Value="False" />
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter TargetName="clear" Property="Visibility" Value="Collapsed" />
+                                            <Setter TargetName="fea" Property="Visibility" Value="Visible" />
+                                        </MultiDataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+
+
+                        <!--<DataGridTemplateColumn>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Viewbox Height="15" Visibility="{Binding HasOrder, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                        <Path
+                                            Data="{StaticResource f.feather-pointed}"
+                                            Fill="Red"
+                                            Visibility="{Binding IsLiquidating, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                                    </Viewbox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>-->
+
+                        <DataGridTemplateColumn>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Viewbox
+                                        Width="14"
+                                        Height="14"
+                                        Visibility="{Binding LackRequest, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                        <Path Data="{StaticResource f.file}" Fill="Red" />
+                                    </Viewbox>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Binding="{Binding RequestDate, StringFormat=yyyy-MM-dd}" Header="日期" />
+                        <DataGridTextColumn
+                            Binding="{Binding FundCode}"
+                            ElementStyle="{StaticResource CenterText}"
+                            Header="代码" />
+                        <DataGridTemplateColumn
+                            shared:FilterColumn.FilterSource="{Binding Data.FundNameFilter, Source={StaticResource proxy}}"
+                            shared:FilterColumn.Header="产品"
+                            shared:FilterColumn.PopupContentTemplate="{StaticResource StringFilterTemplate}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <DockPanel Background="Transparent" LastChildFill="False">
+                                        <shared:CopyableTextBlock Text="{Binding FundName}" />
+                                        <Button
+                                            x:Name="goto"
+                                            hc:IconElement.Geometry="{StaticResource f.paper-plane}"
+                                            Command="{Binding OpenFundCommand}"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            Visibility="Collapsed" />
+                                    </DockPanel>
+                                    <DataTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="goto" Property="Visibility" Value="Visible" />
+                                        </Trigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn
+                            Binding="{Binding ShareClass}"
+                            ElementStyle="{StaticResource CenterText}"
+                            Header="份额" />
+                        <!--<DataGridTextColumn Binding="{Binding InvestorName}" Header="投资人" />-->
+                        <DataGridTemplateColumn
+                            shared:FilterColumn.FilterSource="{Binding Data.InvestorNameFilter, Source={StaticResource proxy}}"
+                            shared:FilterColumn.Header="投资人"
+                            shared:FilterColumn.PopupContentTemplate="{StaticResource StringFilterTemplate}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <DockPanel Background="Transparent" LastChildFill="False">
+                                        <shared:CopyableTextBlock MinWidth="70" Text="{Binding InvestorName}" />
+                                        <shared:CopyableTextBlock IsMasked="True" Text="{Binding InvestorIdentity}" />
+                                        <Button
+                                            x:Name="goto"
+                                            hc:IconElement.Geometry="{StaticResource f.paper-plane}"
+                                            Command="{Binding OpenInvestorViewCommand}"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            Visibility="Collapsed" />
+                                    </DockPanel>
+                                    <DataTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="goto" Property="Visibility" Value="Visible" />
+                                        </Trigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Binding="{Binding Type}" Header="类型" />
+                        <DataGridTextColumn
+                            Binding="{Binding RequestShare, StringFormat=N2, Converter={StaticResource ZeroToBlankConverter}}"
+                            ElementStyle="{StaticResource RightText}"
+                            Header="申请份额" />
+                        <DataGridTextColumn
+                            Binding="{Binding RequestAmount, StringFormat=N2, Converter={StaticResource ZeroToBlankConverter}}"
+                            ElementStyle="{StaticResource RightText}"
+                            Header="申请金额" />
+                        <DataGridTextColumn
+                            Binding="{Binding ConfirmedShare, StringFormat=N2, Converter={StaticResource ZeroToBlankConverter}}"
+                            ElementStyle="{StaticResource RightText}"
+                            Header="确认份额" />
+                        <DataGridTextColumn
+                            Binding="{Binding ConfirmedAmount, StringFormat=N2, Converter={StaticResource ZeroToBlankConverter}}"
+                            ElementStyle="{StaticResource RightText}"
+                            Header="确认金额" />
+                        <DataGridTextColumn
+                            Binding="{Binding ConfirmedNetAmount, StringFormat=N2, Converter={StaticResource ZeroToBlankConverter}}"
+                            ElementStyle="{StaticResource RightText}"
+                            Header="净确认金额" />
+
+                        <DataGridTextColumn Binding="{Binding Fee, Converter={StaticResource ZeroToBlankConverter}}" Header="费用" />
+                        <DataGridTextColumn Binding="{Binding PerformanceFee, Converter={StaticResource ZeroToBlankConverter}}" Header="业绩报酬" />
+                        <DataGridTextColumn
+                            Binding="{Binding Agency}"
+                            ElementStyle="{StaticResource LeftText}"
+                            Header="销售" />
+
+
+
+                        <DataGridTemplateColumn Header="数据源">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button
+                                        Command="{Binding ViewJsonCommand}"
+                                        Content="{Binding Source}"
+                                        Style="{StaticResource ButtonCustom}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock
+                                        FontWeight="Black"
+                                        Foreground="White"
+                                        Text="失败"
+                                        Visibility="{Binding IsFailed, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <!--<DataGridTextColumn
+                            Binding="{Binding ExternalId}"
+                            ElementStyle="{StaticResource LeftText}"
+                            Header="ID" />-->
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+        </TabControl>
+
+
+    </Grid>
+</UserControl>

@@ -1,0 +1,95 @@
+﻿<Window
+    x:Class="FMO.TrusteeLogViewerWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="平台Log"
+    Width="800"
+    Height="450"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <Window.DataContext>
+        <local:TrusteeLogViewerWindowViewModel />
+    </Window.DataContext>
+    <DockPanel Margin="10">
+        <DockPanel DockPanel.Dock="Bottom">
+            <TextBlock DockPanel.Dock="Top" Text="{Binding SelectedLog.Params}" />
+            <TextBox
+                AcceptsReturn="True"
+                IsReadOnly="True"
+                Text="{Binding SelectedLog.Json}"
+                TextWrapping="Wrap" />
+        </DockPanel>
+        <DockPanel>
+
+            <ListBox
+                DockPanel.Dock="Top"
+                ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
+                ItemsSource="{Binding Trustees}"
+                SelectedItem="{Binding SelectedTrustee}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <ListBox
+                ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
+                ItemsSource="{Binding Functions}"
+                SelectedItem="{Binding SelectedFunction}" />
+
+            <DockPanel>
+                <ListBox
+                    BorderThickness="0"
+                    DockPanel.Dock="Top"
+                    ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
+                    ItemStringFormat="yyyy/MM/dd"
+                    ItemsSource="{Binding Dates}"
+                    SelectedItem="{Binding SelectedDate}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel IsItemsHost="True" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+
+                <ListBox
+                    ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
+                    ItemsSource="{Binding LogsByDate}"
+                    SelectedItem="{Binding SelectedLog}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel IsItemsHost="True" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Time, StringFormat=HH:mm}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+
+            <!--<ListBox ItemsSource="{Binding Logs}" SelectedItem="{Binding SelectedLog}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel>
+                            <TextBlock Text="{Binding Time, StringFormat=yyyy/MM/dd HH:mm}" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>-->
+
+        </DockPanel>
+
+
+    </DockPanel>
+</Window>

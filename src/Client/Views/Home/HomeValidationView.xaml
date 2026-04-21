@@ -1,0 +1,68 @@
+﻿<UserControl
+    x:Class="FMO.HomeValidationView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:HomeValidationViewModel />
+    </UserControl.DataContext>
+    <UserControl.Resources>
+        <ResourceDictionary Source="/Themes/ValidationTemplates.xaml" />
+    </UserControl.Resources>
+
+    <hc:UniformSpacingPanel
+        ChildWrapping="Wrap"
+        Spacing="5"
+        VerticalSpacing="5">
+
+        <local:ValidationItemView
+            DataContext="{Binding ClearDateMissing.View}"
+            Header="基金已清盘，清盘日期异常"
+            TipTemplate="{StaticResource ClearDateMissing}" />
+
+        <local:ValidationItemView
+            DataContext="{Binding DailyMissing.View}"
+            Header="基金净值缺失"
+            TipTemplate="{StaticResource DailyMissing}" />
+
+
+        <local:ValidationItemView
+            DataContext="{Binding ShareNotPair.View}"
+            Header="基金份额不匹配"
+            TipTemplate="{StaticResource ShareNotPairRule}" />
+
+        <local:ValidationItemView
+            DataContext="{Binding FundOverdue.View}"
+            Header="基金超期运作"
+            TipTemplate="{StaticResource FundOverdue}" />
+
+
+        <local:ValidationItemView
+            DataContext="{Binding FundClearNotFinished.View}"
+            Header="基金清算长期未完成"
+            TipTemplate="{StaticResource FundClearNotFinished}" />
+
+        <local:ValidationItemView
+            DataContext="{Binding FundScaleWarn.View}"
+            Header="连续30+交易日低于500万"
+            TipTemplate="{StaticResource FundScaleWarn}" />
+
+
+        <local:ValidationItemView
+            DataContext="{Binding FundStopPurchase.View}"
+            Header="受限产品"
+            TipTemplate="{StaticResource FundStopPurchase}" />
+
+
+        <local:ValidationItemView
+            DataContext="{Binding FundNearLiquidation.View}"
+            Header="基金临近清盘"
+            TipTemplate="{StaticResource FundNearLiquidation}" />
+    </hc:UniformSpacingPanel>
+</UserControl>

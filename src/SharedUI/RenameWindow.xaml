@@ -1,0 +1,31 @@
+﻿<Window
+    x:Class="FMO.Shared.RenameWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:FMO.Shared"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="重命名"
+    Width="600"
+    Height="100"
+    mc:Ignorable="d">
+    <!--<Window.DataContext>
+        <local:RenameWindowViewModel />
+    </Window.DataContext>-->
+    <DockPanel Margin="10">
+        <TextBlock VerticalAlignment="Center" Text="文件名" />
+
+        <Button
+            Command="{Binding ConfirmCommand}"
+            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+            Content="确认"
+            DockPanel.Dock="Right"
+            Style="{StaticResource ButtonDefault}" />
+
+
+        <TextBox
+            Margin="4,0"
+            VerticalAlignment="Center"
+            Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}" />
+    </DockPanel>
+</Window>

@@ -1,0 +1,19 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:FMO">
+
+    <local:FileExistsToVisibilityConverter x:Key="FileExistsToVisibilityConverter" />
+    <local:FilePathToNameConverter x:Key="FilePathToNameConverter" />
+    <local:ValueIsEffectToVisibilityConverter x:Key="ValueIsEffectToVisibilityConverter" />
+    <local:ValueIsSameConverter x:Key="ValueIsSameConverter" />
+    <local:DataTimeDateOnlySwitchConverter x:Key="DataTimeDateOnlySwitchConverter" />
+    <local:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
+    <local:EnumIsOtherToVisibilityConverter x:Key="EnumIsOtherToVisibilityConverter" />
+    <local:ZeroToBlankConverter x:Key="ZeroToBlankConverter" />
+    <local:LongTextToShortConverter x:Key="LongTextToShortConverter" />
+    <local:TACExistConveter x:Key="TACExistConveter" />
+    <local:BooleanToVisibility2Converter x:Key="BooleanToVisibility2Converter" />
+    <local:StringSubstringConverter x:Key="StringSubstringConverter" />
+    <local:ListIsNotEmpty2VisibilityConverter x:Key="ListIsNotEmpty2VisibilityConverter" />
+</ResourceDictionary>

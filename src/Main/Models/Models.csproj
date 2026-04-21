@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>FMO.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="FileStorageInfo.cs" />
+    <Compile Remove="Fund\FundAccountType.cs" />
+    <Compile Remove="Investor\Customer.cs" />
+    <Compile Remove="LegalEntity\LegalEntity.cs" />
+    <Compile Remove="Manager\InstitutionFiles.cs" />
+  </ItemGroup>
+
+  <ItemGroup> 
+    <ProjectReference Include="..\..\Utility\Logging\Logging.csproj" /> 
+    <ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Remove="day.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="day.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System.Int32">
+      <Alias>FID</Alias>
+    </Using>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,206 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:FMO.Shared">
+
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <local:BooleanToVisibilityReverseConverter x:Key="BooleanToVisibilityReverseConverter" />
+    <SolidColorBrush x:Key="LabelBrush">Gray</SolidColorBrush>
+
+    <!--  Default Template for ChangeableContainer  -->
+    <ControlTemplate x:Key="Tpl.Changeable.Default" TargetType="local:ChangeableContainer">
+        <DockPanel
+            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+            Background="Transparent"
+            LastChildFill="True">
+            <Grid>
+                <TextBlock
+                    VerticalAlignment="Center"
+                    DockPanel.Dock="Left"
+                    Foreground="{DynamicResource LabelBrush}"
+                    Text="{Binding Binding.Label, RelativeSource={RelativeSource AncestorType=local:ChangeableContainer}}" />
+                <TextBlock
+                    Margin="0,-4,0,0"
+                    HorizontalAlignment="Right"
+                    FontSize="6"
+                    Foreground="Purple"
+                    Text="▼"
+                    Visibility="{Binding Binding.IsInherited, RelativeSource={RelativeSource AncestorType=local:ChangeableContainer}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </Grid>
+            <DockPanel HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}">
+                <DockPanel>
+                    <local:ChangeableControlButtons DataContext="{Binding ., RelativeSource={RelativeSource Mode=TemplatedParent}}" DockPanel.Dock="Right" />
+                    <ContentPresenter
+                        x:Name="PART_Content"
+                        Margin="4,0"
+                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                        local:MaskService.IsMask="True"
+                        Content="{Binding Binding, RelativeSource={RelativeSource AncestorType=local:ChangeableContainer}}"
+                        ContentTemplate="{TemplateBinding ContentTemplate}" />
+                </DockPanel>
+            </DockPanel>
+        </DockPanel>
+    </ControlTemplate>
+
+    <!--  Style for ChangeableContainer  -->
+    <Style TargetType="local:ChangeableContainer">
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBox Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="EditTemplate" Value="{StaticResource Tpl.Changeable.Default}" />
+        <Setter Property="Template" Value="{Binding RelativeSource={RelativeSource Self}, Path=EditTemplate, TargetNullValue={StaticResource Tpl.Changeable.Default}}" />
+        <Style.Triggers>
+            <Trigger Property="IsReadOnly" Value="True">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="local:ChangeableContainer">
+                            <DockPanel
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                Background="Transparent"
+                                LastChildFill="True">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    DockPanel.Dock="Left"
+                                    Foreground="{StaticResource LabelBrush}"
+                                    Text="{Binding Binding.Label, RelativeSource={RelativeSource Mode=TemplatedParent}}" />
+                                <local:CopyableControl Margin="10,0,0,0">
+                                    <TextBlock
+                                        local:MaskService.IsMask="True"
+                                        Text="{Binding Binding.Display, RelativeSource={RelativeSource Mode=TemplatedParent}}"
+                                        TextWrapping="WrapWithOverflow" />
+                                </local:CopyableControl>
+                            </DockPanel>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--  Template for ChangeableControl  -->
+    <ControlTemplate x:Key="Tpl.ChangeableControl" TargetType="local:ChangeableControl">
+        <DockPanel
+            Margin="{TemplateBinding Margin}"
+            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+            Background="Transparent"
+            LastChildFill="True">
+            <Grid>
+                <ContentPresenter Content="{TemplateBinding Header}" ContentTemplate="{Binding HeaderTemplate, RelativeSource={RelativeSource TemplatedParent}}" />
+                <TextBlock
+                    Margin="0,-4,0,0"
+                    HorizontalAlignment="Right"
+                    FontSize="6"
+                    Foreground="Purple"
+                    Text="▼"
+                    Visibility="{Binding Binding.IsInherited, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </Grid>
+            <DockPanel HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}">
+                <DockPanel>
+                    <local:ChangeableControlButtons
+                        DataContext="{Binding ., RelativeSource={RelativeSource TemplatedParent}}"
+                        DockPanel.Dock="Right"
+                        Visibility="{TemplateBinding IsReadOnly,
+                                                     Converter={StaticResource BooleanToVisibilityReverseConverter}}" />
+                    <ContentPresenter
+                        x:Name="PART_Content"
+                        Margin="4,1"
+                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                        local:MaskService.IsMask="True"
+                        Content="{TemplateBinding Binding}"
+                        ContentTemplate="{TemplateBinding EditTemplate}" />
+                </DockPanel>
+            </DockPanel>
+        </DockPanel>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsReadOnly" Value="True">
+                <Setter TargetName="PART_Content" Property="ContentTemplate" Value="{Binding ContentTemplate, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}" />
+            </Trigger>
+            <Trigger Property="IsReadOnly" Value="False">
+                <Setter TargetName="PART_Content" Property="ContentTemplate" Value="{Binding EditTemplate, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <!--  Complex Template for ChangeableControl  -->
+    <ControlTemplate x:Key="Tpl.ChangeableControl.Complex" TargetType="local:ChangeableControl">
+        <StackPanel
+            Margin="{TemplateBinding Margin}"
+            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+            Background="Transparent">
+            <DockPanel LastChildFill="False">
+                <Grid>
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        DockPanel.Dock="Left"
+                        Foreground="{DynamicResource LabelBrush}"
+                        Text="{Binding Binding.Label, RelativeSource={RelativeSource TemplatedParent}}" />
+                    <TextBlock
+                        Margin="0,-4,0,0"
+                        HorizontalAlignment="Right"
+                        FontSize="6"
+                        Foreground="Purple"
+                        Text="▼"
+                        Visibility="{Binding Binding.IsInherited, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                </Grid>
+                <local:ChangeableControlButtons DataContext="{Binding ., RelativeSource={RelativeSource TemplatedParent}}" DockPanel.Dock="Right" />
+            </DockPanel>
+            <ContentPresenter
+                x:Name="PART_Content"
+                Margin="4,1"
+                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                local:MaskService.IsMask="True"
+                Content="{Binding Binding, RelativeSource={RelativeSource TemplatedParent}}"
+                ContentTemplate="{TemplateBinding EditTemplate}" />
+        </StackPanel>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsReadOnly" Value="True">
+                <Setter TargetName="PART_Content" Property="ContentTemplate" Value="{Binding ContentTemplate, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}" />
+            </Trigger>
+            <Trigger Property="IsReadOnly" Value="False">
+                <Setter TargetName="PART_Content" Property="ContentTemplate" Value="{Binding EditTemplate, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <!--  Style for ChangeableControl  -->
+    <Style TargetType="local:ChangeableControl">
+        <Setter Property="HeaderTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        DockPanel.Dock="Left"
+                        Foreground="{DynamicResource LabelBrush}"
+                        Text="{Binding .}" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Header" Value="{Binding Binding.Label, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <local:CopyableTextBlock Text="{Binding Display}" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="EditTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBox local:MaskService.IsMask="True" Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template" Value="{StaticResource Tpl.ChangeableControl}" />
+    </Style>
+
+</ResourceDictionary>

@@ -1,0 +1,222 @@
+﻿<Window
+    x:Class="FMO.InitWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title=""
+    Width="600"
+    Height="360"
+    ResizeMode="NoResize"
+    WindowStartupLocation="CenterScreen"
+    WindowStyle="None"
+    mc:Ignorable="d">
+    <Window.DataContext>
+        <local:InitWindowViewModel />
+    </Window.DataContext>
+    <Border CornerRadius="10">
+        <Border.Background>
+            <LinearGradientBrush>
+                <GradientStop Offset="0" Color="#D4FFEC" />
+                <GradientStop Offset="0.48" Color="#57F2CC" />
+                <GradientStop Offset="1" Color="#4596FB" />
+            </LinearGradientBrush>
+        </Border.Background>
+
+        <Grid Margin="30">
+            <DockPanel HorizontalAlignment="Right" VerticalAlignment="Top">
+
+                <Button
+                    hc:IconElement.Geometry="{StaticResource G.Disconnected}"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="Red"
+                    Style="{StaticResource ButtonIcon}"
+                    Visibility="{Binding IsNetworkDisconnected, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                <Button
+                    hc:IconElement.Geometry="{StaticResource G.Folder.Filled}"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Command="{Binding ChooseFolderCommand}"
+                    Style="{StaticResource ButtonIcon}"
+                    ToolTip="设置数据文件夹" />
+
+                <Button
+                    hc:IconElement.Geometry="{StaticResource G.XMark}"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Command="{Binding CloseCommand}"
+                    Style="{StaticResource ButtonIcon}" />
+
+            </DockPanel>
+
+            <DockPanel>
+
+                <!--  Step1  -->
+                <Grid
+                    HorizontalAlignment="Center"
+                    DockPanel.Dock="Bottom"
+                    Visibility="{Binding ShowStep1, Converter={StaticResource Boolean2VisibilityConverter}}">
+
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        DataContext="{Binding Manager}"
+                        TextElement.FontSize="14">
+                        <StackPanel.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="MinWidth" Value="80" />
+                            </Style>
+                        </StackPanel.Resources>
+                        <!--<BulletDecorator>
+                            <BulletDecorator.Bullet>
+                                <TextBlock Text="组织代码：" />
+                            </BulletDecorator.Bullet>
+                            <TextBlock Text="{Binding Id}" />
+                        </BulletDecorator>-->
+                        <BulletDecorator>
+                            <BulletDecorator.Bullet>
+                                <TextBlock Text="登记编号：" />
+                            </BulletDecorator.Bullet>
+                            <TextBlock Text="{Binding RegisterNo}" />
+                        </BulletDecorator>
+                        <BulletDecorator>
+                            <BulletDecorator.Bullet>
+                                <TextBlock Text="负责人：" />
+                            </BulletDecorator.Bullet>
+                            <TextBlock Text="{Binding ArtificialPerson}" />
+                        </BulletDecorator>
+                        <BulletDecorator>
+                            <BulletDecorator.Bullet>
+                                <TextBlock Text="会员：" />
+                            </BulletDecorator.Bullet>
+                            <TextBlock Text="{Binding MemberType}" />
+                        </BulletDecorator>
+                        <BulletDecorator>
+                            <BulletDecorator.Bullet>
+                                <TextBlock Text="成立日期：" />
+                            </BulletDecorator.Bullet>
+                            <TextBlock Text="{Binding SetupDate, StringFormat=yyyy-MM-dd}" />
+                        </BulletDecorator>
+                        <BulletDecorator>
+                            <BulletDecorator.Bullet>
+                                <TextBlock Text="注册日期：" />
+                            </BulletDecorator.Bullet>
+                            <TextBlock Text="{Binding RegisterDate, StringFormat=yyyy-MM-dd}" />
+                        </BulletDecorator>
+                        <BulletDecorator>
+                            <BulletDecorator.Bullet>
+                                <TextBlock Text="注册地址：" />
+                            </BulletDecorator.Bullet>
+                            <TextBlock Text="{Binding RegisterAddress}" />
+                        </BulletDecorator>
+                        <BulletDecorator>
+                            <BulletDecorator.Bullet>
+                                <TextBlock Text="办公地址：" />
+                            </BulletDecorator.Bullet>
+                            <TextBlock Text="{Binding OfficeAddress}" />
+                        </BulletDecorator>
+                    </StackPanel>
+
+
+                    <Button
+                        Width="auto"
+                        Height="auto"
+                        Margin="20"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        hc:IconElement.Geometry="{StaticResource G.Check}"
+                        hc:IconElement.Height="40"
+                        hc:IconElement.Width="40"
+                        Command="{Binding SetUpCommand}"
+                        DockPanel.Dock="Right"
+                        Foreground="Green"
+                        Style="{StaticResource ButtonIcon}" />
+
+
+                </Grid>
+
+                <!--  Step2  -->
+                <UniformGrid
+                    Height="100"
+                    HorizontalAlignment="Center"
+                    DockPanel.Dock="Bottom"
+                    Visibility="{Binding ShowStep2, Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <UniformGrid.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                    </UniformGrid.Resources>
+
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="管理规模" />
+                        <TextBlock Text="{Binding CurrentScale}" />
+                    </StackPanel>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="暂行办法实施前成立的基金" />
+                        <TextBlock Text="{Binding PreNewRuleFundCount}" />
+                    </StackPanel>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="暂行办法实施后成立的基金" />
+                        <TextBlock Text="{Binding NormalFundCount}" />
+                    </StackPanel>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="投资顾问类产品" />
+                        <TextBlock Text="{Binding AdviseFundCount}" />
+                    </StackPanel>
+                </UniformGrid>
+
+
+                <!--  请输入管理人名称  -->
+                <DockPanel Margin="40,0" VerticalAlignment="Center">
+                    <TextBlock
+                        Margin="8"
+                        HorizontalAlignment="Center"
+                        DockPanel.Dock="Top"
+                        FontSize="24"
+                        Text="请输入管理人名称" />
+
+                    <ProgressBar
+                        Height="12"
+                        DockPanel.Dock="Bottom"
+                        Visibility="{Binding ShowProgress, Converter={StaticResource Boolean2VisibilityConverter}}"
+                        Value="{Binding InitProgress}" />
+
+                    <hc:TransitioningContentControl>
+                        <hc:AutoCompleteTextBox
+                            VerticalAlignment="Center"
+                            HorizontalContentAlignment="Center"
+                            hc:DropDownElement.ConsistentWidth="True"
+                            DisplayMemberPath="ManagerName"
+                            ItemsSource="{Binding ManagerOptions}"
+                            Text="{Binding ManagerName, UpdateSourceTrigger=PropertyChanged, Delay=100}" />
+                    </hc:TransitioningContentControl>
+                </DockPanel>
+                <!--  请输入管理人名称  -->
+
+            </DockPanel>
+
+
+
+
+
+
+
+
+
+
+
+
+
+        </Grid>
+
+
+    </Border>
+</Window>

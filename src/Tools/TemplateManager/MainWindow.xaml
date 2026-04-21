@@ -1,0 +1,118 @@
+﻿<Window
+    x:Class="FMO.TemplateManager.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:local="clr-namespace:FMO.TemplateManager"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="模板管理工具"
+    Width="1000"
+    Height="650"
+    AllowDrop="True"
+    Icon="/logo.ico"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
+    <Window.DataContext>
+        <local:MainWindowViewModel />
+    </Window.DataContext>
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Drop">
+            <i:InvokeCommandAction Command="{Binding AddTemplateCommand}" PassEventArgsToCommand="True" />
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
+    <hc:SimplePanel>
+        <DockPanel Margin="8">
+            <ListBox
+                BorderThickness="0"
+                ItemsSource="{Binding Templates}"
+                SelectedItem="{Binding SelectedTemplate}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel Margin="0,4">
+                            <TextBlock
+                                DockPanel.Dock="Bottom"
+                                FontSize="8"
+                                Text="{Binding Id}" />
+                            <TextBlock Text="{Binding Name}" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Rectangle
+                Width="2"
+                Margin="4,0"
+                Fill="Gray" />
+
+            <DockPanel DockPanel.Dock="Top">
+
+
+                <DockPanel DockPanel.Dock="Right" Visibility="{Binding SelectedFileName, Converter={StaticResource Object2VisibilityConverter}}">
+                    <hc:SimplePanel DockPanel.Dock="Right">
+                        <ToggleButton Content="自定义" IsChecked="{Binding ShowCustomFileName}" />
+                        <Popup
+                            AllowsTransparency="True"
+                            HorizontalOffset="-300"
+                            IsOpen="{Binding ShowCustomFileName}"
+                            Placement="Bottom"
+                            StaysOpen="False">
+                            <Border Background="WhiteSmoke">
+                                <DockPanel Margin="15">
+                                    <Button
+                                        Margin="5,0,0,0"
+                                        Command="{Binding CustomizeCommand}"
+                                        Content="确认"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource ButtonInfo}" />
+
+                                    <TextBlock VerticalAlignment="Center" Text="新模板文件名" />
+                                    <TextBox
+                                        MinWidth="220"
+                                        Margin="5,0,0,0"
+                                        Text="{Binding CustomFileName}" />
+                                </DockPanel>
+                            </Border>
+                        </Popup>
+                    </hc:SimplePanel>
+
+                    <Button
+                        Margin="5,0,0,0"
+                        Command="{Binding ModifyCommand}"
+                        Content="修改"
+                        DockPanel.Dock="Right"
+                        Style="{StaticResource ButtonDashedPrimary}"
+                        Visibility="{Binding IsDefault, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                </DockPanel>
+                <ListBox
+                    ItemsPanel="{StaticResource WrapHorizontalItemsPanelTemplate}"
+                    ItemsSource="{Binding TplFiles}"
+                    SelectedIndex="0"
+                    SelectedItem="{Binding SelectedFileName}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding .}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+            <DataGrid
+                HeadersVisibility="None"
+                ItemsSource="{Binding Sample}"
+                Style="{StaticResource DataGrid.Small}" />
+        </DockPanel>
+
+
+
+        <ScrollViewer
+            Grid.Row="2"
+            Grid.Column="1"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Panel.ZIndex="1"
+            VerticalScrollBarVisibility="Hidden">
+            <StackPanel Margin="0,10,10,10" hc:Growl.GrowlParent="True" />
+        </ScrollViewer>
+    </hc:SimplePanel>
+</Window>

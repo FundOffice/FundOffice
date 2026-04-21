@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFrameworks>net10.0-windows</TargetFrameworks>
+	  <Nullable>enable</Nullable>
+	  <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+	
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-windows'">
+		<DefineConstants>TARGET_NET9_WINDOWS</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+		<DefineConstants>TARGET_NET9</DefineConstants>
+	</PropertyGroup>
+	<ItemGroup>
+	  <Compile Remove="PDFiumSharp\**" />
+	  <EmbeddedResource Remove="PDFiumSharp\**" />
+	  <None Remove="PDFiumSharp\**" />
+	  <Page Remove="PDFiumSharp\**" />
+	</ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="bblanchon.PDFium.Win32" Version="137.0.7123" />
+    <PackageReference Include="PDFium.WindowsV2" Version="1.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Main\Models\Models.csproj" />
+    <ProjectReference Include="..\Utilities\Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PDFiumSharp">
+      <HintPath>PDFiumSharp.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+</Project>

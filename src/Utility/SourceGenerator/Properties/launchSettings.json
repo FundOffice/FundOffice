@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Gen": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\FMO\\FundMiddleOffice.csproj"
+    }
+  }
+}

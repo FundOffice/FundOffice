@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Playwright" Version="1.54.0" />
+    <PackageReference Include="Serilog" Version="4.3.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Main\Models\Models.csproj" />
+    <ProjectReference Include="..\..\Utility\OCR\OCR.csproj" />
+    <ProjectReference Include="..\..\Utility\FileTemplate\FileTemplate.csproj" />
+    <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
+  </ItemGroup>
+
+</Project>

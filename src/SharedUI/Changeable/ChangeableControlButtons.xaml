@@ -1,0 +1,73 @@
+﻿<UserControl
+    x:Class="FMO.Shared.ChangeableControlButtons"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO.Shared"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style
+            x:Key="SaveElement"
+            BasedOn="{StaticResource ButtonBaseStyle}"
+            TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Foreground" Value="Black" />
+            <Setter Property="hc:IconElement.Geometry" Value="{StaticResource f.circle-check}" />
+            <Setter Property="hc:IconElement.Width" Value="15" />
+            <Setter Property="Visibility" Value="{Binding Binding.CanConfirm, Converter={StaticResource Boolean2VisibilityConverter}}" />
+            <Setter Property="Command" Value="{Binding Entity.ModifyCommand}" />
+            <Setter Property="CommandParameter" Value="{Binding Binding}" />
+        </Style>
+        <Style
+            x:Key="DeleteElement"
+            BasedOn="{StaticResource ButtonBaseStyle}"
+            TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="Red" />
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="Padding" Value="1" />
+            <Setter Property="hc:IconElement.Geometry" Value="{StaticResource f.xmark}" />
+            <Setter Property="Visibility" Value="{Binding Binding.CanDelete, Converter={StaticResource Boolean2VisibilityConverter}}" />
+            <Setter Property="Command" Value="{Binding Entity.DeleteCommand}" />
+            <Setter Property="CommandParameter" Value="{Binding Binding}" />
+        </Style>
+        <Style
+            x:Key="ResetElement"
+            BasedOn="{StaticResource ButtonBaseStyle}"
+            TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="Blue" />
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="hc:IconElement.Geometry" Value="{StaticResource f.rotate-left}" />
+            <Setter Property="hc:IconElement.Width" Value="12" />
+            <Setter Property="Visibility" Value="{Binding Binding.IsValueChanged, Converter={StaticResource Boolean2VisibilityConverter}}" />
+            <Setter Property="Command" Value="{Binding Entity.ResetCommand}" />
+            <Setter Property="CommandParameter" Value="{Binding Binding}" />
+        </Style>
+    </UserControl.Resources>
+    <DockPanel>
+        <Button Panel.ZIndex="99" Style="{StaticResource ResetElement}" />
+        <Button Panel.ZIndex="99" Style="{StaticResource SaveElement}" />
+        <Grid
+            x:Name="x"
+            Panel.ZIndex="99"
+            Visibility="{Binding Path=IsMouseOver, Converter={StaticResource Boolean2VisibilityConverter}}">
+            <Grid Visibility="{Binding Binding.IsInherited, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                <Button Style="{StaticResource DeleteElement}" />
+            </Grid>
+        </Grid>
+    </DockPanel>
+</UserControl>

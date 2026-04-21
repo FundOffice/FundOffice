@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/ref/">
+    <Project Path="../Main/Models/Models.csproj" />
+    <Project Path="../Utility/Utilities/Utilities.csproj" />
+  </Folder>
+  <Project Path="../Tools/TemplateBuilder/TemplateBuilder.csproj" />
+  <Project Path="FundHolderSheet/FundHolderSheet.csproj" />
+  <Project Path="MultiFundElementSheet/MultiFundElementSheet.csproj" />
+  <Project Path="MultiFundSummary/MultiFundSummary.csproj" />
+  <Project Path="SingleFundNetValueList/SingleFundNetValueList.csproj" />
+</Solution>

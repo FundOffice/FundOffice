@@ -1,0 +1,141 @@
+﻿<Window
+    x:Class="FMO.FutureOpenFilesGeneratorWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="clr-namespace:FMO.Models;assembly=FMO.Models"
+    Title="期货开户材料生成器"
+    Width="420"
+    Height="250"
+    d:DataContext="{d:DesignInstance Type=local:FutureOpenFilesGeneratorWindowViewModel}"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <DataTemplate x:Key="DT.Member" DataType="model:Participant">
+            <TextBlock Text="{Binding Name}" />
+        </DataTemplate>
+    </Window.Resources>
+
+    <StackPanel Margin="10">
+
+        <Border Margin="0,0,0,10" Background="AliceBlue">
+            <DockPanel>
+                <Button
+                    Command="{Binding GenerateCommand}"
+                    Content="生成"
+                    DockPanel.Dock="Right" />
+
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontSize="24"
+                    Text="{Binding Company}" />
+            </DockPanel>
+        </Border>
+
+
+        <DockPanel LastChildFill="False">
+            <TextBlock Width="60" Text="模板" />
+            <TextBlock
+                MaxWidth="280"
+                Margin="5,0"
+                FontStyle="Italic"
+                Text="{Binding TemplatePath}" />
+            <Button
+                hc:IconElement.Geometry="{StaticResource f.folder}"
+                Command="{Binding ChooseTemplateCommand}"
+                Style="{StaticResource ButtonIcon.Small}" />
+        </DockPanel>
+
+        <DockPanel LastChildFill="False">
+            <TextBlock Width="60" Text="存放路径" />
+            <TextBlock
+                MaxWidth="280"
+                Margin="5,0"
+                FontStyle="Italic"
+                Text="{Binding TargetFolder}" />
+            <Button
+                hc:IconElement.Geometry="{StaticResource f.folder}"
+                Command="{Binding ChooseTargetCommand}"
+                Style="{StaticResource ButtonIcon.Small}" />
+        </DockPanel>
+
+
+        <UniformGrid Columns="2">
+            <UniformGrid.Resources>
+                <Style BasedOn="{StaticResource ComboBox.Small}" TargetType="ComboBox">
+                    <Setter Property="Margin" Value="15,2" />
+                </Style>
+            </UniformGrid.Resources>
+            <DockPanel>
+                <TextBlock Text="账户负责人" />
+                <Button
+                    Margin="-15,0,0,0"
+                    hc:IconElement.Geometry="{StaticResource f.arrow-right-to-bracket}"
+                    Command="{Binding SetAsSameCommand}"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource ButtonIcon.Small}" />
+                <ComboBox
+                    ItemTemplate="{StaticResource DT.Member}"
+                    ItemsSource="{Binding ResponsePersons}"
+                    SelectedItem="{Binding ResponsePerson}" />
+            </DockPanel>
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="基金经理" />
+                </BulletDecorator.Bullet>
+                <ComboBox
+                    ItemTemplate="{StaticResource DT.Member}"
+                    ItemsSource="{Binding InvestmentManagers}"
+                    SelectedItem="{Binding InvestmentManager}" />
+            </BulletDecorator>
+
+
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="开户代理人" />
+                </BulletDecorator.Bullet>
+                <ComboBox
+                    ItemTemplate="{StaticResource DT.Member}"
+                    ItemsSource="{Binding OpenAgents}"
+                    SelectedItem="{Binding OpenAgent}" />
+            </BulletDecorator>
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="指定下单人" />
+                </BulletDecorator.Bullet>
+                <ComboBox
+                    ItemTemplate="{StaticResource DT.Member}"
+                    ItemsSource="{Binding OrderPlacers}"
+                    SelectedItem="{Binding OrderPlacer}" />
+            </BulletDecorator>
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="资金调拨人" />
+                </BulletDecorator.Bullet>
+                <ComboBox
+                    ItemTemplate="{StaticResource DT.Member}"
+                    ItemsSource="{Binding FundTransferors}"
+                    SelectedItem="{Binding FundTransferor}" />
+            </BulletDecorator>
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="结算确认人" />
+                </BulletDecorator.Bullet>
+                <ComboBox
+                    ItemTemplate="{StaticResource DT.Member}"
+                    ItemsSource="{Binding ConfirmationPersons}"
+                    SelectedItem="{Binding ConfirmationPerson}" />
+            </BulletDecorator>
+        </UniformGrid>
+
+        <TextBlock
+            Foreground="Red"
+            Text="未选择相关人员"
+            Visibility="{Binding IsParticipantValid, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+
+    </StackPanel>
+</Window>

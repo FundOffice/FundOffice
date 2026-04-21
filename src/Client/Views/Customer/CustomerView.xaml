@@ -1,0 +1,823 @@
+﻿<UserControl
+    x:Class="FMO.CustomerView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
+    Width="500"
+    d:DataContext="{d:DesignInstance Type=local:CustomerViewModel}"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style BasedOn="{StaticResource {x:Type shared:ChangeableContainer}}" TargetType="shared:ChangeableContainer">
+            <Setter Property="Entity" Value="{Binding RelativeSource={RelativeSource AncestorType=local:CustomerView}, Path=DataContext}" />
+            <Setter Property="IsReadOnly" Value="{Binding RelativeSource={RelativeSource AncestorType=local:CustomerView}, Path=DataContext.IsReadOnly}" />
+        </Style>
+
+        <SolidColorBrush x:Key="LabelBrush">Gray</SolidColorBrush>
+
+
+
+        <DataTemplate x:Key="DT.CenterText">
+            <TextBox
+                BorderThickness="0,0,0,0"
+                Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                TextAlignment="Center" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="DT.InvestorName">
+            <TextBox BorderThickness="0" Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+        </DataTemplate>
+
+
+        <DataTemplate x:Key="DT.QualificationItem" DataType="local:QualificationViewModel">
+            <Grid>
+                <TextBlock VerticalAlignment="Center" Text="{Binding Date.OldValue, StringFormat=yyyy-MM-dd, TargetNullValue=未设置日期}" />
+                <Border
+                    x:Name="pro"
+                    Width="12"
+                    Height="12"
+                    Margin="-14,-5"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Background="RoyalBlue"
+                    CornerRadius="10"
+                    Visibility="Collapsed">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="8"
+                        Foreground="White"
+                        Text="专" />
+                </Border>
+
+                <Ellipse
+                    x:Name="err"
+                    Width="12"
+                    Height="12"
+                    Margin="-14,-5"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Panel.ZIndex="99"
+                    Fill="Red"
+                    Visibility="Collapsed" />
+
+            </Grid>
+            <DataTemplate.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsProfessional}" Value="True" />
+                        <Condition Binding="{Binding HasError}" Value="False" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="pro" Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsProfessional}" Value="True" />
+                        <Condition Binding="{Binding HasError}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="pro" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="pro" Property="Background" Value="Red" />
+                </MultiDataTrigger>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsProfessional}" Value="False" />
+                        <Condition Binding="{Binding HasError}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="err" Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
+                <DataTrigger Binding="{Binding IgnoreError}" Value="True">
+                    <Setter TargetName="err" Property="Fill" Value="Gray" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <ItemsPanelTemplate x:Key="IPT.QualificationItem">
+            <WrapPanel IsItemsHost="True" />
+        </ItemsPanelTemplate>
+
+        <Style x:Key="RightText" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+
+
+
+        <DataTemplate x:Key="DT.File">
+
+            <DockPanel Background="Transparent" LastChildFill="False">
+
+
+                <hc:SimplePanel>
+                    <DockPanel>
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Foreground="RoyalBlue"
+                            Text="{Binding Time, StringFormat=yyyy-MM-dd}" />
+                        <shared:AbbreviationText
+                            x:Name="file"
+                            Margin="5,2"
+                            VerticalContentAlignment="Center"
+                            Text="{Binding Name}" />
+                    </DockPanel>
+                    <hc:SimplePanel
+                        x:Name="p"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Stretch"
+                        Background="White"
+                        Visibility="Collapsed">
+                        <hc:SimplePanel.Resources>
+                            <Style BasedOn="{StaticResource ButtonIcon.Small}" TargetType="Button">
+                                <Setter Property="Margin" Value="2,-5" />
+                            </Style>
+                        </hc:SimplePanel.Resources>
+                        <DockPanel Margin="5,2" LastChildFill="False">
+                            <DockPanel LastChildFill="False">
+                                <Button
+                                    hc:IconElement.Geometry="{DynamicResource f.book-open-reader}"
+                                    Command="{Binding RelativeSource={RelativeSource AncestorType=shared:MultipleFileView}, Path=Binding.ViewCommand}"
+                                    CommandParameter="{Binding .}"
+                                    Foreground="Lime"
+                                    ToolTip="查看" />
+
+                                <Button
+                                    hc:IconElement.Geometry="{DynamicResource f.clone}"
+                                    Command="{Binding RelativeSource={RelativeSource AncestorType=shared:MultipleFileView}, Path=Binding.CopyCommand}"
+                                    CommandParameter="{Binding .}"
+                                    Foreground="RoyalBlue"
+                                    ToolTip="复制" />
+
+                                <Button
+                                    hc:IconElement.Geometry="{DynamicResource f.file-export}"
+                                    Command="{Binding RelativeSource={RelativeSource AncestorType=shared:MultipleFileView}, Path=Binding.SaveAsCommand}"
+                                    CommandParameter="{Binding .}"
+                                    ToolTip="另存为" />
+
+
+                            </DockPanel>
+
+                            <Button
+                                Margin="-5"
+                                hc:IconElement.Geometry="{DynamicResource f.xmark}"
+                                Command="{Binding Binding.DeleteFileCommand, RelativeSource={RelativeSource AncestorType=shared:MultipleFileView}}"
+                                CommandParameter="{Binding .}"
+                                Foreground="Red"
+                                Style="{DynamicResource ButtonIcon.Small}"
+                                ToolTip="删除"
+                                Visibility="{Binding DataContext.IsReadOnly, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                        </DockPanel>
+                    </hc:SimplePanel>
+
+                </hc:SimplePanel>
+                <TextBlock
+                    Margin="6,0,0,0"
+                    VerticalAlignment="Center"
+                    FontSize="8"
+                    Foreground="Red"
+                    Text="文件已被删除"
+                    Visibility="{Binding Exists, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+            </DockPanel>
+            <DataTemplate.Triggers>
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Exists, TargetNullValue=False}" Value="True" />
+                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter TargetName="p" Property="Visibility" Value="Visible" />
+                </MultiDataTrigger>
+
+                <DataTrigger Binding="{Binding Exists, TargetNullValue=False}" Value="False">
+                    <Setter TargetName="file" Property="Foreground" Value="Gray" />
+                </DataTrigger>
+
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <CollectionViewSource x:Key="idcards" Source="{Binding IDCards.Files}">
+            <CollectionViewSource.SortDescriptions>
+                <cm:SortDescription Direction="Descending" PropertyName="Time" />
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+
+
+
+    </UserControl.Resources>
+    <Grid>
+        <DockPanel>
+
+            <!--  基本信息  -->
+            <hc:UniformSpacingPanel
+                DockPanel.Dock="Top"
+                Orientation="Vertical"
+                VerticalSpacing="5">
+
+
+                <Border
+                    Margin="0,0,40,0"
+                    BorderBrush="{StaticResource PrimaryBrush}"
+                    BorderThickness="0,0,0,1">
+                    <shared:ChangeableControl
+                        HorizontalContentAlignment="Center"
+                        Binding="{Binding Name}"
+                        EditTemplate="{StaticResource DT.InvestorName}"
+                        IsReadOnly="{Binding IsReadOnly}"
+                        TextElement.FontWeight="Bold" />
+                </Border>
+
+
+
+                <!--  投资人类型  -->
+                <DockPanel LastChildFill="False">
+                    <shared:ChangeableContainer Binding="{Binding EntityType}">
+                        <shared:ChangeableContainer.ContentTemplate>
+                            <DataTemplate>
+                                <ComboBox
+                                    MinWidth="100"
+                                    ItemsSource="{x:Static local:CustomerViewModel.EntityTypes}"
+                                    SelectedItem="{Binding NewValue}" />
+                            </DataTemplate>
+                        </shared:ChangeableContainer.ContentTemplate>
+                    </shared:ChangeableContainer>
+
+                    <shared:ChangeableContainer Binding="{Binding Type}">
+                        <shared:ChangeableContainer.ContentTemplate>
+                            <DataTemplate>
+                                <ComboBox
+                                    MinWidth="100"
+                                    ItemsSource="{Binding DataContext.InvestorTypes, RelativeSource={RelativeSource AncestorType=local:CustomerView}}"
+                                    SelectedItem="{Binding NewValue}" />
+                            </DataTemplate>
+                        </shared:ChangeableContainer.ContentTemplate>
+                    </shared:ChangeableContainer>
+
+                </DockPanel>
+
+
+
+                <!--  证件  -->
+                <DockPanel LastChildFill="False">
+                    <shared:ChangeableContainer Binding="{Binding IDType}">
+                        <shared:ChangeableContainer.ContentTemplate>
+                            <DataTemplate>
+                                <ComboBox
+                                    MinWidth="100"
+                                    ItemsSource="{Binding DataContext.IDTypes, RelativeSource={RelativeSource AncestorType=local:CustomerView}}"
+                                    SelectedItem="{Binding NewValue}" />
+                            </DataTemplate>
+                        </shared:ChangeableContainer.ContentTemplate>
+                    </shared:ChangeableContainer>
+
+
+                    <shared:ChangeableContainer Binding="{Binding Identity}">
+                        <shared:ChangeableContainer.ContentTemplate>
+                            <DataTemplate>
+                                <TextBox
+                                    MinWidth="200"
+                                    hc:InfoElement.Placeholder="证件号码"
+                                    IsReadOnly="{Binding OldValue, Converter={StaticResource Object2BooleanConverter}}"
+                                    Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=100}"
+                                    TextAlignment="Center" />
+                            </DataTemplate>
+                        </shared:ChangeableContainer.ContentTemplate>
+                    </shared:ChangeableContainer>
+                </DockPanel>
+
+
+                <shared:ChangeableContainer Binding="{Binding Efficient}">
+                    <shared:ChangeableContainer.ContentTemplate>
+                        <DataTemplate>
+                            <DockPanel DataContext="{Binding NewValue}">
+                                <DatePicker MinWidth="100" SelectedDate="{Binding Begin, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
+                                <DockPanel Visibility="{Binding IsLongTerm, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                    <TextBlock
+                                        Margin="5,0"
+                                        VerticalAlignment="Center"
+                                        Text="-" />
+                                    <DatePicker MinWidth="100" SelectedDate="{Binding End, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
+                                </DockPanel>
+                                <CheckBox
+                                    Margin="5,0"
+                                    Content="长期"
+                                    IsChecked="{Binding IsLongTerm}" />
+                            </DockPanel>
+                        </DataTemplate>
+                    </shared:ChangeableContainer.ContentTemplate>
+                </shared:ChangeableContainer>
+
+                <UniformGrid Rows="1">
+                    <shared:ChangeableContainer HorizontalContentAlignment="Stretch" Binding="{Binding Email}" />
+
+                    <shared:ChangeableContainer HorizontalContentAlignment="Stretch" Binding="{Binding Phone}" />
+                </UniformGrid>
+
+
+                <shared:ChangeableContainer HorizontalContentAlignment="Stretch" Binding="{Binding Address}" />
+
+
+                <!--<local:MultiFileDisplay
+                    Margin="0,5"
+                    Files="{Binding}"
+                    Header="身份证明文件"
+                    IsReadOnly="{Binding IsReadOnly}" />-->
+
+                <DockPanel LastChildFill="False">
+                    <!--<shared:MultipleFileView
+                        Binding="{Binding IDCards}"
+                        IsReadOnly="{Binding IsReadOnly}"
+                        Style="{StaticResource CardFileStyle}" />-->
+
+                    <shared:FileView
+                        Content="{Binding IDCards}"
+                        Header="身份证明"
+                        IsReadOnly="{Binding IsReadOnly}"
+                        Style="{StaticResource MultiFileStyle}" />
+
+
+                    <Button
+                        local:HelpService.Placement="Right"
+                        Command="{Binding MergeCardPhotoCommand}"
+                        ToolTip="合并证件图片"
+                        Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}">
+
+                        <Viewbox Height="12">
+                            <DockPanel>
+                                <Path Data="{StaticResource f.image}" Fill="Black" />
+                                <Path
+                                    Margin="50,0"
+                                    Data="{StaticResource f.arrow-right}"
+                                    Fill="Black" />
+                                <Path Data="{StaticResource f.id-card}" Fill="Black" />
+                            </DockPanel>
+                        </Viewbox>
+
+                    </Button>
+                </DockPanel>
+
+            </hc:UniformSpacingPanel>
+
+            <Separator Margin="4" DockPanel.Dock="Top" />
+
+            <Border Margin="0,4" DockPanel.Dock="Top">
+                <DockPanel>
+                    <Button
+                        Command="{Binding AddBankCommand}"
+                        Content="添加银行卡"
+                        Style="{StaticResource ButtonPrimary}" />
+                    <ListBox ItemsSource="{Binding Accounts}" Style="{StaticResource ListBoxCustom}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <hc:UniformSpacingPanel
+                                    ChildWrapping="Wrap"
+                                    IsItemsHost="True"
+                                    Spacing="4" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <hc:SimplePanel>
+                                    <ToggleButton
+                                        x:Name="tb"
+                                        Width="60"
+                                        Content="{Binding Number, Converter={StaticResource StringSubstringConverter}, ConverterParameter='[^4..]'}"
+                                        FontSize="14"
+                                        FontWeight="Black"
+                                        ToolTip="{Binding .}" />
+                                    <Popup
+                                        AllowsTransparency="True"
+                                        IsOpen="{Binding ElementName=tb, Path=IsChecked}"
+                                        Placement="Left"
+                                        PlacementTarget="{Binding ElementName=tb}"
+                                        StaysOpen="False">
+                                        <Border
+                                            Width="300"
+                                            Background="WhiteSmoke"
+                                            DataContext="{Binding .}">
+                                            <StackPanel Margin="10">
+                                                <StackPanel.Resources>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="MinWidth" Value="45" />
+                                                        <Setter Property="TextAlignment" Value="Right" />
+                                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                                        <Setter Property="Margin" Value="0,0,4,0" />
+                                                    </Style>
+
+                                                </StackPanel.Resources>
+                                                <DockPanel>
+                                                    <Button
+                                                        Width="24"
+                                                        Padding="4"
+                                                        hc:IconElement.Geometry="{StaticResource f.trash}"
+                                                        Command="{Binding RelativeSource={RelativeSource AncestorType=local:CustomerView}, Path=DataContext.DeleteBankCommand}"
+                                                        CommandParameter="{Binding .}"
+                                                        DockPanel.Dock="Right"
+                                                        Foreground="Red"
+                                                        Style="{StaticResource ButtonIcon}" />
+                                                    <Button
+                                                        hc:IconElement.Geometry="{StaticResource f.circle-check}"
+                                                        Command="{Binding RelativeSource={RelativeSource AncestorType=local:CustomerView}, Path=DataContext.UpdateBankCommand}"
+                                                        CommandParameter="{Binding .}"
+                                                        Content="更新"
+                                                        DockPanel.Dock="Right"
+                                                        Style="{StaticResource ButtonIcon}" />
+                                                    <TextBlock Text="账号" />
+                                                    <TextBox Text="{Binding Number, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                                                </DockPanel>
+                                                <DockPanel>
+                                                    <TextBlock Text="户名" />
+                                                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                                                </DockPanel>
+                                                <DockPanel>
+                                                    <TextBlock Text="开户行" />
+                                                    <TextBox Text="{Binding BankOfDeposit, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                                                </DockPanel>
+
+                                                <DockPanel>
+                                                    <TextBlock FontSize="9" Text="大额支付号" />
+                                                    <TextBox Text="{Binding LargePayNo, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                                                </DockPanel>
+                                                <DockPanel>
+                                                    <TextBlock Text="Swift" />
+                                                    <TextBox Text="{Binding SwiftCode, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                                                </DockPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </Popup>
+                                </hc:SimplePanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+
+            <!--  添加  -->
+            <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+
+
+                <TextBlock
+                    VerticalAlignment="Center"
+                    DockPanel.Dock="Right"
+                    Text="{Binding TotalProfit, StringFormat=总盈亏：{0:N2}, TargetNullValue=''}"
+                    Visibility="{Binding IsAssessmentFileChoosed, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+
+                <ContentControl Name="btnRisk" HorizontalAlignment="Left">
+                    <ContentControl.Template>
+                        <ControlTemplate TargetType="ContentControl">
+                            <DockPanel Background="Transparent">
+
+                                <Button
+                                    Margin="2,0,0,0"
+                                    Padding="5"
+                                    HorizontalAlignment="Left"
+                                    hc:IconElement.Geometry="{StaticResource AddGeometry}"
+                                    local:HelpService.Help="{StaticResource Help.Investor.AddRisk}"
+                                    local:HelpService.Offset="-140,2"
+                                    AllowDrop="True"
+                                    Command="{Binding ChooseAssessmentFileCommand}"
+                                    Content="风测"
+                                    Drop="RiskDrop"
+                                    Style="{StaticResource ButtonPrimary}" />
+
+                                <hc:SimplePanel Visibility="{Binding IsAssessmentFileChoosed, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                    <Button
+                                        Height="26"
+                                        Margin="1,0"
+                                        Command="{Binding SkipRiskEvaluationCommand}"
+                                        Content="豁免"
+                                        Style="{StaticResource ButtonWarning}"
+                                        Visibility="{Binding CanSkipRiskEvaluation, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                </hc:SimplePanel>
+
+                                <DockPanel LastChildFill="False" Visibility="{Binding IsAssessmentFileChoosed, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                    <DatePicker
+                                        Name="a"
+                                        Width="100"
+                                        IsEnabled="False"
+                                        SelectedDate="{Binding NewDate}" />
+                                    <ListBox
+                                        Name="b"
+                                        IsEnabled="False"
+                                        ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
+                                        ItemsPanel="{StaticResource WrapHorizontalItemsPanelTemplate}"
+                                        ItemsSource="{Binding RiskEvaluations}"
+                                        SelectedItem="{Binding NewEvaluation}" />
+
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.check}"
+                                        Command="{Binding AddRiskAssessmentCommand}"
+                                        Style="{StaticResource ButtonIcon.Small}" />
+
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.reply}"
+                                        Command="{Binding CancelRiskAssessmentCommand}"
+                                        Style="{StaticResource ButtonIcon.Small}" />
+
+
+                                </DockPanel>
+
+                            </DockPanel>
+
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="a" Property="IsEnabled" Value="True" />
+                                    <Setter TargetName="b" Property="IsEnabled" Value="True" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </ContentControl.Template>
+                </ContentControl>
+
+                <Button
+                    Margin="2,0,0,0"
+                    Padding="5"
+                    HorizontalAlignment="Left"
+                    hc:IconElement.Geometry="{StaticResource AddGeometry}"
+                    local:HelpService.Help="{StaticResource Help.Investor.AddQualification}"
+                    local:HelpService.Offset="20,2"
+                    local:HelpService.Placement="RightTop"
+                    Command="{Binding AddQualificationCommand}"
+                    Content="合投"
+                    Style="{StaticResource ButtonPrimary}" />
+
+
+
+                <ToggleButton
+                    Name="showQT"
+                    hc:IconElement.Geometry="{StaticResource f.lightbulb}"
+                    BorderThickness="0"
+                    Foreground="Orange"
+                    Style="{StaticResource ToggleButtonIcon}" />
+
+
+                <Popup
+                    AllowsTransparency="True"
+                    IsOpen="{Binding ElementName=showQT, Path=IsChecked}"
+                    Placement="Left"
+                    StaysOpen="False">
+                    <Border
+                        Width="700"
+                        Background="WhiteSmoke"
+                        CornerRadius="8">
+                        <TextBlock
+                            Margin="10"
+                            Text="{Binding Source={x:Static local:CustomerViewModel.QualificationTips}}"
+                            TextWrapping="Wrap" />
+                    </Border>
+                </Popup>
+            </DockPanel>
+
+            <ScrollViewer ScrollViewer.PanningMode="Both" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+
+                    <TextBlock
+                        Margin="0,2,0,0"
+                        FontSize="9"
+                        Foreground="Red"
+                        Text="存在同日风险测评，添加后将覆盖已有资料"
+                        Visibility="{Binding RiskConflict, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+
+                    <!--  风险测评  -->
+                    <StackPanel Margin="0,6">
+                        <hc:SimplePanel>
+                            <ListBox ItemsSource="{Binding RiskAssessments}" Style="{StaticResource ListBoxCustom}">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel IsItemsHost="True" />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="5,0">
+                                            <DockPanel.ContextMenu>
+                                                <ContextMenu Style="{StaticResource ContextMenu.Small}">
+                                                    <MenuItem Command="{Binding DeleteCommand}" Header="删除" />
+                                                </ContextMenu>
+                                            </DockPanel.ContextMenu>
+                                            <DockPanel
+                                                Margin="0,0,-10,0"
+                                                HorizontalAlignment="Center"
+                                                DockPanel.Dock="Top"
+                                                LastChildFill="False">
+                                                <TextBlock
+                                                    FontSize="16"
+                                                    FontWeight="Black"
+                                                    Text="{Binding Level}" />
+
+                                                <Button
+                                                    hc:IconElement.Geometry="{StaticResource f.street-view}"
+                                                    Command="{Binding ViewFileCommand}"
+                                                    Foreground="Green"
+                                                    Style="{StaticResource ButtonIcon.Small}" />
+                                            </DockPanel>
+
+                                            <TextBlock
+                                                FontSize="9"
+                                                Foreground="Gray"
+                                                Text="{Binding Date, StringFormat=yyyy/MM/dd}" />
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+
+
+                        </hc:SimplePanel>
+                    </StackPanel>
+
+                    <!--  合投  -->
+                    <StackPanel>
+                        <StackPanel.Resources>
+                            <CollectionViewSource x:Key="cvs" Source="{Binding Qualifications}">
+                                <CollectionViewSource.SortDescriptions>
+                                    <cm:SortDescription PropertyName="Date.OldValue" />
+                                </CollectionViewSource.SortDescriptions>
+                            </CollectionViewSource>
+                        </StackPanel.Resources>
+                        <ListBox
+                            ItemTemplate="{StaticResource DT.QualificationItem}"
+                            ItemsSource="{Binding Source={StaticResource cvs}}"
+                            SelectedItem="{Binding SelectedQualification}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <hc:UniformSpacingPanel
+                                        ChildWrapping="Wrap"
+                                        IsItemsHost="True"
+                                        Spacing="5" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+
+                        </ListBox>
+
+                        <local:QualificationView
+                            Margin="0,5"
+                            DataContext="{Binding SelectedQualification}"
+                            Visibility="{Binding ., Converter={StaticResource Object2VisibilityConverter}}" />
+                    </StackPanel>
+
+                    <!--  TA  -->
+                    <ListBox
+                        Margin="0,10,0,0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ItemsSource="{Binding TransferRecords}"
+                        Style="{StaticResource ListBoxCustom}">
+                        <ListBox.Template>
+                            <ControlTemplate>
+                                <ItemsPresenter />
+                            </ControlTemplate>
+                        </ListBox.Template>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel>
+                                    <DockPanel Margin="0,8,0,0" DockPanel.Dock="Top">
+                                        <TextBlock
+                                            shared:MaskService.IsMask="True"
+                                            FontSize="14"
+                                            Text="{Binding FundName}" />
+
+                                        <TextBlock
+                                            Margin="5,0,0,0"
+                                            shared:MaskService.IsMask="True"
+                                            FontSize="14"
+                                            FontWeight="Bold"
+                                            Text="{Binding FundCode}" />
+
+                                        <Button
+                                            hc:IconElement.Geometry="{StaticResource f.square-arrow-up-right}"
+                                            Command="{Binding OpenFundCommand}"
+                                            Foreground="RoyalBlue"
+                                            Style="{StaticResource ButtonIcon.Small}" />
+
+                                        <TextBlock
+                                            x:Name="asset"
+                                            Margin="10,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding Asset, StringFormat=N2}" />
+
+
+                                        <TextBlock
+                                            Margin="10,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding Profit, StringFormat=盈亏：{0:N2}}" />
+                                    </DockPanel>
+                                    <DataGrid
+                                        AutoGenerateColumns="False"
+                                        IsReadOnly="True"
+                                        ItemsSource="{Binding Records}"
+                                        ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                        Style="{StaticResource DataGrid.NoSelect}">
+                                        <DataGrid.Template>
+                                            <ControlTemplate>
+                                                <DockPanel>
+                                                    <DataGridColumnHeadersPresenter
+                                                        Name="PART_ColumnHeadersPresenter"
+                                                        Grid.Row="0"
+                                                        Grid.Column="1"
+                                                        Grid.ColumnSpan="2"
+                                                        DockPanel.Dock="Top"
+                                                        Visibility="{Binding HeadersVisibility, ConverterParameter={x:Static DataGridHeadersVisibility.Column}, Converter={x:Static DataGrid.HeadersVisibilityConverter}, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                                    <ItemsPresenter />
+                                                </DockPanel>
+                                            </ControlTemplate>
+                                        </DataGrid.Template>
+                                        <DataGrid.RowStyle>
+                                            <Style BasedOn="{StaticResource NoSelectDataGridRowStyle}" TargetType="DataGridRow">
+                                                <Setter Property="Margin" Value="0" />
+                                            </Style>
+                                        </DataGrid.RowStyle>
+                                        <DataGrid.Columns>
+                                            <DataGridTemplateColumn>
+                                                <DataGridTemplateColumn.CellTemplate>
+                                                    <DataTemplate>
+                                                        <hc:SimplePanel>
+                                                            <Border
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Background="Black"
+                                                                CornerRadius="8"
+                                                                Visibility="{Binding IsLiquidating, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                                                <TextBlock
+                                                                    Margin="3,1"
+                                                                    FontSize="11"
+                                                                    Foreground="White"
+                                                                    Text="清" />
+                                                            </Border>
+                                                            <Button
+                                                                x:Name="btn"
+                                                                hc:IconElement.Geometry="{StaticResource f.file}"
+                                                                BorderThickness="0"
+                                                                Command="{Binding ModifyOrderCommand}"
+                                                                Style="{StaticResource ButtonIcon.Small}" />
+                                                        </hc:SimplePanel>
+                                                        <DataTemplate.Triggers>
+                                                            <DataTrigger Binding="{Binding HasOrder}" Value="False">
+                                                                <Setter TargetName="btn" Property="Foreground" Value="Red" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding IsLiquidating}" Value="True">
+                                                                <Setter TargetName="btn" Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </DataTemplate.Triggers>
+                                                    </DataTemplate>
+                                                </DataGridTemplateColumn.CellTemplate>
+                                            </DataGridTemplateColumn>
+
+                                            <DataGridTextColumn Binding="{Binding ConfirmedDate, StringFormat=yyyy-MM-dd}" />
+                                            <DataGridTextColumn Binding="{Binding Type}" Header="类型" />
+                                            <DataGridTextColumn
+                                                Binding="{Binding RequestAmount, Converter={StaticResource ZeroToBlankConverter}}"
+                                                ElementStyle="{StaticResource RightText}"
+                                                Header="申请金额" />
+                                            <DataGridTextColumn
+                                                Binding="{Binding RequestShare, Converter={StaticResource ZeroToBlankConverter}}"
+                                                ElementStyle="{StaticResource RightText}"
+                                                Header="申请份额" />
+                                            <DataGridTextColumn
+                                                Binding="{Binding ConfirmedAmount, Converter={StaticResource ZeroToBlankConverter}}"
+                                                ElementStyle="{StaticResource RightText}"
+                                                Header="确认金额" />
+                                            <DataGridTextColumn
+                                                Binding="{Binding ConfirmedShare, Converter={StaticResource ZeroToBlankConverter}}"
+                                                ElementStyle="{StaticResource RightText}"
+                                                Header="确认份额" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </DockPanel>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Asset}" Value="0">
+                                        <Setter TargetName="asset" Property="Text" Value="无资产" />
+                                        <Setter TargetName="asset" Property="Foreground" Value="White" />
+                                        <Setter TargetName="asset" Property="Background" Value="Gray" />
+                                        <Setter TargetName="asset" Property="Padding" Value="3,0" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </ScrollViewer>
+
+
+        </DockPanel>
+
+        <!--  查看/编辑 切换  -->
+        <ToggleButton
+            Width="20"
+            Height="20"
+            Margin="5,0"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            local:HelpService.Help="{StaticResource Help.Investor.Modify}"
+            local:HelpService.Offset="-80,0"
+            local:HelpService.Placement="LeftBottom"
+            IsChecked="{Binding IsReadOnly}"
+            Style="{StaticResource EditSwitch}" />
+
+    </Grid>
+</UserControl>

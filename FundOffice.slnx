@@ -1,4 +1,36 @@
 <Solution>
-  <Project Path="src/ClassLibrary1/ClassLibrary1.csproj" />
-  <Project Path="src/ClassLibrary2/ClassLibrary2.csproj" />
+  <Folder Name="/Amac/">
+    <Project Path="src/Amac/Direct/Amac.Direct.csproj" />
+    <Project Path="src/Amac/RPA/Amac.RPA.csproj" />
+  </Folder>
+  <Folder Name="/ESign/">
+    <Project Path="D:/project/FundOffice/src/ESign/ESigning/ESigning.csproj" />
+    <Project Path="D:/project/FundOffice/src/ESign/MeiShi/MeiShi.csproj" />
+    <Project Path="src/ESign/Galley/Galley.csproj" />
+  </Folder>
+  <Folder Name="/Main/">
+    <Project Path="D:/project/FundOffice/src/Main/Data/Data.csproj" />
+    <Project Path="D:/project/FundOffice/src/Main/Models/Models.csproj" />
+  </Folder>
+  <Folder Name="/Trustee/">
+    <Project Path="src/Trustee/CITICS/CITICS.csproj" />
+    <Project Path="src/Trustee/CMS/CMS.csproj" />
+    <Project Path="src/Trustee/CSC/CSC.csproj" />
+    <Project Path="src/Trustee/Interface/Interface.csproj" />
+    <Project Path="src/Trustee/Trustee/Trustee.csproj" />
+    <Project Path="src/Trustee/XYZQ/XYZQ.csproj" />
+  </Folder>
+  <Folder Name="/Utility/">
+    <Project Path="D:/project/FundOffice/src/Utility/FileTemplate/FileTemplate.csproj" />
+    <Project Path="D:/project/FundOffice/src/Utility/Logging/Logging.csproj" />
+    <Project Path="D:/project/FundOffice/src/Utility/SourceGenerator/SourceGenerator.csproj" />
+    <Project Path="D:/project/FundOffice/src/Utility/Utilities/Utilities.csproj" />
+    <Project Path="src/Utility/OCR/OCR.csproj" />
+    <Project Path="src/Utility/Patch/Patch.csproj" />
+    <Project Path="src/Utility/PDF/PdfExt.csproj" />
+  </Folder>
+  <Project Path="D:/project/FundOffice/src/Schedule/Schedule/Schedule.csproj" />
+  <Project Path="D:/project/FundOffice/src/SharedUI/SharedUI.csproj" />
+  <Project Path="src/Client/FundOffice.csproj" />
+  <Project Path="src/Plugin/Plugin/Plugin.csproj" />
 </Solution>

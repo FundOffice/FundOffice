@@ -1,0 +1,199 @@
+﻿<Window
+    x:Class="FMO.AddOrderWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
+    Title="添加交易订单"
+    Width="600"
+    Height="350"
+    d:DataContext="{d:DesignInstance Type=local:AddOrderWindowViewModel}"
+    SizeToContent="Height"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style
+            x:Key="SearchBox"
+            BasedOn="{StaticResource ComboBoxBaseStyle}"
+            TargetType="ComboBox">
+            <Setter Property="IsDropDownOpen" Value="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource Mode=Self}, Mode=OneWay}" />
+            <!--<Style.Triggers>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="IsDropDownOpen" Value="True" />
+                </Trigger>
+            </Style.Triggers>-->
+        </Style>
+
+        <ControlTemplate x:Key="CT.Toggle.Switch" TargetType="ToggleButton">
+            <Border
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}">
+                <UniformGrid Rows="1">
+                    <Label
+                        Name="a"
+                        Background="Green"
+                        BorderThickness="0"
+                        Content="{TemplateBinding Content}"
+                        Foreground="White" />
+                    <Label
+                        Name="b"
+                        BorderThickness="0"
+                        Content="{TemplateBinding Tag}" />
+                </UniformGrid>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="a" Property="Background" Value="Transparent" />
+                    <Setter TargetName="a" Property="Foreground" Value="Black" />
+                    <Setter TargetName="b" Property="Background" Value="Green" />
+                    <Setter TargetName="b" Property="Foreground" Value="White" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+    </Window.Resources>
+    <StackPanel Margin="10">
+
+
+        <hc:UniformSpacingPanel Orientation="Vertical" VerticalSpacing="8">
+
+
+            <DockPanel>
+                <Button
+                    Height="auto"
+                    Margin="6,0,0,0"
+                    VerticalAlignment="Stretch"
+                    Command="{Binding ConfirmCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                    Content="确认"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource ButtonSuccess}" />
+
+                <!--  产品列表  -->
+
+                <DockPanel DockPanel.Dock="Top">
+                    <TextBlock Width="60" Text="基金产品" />
+                    <ComboBox
+                        HorizontalContentAlignment="Center"
+                        hc:InfoElement.Placeholder="产品"
+                        DisplayMemberPath="Name"
+                        IsEditable="True"
+                        IsSynchronizedWithCurrentItem="False"
+                        IsTextSearchEnabled="False"
+                        ItemsSource="{Binding FundSource.View}"
+                        SelectedIndex="-1"
+                        SelectedItem="{Binding SelectedFund}"
+                        Style="{StaticResource SearchBox}"
+                        Text="{Binding SearchFundKey, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+
+                </DockPanel>
+
+
+                <!--  投资人列表  -->
+                <DockPanel Visibility="{Binding SelectedFund, Converter={StaticResource Object2VisibilityConverter}}">
+                    <TextBlock Width="60" Text="投资人" />
+
+                    <ComboBox
+                        Margin="0,4"
+                        HorizontalContentAlignment="Center"
+                        DisplayMemberPath="Name"
+                        IsEditable="True"
+                        IsSynchronizedWithCurrentItem="False"
+                        IsTextSearchEnabled="False"
+                        ItemsSource="{Binding InvestorSource.View}"
+                        SelectedItem="{Binding SelectedInvestor}"
+                        Style="{StaticResource SearchBox}"
+                        Text="{Binding SearchInvestorKey, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                </DockPanel>
+            </DockPanel>
+
+
+
+            <!--  申请  -->
+            <DockPanel Visibility="{Binding SelectedInvestor, Converter={StaticResource Object2VisibilityConverter}}">
+
+                <TextBlock
+                    Width="60"
+                    VerticalAlignment="Center"
+                    Text="签约日期" />
+
+                <DatePicker Width="100" SelectedDate="{Binding Date}" />
+
+                <ListBox
+                    BorderThickness="0"
+                    ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
+                    ItemsPanel="{StaticResource WrapHorizontalItemsPanelTemplate}"
+                    ItemsSource="{Binding Types}"
+                    SelectedItem="{Binding SelectedType}"
+                    Style="{StaticResource ListBox.Small}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+
+
+                <!--  申请金额/份额  -->
+                <TextBox
+                    hc:InfoElement.Placeholder="金额/份额"
+                    Style="{StaticResource TextBoxExtend}"
+                    Text="{Binding Number, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+            </DockPanel>
+        </hc:UniformSpacingPanel>
+
+
+
+
+        <Separator Margin="0,4" />
+
+        <hc:UniformSpacingPanel
+            AllowDrop="True"
+            Orientation="Vertical"
+            Spacing="4">
+
+            <shared:FileView Content="{Binding OrderFile}" Header="申请表" />
+
+            <shared:FileView
+                Content="{Binding RiskPair}"
+                Header="风险匹配告知书"
+                Visibility="{Binding IsSell, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+            <shared:FileView
+                Content="{Binding Contract}"
+                Header="基金合同"
+                Visibility="{Binding IsSell, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+            <shared:FileView
+                Content="{Binding RiskDisclosure}"
+                Header="风险揭示书"
+                Visibility="{Binding IsSell, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+            <shared:FileView
+                Content="{Binding Review}"
+                Header="回访"
+                Visibility="{Binding IsSell, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+
+            <shared:FileView
+                Content="{Binding Video}"
+                Header="双录"
+                Visibility="{Binding IsSell, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+        </hc:UniformSpacingPanel>
+
+
+
+        <TextBlock Foreground="Red" Text="{Binding Tips}" />
+
+
+    </StackPanel>
+</Window>

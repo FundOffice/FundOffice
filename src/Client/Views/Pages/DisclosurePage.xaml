@@ -1,0 +1,587 @@
+﻿<UserControl
+    x:Class="FMO.DisclosurePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:DisclosurePageViewModel />
+    </UserControl.DataContext>
+    <UserControl.Resources>
+        <!--  定义 ListBoxItem 样式  -->
+        <Style x:Key="ZoomOnSelectListBoxItemStyle" TargetType="ListBoxItem">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border
+                            x:Name="ItemBorder"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform x:Name="ScaleTransform" ScaleX="1.0" ScaleY="1.0" />
+                            </Border.RenderTransform>
+                            <ContentPresenter
+                                Margin="0,4"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                TextElement.FontSize="16" />
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="RoyalBlue" />
+                                <Setter Property="Foreground" Value="White" />
+                                <Setter Property="LayoutTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="1.5" ScaleY="1.5" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+    <DockPanel>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <DockPanel
+            Margin="0,8"
+            DockPanel.Dock="Top"
+            LastChildFill="False">
+            <ComboBox
+                BorderThickness="0"
+                ItemsSource="{Binding Years}"
+                SelectedIndex="0"
+                SelectedItem="{Binding SelectedYear}" />
+
+            <ListBox
+                BorderThickness="0"
+                ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
+                ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
+                ItemsSource="{Binding Months}"
+                SelectedIndex="0"
+                SelectedItem="{Binding SelectedMonth}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding ., StringFormat={}{0}月}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <CheckBox Content="排除已清盘产品" IsChecked="{Binding FilterClearedFund}" />
+
+            <TextBlock />
+
+
+        </DockPanel>
+
+        <ScrollViewer>
+            <hc:UniformSpacingPanel Orientation="Vertical" Spacing="8">
+                <hc:UniformSpacingPanel.Resources>
+                    <Style BasedOn="{StaticResource GroupBoxTab}" TargetType="GroupBox" />
+
+                    <DataTemplate x:Key="ReportItem">
+                        <Border>
+                            <DockPanel Margin="4">
+                                <DockPanel DockPanel.Dock="Top">
+                                    <TextBlock
+                                        shared:MaskService.IsMask="True"
+                                        FontSize="15"
+                                        Text="{Binding FundName}" />
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.upload}"
+                                        Command="{Binding UploadCommand}"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource ButtonIcon.Small}" />
+
+                                </DockPanel>
+
+                                <UniformGrid Columns="2">
+
+                                    <shared:FileView
+                                        Content="{Binding Word}"
+                                        IsReadOnly="False"
+                                        Style="{StaticResource IconViewFileStyle}">
+                                        <shared:FileView.Header>
+                                            <Viewbox Width="14" Height="14">
+                                                <Path Data="{StaticResource f.file-word}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                            </Viewbox>
+                                        </shared:FileView.Header>
+                                    </shared:FileView>
+
+
+                                    <shared:FileView
+                                        Content="{Binding Excel}"
+                                        HeaderTemplate="{x:Null}"
+                                        Style="{StaticResource IconViewFileStyle}">
+                                        <shared:FileView.Header>
+                                            <Viewbox Width="14" Height="14">
+                                                <Path Data="{StaticResource f.file-excel}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                            </Viewbox>
+                                        </shared:FileView.Header>
+                                    </shared:FileView>
+
+
+                                    <shared:FileView Content="{Binding Pdf}" Style="{StaticResource IconViewFileStyle}">
+                                        <shared:FileView.Header>
+                                            <Viewbox Width="14" Height="14">
+                                                <Path Data="{StaticResource f.file-pdf}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                            </Viewbox>
+                                        </shared:FileView.Header>
+                                    </shared:FileView>
+
+                                    <shared:FileView Content="{Binding Xbrl}" Style="{StaticResource IconViewFileStyle}">
+                                        <shared:FileView.Header>
+                                            <Viewbox Width="14" Height="14">
+                                                <Path Data="{StaticResource f.file-code}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                            </Viewbox>
+                                        </shared:FileView.Header>
+                                    </shared:FileView>
+
+
+                                </UniformGrid>
+                            </DockPanel>
+                        </Border>
+                    </DataTemplate>
+
+                    <DataTemplate x:Key="ReportItem2">
+                        <Border>
+                            <DockPanel Margin="4">
+
+                                <DockPanel DockPanel.Dock="Top">
+                                    <TextBlock
+                                        shared:MaskService.IsMask="True"
+                                        FontSize="15"
+                                        Text="{Binding FundName}" />
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.upload}"
+                                        Command="{Binding UploadCommand}"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource ButtonIcon.Small}" />
+
+                                </DockPanel>
+
+
+                                <UniformGrid Columns="2">
+
+                                    <shared:FileView
+                                        Content="{Binding Word}"
+                                        IsReadOnly="False"
+                                        Style="{StaticResource IconViewFileStyle}">
+                                        <shared:FileView.Header>
+                                            <Viewbox Width="14" Height="14">
+                                                <Path Data="{StaticResource f.file-word}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                            </Viewbox>
+                                        </shared:FileView.Header>
+                                    </shared:FileView>
+
+                                    <shared:FileView
+                                        Content="{Binding Excel}"
+                                        HeaderTemplate="{x:Null}"
+                                        Style="{StaticResource IconViewFileStyle}">
+                                        <shared:FileView.Header>
+                                            <Viewbox Width="14" Height="14">
+                                                <Path Data="{StaticResource f.file-excel}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                            </Viewbox>
+                                        </shared:FileView.Header>
+                                    </shared:FileView>
+
+                                    <shared:FileView Content="{Binding Pdf}" Style="{StaticResource IconViewFileStyle}">
+                                        <shared:FileView.Header>
+                                            <Viewbox Width="14" Height="14">
+                                                <Path Data="{StaticResource f.file-pdf}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                            </Viewbox>
+                                        </shared:FileView.Header>
+                                    </shared:FileView>
+
+                                    <shared:FileView Content="{Binding Xbrl}" Style="{StaticResource IconViewFileStyle}">
+                                        <shared:FileView.Header>
+                                            <Viewbox Width="14" Height="14">
+                                                <Path Data="{StaticResource f.file-code}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                            </Viewbox>
+                                        </shared:FileView.Header>
+                                    </shared:FileView>
+
+                                    <shared:FileView Content="{Binding Sealed}" Style="{StaticResource IconViewFileStyle}">
+                                        <shared:FileView.Header>
+                                            <Viewbox Width="14" Height="14">
+                                                <Path Data="{StaticResource f.file-shield}" Fill="Red" />
+                                            </Viewbox>
+                                        </shared:FileView.Header>
+                                    </shared:FileView>
+                                </UniformGrid>
+                            </DockPanel>
+                        </Border>
+                    </DataTemplate>
+
+
+                    <DataTemplate x:Key="QuarterlyUpdateItem">
+                        <Border>
+                            <DockPanel Margin="4">
+                                <DockPanel DockPanel.Dock="Top">
+                                    <TextBlock
+                                        shared:MaskService.IsMask="True"
+                                        FontSize="15"
+                                        Text="{Binding FundName}" />
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.upload}"
+                                        Command="{Binding UploadOperationCommand}"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource ButtonIcon.Small}" />
+
+                                </DockPanel>
+
+                                <StackPanel>
+                                    <DockPanel>
+
+                                        <ContentControl Content="{Binding OperationResult}" DockPanel.Dock="Right">
+                                            <ContentControl.ContentTemplate>
+                                                <DataTemplate>
+                                                    <DockPanel>
+                                                        <hc:SimplePanel x:Name="s1" Visibility="Collapsed">
+                                                            <TextBlock
+                                                                x:Name="noup"
+                                                                VerticalAlignment="Center"
+                                                                FontSize="10"
+                                                                Foreground="Gray"
+                                                                Text="未上报" />
+                                                            <TextBlock
+                                                                x:Name="upfail"
+                                                                VerticalAlignment="Center"
+                                                                FontSize="10"
+                                                                Foreground="Red"
+                                                                Text="上报出错"
+                                                                Visibility="Collapsed" />
+                                                            <Button
+                                                                x:Name="upd"
+                                                                Command="{Binding DataContext.UploadOperationCommand, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                                                                Content="上报"
+                                                                Style="{StaticResource ButtonPrimary.Small}"
+                                                                Visibility="Collapsed" />
+                                                        </hc:SimplePanel>
+
+                                                        <Button
+                                                            x:Name="verify"
+                                                            hc:IconElement.Geometry="{StaticResource f.circle-question}"
+                                                            Foreground="Red"
+                                                            Style="{StaticResource ButtonIcon.Small}"
+                                                            Visibility="Collapsed">
+                                                            <Button.ToolTip>
+                                                                <ListBox BorderThickness="0" ItemsSource="{Binding Validations}">
+                                                                    <ListBox.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <TextBlock x:Name="t" Text="{Binding Message}" />
+                                                                            <DataTemplate.Triggers>
+                                                                                <DataTrigger Binding="{Binding Level}" Value="Error">
+                                                                                    <Setter TargetName="t" Property="Foreground" Value="Red" />
+                                                                                </DataTrigger>
+                                                                            </DataTemplate.Triggers>
+                                                                        </DataTemplate>
+                                                                    </ListBox.ItemTemplate>
+                                                                </ListBox>
+                                                            </Button.ToolTip>
+                                                        </Button>
+
+
+                                                        <TextBlock
+                                                            x:Name="ok"
+                                                            VerticalAlignment="Center"
+                                                            FontSize="10"
+                                                            FontWeight="Bold"
+                                                            Foreground="Green"
+                                                            Text="已上报"
+                                                            Visibility="Collapsed" />
+
+                                                        <Button
+                                                            x:Name="submit"
+                                                            hc:IconElement.Geometry="{StaticResource f.file-circle-check}"
+                                                            Command="{Binding DataContext.SubmitOperationCommand, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                                                            Style="{StaticResource ButtonIcon.Small}"
+                                                            Visibility="Collapsed" />
+
+                                                    </DockPanel>
+
+                                                    <DataTemplate.Triggers>
+
+                                                        <DataTrigger Binding="{Binding ValidationCode}" Value="0">
+                                                            <Setter TargetName="verify" Property="Foreground" Value="Green" />
+                                                        </DataTrigger>
+
+                                                        <DataTrigger Binding="{Binding Status}" Value="Verify">
+                                                            <Setter TargetName="verify" Property="Visibility" Value="Visible" />
+                                                            <Setter TargetName="submit" Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+
+                                                        <DataTrigger Binding="{Binding Status}" Value="None">
+                                                            <Setter TargetName="s1" Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding Status}" Value="Upload" />
+                                                                <Condition Binding="{Binding IsSuccess}" Value="False" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="s1" Property="Visibility" Value="Visible" />
+                                                            <Setter TargetName="upfail" Property="Visibility" Value="Visible" />
+                                                            <Setter TargetName="noup" Property="Visibility" Value="Collapsed" />
+                                                        </MultiDataTrigger>
+
+
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding Status}" Value="Submit" />
+                                                                <Condition Binding="{Binding IsSuccess}" Value="False" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="verify" Property="Visibility" Value="Visible" />
+                                                            <Setter TargetName="submit" Property="Visibility" Value="Visible" />
+                                                        </MultiDataTrigger>
+
+
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding Status}" Value="Submit" />
+                                                                <Condition Binding="{Binding IsSuccess}" Value="True" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="ok" Property="Visibility" Value="Visible" />
+                                                        </MultiDataTrigger>
+
+
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="upd" Property="Visibility" Value="Visible" />
+                                                            <Setter TargetName="noup" Property="Visibility" Value="Collapsed" />
+                                                            <Setter TargetName="upfail" Property="Visibility" Value="Collapsed" />
+                                                        </Trigger>
+                                                    </DataTemplate.Triggers>
+
+                                                </DataTemplate>
+                                            </ContentControl.ContentTemplate>
+                                        </ContentControl>
+
+                                        <shared:FileView Content="{Binding Operation}" Style="{StaticResource IconViewFileStyle}">
+                                            <shared:FileView.Header>
+                                                <TextBlock VerticalAlignment="Center" Text="运行信息表" />
+                                            </shared:FileView.Header>
+                                        </shared:FileView>
+
+
+                                    </DockPanel>
+
+                                    <DockPanel>
+
+                                        <Button
+                                            Command="{Binding GenerateInvestorSheetCommand}"
+                                            Content="生成"
+                                            DockPanel.Dock="Right"
+                                            Style="{StaticResource ButtonPrimary.Small}" />
+
+                                        <shared:FileView Content="{Binding Investor}" Style="{StaticResource IconViewFileStyle}">
+                                            <shared:FileView.Header>
+                                                <TextBlock VerticalAlignment="Center" Text="投资人信息表" />
+                                            </shared:FileView.Header>
+                                        </shared:FileView>
+
+                                    </DockPanel>
+
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+                    </DataTemplate>
+
+                </hc:UniformSpacingPanel.Resources>
+
+
+                <Expander IsExpanded="True" Visibility="{Binding QuarterlyUpdateSource.View.IsEmpty, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                    <Expander.Header>
+                        <DockPanel>
+                            <TextBlock
+                                Margin="10,0"
+                                VerticalAlignment="Center"
+                                FontWeight="Bold"
+                                Text="季度更新" />
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.upload}"
+                                Command="{Binding UploadOperationCommand}"
+                                Style="{StaticResource ButtonIcon.Small}" />
+
+                        </DockPanel>
+                    </Expander.Header>
+
+                    <ListBox
+                        ItemTemplate="{StaticResource QuarterlyUpdateItem}"
+                        ItemsSource="{Binding QuarterlyUpdateSource.View}"
+                        Style="{StaticResource ListBoxCustom}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <hc:UniformSpacingPanel
+                                    ChildWrapping="Wrap"
+                                    HorizontalSpacing="20"
+                                    IsItemsHost="True"
+                                    VerticalSpacing="5" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </Expander>
+
+
+
+
+
+
+                <Expander IsExpanded="True" Visibility="{Binding MonthlySource.View.IsEmpty, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                    <Expander.Header>
+                        <DockPanel>
+                            <TextBlock
+                                Margin="10,0"
+                                VerticalAlignment="Center"
+                                FontWeight="Bold"
+                                Text="月报" />
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.upload}"
+                                Command="{Binding UploadMonthlyCommand}"
+                                Style="{StaticResource ButtonIcon.Small}" />
+
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.box}"
+                                Command="{Binding GenerateMeishiAnnouncesMCommand}"
+                                Style="{StaticResource ButtonIcon.Small}" />
+                        </DockPanel>
+                    </Expander.Header>
+
+                    <ListBox
+                        ItemTemplate="{StaticResource ReportItem}"
+                        ItemsSource="{Binding MonthlySource.View}"
+                        Style="{StaticResource ListBoxCustom}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <hc:UniformSpacingPanel
+                                    ChildWrapping="Wrap"
+                                    HorizontalSpacing="20"
+                                    IsItemsHost="True"
+                                    VerticalSpacing="5" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </Expander>
+
+                <Expander IsExpanded="True" Visibility="{Binding QuarterlySource.View.IsEmpty, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                    <Expander.Header>
+                        <DockPanel>
+                            <TextBlock
+                                Margin="10,0"
+                                VerticalAlignment="Center"
+                                FontWeight="Bold"
+                                Text="季报" />
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.upload}"
+                                Command="{Binding UploadQuarterlyCommand}"
+                                Style="{StaticResource ButtonIcon.Small}" />
+
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.cloud-arrow-up}"
+                                Command="{Binding UploadQuarterlyReportToMeiShiCommand}"
+                                Content="易私募"
+                                Style="{StaticResource ButtonDefault.Small}" />
+                        </DockPanel>
+                    </Expander.Header>
+                    <ListBox
+                        ItemTemplate="{StaticResource ReportItem}"
+                        ItemsSource="{Binding QuarterlySource.View}"
+                        Style="{StaticResource ListBoxCustom}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <hc:UniformSpacingPanel
+                                    ChildWrapping="Wrap"
+                                    HorizontalSpacing="20"
+                                    IsItemsHost="True"
+                                    VerticalSpacing="5" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </Expander>
+
+                <Expander
+                    Header="半年报"
+                    IsExpanded="True"
+                    Visibility="{Binding SemiAnnualSource.View.IsEmpty, Converter={StaticResource Boolean2VisibilityReConverter}}">
+
+                    <ListBox
+                        ItemTemplate="{StaticResource ReportItem}"
+                        ItemsSource="{Binding SemiAnnualSource.View}"
+                        Style="{StaticResource ListBoxCustom}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <hc:UniformSpacingPanel
+                                    ChildWrapping="Wrap"
+                                    HorizontalSpacing="20"
+                                    IsItemsHost="True"
+                                    VerticalSpacing="5" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </Expander>
+
+                <Expander IsExpanded="True" Visibility="{Binding AnnualSource.View.IsEmpty, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                    <Expander.Header>
+                        <DockPanel>
+                            <TextBlock
+                                Margin="10,0"
+                                VerticalAlignment="Center"
+                                FontWeight="Bold"
+                                Text="年报" />
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.upload}"
+                                Command="{Binding UploadAnnualyCommand}"
+                                Style="{StaticResource ButtonIcon.Small}" />
+
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.box}"
+                                Command="{Binding GenerateMeishiAnnouncesCommand}"
+                                Style="{StaticResource ButtonIcon.Small}" />
+                        </DockPanel>
+                    </Expander.Header>
+                    <ListBox
+                        ItemTemplate="{StaticResource ReportItem2}"
+                        ItemsSource="{Binding AnnualSource.View}"
+                        Style="{StaticResource ListBoxCustom}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <hc:UniformSpacingPanel
+                                    ChildWrapping="Wrap"
+                                    HorizontalSpacing="20"
+                                    IsItemsHost="True"
+                                    VerticalSpacing="5" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </Expander>
+            </hc:UniformSpacingPanel>
+
+        </ScrollViewer>
+
+    </DockPanel>
+</UserControl>

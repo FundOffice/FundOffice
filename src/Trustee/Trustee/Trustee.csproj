@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+	  <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="CITISC\**" />
+    <Compile Remove="CMS\**" />
+    <Compile Remove="CSC\**" />
+    <EmbeddedResource Remove="CITISC\**" />
+    <EmbeddedResource Remove="CMS\**" />
+    <EmbeddedResource Remove="CSC\**" />
+    <None Remove="CITISC\**" />
+    <None Remove="CMS\**" />
+    <None Remove="CSC\**" />
+    <Page Remove="CITISC\**" />
+    <Page Remove="CMS\**" />
+    <Page Remove="CSC\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="TrusteeApiBase.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Main\Data\Data.csproj" />
+    <ProjectReference Include="..\..\Main\Models\Models.csproj" />
+    <ProjectReference Include="..\XYZQ\XYZQ.csproj" />
+    <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
+    <ProjectReference Include="..\CITICS\CITICS.csproj" />
+    <ProjectReference Include="..\CMS\CMS.csproj" />
+    <ProjectReference Include="..\CSC\CSC.csproj" />
+  </ItemGroup>
+
+</Project>

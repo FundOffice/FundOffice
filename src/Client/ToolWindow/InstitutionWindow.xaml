@@ -1,0 +1,280 @@
+﻿<Window
+    x:Class="FMO.InstitutionWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:comp="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
+    Title="编辑机构"
+    Width="800"
+    Height="450"
+    d:DataContext="{d:DesignInstance Type=local:InstitutionWindowViewModel}"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/SharedUI;component/Themes/NewFileControl.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+
+            <Style x:Key="RightAlignText" TargetType="TextBlock">
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="TextAlignment" Value="Right" />
+            </Style>
+
+            <SolidColorBrush x:Key="LabelBrush">Gray</SolidColorBrush>
+
+            <Style BasedOn="{StaticResource {x:Type shared:ChangeableControl}}" TargetType="shared:ChangeableControl">
+                <Setter Property="HeaderTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <TextBlock
+                                Width="80"
+                                VerticalAlignment="Center"
+                                Foreground="{DynamicResource LabelBrush}"
+                                Text="{Binding .}"
+                                TextAlignment="Right" />
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="Entity" Value="{Binding RelativeSource={RelativeSource AncestorType=local:InstitutionWindow}, Path=DataContext}" />
+                <Setter Property="IsReadOnly" Value="{Binding RelativeSource={RelativeSource AncestorType=local:InstitutionWindow}, Path=DataContext.IsReadOnly}" />
+            </Style>
+
+            <DataTemplate x:Key="DT.Text.Cap">
+                <TextBox MinWidth="80" Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+            </DataTemplate>
+
+
+        </ResourceDictionary>
+
+    </Window.Resources>
+    <DockPanel Margin="8">
+        <Grid MaxWidth="400">
+            <StackPanel TextElement.FontSize="13">
+                <StackPanel.Resources>
+                    <Style TargetType="ContentControl">
+                        <Setter Property="Margin" Value="0,3" />
+                    </Style>
+                </StackPanel.Resources>
+
+                <shared:ChangeableControl
+                    Margin="0,0,20,0"
+                    HorizontalContentAlignment="Stretch"
+                    Binding="{Binding InstitutionName}" />
+
+
+
+
+                <StackPanel>
+                    <shared:ChangeableControl HorizontalContentAlignment="Stretch" Binding="{Binding InstitutionCode}" />
+                    <shared:ChangeableControl HorizontalContentAlignment="Stretch" Binding="{Binding ArtificialPerson}" />
+
+
+                    <shared:ChangeableControl Binding="{Binding RegisterCapital}" EditTemplate="{StaticResource DT.Text.Cap}" />
+                    <shared:ChangeableControl Binding="{Binding RealCapital}" EditTemplate="{StaticResource DT.Text.Cap}" />
+
+
+                    <shared:ChangeableControl HorizontalContentAlignment="Stretch" Binding="{Binding SetupDate}">
+                        <shared:ChangeableControl.EditTemplate>
+                            <DataTemplate>
+                                <DatePicker SelectedDate="{Binding NewValue}" />
+                            </DataTemplate>
+                        </shared:ChangeableControl.EditTemplate>
+                    </shared:ChangeableControl>
+
+
+                    <shared:ChangeableControl Binding="{Binding ExpireDate}">
+                        <shared:ChangeableControl.EditTemplate>
+                            <DataTemplate>
+                                <DockPanel>
+                                    <DatePicker
+                                        Width="110"
+                                        SelectedDate="{Binding NewValue.Date}"
+                                        Visibility="{Binding NewValue.IsLongTerm, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                                    <CheckBox
+                                        Margin="8,0"
+                                        Content="至今"
+                                        IsChecked="{Binding NewValue.IsLongTerm}" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </shared:ChangeableControl.EditTemplate>
+                    </shared:ChangeableControl>
+
+
+                    <shared:ChangeableControl Binding="{Binding Telephone}" EditTemplate="{StaticResource DT.Text.Cap}" />
+                    <shared:ChangeableControl Binding="{Binding Fax}" EditTemplate="{StaticResource DT.Text.Cap}" />
+
+
+                </StackPanel>
+
+                <shared:ChangeableControl
+                    MinWidth="300"
+                    HorizontalContentAlignment="Stretch"
+                    Binding="{Binding WebSite}" />
+
+
+                <shared:ChangeableControl HorizontalContentAlignment="Stretch" Binding="{Binding RegisterAddress}" />
+                <shared:ChangeableControl HorizontalContentAlignment="Stretch" Binding="{Binding OfficeAddress}" />
+                <shared:ChangeableControl HorizontalContentAlignment="Stretch" Binding="{Binding BusinessScope}">
+                    <shared:ChangeableControl.EditTemplate>
+                        <DataTemplate>
+                            <TextBox
+                                MinHeight="100"
+                                AcceptsReturn="True"
+                                Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                                TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </shared:ChangeableControl.EditTemplate>
+                </shared:ChangeableControl>
+
+
+
+
+            </StackPanel>
+
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top">
+                <ToggleButton
+                    hc:IconElement.Geometry="{StaticResource f.pencil}"
+                    local:HelpService.Help="点击这里修改管理人资料和证件"
+                    local:HelpService.Placement="Right"
+                    BorderThickness="0"
+                    DockPanel.Dock="Right"
+                    IsChecked="{Binding IsReadOnly}"
+                    Style="{StaticResource EditSwitch}">
+                    <!--<local:HelpService.Help>
+                  <DataTemplate>
+                      <TextBlock Text="点击这里修改管理人资料和证件" />
+                  </DataTemplate>
+              </local:HelpService.Help>-->
+                </ToggleButton>
+
+
+            </StackPanel>
+        </Grid>
+
+        <GroupBox
+            local:HelpService.Help="可以设置多个文件，保存历史证件"
+            local:HelpService.Placement="Bottom"
+            Background="WhiteSmoke"
+            DockPanel.Dock="Top"
+            Header="证件"
+            Style="{StaticResource GroupBoxTab}"
+            Visibility="{Binding ShowFileList, Converter={StaticResource Boolean2VisibilityConverter}}">
+            <StackPanel>
+                <StackPanel.Resources>
+                    <Style BasedOn="{StaticResource MultiDualFileStyle}" TargetType="shared:FileView">
+                        <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
+                        <Setter Property="ContentTemplate" Value="{StaticResource MultiDualFile.Flip}" />
+                        <Setter Property="Margin" Value="0,1" />
+                    </Style>
+                </StackPanel.Resources>
+                <shared:FileView Content="{Binding BusinessLicense}" Header="营业执照正本" />
+                <shared:FileView Content="{Binding BusinessLicense2}" Header="营业执照副本" />
+                <shared:FileView Content="{Binding AccountOpeningLicense}" Header="开户许可证" />
+                <shared:FileView Content="{Binding CharterDocument}" Header="章程/合伙协议" />
+                <shared:FileView Content="{Binding LegalPersonIdCard}" Header="法人身份证" />
+            </StackPanel>
+        </GroupBox>
+
+
+
+        <!--  股权结构  -->
+        <StackPanel>
+            <Border>
+                <DockPanel LastChildFill="False">
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="18"
+                        Text="股东" />
+
+
+                    <TextBlock
+                        Margin="10,0"
+                        VerticalAlignment="Center"
+                        Foreground="Red"
+                        Text="股东认缴和注册资本不一致"
+                        Visibility="{Binding ShareNotPair, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                    <Button
+                        hc:IconElement.Geometry="{StaticResource f.circle-plus}"
+                        Command="{Binding AddShareHolderCommand}"
+                        Foreground="Green"
+                        Style="{StaticResource ButtonIcon}" />
+
+
+                    <!--<Button
+                   hc:IconElement.Geometry="{StaticResource f.dharmachakra}"
+                   Command="{Binding OpenOwnershipCommand}"
+                   Style="{StaticResource ButtonIcon}"
+                   ToolTip="股权结构图" />-->
+                </DockPanel>
+            </Border>
+
+            <DataGrid
+                AutoGenerateColumns="False"
+                IsReadOnly="True"
+                ItemsSource="{Binding ShareRelations}"
+                Style="{StaticResource DataGrid.NoSelect}">
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="姓名">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <shared:CopyableTextBlock Text="{Binding Holder.Name}">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="MouseDoubleClick">
+                                            <i:InvokeCommandAction Command="{Binding OpenEntityCommand}" />
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </shared:CopyableTextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="认缴金额">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <shared:CopyableTextBlock HorizontalAlignment="Right" Text="{Binding Share}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn
+                        Binding="{Binding Ratio, StringFormat=P2}"
+                        ElementStyle="{StaticResource RightAlignText}"
+                        Header="占比" />
+
+                    <!--  编辑/删除  -->
+                    <DataGridTemplateColumn>
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <DockPanel LastChildFill="False">
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.circle-minus}"
+                                        Command="{Binding DataContext.RemoveShareHolderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding .}"
+                                        Foreground="Red"
+                                        Style="{StaticResource ButtonIcon.Small}" />
+
+
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.pen}"
+                                        Command="{Binding DataContext.EditShareHolderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                        CommandParameter="{Binding .}"
+                                        Style="{StaticResource ButtonIcon.Small}" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </StackPanel>
+
+    </DockPanel>
+</Window>

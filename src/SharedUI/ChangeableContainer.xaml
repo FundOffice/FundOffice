@@ -1,0 +1,89 @@
+﻿<UserControl
+    x:Class="FMO.Shared.ChangeableContainer"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO.Shared"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+
+        <SolidColorBrush x:Key="LabelBrush">Gray</SolidColorBrush>
+
+    </UserControl.Resources>
+    <UserControl.Style>
+        <Style TargetType="local:ChangeableContainer">
+            <Setter Property="Entity" Value="{Binding DataContext, RelativeSource={RelativeSource Mode=Self}}" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBox Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=100}" />
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="EditTemplate">
+                <Setter.Value>
+                    <ControlTemplate TargetType="local:ChangeableContainer">
+                        <DockPanel
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            Background="Transparent"
+                            LastChildFill="True">
+
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                DockPanel.Dock="Left"
+                                Text="{Binding Binding.Label, RelativeSource={RelativeSource AncestorType=local:ChangeableContainer}}" />
+
+                            <DockPanel HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}">
+                                <DockPanel>
+                                    <local:ChangeableControlButtons DataContext="{Binding ., RelativeSource={RelativeSource Mode=TemplatedParent}}" DockPanel.Dock="Right" />
+
+                                    <ContentPresenter
+                                        x:Name="PART_Content"
+                                        Margin="4,0"
+                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        Content="{Binding Binding, RelativeSource={RelativeSource AncestorType=local:ChangeableContainer}}"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                </DockPanel>
+                            </DockPanel>
+                        </DockPanel>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template" Value="{Binding RelativeSource={RelativeSource Self}, Path=EditTemplate}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Entity.IsReadOnly, RelativeSource={RelativeSource Mode=Self}}" Value="True">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="UserControl">
+                                <DockPanel
+                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    Background="Transparent"
+                                    LastChildFill="True">
+
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        DockPanel.Dock="Left"
+                                        Foreground="{StaticResource LabelBrush}"
+                                        Text="{Binding Binding.Label, RelativeSource={RelativeSource Mode=TemplatedParent}}" />
+
+
+                                    <local:CopyableControl Margin="10,0,0,0" Visibility="{Binding Entity.IsReadOnly, RelativeSource={RelativeSource Mode=TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                        <TextBlock Text="{Binding Binding.Display, RelativeSource={RelativeSource Mode=TemplatedParent}}" />
+                                    </local:CopyableControl>
+
+                                </DockPanel>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+
+        </Style>
+    </UserControl.Style>
+</UserControl>

@@ -1,0 +1,174 @@
+﻿<Window
+    x:Class="FMO.ExporterWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="模板导出"
+    Width="800"
+    Height="450"
+    d:DataContext="{d:DesignInstance Type=local:ExporterWindowViewModel}"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <ItemsPanelTemplate x:Key="ItemsWrapPanel">
+            <hc:UniformSpacingPanel
+                ChildWrapping="Wrap"
+                IsItemsHost="True"
+                Spacing="5"
+                VerticalSpacing="5" />
+        </ItemsPanelTemplate>
+    </Window.Resources>
+    <DockPanel Margin="8">
+        <ListBox
+            BorderThickness="0"
+            ItemsSource="{Binding Templates}"
+            SelectedItem="{Binding SelectedTemplate}"
+            Visibility="{Binding IsMultiTpl, Converter={StaticResource Boolean2VisibilityConverter}}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <DockPanel Margin="0,4">
+                        <TextBlock
+                            DockPanel.Dock="Bottom"
+                            FontSize="8"
+                            Text="{Binding Id}" />
+                        <TextBlock Text="{Binding Name}" />
+                    </DockPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Rectangle
+            Width="2"
+            Margin="4,0"
+            Fill="Gray"
+            Visibility="{Binding IsMultiTpl, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+        <DockPanel DockPanel.Dock="Top">
+
+            <Button
+                Margin="10,0,0,0"
+                Padding="20,0"
+                Command="{Binding ExportCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                Content="导出"
+                DockPanel.Dock="Right"
+                Style="{StaticResource ButtonPrimary}" />
+
+            <!--<DockPanel DockPanel.Dock="Right" Visibility="{Binding SelectedFileName, Converter={StaticResource Object2VisibilityConverter}}">
+                <hc:SimplePanel DockPanel.Dock="Right">
+                    <ToggleButton Content="自定义" IsChecked="{Binding ShowCustomFileName}" />
+                    <Popup
+                        AllowsTransparency="True"
+                        HorizontalOffset="-300"
+                        IsOpen="{Binding ShowCustomFileName}"
+                        Placement="Bottom"
+                        StaysOpen="False">
+                        <Border Background="WhiteSmoke">
+                            <DockPanel Margin="15">
+                                <Button
+                                    Margin="5,0,0,0"
+                                    Command="{Binding CustomizeCommand}"
+                                    Content="确认"
+                                    DockPanel.Dock="Right"
+                                    Style="{StaticResource ButtonInfo}" />
+
+                                <TextBlock VerticalAlignment="Center" Text="新模板文件名" />
+                                <TextBox
+                                    MinWidth="220"
+                                    Margin="5,0,0,0"
+                                    Text="{Binding CustomFileName}" />
+                            </DockPanel>
+                        </Border>
+                    </Popup>
+                </hc:SimplePanel>
+
+                <Button
+                    Margin="5,0,0,0"
+                    Command="{Binding ModifyCommand}"
+                    Content="修改"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource ButtonDashedPrimary}" />
+            </DockPanel>-->
+            <ListBox
+                ItemsPanel="{StaticResource ItemsWrapPanel}"
+                ItemsSource="{Binding TplFiles}"
+                SelectedIndex="0"
+                SelectedItem="{Binding SelectedFileName}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel>
+                            <ToggleButton
+                                x:Name="tg"
+                                hc:IconElement.Geometry="{StaticResource f.book-open}"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                DockPanel.Dock="Right"
+                                Style="{StaticResource ToggleButtonIconPrimary.Small}" />
+                            <TextBlock VerticalAlignment="Center" Text="{Binding .}" />
+
+                            <Popup
+                                AllowsTransparency="True"
+                                IsOpen="{Binding ElementName=tg, Path=IsChecked}"
+                                Placement="Center"
+                                PlacementTarget="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                                StaysOpen="False">
+                                <GroupBox
+                                    Width="1000"
+                                    Header="预览"
+                                    Style="{StaticResource GroupBoxTab}">
+                                    <DataGrid
+                                        BorderThickness="0"
+                                        HeadersVisibility="None"
+                                        ItemsSource="{Binding DataContext.Sample, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                        Style="{StaticResource DataGrid.Small}" />
+                                </GroupBox>
+                            </Popup>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+
+        <DockPanel Visibility="{Binding ChooseMode, Converter={StaticResource Boolean2VisibilityConverter}}">
+            <TabControl>
+                <TabItem Header="选择基金" Visibility="{Binding ChooseFund, Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <DockPanel>
+                        <hc:UniformSpacingPanel DockPanel.Dock="Top" Spacing="5">
+                            <Button Command="{Binding SelectAllFundsCommand}" Content="全选" />
+                            <Button Command="{Binding UnselectAllFundsCommand}" Content="全不选" />
+                            <Button Command="{Binding ReverseSelectFundsCommand}" Content="反选" />
+                        </hc:UniformSpacingPanel>
+
+                        <ListBox
+                            ItemsPanel="{StaticResource ItemsWrapPanel}"
+                            ItemsSource="{Binding Funds}"
+                            SelectionMode="{Binding ChooseFundMode}">
+                            <ListBox.ItemContainerStyle>
+                                <Style BasedOn="{StaticResource ListBoxItem.AllaysFocus}" TargetType="ListBoxItem">
+                                    <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel>
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding ShortName}" />
+
+                                        <TextBlock
+                                            Margin="5,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding Code}" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+
+                        </ListBox>
+                    </DockPanel>
+                </TabItem>
+            </TabControl>
+        </DockPanel>
+    </DockPanel>
+</Window>

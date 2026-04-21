@@ -1,0 +1,305 @@
+﻿<UserControl
+    x:Class="FMO.FundsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
+    d:DesignHeight="450"
+    d:DesignWidth="1400"
+    Tag="基金总览"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style TargetType="Viewbox">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
+            <Setter Property="Margin" Value="2" />
+        </Style>
+    </UserControl.Resources>
+    <UserControl.DataContext>
+        <local:FundsPageViewModel />
+    </UserControl.DataContext>
+
+    <DockPanel>
+
+        <DockPanel Margin="10" DockPanel.Dock="Top">
+            <DockPanel.Resources>
+                <Style TargetType="TextBlock">
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                </Style>
+            </DockPanel.Resources>
+            <TextBlock FontWeight="Bold" Text="{Binding TotalCount, StringFormat=管理基金共 {0} 只，}" />
+            <TextBlock
+                FontWeight="Bold"
+                Text="{Binding NormalCount, StringFormat=运行中 {0} 只，}"
+                Visibility="{Binding NormalCount, Converter={StaticResource ValueIsEffectToVisibilityConverter}}" />
+            <TextBlock
+                FontWeight="Bold"
+                Text="{Binding SetupCount, StringFormat=筹建中 {0} 只，}"
+                Visibility="{Binding SetupCount, Converter={StaticResource ValueIsEffectToVisibilityConverter}}" />
+            <TextBlock
+                FontWeight="Bold"
+                Text="{Binding RegisterCount, StringFormat=正在备案 {0} 只，}"
+                Visibility="{Binding RegisterCount, Converter={StaticResource ValueIsEffectToVisibilityConverter}}" />
+            <TextBlock
+                FontWeight="Bold"
+                Text="{Binding ClearCount, StringFormat=已清算 {0} 只}"
+                Visibility="{Binding ClearCount, Converter={StaticResource ValueIsEffectToVisibilityConverter}}" />
+            <Viewbox
+                Width="12"
+                Height="12"
+                Margin="2,0">
+                <Path Data="{StaticResource G.Archive}" Fill="OrangeRed" />
+            </Viewbox>
+
+            <TextBlock />
+
+            <DockPanel Margin="10,0" LastChildFill="False">
+                <DockPanel.Resources>
+                    <Style BasedOn="{StaticResource ToggleButtonDefault.Small}" TargetType="ToggleButton">
+                        <Style.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                <Setter Property="Foreground" Value="White" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+
+                </DockPanel.Resources>
+
+                <Button
+                    local:HelpService.Help="点此从协会更新"
+                    Command="{Binding SyncFromAmacCommand}"
+                    Content="更新"
+                    Style="{StaticResource ButtonInfo.Small}" />
+
+
+                <Button
+                    Margin="4,0"
+                    Command="{Binding IssueCommand}"
+                    Content="发行新产品"
+                    Style="{StaticResource ButtonPrimary.Small}" />
+
+
+                <Rectangle Width="100" />
+
+                <TextBlock Margin="5,0" Text="筛选" />
+                <ToggleButton Content="已清算" IsChecked="{Binding UiConfig.ShowCleared}" />
+
+
+
+                <TextBlock
+                    Margin="15,0,5,0"
+                    Padding="8,0"
+                    Background="{StaticResource PrimaryBrush}"
+                    Foreground="White"
+                    Text="显示内容" />
+
+                <ToggleButton Content="成立日期" IsChecked="{Binding UiConfig.ShowSetupDate}" />
+                <ToggleButton Content="备案日期" IsChecked="{Binding UiConfig.ShowAuditDate}" />
+
+                <ContentControl Content="{Binding .}" DockPanel.Dock="Right">
+                    <ContentControl.ContentTemplate>
+                        <DataTemplate>
+                            <hc:SimplePanel>
+                                <ToggleButton
+                                    x:Name="tg"
+                                    hc:IconElement.Geometry="{StaticResource f.cloud-arrow-down}"
+                                    Style="{StaticResource ToggleButtonIcon.Small}" />
+                                <Popup
+                                    DataContext="{Binding BatchImportViewModel}"
+                                    HorizontalOffset="30"
+                                    IsOpen="{Binding ElementName=tg, Path=IsChecked}"
+                                    Placement="Left"
+                                    StaysOpen="{Binding IsRunning}"
+                                    VerticalOffset="30">
+                                    <Border Background="WhiteSmoke">
+                                        <UniformGrid Margin="15">
+                                            <ContentControl Content="{Binding .}">
+                                                <ContentControl.ContentTemplate>
+                                                    <DataTemplate>
+                                                        <hc:SimplePanel>
+                                                            <Button
+                                                                Command="{Binding BatchImportSheetCommand}"
+                                                                Content="批量导入估值表"
+                                                                Visibility="{Binding BatchImportSheetCommand.IsRunning, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                                                            <ProgressBar
+                                                                MinWidth="200"
+                                                                Visibility="{Binding BatchImportSheetCommand.IsRunning, Converter={StaticResource Boolean2VisibilityConverter}}"
+                                                                Value="{Binding BatchImportSheetProgess}" />
+                                                        </hc:SimplePanel>
+                                                    </DataTemplate>
+                                                </ContentControl.ContentTemplate>
+                                            </ContentControl>
+                                        </UniformGrid>
+                                    </Border>
+                                </Popup>
+                            </hc:SimplePanel>
+                        </DataTemplate>
+                    </ContentControl.ContentTemplate>
+                </ContentControl>
+
+                <!--  搜索  -->
+                <hc:SimplePanel Margin="10,0">
+                    <TextBox
+                        MinWidth="180"
+                        Padding="4"
+                        HorizontalContentAlignment="Center"
+                        Style="{StaticResource TextBox.Small}"
+                        Text="{Binding FundKeyword, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                    <Viewbox Margin="5,0" HorizontalAlignment="Right">
+                        <Path Data="{StaticResource f.magnifying-glass}" Fill="Black" />
+                    </Viewbox>
+                </hc:SimplePanel>
+
+            </DockPanel>
+
+        </DockPanel>
+
+
+
+
+
+
+        <!--  列表  -->
+        <ListBox
+            d:ItemsSource="{d:SampleData}"
+            local:HelpService.Help="双击打开基金资料卡"
+            local:HelpService.Offset="50,45"
+            local:HelpService.Placement="LeftTop"
+            ItemsSource="{Binding DataViewSource.View}">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel IsItemsHost="True" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemContainerStyle>
+                <Style BasedOn="{StaticResource ListBoxItemCustom}" TargetType="ListBoxItem">
+                    <Setter Property="IsEnabled" Value="{Binding IsEnable}" />
+                    <Setter Property="Padding" Value="5" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Margin" Value="8" />
+                    <EventSetter Event="MouseDoubleClick" Handler="OnOpenFund" />
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="local:FundInfoPageViewModel.FundViewModel">
+                    <DockPanel Background="Transparent">
+                        <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+                            <Viewbox
+                                Width="12"
+                                Height="12"
+                                Margin="2,0"
+                                Visibility="{Binding IsCleared, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <Path Data="{StaticResource G.Archive}" Fill="OrangeRed" />
+                            </Viewbox>
+                            <TextBlock
+                                HorizontalAlignment="Center"
+                                shared:MaskService.IsMask="True"
+                                FontWeight="Bold"
+                                Text="{Binding MajorName}" />
+                            <TextBlock
+                                Margin="2,0,0,0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Bottom"
+                                FontSize="10"
+                                Foreground="Gray"
+                                Text="{Binding SeniorName}" />
+
+                            <!--<hc:Badge
+                                FontSize="9"
+                                Foreground="White"
+                                ShowBadge="{Binding HasTip}"
+                                Style="{StaticResource BadgeWarning}"
+                                ToolTipService.InitialShowDelay="1000"
+                                ToolTipService.ShowDuration="5000"
+                                Value="{Binding Tips.Count}">
+                                <hc:Badge.ToolTip>
+                                    <ToolTip>
+                                        <StackPanel>
+                                            <ListBox
+                                                BorderThickness="0"
+                                                ItemsSource="{Binding Tips}"
+                                                Style="{StaticResource ListBoxCustom}">
+                                                <ListBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Tip}" />
+                                                    </DataTemplate>
+                                                </ListBox.ItemTemplate>
+                                            </ListBox>
+                                        </StackPanel>
+                                    </ToolTip>
+                                </hc:Badge.ToolTip>
+                            </hc:Badge>-->
+
+                            <ToggleButton
+                                Name="badge"
+                                IsChecked="{Binding ShowTips}"
+                                Style="{StaticResource ToggleButtonCustom}">
+                                <hc:Badge
+                                    FontSize="9"
+                                    Foreground="White"
+                                    ShowBadge="{Binding HasTip}"
+                                    Style="{StaticResource BadgeWarning}"
+                                    ToolTipService.InitialShowDelay="1000"
+                                    ToolTipService.ShowDuration="5000"
+                                    Value="{Binding Tips.Count}" />
+                            </ToggleButton>
+
+                            <Popup
+                                AllowsTransparency="True"
+                                HorizontalOffset="10"
+                                IsOpen="{Binding ShowTips}"
+                                Placement="Right"
+                                PlacementTarget="{Binding ElementName=badge}"
+                                StaysOpen="False">
+                                <Border Background="WhiteSmoke" CornerRadius="5">
+                                    <ListBox
+                                        Margin="10"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        ItemsSource="{Binding Tips}"
+                                        Style="{StaticResource ListBoxCustom}">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Foreground="Red" Text="{Binding Tip}" />
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+                            </Popup>
+                        </DockPanel>
+
+                        <DockPanel Margin="8,2" TextElement.FontSize="9">
+                            <DockPanel.Resources>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Margin" Value="5,0" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                    <Setter Property="Foreground" Value="DimGray" />
+                                </Style>
+                            </DockPanel.Resources>
+                            <TextBlock
+                                shared:MaskService.IsMask="True"
+                                FontSize="13"
+                                FontWeight="Bold"
+                                Text="{Binding Code}"
+                                Visibility="{Binding DataContext.UiConfig.ShowCode, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                            <DockPanel Visibility="{Binding DataContext.UiConfig.ShowSetupDate, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <TextBlock Text="成立日期" />
+                                <TextBlock shared:MaskService.IsMask="True" Text="{Binding SetupDate, StringFormat=yyyy-MM-dd}" />
+                            </DockPanel>
+                            <DockPanel Visibility="{Binding DataContext.UiConfig.ShowAuditDate, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <TextBlock Text="备案日期" />
+                                <TextBlock shared:MaskService.IsMask="True" Text="{Binding AuditDate, StringFormat=yyyy-MM-dd}" />
+                            </DockPanel>
+
+                        </DockPanel>
+                    </DockPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</UserControl>

@@ -1,0 +1,277 @@
+﻿<UserControl
+    x:Class="FMO.NetValueCurveView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="clr-namespace:FMO.Models;assembly=FMO.Models"
+    xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    SnapsToDevicePixels="True"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style x:Key="Style.ColorPicker.Toggle" TargetType="ToggleButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Rectangle
+                            Width="16"
+                            Height="16"
+                            Fill="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=ComboBox}}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="Style.ColorPicker" TargetType="ComboBox">
+            <Setter Property="Margin" Value="2,0" />
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="ToolTip" Value="{Binding .}" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Rectangle
+                                        Width="16"
+                                        Height="16"
+                                        Fill="{Binding .}" />
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <UniformGrid IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton
+                                x:Name="tg"
+                                IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                Style="{StaticResource Style.ColorPicker.Toggle}" />
+
+                            <Popup
+                                x:Name="PART_Popup"
+                                AllowsTransparency="True"
+                                IsOpen="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                Placement="Right"
+                                PlacementTarget="{Binding ElementName=tg}">
+                                <Border Width="300" Background="WhiteSmoke">
+                                    <ItemsPresenter x:Name="ItemsPresenter" Margin="4" />
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+    <DockPanel Margin="0,30,0,0">
+        <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+            <DockPanel.Resources>
+                <Style BasedOn="{StaticResource ButtonBaseStyle}" TargetType="Button">
+                    <Setter Property="Height" Value="22" />
+                </Style>
+            </DockPanel.Resources>
+            <TextBlock
+                Margin="4,0"
+                VerticalAlignment="Center"
+                Text="开始日期" />
+            <DatePicker Width="100" SelectedDate="{Binding StartDate, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
+            <TextBlock
+                Margin="4,0"
+                VerticalAlignment="Center"
+                Text="结束日期" />
+            <DatePicker Width="100" SelectedDate="{Binding EndDate, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
+
+            <Button
+                Margin="4,0"
+                hc:IconElement.Geometry="{StaticResource f.copy}"
+                Click="CopyToClipboard_Click"
+                DockPanel.Dock="Right"
+                Style="{StaticResource ButtonIcon}" />
+
+            <TextBlock Width="20" />
+
+
+
+            <DockPanel Margin="0,4" LastChildFill="False">
+
+
+                <CheckBox Content="净值" IsChecked="{Binding DrawNetValue}" />
+                <ComboBox
+                    ItemsSource="{Binding BrushCollection}"
+                    SelectedItem="{Binding NetValueBrush}"
+                    Style="{StaticResource Style.ColorPicker}" />
+                <CheckBox
+                    Margin="20,0,0,0"
+                    Content="累计净值"
+                    IsChecked="{Binding DrawCumValue}" />
+                <ComboBox
+                    ItemsSource="{Binding BrushCollection}"
+                    SelectedItem="{Binding CumValueBrush}"
+                    Style="{StaticResource Style.ColorPicker}" />
+                <CheckBox
+                    Margin="20,0,0,0"
+                    Content="份额"
+                    IsChecked="{Binding DrawShares}" />
+                <ComboBox
+                    ItemsSource="{Binding BrushCollection}"
+                    SelectedItem="{Binding SharesBrush}"
+                    Style="{StaticResource Style.ColorPicker}" />
+                <CheckBox
+                    Margin="20,0,0,0"
+                    Content="净资产"
+                    IsChecked="{Binding DrawNetAssets}" />
+                <ComboBox
+                    ItemsSource="{Binding BrushCollection}"
+                    SelectedItem="{Binding NetAssetsBrush}"
+                    Style="{StaticResource Style.ColorPicker}" />
+                <CheckBox
+                    Margin="20,0,0,0"
+                    Content="总资产"
+                    IsChecked="{Binding DrawAssets}" />
+                <ComboBox
+                    ItemsSource="{Binding BrushCollection}"
+                    SelectedItem="{Binding AssetsBrush}"
+                    Style="{StaticResource Style.ColorPicker}" />
+
+            </DockPanel>
+
+        </DockPanel>
+
+        <DockPanel
+            Margin="0,4"
+            DockPanel.Dock="Top"
+            LastChildFill="False">
+            <Button Click="SetDateRange_Click" Content="上一周" />
+            <Button Click="SetDateRange_Click" Content="近一周" />
+            <Button Click="SetDateRange_Click" Content="本周" />
+            <Button
+                Margin="5,0,0,0"
+                Click="SetDateRange_Click"
+                Content="上个月" />
+            <Button Click="SetDateRange_Click" Content="近一月" />
+            <Button Click="SetDateRange_Click" Content="本月" />
+            <Button
+                Margin="5,0,0,0"
+                Click="SetDateRange_Click"
+                Content="上季度" />
+            <Button Click="SetDateRange_Click" Content="本季度" />
+            <Button
+                Margin="5,0,0,0"
+                Click="SetDateRange_Click"
+                Content="本年度" />
+            <Button Click="SetDateRange_Click" Content="近一年" />
+            <Button Click="SetDateRange_Click" Content="近两年" />
+            <Button Click="SetDateRange_Click" Content="近三年" />
+            <Button
+                Margin="5,0,0,0"
+                BorderBrush="Blue"
+                Click="SetDateRange_Click"
+                Content="成立至今" />
+
+        </DockPanel>
+
+        <!--  按策略选时段  -->
+        <DockPanel DockPanel.Dock="Top">
+            <Border
+                Margin="0,2"
+                Background="Green"
+                CornerRadius="4">
+                <TextBlock
+                    Margin="5,0"
+                    VerticalAlignment="Center"
+                    Foreground="White"
+                    Text="按策略划分" />
+            </Border>
+            <ListBox
+                BorderThickness="0"
+                ItemsSource="{Binding Strategies}"
+                Style="{StaticResource ListBoxCustom}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="model:FundStrategy">
+                        <Button
+                            Margin="2,0"
+                            shared:MaskService.IsMask="True"
+                            Command="{Binding DataContext.SetDateByStrategyCommand, RelativeSource={RelativeSource AncestorType=local:NetValueCurveView}}"
+                            CommandParameter="{Binding .}"
+                            Content="{Binding Name}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+
+        <TextBlock Margin="0,30,0,0" DockPanel.Dock="Top" />
+
+        <DockPanel x:Name="visual" Background="White">
+            <DockPanel DockPanel.Dock="Top">
+
+                <StackPanel
+                    Margin="0,0,50,0"
+                    HorizontalAlignment="Center"
+                    DockPanel.Dock="Right">
+                    <StackPanel.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                            <Setter Property="Margin" Value="10,4" />
+                        </Style>
+                    </StackPanel.Resources>
+                    <UniformGrid
+                        Background="Red"
+                        Rows="1"
+                        TextElement.FontSize="14"
+                        TextElement.Foreground="White">
+                        <TextBlock Text="成立日期" />
+                        <TextBlock Text="累计净值" />
+                        <TextBlock Text="净值变动" />
+                        <TextBlock Text="年化收益率" />
+                        <TextBlock Text="最大回撤" />
+                    </UniformGrid>
+                    <UniformGrid Margin="0,5" Rows="1">
+                        <TextBlock shared:MaskService.IsMask="True" Text="{Binding SetupDate, StringFormat=yyyy-MM-dd}" />
+                        <TextBlock shared:MaskService.IsMask="True" Text="{Binding LastValue}" />
+                        <TextBlock shared:MaskService.IsMask="True" Text="{Binding ValueChanged, StringFormat=N3}" />
+                        <TextBlock shared:MaskService.IsMask="True" Text="{Binding APY, StringFormat=P2}" />
+                        <TextBlock shared:MaskService.IsMask="True" Text="{Binding MaxDrawDown, StringFormat=P2}" />
+                    </UniformGrid>
+                </StackPanel>
+
+                <Viewbox
+                    MaxHeight="60"
+                    Margin="20,0"
+                    Stretch="Uniform">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        shared:MaskService.IsMask="True"
+                        FontWeight="Bold"
+                        Text="{Binding FundName}" />
+                </Viewbox>
+
+            </DockPanel>
+
+            <local:DailyValueCurveDrawing
+                Margin="0,0,10,0"
+                shared:MaskService.BlurRadius="50"
+                shared:MaskService.IsMask="True" />
+        </DockPanel>
+
+    </DockPanel>
+</UserControl>

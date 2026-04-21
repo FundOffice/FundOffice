@@ -1,0 +1,668 @@
+﻿<UserControl
+    x:Class="FMO.FundLifeTimeView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
+    Margin="0,5"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <local:FlowTemplateSelector x:Key="FlowTemplateSelector" />
+        <SolidColorBrush x:Key="LabelBrush">gray</SolidColorBrush>
+
+        <Style
+            x:Key="GeneratorButton"
+            BasedOn="{StaticResource ButtonIconCircular.Small}"
+            TargetType="Button">
+            <Setter Property="Visibility" Value="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+            <Setter Property="hc:IconElement.Geometry" Value="{StaticResource f.file-signature}" />
+            <Setter Property="Command" Value="{Binding GenerateFileCommand}" />
+            <Setter Property="Foreground" Value="RoyalBlue" />
+            <Setter Property="ToolTip" Value="生成" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+
+        <Style x:Key="Style.TextBlock.FlowName" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontWeight" Value="Black" />
+            <Setter Property="FontSize" Value="16" />
+            <!--<Setter Property="Width" Value="32" />-->
+        </Style>
+
+        <ControlTemplate x:Key="FlowHeader" TargetType="UserControl">
+            <Border
+                x:Name="border"
+                Margin="0,0,8,0"
+                Background="{StaticResource AccentBrush}"
+                CornerRadius="2">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock
+                        Margin="12,4"
+                        HorizontalAlignment="Center"
+                        Foreground="{StaticResource DefaultBrush}"
+                        Style="{StaticResource Style.TextBlock.FlowName}"
+                        Text="{Binding Name}" />
+                    <Grid Margin="0,2" DockPanel.Dock="Right">
+                        <Grid Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                            <Grid Visibility="{Binding Date, Converter={StaticResource ValueIsEffectToVisibilityConverter}, ConverterParameter=true}">
+                                <ToggleButton
+                                    x:Name="tb"
+                                    Height="18"
+                                    Margin="5,0"
+                                    Padding="8,0"
+                                    Content="设置日期"
+                                    FontSize="9"
+                                    IsChecked="{Binding IsSettingDate}" />
+
+                                <Popup
+                                    AllowsTransparency="True"
+                                    IsOpen="{Binding IsSettingDate}"
+                                    StaysOpen="False">
+                                    <Border Background="White">
+                                        <hc:DatePicker MinWidth="120" SelectedDate="{Binding Date, UpdateSourceTrigger=PropertyChanged}" />
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Grid>
+                        <DockPanel>
+                            <Grid DockPanel.Dock="Right" Visibility="{Binding Date, Converter={StaticResource ValueIsEffectToVisibilityConverter}}">
+                                <Grid Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                    <ToggleButton
+                                        x:Name="btn"
+                                        Margin="-10,0,0,0"
+                                        Padding="0"
+                                        hc:IconElement.Geometry="{StaticResource f.pen}"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        IsChecked="{Binding IsSettingDate}"
+                                        RenderTransformOrigin="0.5,0.5"
+                                        Style="{StaticResource ToggleButtonIcon.Small}"
+                                        Visibility="Collapsed">
+                                        <ToggleButton.RenderTransform>
+                                            <ScaleTransform ScaleX="0.8" ScaleY="0.8" />
+                                        </ToggleButton.RenderTransform>
+                                    </ToggleButton>
+                                </Grid>
+                            </Grid>
+                            <Grid HorizontalAlignment="Center" Visibility="{Binding Date, Converter={StaticResource ValueIsEffectToVisibilityConverter}}">
+                                <TextBlock
+                                    Margin="0,0,0,4"
+                                    HorizontalAlignment="Center"
+                                    FontWeight="Medium"
+                                    Foreground="{StaticResource DefaultBrush}"
+                                    Text="{Binding Date, StringFormat=yyyy-MM-dd}" />
+                            </Grid>
+                        </DockPanel>
+                    </Grid>
+                </StackPanel>
+
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="btn" Property="Visibility" Value="Visible" />
+                </Trigger>
+                <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                    <Setter TargetName="border" Property="Background" Value="Green" />
+                </DataTrigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <ControlTemplate x:Key="FlowShell" TargetType="UserControl">
+            <DockPanel Margin="0,4">
+                <!--  锁定  -->
+                <ToggleButton
+                    BorderThickness="0"
+                    DockPanel.Dock="Right"
+                    IsChecked="{Binding IsReadOnly, Converter={StaticResource Boolean2BooleanReConverter}}"
+                    Style="{StaticResource ToggleButtonFlip}">
+                    <hc:StatusSwitchElement.CheckedElement>
+                        <Viewbox Width="24" Height="24">
+                            <Path Data="{StaticResource f.lock-open}" Fill="Green" />
+                        </Viewbox>
+                    </hc:StatusSwitchElement.CheckedElement>
+                    <Viewbox Width="24" Height="24">
+                        <Path Data="{StaticResource f.lock}" Fill="Black" />
+                    </Viewbox>
+                </ToggleButton>
+
+                <Button
+                    hc:IconElement.Geometry="{StaticResource f.rotate}"
+                    Command="{Binding UpdateFileDateCommand}"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource ButtonIcon}"
+                    ToolTip="更新文件日期"
+                    Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                <!--<Button
+                    hc:IconElement.Geometry="{StaticResource f.file-medical}"
+                    BorderThickness="0"
+                    Command="{Binding AddCustomFileCommand}"
+                    DockPanel.Dock="Right"
+                    Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />-->
+
+
+                <UserControl Template="{StaticResource FlowHeader}" />
+
+                <ContentPresenter Content="{TemplateBinding Content}" />
+            </DockPanel>
+        </ControlTemplate>
+
+
+        <!--  自定义文件  -->
+        <DataTemplate x:Key="DT.CustomFile">
+            <DockPanel LastChildFill="False">
+
+
+                <shared:FileView Content="{Binding FileInfo}" />
+
+                <Grid Visibility="{Binding RelativeSource={RelativeSource AncestorType=ListBox}, Path=DataContext.IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                    <Button
+                        hc:IconElement.Geometry="{StaticResource f.file-circle-xmark}"
+                        Command="{Binding RelativeSource={RelativeSource AncestorType=ListBox}, Path=DataContext.DeleteFileCommand}"
+                        CommandParameter="{Binding}"
+                        Foreground="Red"
+                        Style="{StaticResource ButtonIcon.Small}"
+                        Visibility="{Binding FileInfo, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                </Grid>
+            </DockPanel>
+        </DataTemplate>
+
+
+
+
+
+        <Style BasedOn="{StaticResource SimpleFileStyle}" TargetType="shared:FileView">
+            <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
+        </Style>
+
+        <Style
+            x:Key="DualFileStyle2"
+            BasedOn="{StaticResource DualFileStyle}"
+            TargetType="shared:FileView">
+            <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
+        </Style>
+
+
+        <DataTemplate x:Key="DT.DateTime">
+            <DatePicker SelectedDate="{Binding NewValue}" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="DT.InitiateFlow">
+            <UserControl Template="{StaticResource FlowShell}">
+                <StackPanel VerticalAlignment="Center">
+                    <shared:FileView
+                        Content="{Binding ElementFiles}"
+                        Header="基金要素"
+                        IsReadOnly="{Binding IsReadOnly}"
+                        Style="{StaticResource MultiFileStyle}" />
+                    <shared:FileView
+                        Content="{Binding ContractFiles}"
+                        Header="基金合同"
+                        IsReadOnly="{Binding IsReadOnly}"
+                        Style="{StaticResource MultiFileStyle}" />
+
+                </StackPanel>
+            </UserControl>
+        </DataTemplate>
+
+        <DataTemplate x:Key="DT.ContractFinalizeFlow">
+            <UserControl Template="{StaticResource FlowShell}">
+                <DockPanel>
+                    <StackPanel MinWidth="500" VerticalAlignment="Center">
+                        <!--<ContentControl Content="{Binding Contract}" Style="{StaticResource SingleFileStyle}" />-->
+
+                        <shared:FileView Content="{Binding Contract}" Header="基金合同" />
+
+                        <shared:FileView Content="{Binding RiskDisclosureDocument}" Header="风险揭示书" />
+
+                        <WrapPanel>
+                            <shared:FileView Content="{Binding CollectionAccount}" Header="募集账户函" />
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.chart-pie}"
+                                Command="{Binding ParseAccountInfoCommand}"
+                                CommandParameter="{Binding CollectionAccount}"
+                                Foreground="RoyalBlue"
+                                Style="{StaticResource ButtonIcon.Small}"
+                                Visibility="{Binding CollectionAccount.Meta, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                        </WrapPanel>
+                        <WrapPanel>
+                            <shared:FileView Content="{Binding CustodyAccount}" Header="托管账户函" />
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.chart-pie}"
+                                Command="{Binding ParseAccountInfoCommand}"
+                                CommandParameter="{Binding CustodyAccount}"
+                                Foreground="RoyalBlue"
+                                Style="{StaticResource ButtonIcon.Small}"
+                                Visibility="{Binding CustodyAccount.Meta, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                        </WrapPanel>
+
+
+                    </StackPanel>
+
+                </DockPanel>
+            </UserControl>
+
+        </DataTemplate>
+
+
+        <DataTemplate x:Key="DT.SetupFlow">
+            <UserControl d:DataContext="{d:DesignInstance Type=local:SetupFlowViewModel}" Template="{StaticResource FlowShell}">
+                <StackPanel VerticalAlignment="Center">
+                    <StackPanel.Resources>
+                        <Style BasedOn="{StaticResource {x:Type shared:ChangeableContainer}}" TargetType="shared:ChangeableContainer">
+                            <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
+                            <Setter Property="Entity" Value="{Binding .}" />
+                        </Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                        <DataTemplate x:Key="Date">
+                            <DatePicker Width="100" SelectedDate="{Binding NewValue, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
+                        </DataTemplate>
+                    </StackPanel.Resources>
+                    <DockPanel>
+
+                        <shared:ChangeableContainer Binding="{Binding RaisingPeriod}">
+                            <shared:ChangeableContainer.ContentTemplate>
+                                <DataTemplate>
+                                    <DockPanel>
+                                        <DatePicker
+                                            Width="100"
+                                            HorizontalContentAlignment="Center"
+                                            SelectedDate="{Binding NewValue.Begin, Converter={StaticResource DataTimeDateOnlySwitchConverter}}"
+                                            Style="{StaticResource DatePicker.Small}" />
+                                        <TextBlock VerticalAlignment="Center" Text=" - " />
+                                        <DatePicker
+                                            Width="100"
+                                            HorizontalContentAlignment="Center"
+                                            SelectedDate="{Binding NewValue.End, Converter={StaticResource DataTimeDateOnlySwitchConverter}}"
+                                            Style="{StaticResource DatePicker.Small}" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </shared:ChangeableContainer.ContentTemplate>
+                        </shared:ChangeableContainer>
+
+
+
+                        <shared:ChangeableContainer Binding="{Binding InitialAsset}">
+                            <shared:ChangeableContainer.ContentTemplate>
+                                <DataTemplate>
+                                    <DockPanel>
+                                        <TextBox
+                                            MinWidth="100"
+                                            Style="{StaticResource TextBox.Small}"
+                                            Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                                            TextAlignment="Center" />
+                                        <TextBlock VerticalAlignment="Center" Text=" 元" />
+                                    </DockPanel>
+                                </DataTemplate>
+                            </shared:ChangeableContainer.ContentTemplate>
+                        </shared:ChangeableContainer>
+
+
+                        <TextBlock
+                            Margin="10,0"
+                            VerticalAlignment="Center"
+                            Foreground="Gray"
+                            Text="{Binding Capital}"
+                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                    </DockPanel>
+
+                    <DockPanel>
+                        <Button CommandParameter="{Binding EstablishmentAnnouncement}" Style="{StaticResource GeneratorButton}" />
+                        <shared:FileView
+                            Content="{Binding EstablishmentAnnouncement}"
+                            Header="成立公告"
+                            Style="{StaticResource DualFileStyle2}" />
+                    </DockPanel>
+
+                    <shared:FileView Content="{Binding PaidInCapitalProof}" Header="资金到账通知书" />
+
+                </StackPanel>
+            </UserControl>
+
+        </DataTemplate>
+
+
+        <DataTemplate x:Key="DT.Registration" DataType="local:RegistrationFlowViewModel">
+            <UserControl Template="{StaticResource FlowShell}">
+                <StackPanel VerticalAlignment="Center">
+
+                    <WrapPanel>
+                        <Button CommandParameter="{Binding CommitmentLetter}" Style="{StaticResource GeneratorButton}" />
+
+                        <shared:FileView
+                            Content="{Binding CommitmentLetter}"
+                            Header="备案承诺函"
+                            Style="{StaticResource DualFileStyle2}" />
+                    </WrapPanel>
+
+                    <shared:FileView
+                        Content="{Binding Prospectus}"
+                        Header="招募说明书"
+                        Style="{StaticResource DualFileStyle2}" />
+
+
+                    <shared:FileView Content="{Binding SealedContract}" Header="签署的合同" />
+                    <shared:FileView Content="{Binding SealedAccountOversightProtocol}" Header="募集账户监督协议" />
+                    <shared:FileView Content="{Binding SealedOutsourcingServicesAgreement}" Header="外包服务协议" />
+
+
+
+                    <shared:FileView
+                        Content="{Binding StructureGraph}"
+                        Header="产品结构图"
+                        Style="{StaticResource DualFileStyle2}" />
+
+
+                    <shared:FileView
+                        Content="{Binding NestedCommitmentLetter}"
+                        Header="嵌套承诺函"
+                        Style="{StaticResource DualFileStyle2}" />
+
+
+
+                    <Separator />
+                    <shared:FileView
+                        Content="{Binding RegistrationLetter}"
+                        Header="备案函"
+                        Style="{StaticResource DualFileStyle2}" />
+                </StackPanel>
+            </UserControl>
+
+        </DataTemplate>
+
+        <DataTemplate x:Key="DT.ContractModifyFlow" DataType="local:ContractModifyFlowViewModel">
+            <UserControl Template="{StaticResource FlowShell}">
+                <DockPanel>
+                    <Button
+                        Command="{Binding DataContext.DeleteFlowCommand, RelativeSource={RelativeSource AncestorType=local:FundLifeTimeView}}"
+                        CommandParameter="{Binding .}"
+                        Content="废除"
+                        DockPanel.Dock="Right"
+                        Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+
+                    <DockPanel
+                        DockPanel.Dock="Top"
+                        IsEnabled="{Binding IsReadOnly, Converter={StaticResource Boolean2BooleanReConverter}}"
+                        LastChildFill="False">
+                        <DockPanel.Resources>
+                            <Style BasedOn="{StaticResource CheckBoxBaseStyle}" TargetType="CheckBox">
+                                <Setter Property="Margin" Value="2,0" />
+                            </Style>
+                        </DockPanel.Resources>
+
+                        <CheckBox Content="协议变更" IsChecked="{Binding ModifyBySupplementary}" />
+
+                        <TextBlock
+                            Margin="10,0,10,0"
+                            VerticalAlignment="Center"
+                            Text="变更-&gt;" />
+                        <CheckBox Content="产品名称" IsChecked="{Binding ModifyName}" />
+                        <CheckBox Content="投资经理" IsChecked="{Binding ModifyInvestmentManager}" />
+                        <CheckBox Content="份额分类" IsChecked="{Binding ModifyShareClass}" />
+                        <CheckBox Content="募集账户" IsChecked="{Binding ModifyCollectionAccount}" />
+                        <CheckBox Content="托管账户" IsChecked="{Binding ModifyCustodyAccount}" />
+
+                        <Button
+                            hc:IconElement.Geometry="{StaticResource f.floppy-disk}"
+                            Command="{Binding SaveModifySectionCommand}"
+                            Style="{StaticResource ButtonIcon.Small}"
+                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                    </DockPanel>
+
+                    <StackPanel MinWidth="500" VerticalAlignment="Center">
+                        <shared:FileView
+                            Content="{Binding SupplementaryFile}"
+                            Header="补充协议"
+                            IsReadOnly="{Binding IsReadOnly}"
+                            Style="{StaticResource MultiFileStyle}"
+                            Visibility="{Binding ModifyBySupplementary, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                        <shared:FileView
+                            Content="{Binding SignedSupplementary}"
+                            Header="签署的补充协议"
+                            IsReadOnly="{Binding IsReadOnly}"
+                            Style="{StaticResource MultiFileStyle}"
+                            Visibility="{Binding ModifyBySupplementary, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                        <shared:FileView Content="{Binding Contract}" Header="基金合同" />
+                        <shared:FileView Content="{Binding RiskDisclosureDocument}" Header="风险揭示书" />
+
+                        <WrapPanel Visibility="{Binding ModifyCollectionAccount, Converter={StaticResource Boolean2VisibilityConverter}}">
+                            <shared:FileView Content="{Binding CollectionAccount}" Header="募集账户函" />
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.chart-pie}"
+                                Command="{Binding ParseAccountInfoCommand}"
+                                CommandParameter="{Binding CollectionAccount}"
+                                Foreground="RoyalBlue"
+                                Style="{StaticResource ButtonIcon.Small}"
+                                Visibility="{Binding CollectionAccount.Meta, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                        </WrapPanel>
+                        <WrapPanel Visibility="{Binding ModifyCustodyAccount, Converter={StaticResource Boolean2VisibilityConverter}}">
+                            <shared:FileView Content="{Binding CustodyAccount}" Header="托管账户函" />
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.chart-pie}"
+                                Command="{Binding ParseAccountInfoCommand}"
+                                CommandParameter="{Binding CustodyAccount}"
+                                Foreground="RoyalBlue"
+                                Style="{StaticResource ButtonIcon.Small}"
+                                Visibility="{Binding CustodyAccount.Meta, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                        </WrapPanel>
+
+
+
+                        <Separator />
+
+                        <shared:FileView
+                            Content="{Binding Announcement}"
+                            Header="变更公告"
+                            Style="{StaticResource DualFileStyle2}" />
+
+                        <WrapPanel>
+                            <Button CommandParameter="{Binding CommitmentLetter}" Style="{StaticResource GeneratorButton}" />
+                            <shared:FileView
+                                Content="{Binding CommitmentLetter}"
+                                Header="承诺函"
+                                Style="{StaticResource DualFileStyle2}" />
+                        </WrapPanel>
+
+
+                        <shared:FileView
+                            Content="{Binding RegistrationLetter}"
+                            Header="备案函"
+                            Style="{StaticResource DualFileStyle2}"
+                            Visibility="{Binding ModifyName, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                    </StackPanel>
+
+
+                    <TextBlock />
+                </DockPanel>
+            </UserControl>
+
+        </DataTemplate>
+
+        <DataTemplate x:Key="DT.ModifyByAnnounceFlow" DataType="local:ModifyByAnnounceFlowViewModel">
+            <UserControl Template="{StaticResource FlowShell}">
+                <DockPanel>
+                    <Button
+                        Command="{Binding DataContext.DeleteFlowCommand, RelativeSource={RelativeSource AncestorType=local:FundLifeTimeView}}"
+                        CommandParameter="{Binding .}"
+                        Content="废除"
+                        DockPanel.Dock="Right"
+                        Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+
+                    <StackPanel MinWidth="500" VerticalAlignment="Center">
+
+                        <shared:FileView Content="{Binding Announcement}" Style="{StaticResource DualFileStyle2}" />
+
+
+                    </StackPanel>
+
+                </DockPanel>
+            </UserControl>
+
+        </DataTemplate>
+
+        <DataTemplate x:Key="DT.DividendFlow" DataType="local:DividendFlowViewModel">
+            <UserControl Template="{StaticResource FlowShell}">
+                <DockPanel>
+                    <Button
+                        Command="{Binding DataContext.DeleteFlowCommand, RelativeSource={RelativeSource AncestorType=local:FundLifeTimeView}}"
+                        CommandParameter="{Binding .}"
+                        Content="废除"
+                        DockPanel.Dock="Right"
+                        Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+
+                    <StackPanel MinWidth="500" VerticalAlignment="Center">
+                        <StackPanel.Resources>
+                            <Style BasedOn="{StaticResource {x:Type shared:ChangeableControl}}" TargetType="shared:ChangeableControl">
+                                <Setter Property="Entity" Value="{Binding .}" />
+                                <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
+                            </Style>
+                        </StackPanel.Resources>
+                        <DockPanel LastChildFill="False">
+                            <shared:ChangeableControl Binding="{Binding Type}">
+                                <shared:ChangeableControl.EditTemplate>
+                                    <DataTemplate>
+                                        <ListBox
+                                            ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
+                                            ItemsPanel="{StaticResource ButtonGroupHorizontalStackItemsPanelTemplate}"
+                                            ItemsSource="{x:Static local:DividendFlowViewModel.Types}"
+                                            SelectedItem="{Binding NewValue}"
+                                            Style="{StaticResource ListBox.Small}" />
+                                    </DataTemplate>
+                                </shared:ChangeableControl.EditTemplate>
+                            </shared:ChangeableControl>
+
+                            <shared:ChangeableControl
+                                Width="120"
+                                HorizontalContentAlignment="Stretch"
+                                Binding="{Binding Target}" />
+
+                            <shared:ChangeableControl Binding="{Binding Method}">
+                                <shared:ChangeableControl.EditTemplate>
+                                    <DataTemplate>
+                                        <ListBox
+                                            ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
+                                            ItemsPanel="{StaticResource ButtonGroupHorizontalStackItemsPanelTemplate}"
+                                            ItemsSource="{x:Static local:DividendFlowViewModel.Methods}"
+                                            SelectedItem="{Binding NewValue}"
+                                            Style="{StaticResource ListBox.Small}" />
+                                    </DataTemplate>
+                                </shared:ChangeableControl.EditTemplate>
+                            </shared:ChangeableControl>
+                        </DockPanel>
+
+                        <WrapPanel>
+                            <shared:ChangeableControl
+                                HorizontalContentAlignment="Stretch"
+                                Binding="{Binding DividendReferenceDate}"
+                                EditTemplate="{StaticResource DT.DateTime}" />
+                            <shared:ChangeableControl
+                                HorizontalContentAlignment="Stretch"
+                                Binding="{Binding RecordDate}"
+                                EditTemplate="{StaticResource DT.DateTime}" />
+                            <shared:ChangeableControl
+                                HorizontalContentAlignment="Stretch"
+                                Binding="{Binding ExDividendDate}"
+                                EditTemplate="{StaticResource DT.DateTime}" />
+                            <shared:ChangeableControl
+                                HorizontalContentAlignment="Stretch"
+                                Binding="{Binding CashPaymentDate}"
+                                EditTemplate="{StaticResource DT.DateTime}" />
+                        </WrapPanel>
+
+
+
+                        <WrapPanel>
+                            <Button CommandParameter="{Binding Announcement}" Style="{StaticResource GeneratorButton}" />
+                            <shared:FileView Content="{Binding Announcement}" Style="{StaticResource DualFileStyle2}" />
+                        </WrapPanel>
+
+
+                    </StackPanel>
+
+                </DockPanel>
+            </UserControl>
+
+        </DataTemplate>
+
+        <DataTemplate x:Key="DT.Liquidation" DataType="local:LiquidationFlowViewModel">
+            <UserControl Template="{StaticResource FlowShell}">
+                <DockPanel>
+                    <Button
+                        Command="{Binding DataContext.DeleteFlowCommand, RelativeSource={RelativeSource AncestorType=local:FundLifeTimeView}}"
+                        CommandParameter="{Binding .}"
+                        Content="撤销"
+                        DockPanel.Dock="Right" />
+
+                    <StackPanel VerticalAlignment="Center">
+
+                        <shared:FileView
+                            Content="{Binding LiquidationReport}"
+                            Header="清算报告"
+                            Style="{StaticResource DualFileStyle2}" />
+
+                        <WrapPanel>
+                            <Button CommandParameter="{Binding CommitmentLetter}" Style="{StaticResource GeneratorButton}" />
+                            <shared:FileView
+                                Content="{Binding CommitmentLetter}"
+                                Header="承诺函"
+                                Style="{StaticResource DualFileStyle2}" />
+                        </WrapPanel>
+                        <shared:FileView Content="{Binding InvestorSheet}" Header="投资人表" />
+                        <shared:FileView Content="{Binding LiquidationSheet}" Header="清算运行表" />
+
+                    </StackPanel>
+                </DockPanel>
+            </UserControl>
+
+        </DataTemplate>
+    </UserControl.Resources>
+
+
+
+    <DockPanel>
+
+        <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+            <DockPanel.Resources>
+                <Style BasedOn="{StaticResource ButtonDashedPrimary}" TargetType="Button">
+                    <Setter Property="Margin" Value="5,0" />
+                </Style>
+            </DockPanel.Resources>
+            <Button Command="{Binding SetupFundCommand}" Content="成立备案" />
+
+            <Button Command="{Binding CreateContractModifyCommand}" Content="合同变更" />
+
+            <!--<Button Command="{Binding CreateModifyByAnnounceCommand}" Content="公告变更" />-->
+
+            <Button Command="{Binding CreateDividendFlowCommand}" Content="发起分红" />
+
+
+            <Button Command="{Binding CreateClearFlowCommand}" Content="发起清盘" />
+        </DockPanel>
+
+        <ListBox
+            BorderThickness="0"
+            ItemTemplateSelector="{StaticResource FlowTemplateSelector}"
+            ItemsSource="{Binding Flows}"
+            Style="{StaticResource ListBoxCustom}">
+            <ListBox.ItemContainerStyle>
+                <Style BasedOn="{StaticResource ListBoxItemCustom}" TargetType="ListBoxItem">
+                    <Setter Property="Margin" Value="0,0,10,0" />
+                </Style>
+            </ListBox.ItemContainerStyle>
+        </ListBox>
+
+    </DockPanel>
+</UserControl>

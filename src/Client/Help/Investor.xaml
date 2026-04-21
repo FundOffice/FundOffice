@@ -1,0 +1,219 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:hc="https://handyorg.github.io/handycontrol">
+
+    <DataTemplate x:Key="Help.Investor.Tags">
+        <Border
+            Canvas.Left="160"
+            Canvas.Top="160"
+            Background="White">
+            <Border.Resources>
+                <Style TargetType="Viewbox">
+                    <Setter Property="Height" Value="20" />
+                </Style>
+            </Border.Resources>
+            <hc:UniformSpacingPanel
+                Margin="10"
+                Orientation="Vertical"
+                VerticalSpacing="10">
+
+                <DockPanel>
+                    <Viewbox>
+                        <Path Data="{StaticResource f.web-awesome}" Fill="Green" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="当前持有产品" />
+
+                    <Viewbox>
+                        <Path Data="{StaticResource f.web-awesome}" Fill="DarkGray" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="曾经持有产品" />
+                </DockPanel>
+
+                <DockPanel>
+                    <Viewbox>
+                        <Path Data="{StaticResource f.umbrella}" Fill="Red" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="风险测评过期" />
+                </DockPanel>
+
+                <DockPanel>
+                    <Viewbox>
+                        <Path Data="{StaticResource f.triangle-exclamation}" Fill="Red" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="没有合格投资者认定" />
+
+                    <Viewbox>
+                        <Path Data="{StaticResource f.triangle-exclamation}" Fill="Gray" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="合格投资者认定资料不全" />
+                </DockPanel>
+
+                <DockPanel>
+                    <Viewbox>
+                        <Path Data="{StaticResource f.credit-card}" Fill="Red" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="没有银行账户" />
+                </DockPanel>
+
+
+
+                <DockPanel>
+                    <Viewbox>
+                        <Path Data="{StaticResource f.envelope}" Fill="Red" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="没有填写Email" />
+                </DockPanel>
+                <DockPanel>
+                    <Viewbox Height="24">
+                        <Path Data="{StaticResource f.mobile-retro}" Fill="Red" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="没有填写手机号" />
+                </DockPanel>
+
+            </hc:UniformSpacingPanel>
+        </Border>
+    </DataTemplate>
+
+    <DataTemplate x:Key="Help.Investor.Modify">
+        <TextBlock FontSize="15" Text="点此修改信息" />
+    </DataTemplate>
+
+
+    <DataTemplate x:Key="Help.Investor.AddRisk">
+        <TextBlock FontSize="15" Text="增加风险调查问卷" />
+    </DataTemplate>
+
+
+    <DataTemplate x:Key="Help.Investor.AddQualification">
+        <TextBlock FontSize="15" Text="增加合格投资者认定" />
+    </DataTemplate>
+
+
+    <DataTemplate x:Key="Help.Investor">
+        <Canvas HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Canvas.Resources>
+                <Style TargetType="Viewbox">
+                    <Setter Property="Height" Value="20" />
+                </Style>
+            </Canvas.Resources>
+            <Border
+                Canvas.Left="160"
+                Canvas.Top="160"
+                Background="White">
+                <hc:UniformSpacingPanel
+                    Margin="10"
+                    Orientation="Vertical"
+                    VerticalSpacing="10">
+
+                    <DockPanel>
+                        <Viewbox>
+                            <Path Data="{StaticResource f.web-awesome}" Fill="Green" />
+                        </Viewbox>
+                        <TextBlock
+                            Margin="5,0"
+                            VerticalAlignment="Center"
+                            Text="当前持有产品" />
+
+                        <Viewbox>
+                            <Path Data="{StaticResource f.web-awesome}" Fill="DarkGray" />
+                        </Viewbox>
+                        <TextBlock
+                            Margin="5,0"
+                            VerticalAlignment="Center"
+                            Text="曾经持有产品" />
+                    </DockPanel>
+
+                    <DockPanel>
+                        <Viewbox>
+                            <Path Data="{StaticResource f.umbrella}" Fill="Red" />
+                        </Viewbox>
+                        <TextBlock
+                            Margin="5,0"
+                            VerticalAlignment="Center"
+                            Text="风险测评过期" />
+                    </DockPanel>
+
+                    <DockPanel>
+                        <Viewbox>
+                            <Path Data="{StaticResource f.triangle-exclamation}" Fill="Red" />
+                        </Viewbox>
+                        <TextBlock
+                            Margin="5,0"
+                            VerticalAlignment="Center"
+                            Text="没有合格投资者认定" />
+
+                        <Viewbox>
+                            <Path Data="{StaticResource f.triangle-exclamation}" Fill="Gray" />
+                        </Viewbox>
+                        <TextBlock
+                            Margin="5,0"
+                            VerticalAlignment="Center"
+                            Text="合格投资者认定资料不全" />
+                    </DockPanel>
+
+                    <DockPanel>
+                        <Viewbox>
+                            <Path Data="{StaticResource f.envelope}" Fill="Red" />
+                        </Viewbox>
+                        <TextBlock
+                            Margin="5,0"
+                            VerticalAlignment="Center"
+                            Text="没有填写Email" />
+                    </DockPanel>
+                    <DockPanel>
+                        <Viewbox Height="24">
+                            <Path Data="{StaticResource f.mobile-retro}" Fill="Red" />
+                        </Viewbox>
+                        <TextBlock
+                            Margin="5,0"
+                            VerticalAlignment="Center"
+                            Text="没有填写手机号" />
+                    </DockPanel>
+
+                </hc:UniformSpacingPanel>
+            </Border>
+
+
+            <DockPanel Canvas.Top="100" Canvas.Right="40">
+                <TextBlock Text="修改信息" />
+                <Line
+                    Stroke="Black"
+                    X1="0"
+                    X2="80"
+                    Y1="5"
+                    Y2="20" />
+            </DockPanel>
+
+
+
+
+
+
+        </Canvas>
+    </DataTemplate>
+</ResourceDictionary>
