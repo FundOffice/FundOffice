@@ -90,7 +90,11 @@ public abstract class Mission
         return r;
     }
 
-
+    /// <summary>
+    /// 返回false表示执行失败，且不会重试
+    /// true可以继续执行下一次
+    /// </summary>
+    /// <returns></returns>
     protected virtual bool WorkOverride()
     {
         return true;
