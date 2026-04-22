@@ -1,4 +1,4 @@
-name: publish
+name: 发布 .NET 10 WPF 并创建 Release
 
 on:
   workflow_dispatch:    # 手动触发
@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: write
+      contents: write   # 必须，否则无法创建 Release
 
     steps:
       - name: 检出代码
@@ -21,14 +21,13 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      - name: 构建并发布（自动还原 + 正确运行时）
+      - name: 发布所有 WPF/EXE 项目
         run: |
           $publishDir = "./publish"
           $configuration = "Release"
           $runtime = "win-x64"
           $selfContained = $false
 
-          # 获取所有合法项目
           $projects = Get-ChildItem -Recurse -Filter *.csproj | Where-Object {
               $_.Name -notmatch '_'
           }
@@ -37,11 +36,9 @@ jobs:
               $projPath = $proj.FullName
               $projContent = Get-Content $projPath -Raw -Encoding UTF8
 
-              # 只发布 EXE/WPF 程序
               if ($projContent -match '<OutputType>(WinExe|Exe)</OutputType>') {
                   Write-Host "`n=== 发布: $($proj.Name) ===" -ForegroundColor Cyan
 
-                  # 关键：发布时自带还原，去掉 --no-restore，强制指定运行时
                   dotnet publish $projPath `
                       -c $configuration `
                       -r $runtime `
@@ -61,18 +58,41 @@ jobs:
           }
         shell: powershell
 
-      - name: 上传产物
+      - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:
           name: FundOffice-Win-x64
           path: ./publish/
 
+      - name: 打包成单个 ZIP（方便 Release 下载）
+        run: |
+          Compress-Archive -Path ./publish/* -DestinationPath ./FundOffice-Win-x64.zip -Force
+        shell: powershell
+
+      - name: 确定版本号
+        id: version
+        run: |
+          if ("${{ github.ref }}" -like "refs/tags/*") {
+              $version = "${{ github.ref_name }}"
+              $tag = "${{ github.ref_name }}"
+              $isTag = "true"
+          } else {
+              $version = "dev-build-$(Get-Date -Format 'yyyyMMddHHmm')"
+              $tag = "dev"
+              $isTag = "false"
+          }
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "TAG=$tag" >> $env:GITHUB_OUTPUT
+          echo "ISTAG=$isTag" >> $env:GITHUB_OUTPUT
+        shell: powershell
+
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: FundOffice ${{ github.ref_name }}
-          tag_name: ${{ github.ref_name }}
-          files: ./publish/**
+          name: FundOffice ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ steps.version.outputs.TAG }}
+          files: ./FundOffice-Win-x64.zip
+          draft: false
+          prerelease: ${{ steps.version.outputs.ISTAG != 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
