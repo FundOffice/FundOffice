@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/.github/">
+    <File Path=".github/workflows/dotnet-desktop.yml" />
+  </Folder>
   <Folder Name="/Amac/">
     <Project Path="src/Amac/Direct/Amac.Direct.csproj" />
     <Project Path="src/Amac/RPA/Amac.RPA.csproj" />

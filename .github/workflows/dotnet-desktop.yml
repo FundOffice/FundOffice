@@ -1,10 +1,10 @@
 name: publish
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:    # 手动触发
   push:
     tags:
-      - 'v*'
+      - 'v*'            # 打 tag 自动发布
 
 jobs:
   build:
@@ -21,42 +21,38 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      - name: 发布所有 WPF 项目（修复路径错误）
+      - name: 构建并发布（自动还原 + 正确运行时）
         run: |
           $publishDir = "./publish"
           $configuration = "Release"
           $runtime = "win-x64"
           $selfContained = $false
 
-          # 1. 查找所有合法项目（排除_临时文件）
+          # 获取所有合法项目
           $projects = Get-ChildItem -Recurse -Filter *.csproj | Where-Object {
               $_.Name -notmatch '_'
           }
 
-          # 2. 逐个还原（关键：不用解决方案，避免路径错误）
-          foreach ($proj in $projects) {
-              dotnet restore $proj.FullName --nologo
-          }
-
-          # 3. 只发布 EXE/WPF 项目
           foreach ($proj in $projects) {
               $projPath = $proj.FullName
               $projContent = Get-Content $projPath -Raw -Encoding UTF8
 
+              # 只发布 EXE/WPF 程序
               if ($projContent -match '<OutputType>(WinExe|Exe)</OutputType>') {
                   Write-Host "`n=== 发布: $($proj.Name) ===" -ForegroundColor Cyan
 
+                  # 关键：发布时自带还原，去掉 --no-restore，强制指定运行时
                   dotnet publish $projPath `
                       -c $configuration `
                       -r $runtime `
                       --self-contained $selfContained `
                       -o $publishDir `
                       --nologo `
-                      --no-restore `
                       /p:WarningLevel=0 `
                       /p:DebugSymbols=false `
                       /p:DebugType=None `
-                      /p:UseAppHost=true
+                      /p:UseAppHost=true `
+                      /p:RuntimeIdentifier=win-x64
 
                   if ($LASTEXITCODE -ne 0) {
                       exit $LASTEXITCODE
@@ -65,7 +61,7 @@ jobs:
           }
         shell: powershell
 
-      - name: 上传构建产物
+      - name: 上传产物
         uses: actions/upload-artifact@v4
         with:
           name: FundOffice-Win-x64
