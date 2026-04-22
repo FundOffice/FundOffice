@@ -10,7 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Main\Models\Models.csproj" />
 	  <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
   </ItemGroup>
 
 </Project>
