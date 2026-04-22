@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.ESigning;
 using FMO.IO.AMAC;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Schedule;
 using FMO.Trustee;
@@ -11,6 +12,7 @@ using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using Serilog;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
@@ -96,7 +98,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
     {
         WeakReferenceMessenger.Default.RegisterAll(this);
 
-         
+
         Task.Run(() =>
         {
             IsInitializing = true;
@@ -131,7 +133,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             TrusteeGallay.Initialize();
             SigningGalley.Initialize();
         });
-         
+
 
         // 每小时运行一次，判断是不是新的一天
         _dailyTimer = new Timer(x => OnNewDate(), null, 60000, 1000 * 60 * 60);
@@ -674,15 +676,37 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             Log.Error($"HomePage, OnNewDate {ex}");
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "更新每日数据失败"));
         }
+
+        BackupDb();
+
         DailyUpdateTime = DateTime.Now;
     }
 
+    private static void BackupDb()
+    {
+        try
+        {
+            Directory.CreateDirectory("data\\bak");
+            var ca = CultureInfo.CurrentCulture.Calendar;
+            var path = @$"data\bak\bak_{DateTime.Now:yy}{ca.GetWeekOfYear(DateTime.Now, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday):D2}.zip";
 
+            if (!File.Exists(path))
+            {
+                using ZipArchive zip = new ZipArchive(File.Create(path), ZipArchiveMode.Create);
+                foreach (var file in Directory.GetFiles("data", "*.db"))
+                {
+                    if (file.Contains("log")) continue;
 
-
-
-
-
+                    var entryName = Path.GetRelativePath("data", file);
+                    zip.CreateEntryFromFile(file, entryName);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogEx.Error(ex);
+        }
+    }
 
     public partial class RaisingAccountWarning : ObservableObject
     {
