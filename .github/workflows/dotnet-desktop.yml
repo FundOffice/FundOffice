@@ -1,47 +1,48 @@
-name: 发布 .NET 10 WPF 并创建 Release
+name: publish
 
 on:
-  workflow_dispatch:    # 手动触发
+  workflow_dispatch:
   push:
     tags:
-      - 'v*'            # 打 tag 自动触发（v1.0.0 格式）
+      - 'v*'
 
 jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: write   # 允许创建 Release
+      contents: write
 
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 安装 .NET 10 SDK（WPF 专用）
+      - name: 安装 .NET 10 SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.x'
-          vs-components: Microsoft.VisualStudio.Component.Windows10SDK.18362
 
-      - name: 还原 NuGet 包
-        run: dotnet restore
-
-      - name: 发布所有 WPF/EXE 项目（和你的脚本一致）
+      - name: 发布所有 WPF 项目（修复路径错误）
         run: |
           $publishDir = "./publish"
           $configuration = "Release"
           $runtime = "win-x64"
           $selfContained = $false
 
-          # 查找所有项目，排除带 _ 的临时文件
+          # 1. 查找所有合法项目（排除_临时文件）
           $projects = Get-ChildItem -Recurse -Filter *.csproj | Where-Object {
               $_.Name -notmatch '_'
           }
 
+          # 2. 逐个还原（关键：不用解决方案，避免路径错误）
+          foreach ($proj in $projects) {
+              dotnet restore $proj.FullName --nologo
+          }
+
+          # 3. 只发布 EXE/WPF 项目
           foreach ($proj in $projects) {
               $projPath = $proj.FullName
               $projContent = Get-Content $projPath -Raw -Encoding UTF8
 
-              # 只发布 WPF/EXE 程序
               if ($projContent -match '<OutputType>(WinExe|Exe)</OutputType>') {
                   Write-Host "`n=== 发布: $($proj.Name) ===" -ForegroundColor Cyan
 
@@ -55,7 +56,7 @@ jobs:
                       /p:WarningLevel=0 `
                       /p:DebugSymbols=false `
                       /p:DebugType=None `
-                      /p:UseAppHost=true  # WPF 必须生成 EXE
+                      /p:UseAppHost=true
 
                   if ($LASTEXITCODE -ne 0) {
                       exit $LASTEXITCODE
@@ -70,19 +71,11 @@ jobs:
           name: FundOffice-Win-x64
           path: ./publish/
 
-      - name: 读取版本号
-        id: version
-        run: |
-          $ver = "${{ github.ref_name }}"
-          if (!$ver) { $ver = "dev-$(Get-Date -Format yyyyMMddHHmm)" }
-          echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
-        shell: powershell
-
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: FundOffice ${{ steps.version.outputs.VERSION }}
+          name: FundOffice ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           files: ./publish/**
         env:
