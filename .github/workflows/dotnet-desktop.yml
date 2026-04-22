@@ -1,0 +1,89 @@
+name: 发布 .NET 10 WPF 并创建 Release
+
+on:
+  workflow_dispatch:    # 手动触发
+  push:
+    tags:
+      - 'v*'            # 打 tag 自动触发（v1.0.0 格式）
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write   # 允许创建 Release
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 .NET 10 SDK（WPF 专用）
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+          vs-components: Microsoft.VisualStudio.Component.Windows10SDK.18362
+
+      - name: 还原 NuGet 包
+        run: dotnet restore
+
+      - name: 发布所有 WPF/EXE 项目（和你的脚本一致）
+        run: |
+          $publishDir = "./publish"
+          $configuration = "Release"
+          $runtime = "win-x64"
+          $selfContained = $false
+
+          # 查找所有项目，排除带 _ 的临时文件
+          $projects = Get-ChildItem -Recurse -Filter *.csproj | Where-Object {
+              $_.Name -notmatch '_'
+          }
+
+          foreach ($proj in $projects) {
+              $projPath = $proj.FullName
+              $projContent = Get-Content $projPath -Raw -Encoding UTF8
+
+              # 只发布 WPF/EXE 程序
+              if ($projContent -match '<OutputType>(WinExe|Exe)</OutputType>') {
+                  Write-Host "`n=== 发布: $($proj.Name) ===" -ForegroundColor Cyan
+
+                  dotnet publish $projPath `
+                      -c $configuration `
+                      -r $runtime `
+                      --self-contained $selfContained `
+                      -o $publishDir `
+                      --nologo `
+                      --no-restore `
+                      /p:WarningLevel=0 `
+                      /p:DebugSymbols=false `
+                      /p:DebugType=None `
+                      /p:UseAppHost=true  # WPF 必须生成 EXE
+
+                  if ($LASTEXITCODE -ne 0) {
+                      exit $LASTEXITCODE
+                  }
+              }
+          }
+        shell: powershell
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: FundOffice-Win-x64
+          path: ./publish/
+
+      - name: 读取版本号
+        id: version
+        run: |
+          $ver = "${{ github.ref_name }}"
+          if (!$ver) { $ver = "dev-$(Get-Date -Format yyyyMMddHHmm)" }
+          echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
+        shell: powershell
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: FundOffice ${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ github.ref_name }}
+          files: ./publish/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
