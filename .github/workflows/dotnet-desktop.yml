@@ -1,0 +1,82 @@
+name: publish
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: 发布所有 WPF 项目（修复路径错误）
+        run: |
+          $publishDir = "./publish"
+          $configuration = "Release"
+          $runtime = "win-x64"
+          $selfContained = $false
+
+          # 1. 查找所有合法项目（排除_临时文件）
+          $projects = Get-ChildItem -Recurse -Filter *.csproj | Where-Object {
+              $_.Name -notmatch '_'
+          }
+
+          # 2. 逐个还原（关键：不用解决方案，避免路径错误）
+          foreach ($proj in $projects) {
+              dotnet restore $proj.FullName --nologo
+          }
+
+          # 3. 只发布 EXE/WPF 项目
+          foreach ($proj in $projects) {
+              $projPath = $proj.FullName
+              $projContent = Get-Content $projPath -Raw -Encoding UTF8
+
+              if ($projContent -match '<OutputType>(WinExe|Exe)</OutputType>') {
+                  Write-Host "`n=== 发布: $($proj.Name) ===" -ForegroundColor Cyan
+
+                  dotnet publish $projPath `
+                      -c $configuration `
+                      -r $runtime `
+                      --self-contained $selfContained `
+                      -o $publishDir `
+                      --nologo `
+                      --no-restore `
+                      /p:WarningLevel=0 `
+                      /p:DebugSymbols=false `
+                      /p:DebugType=None `
+                      /p:UseAppHost=true
+
+                  if ($LASTEXITCODE -ne 0) {
+                      exit $LASTEXITCODE
+                  }
+              }
+          }
+        shell: powershell
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: FundOffice-Win-x64
+          path: ./publish/
+
+      - name: 创建 GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: FundOffice ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: ./publish/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
