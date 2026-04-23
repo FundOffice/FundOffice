@@ -1,11 +1,16 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.IO.AMAC;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Shared;
 using FMO.TPL;
 using FMO.Trustee;
 using FMO.Utilities;
+using HandyControl.Tools;
+using LiteDB;
+using Microsoft.Playwright;
 using Microsoft.Win32;
 using Serilog;
 using System.Collections.Concurrent;
@@ -61,6 +66,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         InitiateDate = fund.InitiateDate == default ? null : fund.InitiateDate;
         FundCode = fund.Code;
         FundStatus = fund.Status;
+        AmacId = fund.AmacID;
 
 
         _api = TrusteeGallay.Find(fund.Id);
@@ -335,6 +341,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsCleared))]
     public partial FundStatus FundStatus { get; set; }
+    public string? AmacId { get; }
 
     public bool IsCleared => FundStatus > FundStatus.StartLiquidation;
 
@@ -754,6 +761,104 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
             });
         }
     }
+
+
+    [RelayCommand]
+    public async Task<bool> SyncRegisterLeterFromAmac()
+    {
+        if(string.IsNullOrWhiteSpace(FundCode))
+        {
+            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "没有备案号，无法更新"));
+            return false;
+        }
+
+        AmacAccount acc = null!;
+        using (var db = DbHelper.Base())
+        {
+            acc = db.GetCollection<AmacAccount>().FindById("ambers");
+            if (string.IsNullOrWhiteSpace(acc?.Name) || string.IsNullOrWhiteSpace(acc?.Password))
+            {
+                LogEx.Error("AMAC账号信息不完整，请检查数据库");
+                return false;
+            }
+        }
+
+
+        var (pw, browser, page) = await AmbersAssist.Prepare(true);
+
+        try
+        {
+            // 检查登录
+            await Task.Delay(2000);
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+
+            // 登录
+            var loginResult = await AmbersAssist.IsLogin(page);
+            if (!loginResult)
+                loginResult = await AmbersAssist.Login(page, acc.Name, acc.Password);
+
+            if (!loginResult)
+            {
+                LogEx.Error("AMAC登录失败，请检查账号信息");
+                return false;
+            }
+
+            await Task.Delay(2000);
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            // 下载 
+            try
+            {
+                var downloadResult = await AmbersAssist.DownloadRegisterLetterCore(page, FundCode);
+                if (string.IsNullOrWhiteSpace(downloadResult) || !File.Exists(downloadResult))
+                {
+                    WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "AMAC下载备案函失败，可能是网络问题或者AMAC页面结构发生变化"));
+                    return false;
+                }
+
+
+                // 更新到flow中
+                foreach (var flow in Flows.OrderByDescending(x => x.Date))
+                {
+                    if (flow is RegistrationFlowViewModel r)
+                    {
+                        r.RegistrationLetter.Normal.SetFile(downloadResult);
+                        RegistrationLetter.Meta = r.RegistrationLetter.Normal.Meta;
+                        break;
+                    }
+                    else if (flow is ContractModifyFlowViewModel c && c.ModifyName)
+                    {
+                        c.RegistrationLetter.Normal.SetFile(downloadResult);
+                        RegistrationLetter.Meta = c.RegistrationLetter.Normal.Meta;
+                        break;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                LogEx.Error(e);
+                WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "AMAC下载备案函失败，请查看log"));
+                return false;
+            }
+
+
+            return true;
+
+        }
+        catch (Exception e)
+        {
+            LogEx.Error(e);
+            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "AMAC下载备案函失败，请查看log"));
+            return false;
+        }
+        finally
+        {
+            await browser.CloseAsync();
+            pw.Dispose();
+        }
+    }
+
 
     partial void OnInitiateFundContractFileChanged(FileInfo? oldValue, FileInfo? newValue)
     {

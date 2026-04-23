@@ -388,11 +388,20 @@
             </DockPanel>
 
 
-            <shared:FileView
-                AllowDrop="False"
-                Content="{Binding RegistrationLetter}"
-                Header="备案函"
-                IsReadOnly="True" />
+            <DockPanel LastChildFill="False">
+                <shared:FileView
+                    AllowDrop="False"
+                    Content="{Binding RegistrationLetter}"
+                    Header="备案函"
+                    IsReadOnly="True" />
+
+                <Button
+                    hc:IconElement.Geometry="{StaticResource f.cloud-arrow-down}"
+                    Command="{Binding SyncRegisterLeterFromAmacCommand}"
+                    Foreground="DodgerBlue"
+                    Style="{StaticResource ButtonIcon.Small}"
+                    ToolTip="从中基协同步备案函" />
+            </DockPanel>
 
 
         </StackPanel>

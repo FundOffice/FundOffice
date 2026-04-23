@@ -370,6 +370,7 @@
 
                     <Separator />
                     <shared:FileView
+                        Background="AliceBlue"
                         Content="{Binding RegistrationLetter}"
                         Header="备案函"
                         Style="{StaticResource DualFileStyle2}" />
