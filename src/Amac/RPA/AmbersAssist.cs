@@ -16,7 +16,11 @@ public static class AmbersAssist
     public static async Task<(IPlaywright pw, IBrowser browser, IPage page)> Prepare(bool load = false)
     {
         var pw = await Playwright.CreateAsync();
+#if DEBUG 
         var browser = await pw.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel = "msedge", Headless = false });
+#else
+        var browser = await pw.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel = "msedge", Headless = true });
+#endif
 
         var fi = new FileInfo(@"config\ambers.ck");
         var context = load && fi.Exists && (DateTime.Now - fi.LastWriteTime).TotalHours < 1 ? await browser.NewContextAsync(new BrowserNewContextOptions { StorageStatePath = fi.FullName }) : await browser.NewContextAsync();
@@ -254,7 +258,7 @@ public static class AmbersAssist
     }
 
 
-    private static async Task<bool> IsLogin(IPage page)
+    public static async Task<bool> IsLogin(IPage page)
     {
         var locator = page.Locator("#mgr_register");
 
@@ -361,6 +365,7 @@ public static class AmbersAssist
     }
 
 
+    #region 季度更新投资人
     /// <summary>
     /// 填报投资人页
     /// </summary>
@@ -476,7 +481,7 @@ public static class AmbersAssist
             }
 
 
-            if(!await CheckSubmitSuccessAndCloseModalAsync(page, "导入数据成功"))
+            if (!await CheckSubmitSuccessAndCloseModalAsync(page, "导入数据成功"))
             {
                 status.InvestorFill.LastUpdated = DateTime.Now;
                 status.InvestorFill.IsFilled = false;
@@ -831,6 +836,57 @@ public static class AmbersAssist
             return false;
         }
     }
+    #endregion
+
+
+    /// <summary>
+    /// 下载备案函
+    /// </summary>
+    /// <param name="page"></param>
+    /// <param name="amacFundId"></param>
+    /// <returns></returns>
+    public static async Task<string> DownloadRegisterLetterCore(IPage page, string fundCode)
+    {
+        await page.GotoAsync("https://ambers.amac.org.cn/web/app.html#/product/query");
+
+        // 搜索
+        var keywordInput = page.Locator("#keyword");
+        await keywordInput.FillAsync(string.Empty);
+        await keywordInput.FillAsync(fundCode);
+
+        // 点击查询按钮
+        var searchBtn = page.Locator("button.btn-query");
+        await searchBtn.ClickAsync();
+
+        // 等待搜索结果加载
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await Task.Delay(800);
+
+
+        var savePath = Path.GetFullPath($"temp\\{fundCode}_备案函_{DateTime.Now:yyyyMMdd}.pdf");
+        var locator = page.Locator("a", new() { HasText = "查看备案函" });
+        if (await locator.CountAsync() > 0)
+        {
+
+            // 4. 【核心】监听下载事件（必须在导航前注册）
+            var downloadTask = page.WaitForDownloadAsync();
+
+            // 5. 导航到 PDF URL 
+            await locator.ClickAsync();
+
+            // 6. 获取下载对象
+            var download = await downloadTask;
+
+            // 8. 保存 PDF 文件
+            await download.SaveAsAsync(savePath);
+
+            return savePath;
+        }
+        return string.Empty;
+    }
+
+
+
 }
 
 
