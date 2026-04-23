@@ -199,7 +199,7 @@ public partial class FileMetaViewModel : ReadOnlyFileMetaViewModel
     }
 
 
-    internal void SetFile(string path)
+    public void SetFile(string path)
     {
         var newf = new FileInfo(path);
         var desire = SpecificFileName is null ? newf.Name : SpecificFileName(newf.Extension);
