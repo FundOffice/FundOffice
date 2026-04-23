@@ -122,7 +122,9 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
         CashPaymentDate.Init(flow);
 
 
-        Announcement = new() { Label = "分红公告", Filter = "文档|*.docx;*.doc;*.pdf" };
+        Announcement = new(flow.Announcement) { Label = "分红公告", Filter = "文档|*.docx;*.doc;*.pdf",  }; 
+        Announcement.Normal.SpecificFileName = Announcement.SpecificFileName;
+        Announcement.Another.SpecificFileName = Announcement.SpecificFileName;
         Announcement.FileChanged += f => SaveFileChanged(new { Announcement = f });
 
         //Announcement = new()
