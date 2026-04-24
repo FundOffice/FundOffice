@@ -1,0 +1,39 @@
+﻿<Window
+    x:Class="FMO.Disclosure.ChooseFundWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:FMO.Disclosure"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="选择"
+    Width="500"
+    Height="450"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+
+    <DockPanel Margin="4">
+        <DockPanel DockPanel.Dock="Top">
+            <Button
+                Command="{Binding ConfirmCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                Content="确认"
+                DockPanel.Dock="Right"
+                Style="{StaticResource ButtonPrimary}" />
+            <TextBox Text="{Binding SearchKey, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+
+        </DockPanel>
+
+        <ListBox
+            Margin="0,4,0,0"
+            ItemsSource="{Binding FundSource.View}"
+            Style="{StaticResource ListBoxCustom}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <DockPanel Margin="2">
+                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" />
+                    </DockPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</Window>

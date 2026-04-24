@@ -6,7 +6,7 @@
 /// </summary>
 public class DisclosureInstance
 {
-    public string Id => $"{Channel}{NoticeId}";
+    public string Id => $"{Channel}-{NoticeId}";
 
     public required string WorkflowId { get; set; }
 

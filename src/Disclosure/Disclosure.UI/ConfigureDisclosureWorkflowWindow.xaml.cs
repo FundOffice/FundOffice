@@ -77,7 +77,7 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
 
     public ConfigureDisclosureWorkflowWindowViewModel()
     {
-        Channels = DisclosureChannelGalley.GetRegisteredChannels().ToArray();
+        Channels = DisclosureChannelManager.GetRegisteredChannels().ToArray();
 
         // 检查是否有对应的配置界面
         using var db = DbHelper.Base();
@@ -87,13 +87,14 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
         foreach (var c in Channels)
         {
             if (configs.TryGetValue(c.Code, out var config))
-                channelConfigs.Add(ChannelConfigFactory.CreateConfig(config)!);
-            else channelConfigs.Add(ChannelConfigFactory.CreateConfig(c.Code)!);
+                channelConfigs.Add(DisclosureChannelManager.CreateViewModel(config)!);
+            else channelConfigs.Add(DisclosureChannelManager.CreateViewModel(c.Code)!);
         }
 
         ChannelConfigs = channelConfigs.ToArray();
         var cm = channelConfigs.ToDictionary(x => x.ChannelCode);
 
+        var funds = db.GetCollection<Fund>().Query().Select(x => new { Name = x.Name, Code = x.Code!, Id = x.Id, }).ToArray();
 
 
         Types = Enum.GetValues<DisclosureType>().Except([DisclosureType.Temporary, DisclosureType.ManagerLevel]).ToArray();
@@ -123,7 +124,17 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
                 }
             }
 
-            Workflows.Add(new WorkflowRow { Head = c, Config = cm[c.Code], Workflows = list.Select(x => new DisclosureWorkflowViewModel(x)).ToArray() });
+            Workflows.Add(new WorkflowRow
+            {
+                Head = c,
+                Config = cm[c.Code],
+                Workflows = list.Select(x => new DisclosureWorkflowViewModel(x, funds.Select(x => new DisclosureWorkflowViewModel.FundSelectInfo
+                {
+                    Code = x.Code,
+                    Name = x.Name,
+                    Id = x.Id
+                }).ToArray())).ToArray()
+            });
         }
     }
 
@@ -163,7 +174,7 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
     public bool IsSupported { get; }
 
 
-    public DisclosureWorkflowViewModel(DisclosureWorkflow? workflow)
+    public DisclosureWorkflowViewModel(DisclosureWorkflow? workflow, FundSelectInfo[] funds)
     {
         IsSupported = workflow is not null;
         if (workflow is not null)
@@ -174,9 +185,20 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
             TargetFunds = workflow.TargetFunds;
             Channel = workflow.Channel;
             Config = workflow.Config;
+            RequireConfigWork = DisclosureChannelManager.GetChannel(Channel)?.RequireConfigWork(Type) ?? false;
+        }
+
+        Funds = funds;
+
+        foreach (var item in Funds)
+        {
+            if (TargetFunds.Contains(item.Id))
+                item.IsSelected = true;
         }
     }
 
+
+    public FundSelectInfo[] Funds { get; }
 
 
     public string Id => Channel + Type;
@@ -214,6 +236,9 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
     public partial IWorkConfig? Config { get; set; }
 
 
+    public bool RequireConfigWork { get; init; }
+
+
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
@@ -232,5 +257,29 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
         // 持久化到数据库
         using var db = DbHelper.Base();
         db.GetCollection<DisclosureWorkflow>().Upsert(obj);
+    }
+
+
+    [RelayCommand]
+    public void ChooseFund()
+    {
+        var w = new ChooseFundWindow { Owner = Application.Current.Windows[^2] };
+        w.DataContext = new ChooseFundWindowViewModel(Funds);
+        if (w.ShowDialog() == true)
+        {
+            TargetFunds = Funds.Where(x => x.IsSelected).Select(x => x.Id).ToArray();
+        }
+    }
+
+
+    public class FundSelectInfo
+    {
+        public int Id { get; set; }
+
+        public required string Name { get; set; }
+
+        public required string Code { get; set; }
+
+        public bool IsSelected { get; set; }
     }
 }

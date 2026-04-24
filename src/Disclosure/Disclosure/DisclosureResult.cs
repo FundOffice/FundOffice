@@ -1,6 +1,11 @@
-﻿using System.Threading.Channels;
+﻿using System.Runtime.CompilerServices;
+using System.Threading.Channels;
+
+
+[assembly: InternalsVisibleTo("Disclosure.UI")]
 
 namespace FMO.Disclosure;
+
 
 
 public class DisclosureResult

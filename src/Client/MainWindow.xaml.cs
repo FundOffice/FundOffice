@@ -29,8 +29,8 @@ public partial class MainWindow : HandyControl.Controls.Window
         Title = "调试模式";
 #endif
 
-        Width = SystemParameters.FullPrimaryScreenWidth * 0.9;
-        Height = SystemParameters.FullPrimaryScreenHeight * 0.9;
+        Width = Math.Min(1920, SystemParameters.FullPrimaryScreenWidth * 0.9);
+        Height = Math.Min(1080, SystemParameters.FullPrimaryScreenHeight * 0.9);
 
         PreviewKeyDown += MainWindow_PreviewKeyDown;
 

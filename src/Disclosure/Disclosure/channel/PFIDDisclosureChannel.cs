@@ -2,7 +2,7 @@
 
 namespace FMO.Disclosure;
 
-internal class PFIDDisclosureChannel : IDisclosureChannel
+public class PFIDDisclosureChannel : IDisclosureChannel
 {
     public string Code => DisclosureChannelCode.Pfid;
 
@@ -10,6 +10,8 @@ internal class PFIDDisclosureChannel : IDisclosureChannel
     public string Name => "中基协PFID系统";
 
     public string Description => "在中基协信批系统发布信批公告";
+
+    public IWorkConfig? DefaultWorkConfig(DisclosureType type) => null;
 
     public Task<ErrorReturn> Disclosure(IDisclosureNotice Notice, IWorkConfig config)
     {
@@ -27,6 +29,8 @@ internal class PFIDDisclosureChannel : IDisclosureChannel
           _ => false
       };
     }
+
+    public bool RequireConfigWork(DisclosureType type) => false;
 
     public ErrorReturn VerifyNotice(IDisclosureNotice Notice)
     {

@@ -132,7 +132,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             //启动api
             TrusteeGallay.Initialize();
             SigningGalley.Initialize();
-            DisclosureChannelGalley.Initialize();
+            DisclosureChannelManager.Initialize();
             IsInitializing = false;
         });
 

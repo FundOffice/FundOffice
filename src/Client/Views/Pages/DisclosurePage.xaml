@@ -76,8 +76,9 @@
 
             <Button
                 Command="{Binding ConfigureCommand}"
-                Content="配置"
-                DockPanel.Dock="Right" />
+                Content="配置信批通道"
+                DockPanel.Dock="Right"
+                Style="{StaticResource ButtonPrimary}" />
 
 
             <ComboBox

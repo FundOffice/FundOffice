@@ -3,43 +3,7 @@ using LiteDB;
 using System.Collections.Concurrent;
 
 namespace FMO.Disclosure;
-
-public static class DisclosureChannelGalley
-{
-    private static readonly Dictionary<string, IDisclosureChannel> _channels = new();
-
-    public static bool Register(IDisclosureChannel channelInstance)
-    {
-        // 注册通道实例，可以存储在一个字典中
-        // 这里可以使用反射或者工厂模式来实现
-        if (_channels.ContainsKey(channelInstance.Code))
-            return false; // 已经注册过了 
-
-        _channels[channelInstance.Code] = channelInstance;
-        return true;
-    }
-
-    public static bool Unregister(string channel) => _channels.Remove(channel);
-
-    public static IEnumerable<IDisclosureChannel> GetRegisteredChannels() => _channels.Values;
-
-    public static bool IsChannelRegistered(string channel) => _channels.ContainsKey(channel);
-
-    public static void Initialize()
-    {
-        // 初始化默认的通道实例
-        Register(new EmailDisclosureChannel());
-        Register(new PFIDDisclosureChannel());
-        Register(new MeiShiDisclosureChannel());
-    }
-
-
-    public static IDisclosureChannel? GetChannel(string channel) => _channels.TryGetValue(channel, out var channelInstance) ? channelInstance : null;
-
-
-
-}
-
+ 
 
 public static class DisclosureWorkflowService
 {
@@ -175,7 +139,7 @@ public static class DisclosureWorkflowService
         if (config == null)
             return (false, $"未找到信批配置：{instance.WorkflowId}");
 
-        var channel = DisclosureChannelGalley.GetChannel(instance.Channel);
+        var channel = DisclosureChannelManager.GetChannel(instance.Channel);
         if (channel == null)
             return (false, $"未找到通道：{instance.Channel}");
 
