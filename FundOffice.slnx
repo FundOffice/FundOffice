@@ -6,6 +6,10 @@
     <Project Path="src/Amac/Direct/Amac.Direct.csproj" />
     <Project Path="src/Amac/RPA/Amac.RPA.csproj" />
   </Folder>
+  <Folder Name="/Disclosure/">
+    <Project Path="src/Disclosure/Disclosure.UI/Disclosure.UI.csproj" Id="68409ee8-07e3-4638-b5c9-cd9d48ca57ca" />
+    <Project Path="src/Disclosure/Disclosure/Disclosure.csproj" />
+  </Folder>
   <Folder Name="/ESign/">
     <Project Path="D:/project/FundOffice/src/ESign/ESigning/ESigning.csproj" />
     <Project Path="D:/project/FundOffice/src/ESign/MeiShi/MeiShi.csproj" />

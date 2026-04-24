@@ -73,6 +73,13 @@
             Margin="0,8"
             DockPanel.Dock="Top"
             LastChildFill="False">
+
+            <Button
+                Command="{Binding ConfigureCommand}"
+                Content="配置"
+                DockPanel.Dock="Right" />
+
+
             <ComboBox
                 BorderThickness="0"
                 ItemsSource="{Binding Years}"

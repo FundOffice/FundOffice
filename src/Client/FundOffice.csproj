@@ -96,6 +96,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Amac\Direct\Amac.Direct.csproj" />
     <ProjectReference Include="..\Amac\RPA\Amac.RPA.csproj" />
+    <ProjectReference Include="..\Disclosure\Disclosure.UI\Disclosure.UI.csproj" />
+    <ProjectReference Include="..\Disclosure\Disclosure\Disclosure.csproj" />
     <ProjectReference Include="..\Schedule\Schedule\Schedule.csproj" />
     <ProjectReference Include="..\Main\Data\Data.csproj" />
     <ProjectReference Include="..\ESign\Galley\Galley.csproj" />

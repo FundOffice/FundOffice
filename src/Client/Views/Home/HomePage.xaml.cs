@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Disclosure;
 using FMO.ESigning;
 using FMO.IO.AMAC;
 using FMO.Logging;
@@ -126,12 +127,13 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             LoadTrusteeMessages();
 
             InitializeMesage = null;
-            IsInitializing = false;
 
 
             //启动api
             TrusteeGallay.Initialize();
             SigningGalley.Initialize();
+            DisclosureChannelGalley.Initialize();
+            IsInitializing = false;
         });
 
 

@@ -1,0 +1,177 @@
+﻿<Window
+    x:Class="FMO.Disclosure.ConfigureDisclosureWorkflowWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:FMO.Disclosure"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="配置信批"
+    Width="1500"
+    Height="650"
+    DataContextChanged="Window_DataContextChanged"
+    Loaded="Window_Loaded"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <d:Window.DataContext>
+        <local:ConfigureDisclosureWorkflowWindowViewModel />
+    </d:Window.DataContext>
+
+    <Window.Resources>
+        <Style x:Key="head" TargetType="ListBoxItem">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock
+                            Text="{Binding .}"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
+        <DataTemplate x:Key="FlowItemTemplate">
+            <Grid>
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Foreground="Red"
+                    Text="不支持"
+                    Visibility="{Binding IsSupported, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Visibility="{Binding IsSupported, Converter={StaticResource Boolean2VisibilityConverter}}">
+
+                    <DockPanel>
+                        <CheckBox Content="启用" IsChecked="{Binding IsEnabled}" />
+                        <Button
+                            Margin="4,0,0,0"
+                            Content="配置"
+                            Style="{StaticResource ButtonDashedSuccess.Small}" />
+                    </DockPanel>
+
+                    <StackPanel Visibility="{Binding IsManagerLevel, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                        <CheckBox
+                            Margin="0,1"
+                            Content="全部基金"
+                            IsChecked="{Binding ForAllFunds}" />
+                        <DockPanel Visibility="{Binding ForAllFunds, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Foreground="Black"
+                                Text="{Binding TargetFunds.Length}" />
+                            <Button Content="选择" Style="{StaticResource ButtonDefault.Small}" />
+                        </DockPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+    </Window.Resources>
+
+
+
+    <DataGrid
+        x:Name="grid"
+        AutoGenerateColumns="False"
+        Background="White"
+        BorderThickness="0"
+        CanUserReorderColumns="False"
+        CanUserResizeColumns="False"
+        CanUserResizeRows="False"
+        CanUserSortColumns="False"
+        GridLinesVisibility="All"
+        HeadersVisibility="All"
+        HorizontalGridLinesBrush="LightGray"
+        IsReadOnly="True"
+        ItemsSource="{Binding Workflows}"
+        RowHeaderWidth="120"
+        RowHeight="120"
+        SelectionMode="Single"
+        SelectionUnit="Cell"
+        VerticalGridLinesBrush="LightGray">
+        <DataGrid.Columns />
+
+        <DataGrid.RowHeaderStyle>
+            <Style TargetType="DataGridRowHeader">
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="BorderBrush" Value="LightGray" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="DataGridRowHeader">
+                            <Border BorderBrush="LightGray" BorderThickness="0,0,1,1">
+
+                                <DockPanel>
+                                    <TextBlock
+                                        Margin="0,0,0,3"
+                                        HorizontalAlignment="Center"
+                                        DockPanel.Dock="Bottom"
+                                        FontSize="10"
+                                        Foreground="Red"
+                                        Text="配置后可用"
+                                        Visibility="{Binding Config.IsAvailable, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                                    <Button
+                                        Margin="0,2"
+                                        Command="{Binding SetChannelConfigCommand}"
+                                        Content="配置"
+                                        DockPanel.Dock="Bottom"
+                                        Style="{StaticResource ButtonDashedPrimary.Small}" />
+
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="14"
+                                        Text="{Binding Head.Name}" />
+                                </DockPanel>
+
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </DataGrid.RowHeaderStyle>
+
+        <!--  取消单元格选中高亮  -->
+        <DataGrid.CellStyle>
+            <Style TargetType="DataGridCell">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding Config.IsAvailable}" Value="False">
+                        <Setter Property="IsEnabled" Value="False" />
+                    </DataTrigger>
+
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderBrush" Value="Transparent" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+        </DataGrid.CellStyle>
+
+        <DataGrid.RowStyle>
+            <Style BasedOn="{StaticResource DataGridRowStyle}" TargetType="DataGridRow">
+                <Setter Property="Margin" Value="0" />
+            </Style>
+        </DataGrid.RowStyle>
+
+
+
+        <DataGrid.ColumnHeaderStyle>
+            <Style BasedOn="{StaticResource DataGridColumnHeaderStyle}" TargetType="DataGridColumnHeader">
+                <Setter Property="HorizontalAlignment" Value="Center" />
+            </Style>
+        </DataGrid.ColumnHeaderStyle>
+
+    </DataGrid>
+</Window>

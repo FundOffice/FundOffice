@@ -49,7 +49,14 @@ public static partial class DatabaseAssist
         [106] = FixMeishi,
         [107] = FixFund,
         [113] = FixMove,
+        [117] = FixChannelConfig,
     };
+
+    private static void FixChannelConfig(BaseDatabase database)
+    {
+        database.DropCollection("IDisclosureChannelConfig");
+        database.DropCollection("DisclosureWorkflow");
+    }
 
     /// <summary>
     /// 修复迁移时的type名称不对

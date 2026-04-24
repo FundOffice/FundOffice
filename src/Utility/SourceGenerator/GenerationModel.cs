@@ -11,12 +11,10 @@ namespace SourceGenerator;
 [Generator]
 public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
 {
-    // 注意：若特性定义在其他命名空间，请修改为完整限定名，如 "YourNs.AutoViewModelAttribute"
     private const string AttributeMetadataName = "FMO.Models.AutoViewModelAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // 1. 语法提供器：筛选带有目标特性的 ClassDeclarationSyntax
         var classDeclarations = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 AttributeMetadataName,
@@ -35,7 +33,6 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
                 })
             .Where(model => model != null);
 
-        // 2. 注册源码输出
         context.RegisterSourceOutput(classDeclarations, (spc, model) =>
         {
             if (model == null) return;
@@ -48,52 +45,78 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
     {
         var ns = targetClass.ContainingNamespace.IsGlobalNamespace ? string.Empty : targetClass.ContainingNamespace.ToDisplayString();
         var className = targetClass.Name;
+        var sourceTypeName = sourceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        // 🟢 收集目标类及其所有父类中已存在的公开属性名（用于排除）
-        var existingPropertyNames = new HashSet<string>(StringComparer.Ordinal);
+        // 🔹 1. ViewModel 本身（不包括父类）已声明的属性 → 构造函数/Build 时跳过
+        var viewModelDeclaredProperties = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var member in targetClass.GetMembers())
+        {
+            if (member is IPropertySymbol prop && prop.DeclaredAccessibility == Accessibility.Public)
+                viewModelDeclaredProperties.Add(prop.Name);
+        }
+
+        // 🔹 2. ViewModel 继承链（含自身）的所有公开属性 → 判断是否需要生成新 property
+        var existingInHierarchy = new HashSet<string>(StringComparer.Ordinal);
         var currentType = targetClass;
         while (currentType != null && currentType.SpecialType != SpecialType.System_Object)
         {
             foreach (var member in currentType.GetMembers())
             {
                 if (member is IPropertySymbol prop && prop.DeclaredAccessibility == Accessibility.Public)
-                    existingPropertyNames.Add(prop.Name);
+                    existingInHierarchy.Add(prop.Name);
             }
             currentType = currentType.BaseType;
         }
 
-        // 🔵 收集 T 及其基类中的公开实例属性
-        var propertiesToGenerate = new List<PropertyInfo>();
+        // 🔹 3. 收集源类型属性，分类处理
+        var propertiesToGenerate = new List<PropertyInfo>();      // 需生成 property + 赋值
+        var propertiesToAssignOnly = new List<PropertyInfo>();    // 只需赋值（父类已有 property）
+
         currentType = sourceType;
         while (currentType != null && currentType.SpecialType != SpecialType.System_Object)
         {
             foreach (var member in currentType.GetMembers())
             {
-                if (member is IPropertySymbol prop && prop.DeclaredAccessibility == Accessibility.Public && !prop.IsStatic)
+                if (member is IPropertySymbol prop &&
+                    prop.DeclaredAccessibility == Accessibility.Public &&
+                    !prop.IsStatic)
                 {
-                    if (!existingPropertyNames.Contains(prop.Name))
-                    {
-                        // 规则：如果是类(class)或 string，则标记为 nullable
-                        bool isNullable = prop.Type.TypeKind == TypeKind.Class ||
-                                          prop.Type.SpecialType == SpecialType.System_String ||
-                                          prop.Type.IsReferenceType;
+                    // ViewModel 本身已声明 → 完全跳过
+                    if (viewModelDeclaredProperties.Contains(prop.Name))
+                        continue;
 
-                        propertiesToGenerate.Add(new PropertyInfo(
-                            prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                            prop.Name,
-                            isNullable));
-                    }
+                    bool isNullable = prop.Type.TypeKind == TypeKind.Class ||
+                                      prop.Type.SpecialType == SpecialType.System_String ||
+                                      prop.Type.IsReferenceType;
+
+                    var propInfo = new PropertyInfo(
+                        prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                        prop.Name,
+                        isNullable);
+
+                    // ViewModel 继承链已有 → 只赋值；否则 → 生成 property + 赋值
+                    if (existingInHierarchy.Contains(prop.Name))
+                        propertiesToAssignOnly.Add(propInfo);
+                    else
+                        propertiesToGenerate.Add(propInfo);
                 }
             }
             currentType = currentType.BaseType;
         }
 
-        if (propertiesToGenerate.Count == 0) return null;
+        // 如果没有任何需要处理的属性，跳过生成
+        if (propertiesToGenerate.Count == 0 && propertiesToAssignOnly.Count == 0)
+            return null;
 
-        // 🔴 检查类型体系是否已实现 INotifyPropertyChanged
         bool needsINPC = !targetClass.AllInterfaces.Any(i => i.Name == "INotifyPropertyChanged");
 
-        return new GenerationModel(className, ns, propertiesToGenerate, needsINPC);
+        return new GenerationModel(
+            className,
+            ns,
+            sourceTypeName,
+            propertiesToGenerate,
+            propertiesToAssignOnly,
+            needsINPC);
     }
 
     private static string GenerateSource(GenerationModel model)
@@ -111,7 +134,6 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
             sb.AppendLine("{");
         }
 
-        // 若未实现 INPC，则自动添加接口声明
         sb.AppendLine($"    public partial class {model.ClassName}" + (model.NeedsINPC ? " : INotifyPropertyChanged" : ""));
         sb.AppendLine("    {");
 
@@ -123,7 +145,46 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
             sb.AppendLine();
         }
 
-        foreach (var prop in model.Properties)
+        // 🔹 无参构造函数
+        sb.AppendLine($"        public {model.ClassName}() {{ }}");
+        sb.AppendLine();
+
+        // 🔹 带源类型参数的构造函数
+        sb.AppendLine($"        public {model.ClassName}({model.SourceTypeName} val)");
+        sb.AppendLine("        {");
+        // 先处理需生成 property 的
+        foreach (var prop in model.PropertiesToGenerate)
+        {
+            sb.AppendLine($"            {prop.Name} = val.{prop.Name};");
+        }
+        // 再处理只需赋值的（父类已有 property）
+        foreach (var prop in model.PropertiesToAssignOnly)
+        {
+            sb.AppendLine($"            {prop.Name} = val.{prop.Name};");
+        }
+        sb.AppendLine("        }");
+        sb.AppendLine();
+
+        // 🔹 Build() 方法
+        sb.AppendLine($"        public {model.SourceTypeName} Build()");
+        sb.AppendLine("        {");
+        sb.AppendLine($"            var result = new {model.SourceTypeName}");
+        sb.AppendLine("             {");
+        foreach (var prop in model.PropertiesToGenerate)
+        {
+            sb.AppendLine($"                {prop.Name} = {prop.Name}!,");
+        }
+        foreach (var prop in model.PropertiesToAssignOnly)
+        {
+            sb.AppendLine($"                {prop.Name} = {prop.Name}!,");
+        }
+        sb.AppendLine("             };");
+        sb.AppendLine("            return result;");
+        sb.AppendLine("        }");
+        sb.AppendLine();
+
+        // 🔹 生成新的 property（仅针对继承链中不存在的）
+        foreach (var prop in model.PropertiesToGenerate)
         {
             var typeName = prop.IsNullable ? $"{prop.TypeName}?" : prop.TypeName;
             var backingField = $"_{char.ToLowerInvariant(prop.Name[0])}{prop.Name.Substring(1)}";
@@ -150,15 +211,12 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
         return sb.ToString();
     }
 
-    // 普通类，替代 record PropertyInfo
     private class PropertyInfo
     {
-        // 只读自动属性（无字段）
         public string TypeName { get; }
         public string Name { get; }
         public bool IsNullable { get; }
 
-        // 构造函数
         public PropertyInfo(string typeName, string name, bool isNullable)
         {
             TypeName = typeName;
@@ -167,21 +225,29 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
         }
     }
 
-    // 普通类，替代主构造函数 GenerationModel
+    // 🔹 GenerationModel 增加 PropertiesToAssignOnly
     private class GenerationModel
     {
-        // 只读自动属性（无字段）
         public string ClassName { get; }
         public string Namespace { get; }
-        public List<PropertyInfo> Properties { get; }
+        public string SourceTypeName { get; }
+        public List<PropertyInfo> PropertiesToGenerate { get; }      // 需生成 property
+        public List<PropertyInfo> PropertiesToAssignOnly { get; }    // 只需赋值
         public bool NeedsINPC { get; }
 
-        // 构造函数
-        public GenerationModel(string className, string @namespace, List<PropertyInfo> properties, bool needsINPC)
+        public GenerationModel(
+            string className,
+            string @namespace,
+            string sourceTypeName,
+            List<PropertyInfo> propertiesToGenerate,
+            List<PropertyInfo> propertiesToAssignOnly,
+            bool needsINPC)
         {
             ClassName = className;
             Namespace = @namespace;
-            Properties = properties;
+            SourceTypeName = sourceTypeName;
+            PropertiesToGenerate = propertiesToGenerate;
+            PropertiesToAssignOnly = propertiesToAssignOnly;
             NeedsINPC = needsINPC;
         }
     }

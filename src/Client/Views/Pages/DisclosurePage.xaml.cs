@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Disclosure;
 using FMO.AMAC.Direct;
 using FMO.ESigning.MeiShi;
 using FMO.Logging;
@@ -328,4 +329,12 @@ public partial class DisclosurePageViewModel : ObservableObject
         }
     }
 
+
+    [RelayCommand]
+    public void Configure()
+    {
+        var wnd = new ConfigureDisclosureWorkflowWindow();
+        wnd.Owner = App.Current.MainWindow;
+        wnd.ShowDialog();
+    }
 }
