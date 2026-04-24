@@ -24,7 +24,7 @@ public static class TrusteeGallay
         }
 
 
-        TrusteeViewModels = [new CMSViewModel(), new CITISCViewModel(), new CSCViewModel(), new XYZQViewModel()];
+        TrusteeViewModels = [new CMSViewModel(), new CITICSViewModel(), new CSCViewModel(), new XYZQViewModel()];
 
         Trustees = TrusteeViewModels.OfType<ITrusteeViewModel>().Select(x => x.Assist).ToArray();
 

@@ -187,7 +187,7 @@
 
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type citics:CITISCViewModel}">
+        <DataTemplate DataType="{x:Type citics:CITICSViewModel}">
             <BulletDecorator>
                 <BulletDecorator.Bullet>
                     <TextBlock Text="Custom Auth" />

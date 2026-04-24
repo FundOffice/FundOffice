@@ -6,7 +6,7 @@ namespace FMO.Trustee;
 /// <summary>
 /// ÖÐÐÅ
 /// </summary>
-public partial class CITISCViewModel : TrusteeViewModelBase<CITICS>
+public partial class CITICSViewModel : TrusteeViewModelBase<CITICS>
 {
     [ObservableProperty]
 
@@ -15,7 +15,7 @@ public partial class CITISCViewModel : TrusteeViewModelBase<CITICS>
 
     public string? Token { get; set; }
 
-    public CITISCViewModel()
+    public CITICSViewModel()
     {
         CustomerAuth = Assist.CustomerAuth;
     }
