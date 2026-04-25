@@ -547,6 +547,7 @@
                                     <hc:SimplePanel>
                                         <shared:CopyableTextBlock
                                             Margin="15,0,0,0"
+                                            shared:MaskService.IsMask="True"
                                             Text="{Binding Account}"
                                             Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
@@ -680,6 +681,7 @@
                                         <hc:SimplePanel>
                                             <shared:CopyableTextBlock
                                                 Margin="15,0,0,0"
+                                                shared:MaskService.IsMask="True"
                                                 Text="{Binding Account}"
                                                 Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
@@ -894,6 +896,7 @@
                                     <hc:SimplePanel>
                                         <shared:CopyableTextBlock
                                             Margin="15,0,0,0"
+                                            shared:MaskService.IsMask="True"
                                             Text="{Binding Account}"
                                             Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
@@ -1012,10 +1015,22 @@
                 </Style>
             </UniformGrid.Resources>
 
-            <shared:ChangeableControl Binding="{Binding UniversalNo}" Entity="{Binding .}" />
-            <shared:ChangeableControl Binding="{Binding CCDCBondAccount}" Entity="{Binding .}" />
-            <shared:ChangeableControl Binding="{Binding FutureNo}" Entity="{Binding .}" />
-            <shared:ChangeableControl Binding="{Binding SHCBondAccount}" Entity="{Binding .}" />
+            <shared:ChangeableControl
+                shared:MaskService.IsMask="True"
+                Binding="{Binding UniversalNo}"
+                Entity="{Binding .}" />
+            <shared:ChangeableControl
+                shared:MaskService.IsMask="True"
+                Binding="{Binding CCDCBondAccount}"
+                Entity="{Binding .}" />
+            <shared:ChangeableControl
+                shared:MaskService.IsMask="True"
+                Binding="{Binding FutureNo}"
+                Entity="{Binding .}" />
+            <shared:ChangeableControl
+                shared:MaskService.IsMask="True"
+                Binding="{Binding SHCBondAccount}"
+                Entity="{Binding .}" />
 
         </UniformGrid>
 

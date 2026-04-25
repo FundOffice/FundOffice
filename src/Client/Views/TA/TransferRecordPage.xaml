@@ -17,17 +17,19 @@
     <UserControl.Resources>
         <Style x:Key="CenterText" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="CenterMaskText" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="shared:MaskService.IsMask" Value="True" />
         </Style>
 
         <Style x:Key="RightText" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Right" />
-            <Setter Property="shared:MaskService.IsMask" Value="True" />
         </Style>
 
         <Style x:Key="LeftText" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Left" />
-            <Setter Property="shared:MaskService.IsMask" Value="True" />
         </Style>
 
         <local:BindingProxy x:Key="proxy" Data="{Binding}" />
@@ -1068,7 +1070,7 @@
                         <DataGridTextColumn Binding="{Binding RequestDate, StringFormat=yyyy-MM-dd}" Header="日期" />
                         <DataGridTextColumn
                             Binding="{Binding FundCode}"
-                            ElementStyle="{StaticResource CenterText}"
+                            ElementStyle="{StaticResource CenterMaskText}"
                             Header="代码" />
                         <DataGridTemplateColumn
                             shared:FilterColumn.FilterSource="{Binding Data.FundNameFilter, Source={StaticResource proxy}}"
@@ -1077,7 +1079,7 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <DockPanel Background="Transparent" LastChildFill="False">
-                                        <shared:CopyableTextBlock Text="{Binding FundName}" />
+                                        <shared:CopyableTextBlock shared:MaskService.IsMask="True" Text="{Binding FundName}" />
                                         <Button
                                             x:Name="goto"
                                             hc:IconElement.Geometry="{StaticResource f.paper-plane}"
@@ -1106,7 +1108,10 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <DockPanel Background="Transparent" LastChildFill="False">
-                                        <shared:CopyableTextBlock MinWidth="70" Text="{Binding InvestorName}" />
+                                        <shared:CopyableTextBlock
+                                            MinWidth="70"
+                                            shared:MaskService.IsMask="True"
+                                            Text="{Binding InvestorName}" />
                                         <shared:CopyableTextBlock IsMasked="True" Text="{Binding InvestorIdentity}" />
                                         <Button
                                             x:Name="goto"

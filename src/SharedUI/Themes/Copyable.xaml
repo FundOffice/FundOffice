@@ -24,7 +24,6 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock
                                 VerticalAlignment="Center"
-                                local:MaskService.IsMask="True"
                                 Text="{TemplateBinding MaskedText}"
                                 TextWrapping="WrapWithOverflow" />
                             <Button

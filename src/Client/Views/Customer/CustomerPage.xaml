@@ -435,13 +435,10 @@
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <DockPanel LastChildFill="False">
-                                <shared:CopyableControl>
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        shared:MaskService.IsMask="True"
-                                        Text="{Binding Name}"
-                                        TextWrapping="Wrap" />
-                                </shared:CopyableControl>
+                                <shared:CopyableTextBlock
+                                    VerticalAlignment="Center"
+                                    shared:MaskService.IsMask="True"
+                                    Text="{Binding Name}" />
 
                             </DockPanel>
                         </DataTemplate>
@@ -476,7 +473,10 @@
                 <DataGridTemplateColumn Header="证件号码">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <shared:CopyableTextBlock IsMasked="True" Text="{Binding Identity.Id}" />
+                            <shared:CopyableTextBlock
+                                shared:MaskService.IsMask="True"
+                                IsMasked="True"
+                                Text="{Binding Identity.Id}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

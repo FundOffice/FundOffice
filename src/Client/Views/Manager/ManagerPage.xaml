@@ -377,7 +377,7 @@
                                         <BulletDecorator.Bullet>
                                             <TextBlock Width="70" Text="Email" />
                                         </BulletDecorator.Bullet>
-                                        <shared:CopyableTextBlock Text="{Binding Email}" />
+                                        <shared:CopyableTextBlock shared:MaskService.IsMask="True" Text="{Binding Email}" />
                                     </BulletDecorator>
 
                                     <BulletDecorator>
@@ -391,7 +391,7 @@
                                         <BulletDecorator.Bullet>
                                             <TextBlock Width="70" Text="从业证书" />
                                         </BulletDecorator.Bullet>
-                                        <shared:CopyableTextBlock Text="{Binding CertCode}" />
+                                        <shared:CopyableTextBlock shared:MaskService.IsMask="True" Text="{Binding CertCode}" />
                                     </BulletDecorator>
                                 </hc:UniformSpacingPanel>
                             </Border>
@@ -401,21 +401,24 @@
                         <DataGridTemplateColumn Header="姓名">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <shared:CopyableTextBlock Text="{Binding Name}" />
+                                    <shared:CopyableTextBlock shared:MaskService.IsMask="True" Text="{Binding Name}" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
                         <DataGridTemplateColumn Header="证件号">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <shared:CopyableTextBlock IsMasked="True" Text="{Binding Identity.Id}" />
+                                    <shared:CopyableTextBlock
+                                        shared:MaskService.IsMask="True"
+                                        IsMasked="True"
+                                        Text="{Binding Identity.Id}" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
                         <DataGridTemplateColumn Header="电话">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <shared:CopyableTextBlock Text="{Binding Phone}" />
+                                    <shared:CopyableTextBlock shared:MaskService.IsMask="True" Text="{Binding Phone}" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -534,6 +537,7 @@
                                     <shared:CopyableTextBlock
                                         local:HelpService.Help="双击修改股东资料"
                                         local:HelpService.Placement="Bottom"
+                                        shared:MaskService.IsMask="True"
                                         Text="{Binding Holder.Name}">
                                         <i:Interaction.Triggers>
                                             <i:EventTrigger EventName="MouseDoubleClick">

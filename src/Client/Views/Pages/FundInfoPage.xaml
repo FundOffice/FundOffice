@@ -282,6 +282,7 @@
             </StackPanel.Resources>
 
             <shared:CopyableTextBlock
+                shared:MaskService.IsMask="True"
                 FontSize="16"
                 FontWeight="Black"
                 Text="{Binding FundName}" />
@@ -312,7 +313,10 @@
                     ToolTip="生成合同附件" />
 
 
-                <shared:CopyableTextBlock FontWeight="Bold" Text="{Binding FundCode}" />
+                <shared:CopyableTextBlock
+                    shared:MaskService.IsMask="True"
+                    FontWeight="Bold"
+                    Text="{Binding FundCode}" />
 
 
                 <shared:CopyableTextBlock FontWeight="Bold" Text="{Binding RiskLevel}" />
@@ -320,7 +324,7 @@
 
                 <TextBlock DockPanel.Dock="Right" Text="{Binding FundStatus}" />
 
-                <shared:CopyableTextBlock Text="{Binding FundShortName}" />
+                <shared:CopyableTextBlock shared:MaskService.IsMask="True" Text="{Binding FundShortName}" />
 
             </DockPanel>
 
@@ -360,14 +364,14 @@
                 <BulletDecorator.Bullet>
                     <TextBlock Text="募集账户" />
                 </BulletDecorator.Bullet>
-                <shared:CopyableTextBlock Text="{Binding CollectionAccount}" />
+                <shared:CopyableTextBlock shared:MaskService.IsMask="True" Text="{Binding CollectionAccount}" />
             </BulletDecorator>
 
             <BulletDecorator>
                 <BulletDecorator.Bullet>
                     <TextBlock Text="托管账户" />
                 </BulletDecorator.Bullet>
-                <shared:CopyableTextBlock Text="{Binding CustodyAccount}" />
+                <shared:CopyableTextBlock shared:MaskService.IsMask="True" Text="{Binding CustodyAccount}" />
             </BulletDecorator>
 
 

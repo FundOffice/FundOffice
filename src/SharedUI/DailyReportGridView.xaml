@@ -16,18 +16,21 @@
 
         <Style x:Key="CenterText" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="shared:MaskService.IsMask" Value="True" />
         </Style>
 
         <Style x:Key="RightText" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Right" />
-            <Setter Property="shared:MaskService.IsMask" Value="True" />
         </Style>
 
         <Style x:Key="LeftText" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+        <Style x:Key="LeftMaskText" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Left" />
             <Setter Property="shared:MaskService.IsMask" Value="True" />
         </Style>
+
+
 
 
         <Style x:Key="Style.Date" TargetType="TextBlock">
@@ -40,7 +43,6 @@
         </Style>
         <Style x:Key="Style.HC" TargetType="TextBlock">
             <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="shared:MaskService.IsMask" Value="True" />
         </Style>
         <Style BasedOn="{StaticResource DataGridColumnHeaderStyle}" TargetType="DataGridColumnHeader">
             <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -134,11 +136,11 @@
             <DataGrid.Columns>
                 <DataGridTextColumn
                     Binding="{Binding FundCode}"
-                    ElementStyle="{StaticResource LeftText}"
+                    ElementStyle="{StaticResource LeftMaskText}"
                     Header="备案号" />
                 <DataGridTextColumn
                     Binding="{Binding FundName}"
-                    ElementStyle="{StaticResource LeftText}"
+                    ElementStyle="{StaticResource LeftMaskText}"
                     Header="产品" />
                 <DataGridTextColumn
                     Binding="{Binding Daily.Date, StringFormat=yyyy-MM-dd}"

@@ -283,7 +283,10 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <DockPanel LastChildFill="False">
-                                        <shared:CopyableTextBlock Foreground="Black" Text="{Binding Name}" />
+                                        <shared:CopyableTextBlock
+                                            shared:MaskService.IsMask="True"
+                                            Foreground="Black"
+                                            Text="{Binding Name}" />
                                         <Button
                                             x:Name="view"
                                             hc:IconElement.Geometry="{StaticResource f.book-open}"

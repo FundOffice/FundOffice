@@ -1,5 +1,5 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -10,273 +10,534 @@ using System.Windows.Threading;
 
 namespace FMO.Shared;
 
+/// <summary>
+/// 全局隐私遮罩服务（按F9开关，自动处理所有文本/图片/日期选择器）
+/// </summary>
 public static class MaskService
 {
-    // 注册附加属性 IsMask
+    #region 依赖属性
+    // 启用遮罩标记
     public static readonly DependencyProperty IsMaskProperty =
-        DependencyProperty.RegisterAttached(
-            "IsMask",
-            typeof(bool),
-            typeof(MaskService),
-            new PropertyMetadata(false, OnIsMaskChanged));
+        DependencyProperty.RegisterAttached("IsMask", typeof(bool), typeof(MaskService),
+            new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits, OnIsMaskChanged));
 
-    public static bool GetIsMask(DependencyObject obj) =>
-        (bool)obj.GetValue(IsMaskProperty);
+    public static bool GetIsMask(DependencyObject obj) => (bool)obj.GetValue(IsMaskProperty);
+    public static void SetIsMask(DependencyObject obj, bool value) => obj.SetValue(IsMaskProperty, value);
 
-    public static void SetIsMask(DependencyObject obj, bool value) =>
-        obj.SetValue(IsMaskProperty, value);
-
-    // 注册附加属性 BlurRadius
+    // 模糊半径
     public static readonly DependencyProperty BlurRadiusProperty =
-        DependencyProperty.RegisterAttached(
-            "BlurRadius",
-            typeof(double),
-            typeof(MaskService),
-            new PropertyMetadata(15.0, OnBlurRadiusChanged));
+        DependencyProperty.RegisterAttached("BlurRadius", typeof(double), typeof(MaskService),
+            new PropertyMetadata(15.0));
 
-    public static double GetBlurRadius(DependencyObject obj) =>
-        (double)obj.GetValue(BlurRadiusProperty);
+    public static double GetBlurRadius(DependencyObject obj) => (double)obj.GetValue(BlurRadiusProperty);
+    public static void SetBlurRadius(DependencyObject obj, double value) => obj.SetValue(BlurRadiusProperty, value);
 
-    public static void SetBlurRadius(DependencyObject obj, double value) =>
-        obj.SetValue(BlurRadiusProperty, value);
+    // 存储原始文本
+    private static readonly DependencyProperty OriginalTextProperty =
+        DependencyProperty.RegisterAttached("OriginalText", typeof(string), typeof(MaskService),
+            new PropertyMetadata(default(string)));
 
-    // 内部属性存储原始效果
+    private static string GetOriginalText(DependencyObject obj) => (string)obj.GetValue(OriginalTextProperty);
+    private static void SetOriginalText(DependencyObject obj, string value) => obj.SetValue(OriginalTextProperty, value);
+
+    // 存储原始效果
     private static readonly DependencyProperty OriginalEffectProperty =
-        DependencyProperty.RegisterAttached(
-            "OriginalEffect",
-            typeof(Effect),
-            typeof(MaskService));
+        DependencyProperty.RegisterAttached("OriginalEffect", typeof(Effect), typeof(MaskService),
+            new PropertyMetadata(default(Effect)));
 
-    private static Effect GetOriginalEffect(DependencyObject obj) =>
-        (Effect)obj.GetValue(OriginalEffectProperty);
+    private static Effect GetOriginalEffect(DependencyObject obj) => (Effect)obj.GetValue(OriginalEffectProperty);
+    private static void SetOriginalEffect(DependencyObject obj, Effect value) => obj.SetValue(OriginalEffectProperty, value);
 
-    private static void SetOriginalEffect(DependencyObject obj, Effect? value) =>
-        obj.SetValue(OriginalEffectProperty, value);
+    // 标记：是否正在更新遮罩文本（防止无限循环）
+    private static readonly DependencyProperty IsUpdatingMaskProperty =
+        DependencyProperty.RegisterAttached("IsUpdatingMask", typeof(bool), typeof(MaskService),
+            new PropertyMetadata(false));
 
-    // 全局模糊状态
-    private static bool _isGlobalMaskEnabled = false;
+    private static bool GetIsUpdatingMask(DependencyObject obj) => (bool)obj.GetValue(IsUpdatingMaskProperty);
+    private static void SetIsUpdatingMask(DependencyObject obj, bool value) => obj.SetValue(IsUpdatingMaskProperty, value);
+    #endregion
+
+    #region 全局状态
+    /// <summary>
+    /// 全局遮罩启用状态
+    /// </summary>
+    private static bool _isGlobalMaskEnabled;
+
+    /// <summary>
+    /// 文本控件类型匹配
+    /// </summary>
+    private static readonly Regex _textControlRegex = new(
+        @"^(AbbreviationText|CopyableTextBlock|TextBox|Label|TextBlock|DateTimePicker|DatePicker)$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    #endregion
 
     static MaskService()
     {
-        // 注册全局键盘事件
+        // 全局监听控件加载（解决动态加载控件不生效）
+        EventManager.RegisterClassHandler(
+            typeof(FrameworkElement),
+            FrameworkElement.LoadedEvent,
+            new RoutedEventHandler(OnFrameworkElementLoaded),
+            handledEventsToo: true);
+
+        // 全局F9快捷键
         EventManager.RegisterClassHandler(
             typeof(Window),
             Window.KeyDownEvent,
-            new KeyEventHandler(HandleKeyDown)
-        );
-
-        // 监听所有窗口的Loaded事件，以便处理后续创建的Popup
-        EventManager.RegisterClassHandler(
-            typeof(Window),
-            Window.LoadedEvent,
-            new RoutedEventHandler(OnWindowLoaded)
-        );
+            new KeyEventHandler(OnGlobalKeyDown));
     }
 
-    // 窗口加载时注册Popup监测
-    private static void OnWindowLoaded(object? sender, RoutedEventArgs e)
+    #region 核心：动态控件自动生效 + 绑定更新监听
+    private static void OnFrameworkElementLoaded(object sender, RoutedEventArgs e)
     {
-        if (sender is Window window)
-        {
-            // 监测窗口中所有元素的加载事件，以捕获动态创建的Popup
-            window.AddHandler(FrameworkElement.LoadedEvent, new RoutedEventHandler(OnElementLoaded));
-        }
-    }
+        if (!_isGlobalMaskEnabled || sender is not FrameworkElement element)
+            return;
 
-    // 元素加载时检查是否为Popup并注册事件
-    private static void OnElementLoaded(object? sender, RoutedEventArgs e)
-    {
-        if (e.OriginalSource is Popup popup)
+        // 延迟执行，确保可视化树完全构建
+        element.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () =>
         {
-            // 为每个Popup实例单独注册IsOpen属性变化事件
-            DependencyPropertyDescriptor.FromProperty(Popup.IsOpenProperty, typeof(Popup))
-                .AddValueChanged(popup, Popup_IsOpenChanged);
-        }
-    }
-
-    // 处理单个Popup的IsOpen属性变化
-    private static void Popup_IsOpenChanged(object? sender, EventArgs e)
-    {
-        if (sender is Popup popup && popup.IsOpen && _isGlobalMaskEnabled)
-        {
-            // 延迟处理以确保Popup内容已加载
-            Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+            if (GetIsMask(element))
             {
-                if (popup.Child != null && popup.IsOpen)
-                {
-                    ProcessVisualTree(popup.Child, true);
-                }
-            }));
+                ApplyMask(element);
+            }
+            // 递归处理子控件
+            ProcessVisualTreeChildren(element, true);
+        });
+    }
+
+    /// <summary>
+    /// 为文本控件注册文本变更监听（绑定更新时自动重新遮罩）
+    /// </summary>
+    private static void RegisterTextChangedListener(UIElement element)
+    {
+        if (element is TextBlock tb)
+        {
+            // TextBlock 监听依赖属性变更
+            var desc = DependencyPropertyDescriptor.FromProperty(TextBlock.TextProperty, typeof(TextBlock));
+            desc.AddValueChanged(tb, OnTextUpdated);
+            return;
+        }
+
+        if (element is Control ctrl && _textControlRegex.IsMatch(ctrl.GetType().Name))
+        {
+            var textProp = ctrl.GetType().GetProperty("Text");
+            if (textProp == null) return;
+
+            // 监听 TextProperty 变更
+            var dp = DependencyPropertyDescriptor.FromName(textProp.Name, ctrl.GetType(), ctrl.GetType());
+            dp?.AddValueChanged(ctrl, OnTextUpdated);
+        }
+
+        if (element is ContentControl cc)
+        {
+            // 监听 Content 变更
+            var desc = DependencyPropertyDescriptor.FromProperty(ContentControl.ContentProperty, typeof(ContentControl));
+            desc.AddValueChanged(cc, OnTextUpdated);
         }
     }
 
-    // 属性变更回调
+    /// <summary>
+    /// 文本/内容变更后自动重新遮罩
+    /// </summary>
+    private static void OnTextUpdated(object? sender, EventArgs e)
+    {
+        if (!_isGlobalMaskEnabled || sender is not UIElement element || !GetIsMask(element))
+            return;
+
+        // 防止递归死循环
+        if (GetIsUpdatingMask(element))
+            return;
+
+        try
+        {
+            SetIsUpdatingMask(element, true);
+
+            var original = GetOriginalText(element);
+            if (string.IsNullOrEmpty(original))
+            {
+                // 首次变更：保存新的原始值并覆盖
+                SaveNewOriginalAndApplyMask(element);
+            }
+            else
+            {
+                // 原始值已存在：直接覆盖为脱敏文本
+                ApplyMaskDirectly(element, original);
+            }
+        }
+        finally
+        {
+            SetIsUpdatingMask(element, false);
+        }
+    }
+    #endregion
+
+    #region 手动标记变更
     private static void OnIsMaskChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not UIElement element) return;
+        var enable = (bool)e.NewValue;
 
-        // 当元素的IsMask属性变化时，如果全局启用则立即应用效果
-        if (_isGlobalMaskEnabled && (bool)e.NewValue)
-        {
-            ApplyBlurEffect(element);
-        }
-        else if (!(bool)e.NewValue && GetOriginalEffect(element) != null)
-        {
-            RestoreOriginalEffect(element);
-        }
-
-        // 如果是容器元素，监听其布局变化以捕获新添加的子元素
-        if (d is Panel panel)
-        {
-            panel.LayoutUpdated += Panel_LayoutUpdated;
-        }
-        else if (d is ContentControl contentControl)
-        {
-            contentControl.LayoutUpdated += ContentControl_LayoutUpdated;
-        }
+        if (_isGlobalMaskEnabled && enable)
+            ApplyMask(element);
+        else
+            RestoreMask(element);
     }
+    #endregion
 
-    // 监听ContentControl的布局更新
-    private static void ContentControl_LayoutUpdated(object? sender, EventArgs e)
-    {
-        if (sender is ContentControl contentControl && _isGlobalMaskEnabled)
-        {
-            if (contentControl.Content is DependencyObject content)
-            {
-                ProcessVisualTree(content, true);
-            }
-        }
-    }
-
-    // 监听Panel的布局更新
-    private static void Panel_LayoutUpdated(object? sender, EventArgs e)
-    {
-        if (sender is Panel panel && _isGlobalMaskEnabled)
-        {
-            ProcessVisualTree(panel, true);
-        }
-    }
-
-    private static void OnBlurRadiusChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is UIElement element && _isGlobalMaskEnabled && GetIsMask(element))
-        {
-            ApplyBlurEffect(element);
-        }
-    }
-
-    // 全局按键处理
-    private static void HandleKeyDown(object sender, KeyEventArgs e)
+    #region F9 全局开关
+    private static void OnGlobalKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.F9 && Keyboard.Modifiers == ModifierKeys.None)
         {
-            _isGlobalMaskEnabled = !_isGlobalMaskEnabled;
-            ToggleMaskEffects();
-            UpdateStatusIndicator(sender as Window);
             e.Handled = true;
+            _isGlobalMaskEnabled = !_isGlobalMaskEnabled;
+
+            Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, () =>
+            {
+                RefreshAllMasks();
+                UpdateStatusBar(sender as Window);
+            });
         }
     }
 
-    // 切换所有元素的模糊效果
-    private static void ToggleMaskEffects()
+    /// <summary>
+    /// 刷新所有窗口+弹出层
+    /// </summary>
+    private static void RefreshAllMasks()
     {
         foreach (Window window in Application.Current.Windows)
         {
+            if (!window.IsLoaded) continue;
             ProcessVisualTree(window, _isGlobalMaskEnabled);
-
-            // 处理所有打开的Popup
             ProcessAllPopups(window, _isGlobalMaskEnabled);
         }
     }
+    #endregion
 
-    // 处理所有Popup
-    private static void ProcessAllPopups(DependencyObject parent, bool applyBlur)
+    #region 可视化树遍历（通用）
+    private static void ProcessVisualTree(DependencyObject parent, bool enableMask)
     {
-        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        if (parent == null) return;
+
+        if (parent is UIElement elem && GetIsMask(elem))
+        {
+            if (enableMask) ApplyMask(elem);
+            else RestoreMask(elem);
+        }
+
+        ProcessVisualTreeChildren(parent, enableMask);
+    }
+
+    /// <summary>
+    /// 只遍历子元素（避免重复处理自身）
+    /// </summary>
+    private static void ProcessVisualTreeChildren(DependencyObject parent, bool enableMask)
+    {
+        int count = VisualTreeHelper.GetChildrenCount(parent);
+        for (int i = 0; i < count; i++)
+        {
+            ProcessVisualTree(VisualTreeHelper.GetChild(parent, i), enableMask);
+        }
+
+        // 兼容 Decorator (Border/Viewbox)
+        if (count == 0 && parent is Decorator dec && dec.Child != null)
+        {
+            ProcessVisualTree(dec.Child, enableMask);
+        }
+    }
+
+    /// <summary>
+    /// 处理弹出层 Popup
+    /// </summary>
+    private static void ProcessAllPopups(DependencyObject parent, bool enableMask)
+    {
+        if (parent == null) return;
+
+        int count = VisualTreeHelper.GetChildrenCount(parent);
+        for (int i = 0; i < count; i++)
         {
             var child = VisualTreeHelper.GetChild(parent, i);
 
-            if (child is Popup popup && popup.IsOpen)
+            if (child is Popup { IsOpen: true, Child: { } popupChild })
             {
-                if (popup.Child != null)
-                {
-                    ProcessVisualTree(popup.Child, applyBlur);
-                }
+                ProcessVisualTree(popupChild, enableMask);
+                ProcessAllPopups(popupChild, enableMask);
             }
 
-            // 递归查找子元素中的Popup
-            ProcessAllPopups(child, applyBlur);
+            ProcessAllPopups(child, enableMask);
+        }
+    }
+    #endregion
+
+    #region 应用遮罩
+    private static void ApplyMask(UIElement element)
+    {
+        if (element == null) return;
+
+        // 已处理过，直接跳过
+        if (!string.IsNullOrEmpty(GetOriginalText(element)) || GetOriginalEffect(element) != null)
+            return;
+
+        // 注册文本变更监听（修复绑定更新不生效）
+        RegisterTextChangedListener(element);
+
+        // 优先处理 DateTimePicker / DatePicker
+        if (HandleDateTimePickerMask(element))
+            return;
+
+        // 文本处理
+        ApplyTextMask(element);
+
+        // 图片模糊
+        ApplyImageBlur(element);
+    }
+
+    /// <summary>
+    /// 保存新的原始值并重新遮罩（用于绑定更新）
+    /// </summary>
+    private static void SaveNewOriginalAndApplyMask(UIElement element)
+    {
+        string newOriginal = string.Empty;
+
+        if (element is TextBlock tb)
+            newOriginal = tb.Text;
+        else if (element is Control ctrl && _textControlRegex.IsMatch(ctrl.GetType().Name))
+        {
+            var textProp = ctrl.GetType().GetProperty("Text");
+            newOriginal = textProp?.GetValue(ctrl)?.ToString() ?? "";
+        }
+        else if (element is ContentControl cc && cc.Content is string s)
+            newOriginal = s;
+
+        if (string.IsNullOrEmpty(newOriginal)) return;
+
+        SetOriginalText(element, newOriginal);
+        ApplyMaskDirectly(element, newOriginal);
+    }
+
+    /// <summary>
+    /// 直接应用遮罩（不修改原始值）
+    /// </summary>
+    private static void ApplyMaskDirectly(UIElement element, string originalText)
+    {
+        string maskText = ToNewText(originalText);
+
+        if (element is TextBlock tb)
+            tb.Text = maskText;
+        else if (element is Control ctrl && _textControlRegex.IsMatch(ctrl.GetType().Name))
+        {
+            var textProp = ctrl.GetType().GetProperty("Text");
+            textProp?.SetValue(ctrl, maskText);
+        }
+        else if (element is ContentControl cc)
+            cc.Content = maskText;
+    }
+
+    /// <summary>
+    /// 专门处理日期选择器：遮罩时固定显示 2000-01-01
+    /// </summary>
+    private static bool HandleDateTimePickerMask(UIElement element)
+    {
+        try
+        {
+            var type = element.GetType();
+            if (!type.Name.Equals("DatePicker", StringComparison.OrdinalIgnoreCase) &&
+                !type.Name.Equals("DateTimePicker", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var textProp = type.GetProperty("Text");
+            var valueProp = type.GetProperty("Value");
+
+            if (textProp == null) return false;
+
+            var originalText = textProp.GetValue(element)?.ToString() ?? "";
+            SetOriginalText(element, originalText);
+
+            textProp.SetValue(element, "2000-01-01");
+
+            if (valueProp != null && valueProp.PropertyType == typeof(DateTime?))
+                valueProp.SetValue(element, new DateTime(2000, 1, 1));
+
+            return true;
+        }
+        catch
+        {
+            return false;
         }
     }
 
-    // 递归处理视觉树
-    private static void ProcessVisualTree(DependencyObject parent, bool applyBlur)
+    private static void ApplyTextMask(UIElement element)
     {
-        if (parent is UIElement element && GetIsMask(element))
+        // TextBlock
+        if (element is TextBlock tb && !string.IsNullOrWhiteSpace(tb.Text))
         {
-            if (applyBlur)
-                ApplyBlurEffect(element);
-            else
-                RestoreOriginalEffect(element);
+            SetOriginalText(tb, tb.Text);
+            tb.Text = ToNewText(tb.Text);
+            return;
         }
 
-        // 处理子元素
-        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+        // 带Text属性的控件
+        if (element is Control ctrl && _textControlRegex.IsMatch(ctrl.GetType().Name))
         {
-            var child = VisualTreeHelper.GetChild(parent, i);
-            ProcessVisualTree(child, applyBlur);
+            var textProp = ctrl.GetType().GetProperty("Text");
+            if (textProp is null) return;
+
+            var original = textProp.GetValue(ctrl)?.ToString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(original)) return;
+
+            SetOriginalText(ctrl, original);
+            textProp.SetValue(ctrl, ToNewText(original));
+            return;
+        }
+
+        // Content 是纯文本的控件（Label/Button等）
+        if (element is ContentControl cc && cc.Content is string content)
+        {
+            if (string.IsNullOrWhiteSpace(content)) return;
+
+            SetOriginalText(cc, content);
+            cc.Content = ToNewText(content);
         }
     }
 
-    // 应用模糊效果
-    private static void ApplyBlurEffect(UIElement element)
+    private static string ToNewText(string? old)
     {
-        if (GetOriginalEffect(element) == null)
-        {
-            // 保存原始效果
-            SetOriginalEffect(element, element.Effect);
+        if (string.IsNullOrWhiteSpace(old)) return "";
 
-            // 应用模糊效果
-            double radius = GetBlurRadius(element);
-            element.Effect = new BlurEffect { Radius = radius };
-        }
-        else
+        if (DateOnly.TryParse(old, out DateOnly d))
+            return "2000-01-01";
+
+        if (Regex.Match(old, @"[\d一二三四五六七八九十]+号") is Match m && m.Success)
+            return $"演示产品{m.Value}";
+
+        if (Regex.IsMatch(old, @"S\w{5}"))
+            return "SABCDE";
+
+        if (Regex.IsMatch(old, @"^1\d{10}$"))
+            return "13999999999";
+
+        if (Regex.IsMatch(old, @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
+            return "mail@abc.com";
+
+        if (Regex.IsMatch(old, @"^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"))
+            return "www.abc.com";
+
+        if (Regex.IsMatch(old, @"^[\d\*]{17}[\dXx]$"))
+            return $"{old[..6]}*************";
+
+
+        if (int.TryParse(old, null, out var dd))
+            return "999";
+
+        return $"演示{old.GetHashCode()}";
+    }
+
+    private static void ApplyImageBlur(UIElement element)
+    {
+        if (element is not Image img) return;
+
+        SetOriginalEffect(img, img.Effect);
+        img.Effect = new BlurEffect { Radius = GetBlurRadius(img) };
+    }
+    #endregion
+
+    #region 恢复原始内容
+    private static void RestoreMask(UIElement element)
+    {
+        if (element == null) return;
+
+        // 恢复日期选择器
+        if (HandleDateTimePickerRestore(element))
+            return;
+
+        RestoreText(element);
+        RestoreImageEffect(element);
+    }
+
+    /// <summary>
+    /// 恢复日期选择器原始值
+    /// </summary>
+    private static bool HandleDateTimePickerRestore(UIElement element)
+    {
+        try
         {
-            // 更新现有模糊效果
-            if (element.Effect is BlurEffect blurEffect)
+            var type = element.GetType();
+            if (!type.Name.Equals("DateTimePicker", StringComparison.OrdinalIgnoreCase) &&
+                !type.Name.Equals("DatePicker", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var original = GetOriginalText(element);
+            if (string.IsNullOrEmpty(original)) return false;
+
+            var textProp = type.GetProperty("Text");
+            textProp?.SetValue(element, original);
+
+            SetOriginalText(element, string.Empty);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void RestoreText(UIElement element)
+    {
+        var original = GetOriginalText(element);
+        if (string.IsNullOrEmpty(original)) return;
+
+        try
+        {
+            SetIsUpdatingMask(element, true);
+
+            // TextBlock
+            if (element is TextBlock tb)
+                tb.Text = original;
+            // Text 控件
+            else if (element is Control ctrl && _textControlRegex.IsMatch(ctrl.GetType().Name))
             {
-                blurEffect.Radius = GetBlurRadius(element);
+                var textProp = ctrl.GetType().GetProperty("Text");
+                textProp?.SetValue(ctrl, original);
             }
+            // Content 文本
+            else if (element is ContentControl cc)
+                cc.Content = original;
+        }
+        finally
+        {
+            SetIsUpdatingMask(element, false);
+            SetOriginalText(element, string.Empty);
         }
     }
 
-    // 恢复原始效果
-    private static void RestoreOriginalEffect(UIElement element)
+    private static void RestoreImageEffect(UIElement element)
     {
-        var originalEffect = GetOriginalEffect(element);
+        if (element is not Image img) return;
 
-        element.Effect = originalEffect;
-        SetOriginalEffect(element, null);
+        img.Effect = GetOriginalEffect(img);
+        SetOriginalEffect(img, null);
     }
+    #endregion
 
-    // 更新状态指示器
-    private static void UpdateStatusIndicator(Window? window)
+    #region 状态栏提示
+    private static void UpdateStatusBar(Window? window)
     {
         if (window == null) return;
 
         if (window.FindName("statusIndicator") is Border indicator &&
-            window.FindName("statusText") is TextBlock statusText)
+            window.FindName("statusText") is TextBlock txt)
         {
             if (_isGlobalMaskEnabled)
             {
-                indicator.Background = new SolidColorBrush(Colors.Red);
-                statusText.Text = "隐私保护已启用 (按 F9 关闭)";
+                indicator.Background = Brushes.Red;
+                txt.Text = "隐私保护已启用（F9关闭）";
             }
             else
             {
-                indicator.Background = new SolidColorBrush(Colors.Green);
-                statusText.Text = "隐私保护已禁用 (按 F9 启用)";
+                indicator.Background = Brushes.Green;
+                txt.Text = "隐私保护已禁用（F9启用）";
             }
         }
     }
+    #endregion
 }

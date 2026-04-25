@@ -226,7 +226,7 @@
                     <DataGridTemplateColumn Header="姓名">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <shared:CopyableTextBlock Text="{Binding Holder.Name}">
+                                <shared:CopyableTextBlock shared:MaskService.IsMask="True" Text="{Binding Holder.Name}">
                                     <i:Interaction.Triggers>
                                         <i:EventTrigger EventName="MouseDoubleClick">
                                             <i:InvokeCommandAction Command="{Binding OpenEntityCommand}" />
