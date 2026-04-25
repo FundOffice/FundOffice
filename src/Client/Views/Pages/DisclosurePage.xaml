@@ -53,6 +53,125 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+
+        <Style x:Key="NoArrowExpander" TargetType="Expander">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Expander">
+                        <Border BorderBrush="LightGray" BorderThickness="1">
+                            <DockPanel LastChildFill="True">
+                                <!--  标题区域（无箭头）  -->
+                                <ToggleButton
+                                    HorizontalContentAlignment="Stretch"
+                                    VerticalContentAlignment="Center"
+                                    Background="#eeeeee"
+                                    Content="{TemplateBinding Header}"
+                                    DockPanel.Dock="Top"
+                                    IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ToggleButton.Style>
+                                        <Style TargetType="ToggleButton">
+                                            <Setter Property="OverridesDefaultStyle" Value="True" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ToggleButton">
+                                                        <Border Background="{TemplateBinding Background}">
+                                                            <ContentPresenter
+                                                                Margin="3,2"
+                                                                HorizontalAlignment="Stretch"
+                                                                VerticalAlignment="Center" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ToggleButton.Style>
+                                </ToggleButton>
+
+                                <!--  展开内容区域  -->
+                                <ContentPresenter
+                                    x:Name="ExpandSite"
+                                    DockPanel.Dock="Bottom"
+                                    Visibility="Collapsed" />
+                            </DockPanel>
+                        </Border>
+
+                        <!--  触发展开/折叠动画  -->
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="RunDataTemplate" DataType="local:DisclosureRunViewModel">
+            <Expander Style="{StaticResource NoArrowExpander}">
+                <Expander.Header>
+                    <DockPanel>
+                        <DockPanel.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                        </DockPanel.Resources>
+
+
+                        <hc:SimplePanel DockPanel.Dock="Right">
+                            <DockPanel Visibility="{Binding HasInstance, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                <TextBlock
+                                    Margin="3,0"
+                                    Foreground="Red"
+                                    Text="未创建信批任务" />
+                                <Button
+                                    Command="{Binding CreateInstanceCommand}"
+                                    Content="创建"
+                                    Style="{StaticResource ButtonPrimary.Small}" />
+                            </DockPanel>
+
+                            <TextBlock
+                                DockPanel.Dock="Top"
+                                Text="{Binding Status, Converter={StaticResource EnumDescriptionConverter}}"
+                                Visibility="{Binding HasInstance, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                        </hc:SimplePanel>
+                        <TextBlock Foreground="DodgerBlue" Text="{Binding ChannelName}" />
+
+                    </DockPanel>
+                </Expander.Header>
+
+                <hc:SimplePanel Visibility="{Binding HasInstance, Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <StackPanel x:Name="detail" Margin="4,0">
+                        <DockPanel>
+
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding StartedTime, StringFormat=yyyy/MM/dd HH:mm:ss}" />
+                            <TextBlock Text="首次执行" />
+                        </DockPanel>
+
+                        <DockPanel>
+
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding CompletedTime, StringFormat=yyyy/MM/dd HH:mm:ss}" />
+                            <TextBlock Text="完成" />
+                        </DockPanel>
+
+
+                        <DockPanel>
+
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding Error}" />
+                            <TextBlock Text="错误" />
+                        </DockPanel>
+                    </StackPanel>
+                </hc:SimplePanel>
+            </Expander>
+        </DataTemplate>
+
+
+
+
+
+
     </UserControl.Resources>
     <DockPanel>
 
@@ -115,7 +234,7 @@
 
                     <DataTemplate x:Key="ReportItem">
                         <Border>
-                            <DockPanel Margin="4">
+                            <StackPanel Margin="4">
                                 <DockPanel DockPanel.Dock="Top">
                                     <TextBlock
                                         shared:MaskService.IsMask="True"
@@ -173,13 +292,20 @@
 
 
                                 </UniformGrid>
-                            </DockPanel>
+
+                                <ListBox
+                                    BorderThickness="0"
+                                    ItemTemplate="{StaticResource RunDataTemplate}"
+                                    ItemsSource="{Binding Runs}"
+                                    Style="{StaticResource ListBoxCustom}" />
+
+                            </StackPanel>
                         </Border>
                     </DataTemplate>
 
                     <DataTemplate x:Key="ReportItem2">
                         <Border>
-                            <DockPanel Margin="4">
+                            <StackPanel Margin="4">
 
                                 <DockPanel DockPanel.Dock="Top">
                                     <TextBlock
@@ -243,7 +369,14 @@
                                         </shared:FileView.Header>
                                     </shared:FileView>
                                 </UniformGrid>
-                            </DockPanel>
+
+
+                                <ListBox
+                                    BorderThickness="0"
+                                    ItemTemplate="{StaticResource RunDataTemplate}"
+                                    ItemsSource="{Binding Runs}"
+                                    Style="{StaticResource ListBoxCustom}" />
+                            </StackPanel>
                         </Border>
                     </DataTemplate>
 
@@ -256,11 +389,6 @@
                                         shared:MaskService.IsMask="True"
                                         FontSize="15"
                                         Text="{Binding FundName}" />
-                                    <Button
-                                        hc:IconElement.Geometry="{StaticResource f.upload}"
-                                        Command="{Binding UploadOperationCommand}"
-                                        DockPanel.Dock="Right"
-                                        Style="{StaticResource ButtonIcon.Small}" />
 
                                 </DockPanel>
 
@@ -415,6 +543,11 @@
 
                                     </DockPanel>
 
+                                    <ListBox
+                                        BorderThickness="0"
+                                        ItemTemplate="{StaticResource RunDataTemplate}"
+                                        ItemsSource="{Binding Runs}"
+                                        Style="{StaticResource ListBoxCustom}" />
                                 </StackPanel>
                             </DockPanel>
                         </Border>

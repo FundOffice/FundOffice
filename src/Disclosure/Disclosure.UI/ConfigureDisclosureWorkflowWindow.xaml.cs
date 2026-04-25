@@ -77,7 +77,7 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
 
     public ConfigureDisclosureWorkflowWindowViewModel()
     {
-        Channels = DisclosureChannelManager.GetRegisteredChannels().ToArray();
+        Channels = DisclosureChannelManager.GetRegisteredChannels().Where(x => x.Code != DisclosureChannelCode.QuarterlyUpdate).ToArray();
 
         // 检查是否有对应的配置界面
         using var db = DbHelper.Base();
@@ -97,38 +97,25 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
         var funds = db.GetCollection<Fund>().Query().Select(x => new { Name = x.Name, Code = x.Code!, Id = x.Id, }).ToArray();
 
 
-        Types = Enum.GetValues<DisclosureType>().Except([DisclosureType.Temporary, DisclosureType.ManagerLevel]).ToArray();
-
-        var dd = db.GetCollection<DisclosureWorkflow>().FindAll().ToArray();
-        var data = dd.ToDictionary(x => x.Id);
+        Types = Enum.GetValues<DisclosureType>().Except([DisclosureType.Temporary, DisclosureType.ManagerLevel, DisclosureType.QuarterlyUpdate]).ToArray();
 
 
+        var dd = DisclosureChannelManager.GetWorkflows();
+    
         foreach (var c in Channels)
         {
-            var list = new List<DisclosureWorkflow?>();
-            foreach (var t in Types)
-            {
-                if (c.IsSupported(t) == false)
-                {
-                    list.Add(null);
-                    continue;
-                }
-                var key = c.Code + t;
-                if (data.ContainsKey(key))
-                {
-                    list.Add(data[key]);
-                }
-                else
-                {
-                    list.Add(new DisclosureWorkflow { Channel = c.Code, Type = t });
-                }
-            }
+            var rowd = from a in Types
+                       join b in dd.Where(x => x.Channel == c.Code)  on a equals b.Type
+                       into instanceGroup
+                       from instance in instanceGroup.DefaultIfEmpty()
+                       select instance;
+
 
             Workflows.Add(new WorkflowRow
             {
                 Head = c,
                 Config = cm[c.Code],
-                Workflows = list.Select(x => new DisclosureWorkflowViewModel(x, funds.Select(x => new DisclosureWorkflowViewModel.FundSelectInfo
+                Workflows = rowd.Select(x => new DisclosureWorkflowViewModel(x, funds.Select(x => new DisclosureWorkflowViewModel.FundSelectInfo
                 {
                     Code = x.Code,
                     Name = x.Name,
@@ -254,9 +241,7 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
             Config = this.Config,
         };
 
-        // 持久化到数据库
-        using var db = DbHelper.Base();
-        db.GetCollection<DisclosureWorkflow>().Upsert(obj);
+        DisclosureChannelManager.UpdateWorkflow(obj);
     }
 
 

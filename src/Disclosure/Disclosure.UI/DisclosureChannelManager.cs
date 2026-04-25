@@ -1,3 +1,5 @@
+using FMO.Utilities;
+
 namespace FMO.Disclosure;
 
 
@@ -20,21 +22,85 @@ public static class DisclosureChannelManager
 
     private static readonly Dictionary<string, Func<IDisclosureChannelConfig?>> _configCreators = new();
 
+    private static readonly Dictionary<string, DisclosureWorkflow> _workflows;
+
+    public static DisclosureType[] DisclosureTypes { get; } = Enum.GetValues<DisclosureType>().Except([DisclosureType.Temporary, DisclosureType.ManagerLevel]).ToArray();
+
     /// <summary>
     /// 静态构造：初始化默认通道
     /// </summary>
-
+    static DisclosureChannelManager()
+    {
+        using var db = DbHelper.Base();
+        _workflows = db.GetCollection<DisclosureWorkflow>().FindAll().ToDictionary(x => x.Id);
+    }
 
     #region 初始化（原有默认通道）
     public static void Initialize()
     {
+
+
         // 注册通道实例
         Register<EmailChannelConfig>(new EmailDisclosureChannel(), () => new EmailChannelConfigViewModel(), (x) => new EmailChannelConfigViewModel(x));
         Register<PfidChannelConfig>(new PFIDDisclosureChannel(), () => new PfidChannelConfigViewModel(), (x) => new PfidChannelConfigViewModel(x));
         Register<MeiShiChannelConfig>(new MeiShiDisclosureChannel(), () => new MeiShiChannelConfigViewModel(), (x) => new MeiShiChannelConfigViewModel(x));
 
+        // 创建季度更新通道
+        RegisterQuartlyUpdateChannel();
+    }
+
+    private static void RegisterQuartlyUpdateChannel()
+    {
+        QuarterlyUpdateChannel quarterlyUpdateChannel = new();
+        _channels[DisclosureChannelCode.QuarterlyUpdate] = quarterlyUpdateChannel;
+        InitWorkflows(quarterlyUpdateChannel);
     }
     #endregion
+
+
+
+    private static void InitWorkflows(IDisclosureChannel channel)
+    {
+        // 季度更新通道特殊处理：仅创建一个季度更新类型的工作流，并确保其始终启用
+        if (channel is QuarterlyUpdateChannel)
+        {
+            var type = DisclosureType.QuarterlyUpdate;
+            var id = DisclosureWorkflow.GetId(channel.Code, type);
+            if (!_workflows.ContainsKey(id))
+            {
+                var flow = new DisclosureWorkflow { Channel = channel.Code, Type = type, ForAllFunds = true, IsEnabled = true }; 
+                _workflows[id] = flow;
+                using var db = DbHelper.Base();
+                db.GetCollection<DisclosureWorkflow>().Insert(flow);
+            }
+            else
+                _workflows[id].IsEnabled = true; // 确保季度更新通道的工作流始终启用
+
+            return;
+        }
+
+        List<DisclosureWorkflow> _toUpdate = [];
+        foreach (var type in DisclosureTypes)
+        {
+            if (!channel.IsSupported(type))
+                continue;
+
+            var id = DisclosureWorkflow.GetId(channel.Code, type);
+            if (!_workflows.ContainsKey(id))
+            {
+                var flow = new DisclosureWorkflow { Channel = channel.Code, Type = type };
+                _workflows[id] = flow;
+                _toUpdate.Add(flow);
+            }
+        }
+        if (_toUpdate.Count > 0)
+        {
+            using var db = DbHelper.Base();
+            var col = db.GetCollection<DisclosureWorkflow>().InsertBulk(_toUpdate);
+        }
+    }
+
+
 
     public static bool Register<T>(IDisclosureChannel channel, Func<ChannelConfigViewModel?> creator, Func<T, ChannelConfigViewModel?> creator2) where T : IDisclosureChannelConfig
     {
@@ -43,6 +109,7 @@ public static class DisclosureChannelManager
         _channels[channel.Code] = channel;
         _codeCreators[channel.Code] = creator;
         _typeCreators[typeof(T)] = config => creator2((T)config);
+        InitWorkflows(channel);
         return true;
     }
 
@@ -55,8 +122,8 @@ public static class DisclosureChannelManager
 
     public static bool IsChannelRegistered(string channel) => _channels.ContainsKey(channel);
 
-    public static IDisclosureChannel? GetChannel(string channel) =>
-        _channels.TryGetValue(channel, out var instance) ? instance : null;
+    public static IDisclosureChannel? GetChannel(string? channel) =>
+        string.IsNullOrWhiteSpace(channel) ? null : _channels.TryGetValue(channel, out var instance) ? instance : null;
     #endregion
 
 
@@ -78,7 +145,7 @@ public static class DisclosureChannelManager
         return _configCreators.TryGetValue(channel.Code, out var func) ? func() : null;
     }
 
- 
+
 
     // 原方法 1：按 Code 创建（不变）
     public static ChannelConfigViewModel? CreateViewModel(string channelCode)
@@ -92,5 +159,16 @@ public static class DisclosureChannelManager
         if (config is null) return null;
         var type = config.GetType();
         return _typeCreators.TryGetValue(type, out var func) ? func(config) : null;
+    }
+
+    public static DisclosureWorkflow[] GetWorkflows() => _workflows.Values.ToArray();
+
+    internal static void UpdateWorkflow(DisclosureWorkflow obj)
+    {
+        _workflows[obj.Id] = obj;
+
+        // 持久化到数据库
+        using var db = DbHelper.Base();
+        db.GetCollection<DisclosureWorkflow>().Upsert(obj);
     }
 }

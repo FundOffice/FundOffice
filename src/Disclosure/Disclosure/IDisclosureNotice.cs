@@ -37,15 +37,19 @@ public interface IFundDisclosureNotice : IDisclosureNotice
 }
 
 
+public interface IFundPeriodicalDisclosure : IFundDisclosureNotice
+{
+    DateOnly ReportDate { get; }
+}
 
 
 /// <summary>
 /// 定期报告
 /// 月报、季报、半年报、年报等
 /// </summary>
-public class PeriodicalDisclosureNotice : IFundDisclosureNotice
+public class PeriodicalDisclosureNotice : IFundPeriodicalDisclosure
 {
-    public long Id => ReportDate.DayNumber << 32 | FundId << 10 | ((int)Type);
+    public long Id => ((long)ReportDate.DayNumber) << 32 | (long)FundId << 10 | ((long)Type);
 
     public DisclosureType Type { get; set; }
 
@@ -72,6 +76,47 @@ public class PeriodicalDisclosureNotice : IFundDisclosureNotice
     public SimpleFile? Pdf { get; set; }
 
     public SimpleFile? Sealed { get; set; }
+
+
+}
+
+/// <summary>
+/// 季度更新
+/// </summary>
+public class QuarterlyUpdate : IFundPeriodicalDisclosure
+{
+    public long Id => ((long)ReportDate.DayNumber) << 32 | (long)FundId << 10 | ((long)Type);
+
+    public required int FundId { get; set; }
+
+    public required string FundCode { get; set; }
+
+    public DisclosureType Type => DisclosureType.QuarterlyUpdate;
+
+    public required string FundName { get; set; }
+
+
+    public DateOnly PublishDate { get; set; }
+
+    public required string Name { get; set; }
+
+
+    /// <summary>
+    /// 定期报告的最后一天
+    /// </summary>
+
+    public DateOnly ReportDate { get; set; }
+
+    /// <summary>
+    /// 投资者
+    /// </summary>
+    public SimpleFile? Investor { get; set; }
+
+    /// <summary>
+    /// 运行信息
+    /// </summary>
+    public SimpleFile? Operation { get; set; }
+
 
 
 }

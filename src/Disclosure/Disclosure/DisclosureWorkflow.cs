@@ -8,7 +8,7 @@
 /// </summary>
 public class DisclosureWorkflow
 {
-    public string Id => Channel + Type;
+    public string Id => GetId( Channel , Type);
 
     public bool IsEnabled { get; set; }
 
@@ -38,5 +38,7 @@ public class DisclosureWorkflow
 
     //public Dictionary<string, object> Params { get; set; } = [];
     public IWorkConfig? Config { get; set; }
+
+    public static string GetId(string channel, DisclosureType type) => $"{channel}.{type}";
 }
 

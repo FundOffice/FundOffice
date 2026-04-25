@@ -3,28 +3,19 @@ using LiteDB;
 using System.Collections.Concurrent;
 
 namespace FMO.Disclosure;
- 
+
 
 public static class DisclosureWorkflowService
 {
-
-
-
-
-
-
-
-
-
 
 
     public static IEnumerable<DisclosureWorkflow> GetApplicableWorkflows(IDisclosureNotice report)
     {
         using var db = DbHelper.Base();
         if (report.Type > DisclosureType.ManagerLevel)
-            return db.GetCollection<DisclosureWorkflow>().Find(x => x.IsEnabled && x.Type == report.Type).ToList();
+            return db.GetCollection<DisclosureWorkflow>().Find(x => x.IsEnabled && x.Type == report.Type).ToArray();
         else if (report is IFundDisclosureNotice r)
-            return db.GetCollection<DisclosureWorkflow>().Query().Where(x => x.IsEnabled && x.Type == report.Type).Where(w => w.ForAllFunds || w.TargetFunds.Contains(r.FundId)).ToList();
+            return db.GetCollection<DisclosureWorkflow>().Query().Where(x => x.IsEnabled && x.Type == report.Type).Where(w => w.ForAllFunds || w.TargetFunds.Contains(r.FundId)).ToArray();
         else return [];
     }
 
@@ -37,7 +28,12 @@ public static class DisclosureWorkflowService
     /// <returns></returns>
     public static DisclosureInstance CreateInstance(DisclosureWorkflow workflow, IDisclosureNotice report)
     {
-        return new DisclosureInstance
+        using var db = DbHelper.Base();
+        var old = db.GetCollection<DisclosureInstance>().FindById($"{workflow.Channel}-{report.Id}");
+        if (old is not null && old.WorkflowId == workflow.Id)
+            return old;
+
+        var instance = new DisclosureInstance
         {
             WorkflowId = workflow.Id,
             NoticeId = report.Id,
@@ -45,9 +41,24 @@ public static class DisclosureWorkflowService
             FundId = report is IFundDisclosureNotice f ? f.FundId : 0,
             Type = report.Type,
         };
+
+        db.GetCollection<DisclosureInstance>().Upsert(instance);
+        return instance;
     }
 
+    public static DisclosureInstance[] CreateInstance(IDisclosureNotice report)
+    {
+        using var db = DbHelper.Base();
+        var exist = db.GetCollection<DisclosureInstance>().Find(x => x.NoticeId == report.Id).ToList();
 
+        DisclosureInstance[] gen;
+
+        var workflows = GetApplicableWorkflows(report);
+        gen = workflows.ExceptBy(exist.Select(x => x.WorkflowId), x => x.Id).Select(w => CreateInstance(w, report)).ToArray();
+
+        db.GetCollection<DisclosureInstance>().InsertBulk(gen);
+        return gen;
+    }
 
 
 
@@ -69,7 +80,7 @@ public static class DisclosureWorkflowService
             var col = db.GetCollection<DisclosureResult>();
             result = col.FindById(instance.Id) ?? new DisclosureResult { Id = instance.Id };
 
-            if (result.Status == DisclosureStatus.Published)
+            if (result.Status == DisclosureStatus.Successed)
                 return result;
 
             // 更新执行状态
@@ -96,7 +107,7 @@ public static class DisclosureWorkflowService
 
             // 4. 【外层统一赋值 + 统一保存】
             result.Error = workResult.Error;
-            result.Status = workResult.Successed ? DisclosureStatus.Published : DisclosureStatus.Failed;
+            result.Status = workResult.Successed ? DisclosureStatus.Successed : DisclosureStatus.Failed;
             result.CompletedTime = DateTime.Now;
 
             using (var db = DbHelper.Base())
@@ -176,3 +187,14 @@ public static class DisclosureWorkflowService
 }
 
 internal record DisclosureInstanceLog(string Level, string Message);
+
+
+public class DisclosureWorker
+{
+
+
+
+
+
+}
+

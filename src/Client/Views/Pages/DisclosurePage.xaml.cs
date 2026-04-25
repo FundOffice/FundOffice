@@ -1,12 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Disclosure;
 using FMO.AMAC.Direct;
+using FMO.Disclosure;
 using FMO.ESigning.MeiShi;
 using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
+using LiteDB;
 using System.IO;
 using System.IO.Compression;
 using System.Windows.Controls;
@@ -40,13 +41,13 @@ public partial class DisclosurePageViewModel : ObservableObject
         debouncer = new Debouncer(() => Update());
 
         clearDateMap = db.GetCollection<Fund>().Query().Select(x => new { x.Code, x.ClearDate, x.Status }).ToArray().ToDictionary(x => x.Code!, x => x.Status == FundStatus.Normal ? DateOnly.MaxValue : x.ClearDate);
-        MonthlySource.Filter += (s, e) => e.Accepted = Filter(e.Item as FundPeriodicReportViewModel);
-        QuarterlySource.Filter += (s, e) => e.Accepted = Filter(e.Item as FundPeriodicReportViewModel);
-        SemiAnnualSource.Filter += (s, e) => e.Accepted = Filter(e.Item as FundPeriodicReportViewModel);
-        AnnualSource.Filter += (s, e) => e.Accepted = Filter(e.Item as FundPeriodicReportViewModel);
+        MonthlySource.Filter += (s, e) => e.Accepted = Filter(e.Item as PeriodicReportViewModel);
+        QuarterlySource.Filter += (s, e) => e.Accepted = Filter(e.Item as PeriodicReportViewModel);
+        SemiAnnualSource.Filter += (s, e) => e.Accepted = Filter(e.Item as PeriodicReportViewModel);
+        AnnualSource.Filter += (s, e) => e.Accepted = Filter(e.Item as PeriodicReportViewModel);
     }
 
-    private bool Filter(FundPeriodicReportViewModel? v)
+    private bool Filter(PeriodicReportViewModel? v)
     {
         return !FilterClearedFund || (v is not null && clearDateMap.TryGetValue(v.Code!, out var date) && date > v.PeriodEnd);
     }
@@ -117,39 +118,51 @@ public partial class DisclosurePageViewModel : ObservableObject
 
     private void Update()
     {
+        var pe = new DateOnly(SelectedYear!.Value, SelectedMonth!.Value, 1).AddMonths(1).AddDays(-1);
+
         using var db = DbHelper.Base();
-        var reports = db.GetCollection<FundPeriodicReport>().Find(x => x.PeriodEnd.Year == SelectedYear && x.PeriodEnd.Month == SelectedMonth).ToArray();
-        var dic = db.GetCollection<Fund>().Query().Select(x => new { x.Code, x.Name }).ToArray().ToDictionary(x => x.Code!, x => x.Name);
-        List<FundQuarterlyUpdate> qu = [];
+
+        var reports = db.GetCollection<IDisclosureNotice>().Query().Where("_type LIKE @0", $"%{nameof(PeriodicalDisclosureNotice)}%").
+            Where($"{nameof(PeriodicalDisclosureNotice.ReportDate)}.DayNumber=@0", pe.DayNumber).ToList().Cast<PeriodicalDisclosureNotice>().ToList();
+
+        var updates = db.GetCollection<IDisclosureNotice>().Query().Where("_type LIKE @0", $"%{nameof(QuarterlyUpdate)}%").
+            Where($"{nameof(QuarterlyUpdate.ReportDate)}.DayNumber=@0", pe.DayNumber).ToList().Cast<QuarterlyUpdate>().ToList();
+
+
+        var noticeIds = reports.Select(x => x.Id).Concat(updates.Select(x => x.Id)).ToArray();
+
+        var workflows = db.GetCollection<DisclosureWorkflow>().Find(x => x.IsEnabled && !string.IsNullOrWhiteSpace(x.Channel)).ToArray().ToLookup(x => x.Type);
+
+        var run = db.GetCollection<DisclosureInstance>().Query().Where(Query.In(nameof(DisclosureInstance.NoticeId), noticeIds.Select(x => new BsonValue(x)))).ToArray().ToLookup(x => x.NoticeId);
+
         if (SelectedMonth % 3 == 0)
         {
-            qu = db.GetCollection<FundQuarterlyUpdate>().Find(x => x.PeriodEnd.Year == SelectedYear && x.PeriodEnd.Month == SelectedMonth).ToList();
-
             // 补全没有的季度更新
-            var date = new DateOnly(SelectedYear!.Value, SelectedMonth!.Value, 1).AddMonths(1).AddDays(-1);
-            var lack = db.GetCollection<Fund>().Find(x => x.Status == FundStatus.Normal || x.ClearDate > date).ToList().ExceptBy(qu.Select(x => x.FundId), x => x.Id);
+            var lack = db.GetCollection<Fund>().Find(x => x.Status == FundStatus.Normal || x.ClearDate > pe).ToList().ExceptBy(updates.Select(x => x.FundId), x => x.Id);
             foreach (var item in lack)
             {
-                var v = new FundQuarterlyUpdate
+                var v = new QuarterlyUpdate
                 {
                     FundId = item.Id,
-                    FundCode = item.Code,
-                    PeriodEnd = date
+                    FundCode = item.Code!,
+                    FundName = item.Name,
+                    Name = $"{item.Name}_季度更新_{pe}",
+                    ReportDate = pe
                 };
-                qu.Add(v);
-                db.GetCollection<FundQuarterlyUpdate>().Insert(v);
+                updates.Add(v);
+                db.GetCollection<IDisclosureNotice>().Insert(v);
             }
         }
 
-        var vm = reports.Select(x => new FundPeriodicReportViewModel(x) { FundName = dic[x.FundCode!] });
+        var vm = reports.Select(x => new PeriodicReportViewModel(x, workflows[x.Type], run[x.Id])).ToArray();
 
         App.Current.Dispatcher.InvokeAsync(() =>
         {
-            MonthlySource.Source = vm.Where(x => x.Type == FundReportType.MonthlyReport);
-            QuarterlySource.Source = vm.Where(x => x.Type == FundReportType.QuarterlyReport);
-            SemiAnnualSource.Source = vm.Where(x => x.Type == FundReportType.SemiAnnualReport);
-            AnnualSource.Source = vm.Where(x => x.Type == FundReportType.AnnualReport);
-            QuarterlyUpdateSource.Source = qu.Select(x => new FundQuarterlyUpdateViewModel(x, db.GetCollection<AmacProcessResult>().FindById(x.Id)) { FundName = dic[x.FundCode!] });
+            MonthlySource.Source = vm.Where(x => x.Type == DisclosureType.Monthly);
+            QuarterlySource.Source = vm.Where(x => x.Type == DisclosureType.Quarterly);
+            SemiAnnualSource.Source = vm.Where(x => x.Type == DisclosureType.SemiAnnually);
+            AnnualSource.Source = vm.Where(x => x.Type == DisclosureType.Annually);
+            QuarterlyUpdateSource.Source = updates.Select(x => new QuarterlyUpdateViewModel(x, workflows[x.Type], run[x.Id], db.GetCollection<AmacProcessResult>().FindById(x.Id)));
         });
 
     }
@@ -318,9 +331,9 @@ public partial class DisclosurePageViewModel : ObservableObject
                     try
                     {
                         bool r = await assit.UploadDisclosureFile(v.FundName!, v.Code!, "", DateTime.Now, $"{v.FundName}-{SelectedYear}年{q}季度报告", @$"temp\{v.FundName}-{SelectedYear}年{q}季度报告.pdf");
-                        if(!r) WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"Failed to upload {v.FundName} - {SelectedYear}年{q}季度报告"));
+                        if (!r) WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"Failed to upload {v.FundName} - {SelectedYear}年{q}季度报告"));
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"Failed to upload {v.FundName} - {SelectedYear}年{q}季度报告"));
                     }
@@ -336,5 +349,7 @@ public partial class DisclosurePageViewModel : ObservableObject
         var wnd = new ConfigureDisclosureWorkflowWindow();
         wnd.Owner = App.Current.MainWindow;
         wnd.ShowDialog();
+
+        debouncer.Invoke();
     }
 }

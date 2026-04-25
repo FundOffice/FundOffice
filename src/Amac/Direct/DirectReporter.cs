@@ -1,6 +1,7 @@
 ﻿
 //#define TEST_PFID
 
+using FMO.Disclosure;
 using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
@@ -506,6 +507,11 @@ public class DirectReporter
             "101" => "操作机构名称必填写",
             _ => $"未知状态码：{code}"
         };
+    }
+
+    public static async Task<AmacProcessResult?> UploadReport(QuarterlyUpdate report, AmacReportAccount acc)
+    {
+        throw new NotImplementedException();
     }
 }
 

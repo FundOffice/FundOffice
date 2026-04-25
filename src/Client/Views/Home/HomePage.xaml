@@ -152,7 +152,7 @@
                 <oxy:PlotView
                     Height="300"
                     local:HelpService.Placement="Center"
-                    shared:MaskService.BlurRadius="40" 
+                    shared:MaskService.BlurRadius="40"
                     Model="{Binding ManageScaleContext}">
                     <local:HelpService.Help>
                         <DataTemplate>

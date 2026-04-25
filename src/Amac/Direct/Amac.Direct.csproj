@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Disclosure\Disclosure\Disclosure.csproj" />
     <ProjectReference Include="..\..\Main\Models\Models.csproj" />
     <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
   </ItemGroup>

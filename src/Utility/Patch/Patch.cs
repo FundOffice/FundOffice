@@ -1,4 +1,5 @@
-﻿using FMO.Models;
+﻿using FMO.Disclosure;
+using FMO.Models;
 using FMO.Schedule;
 using FMO.Trustee;
 using LiteDB;
@@ -50,7 +51,52 @@ public static partial class DatabaseAssist
         [107] = FixFund,
         [113] = FixMove,
         [117] = FixChannelConfig,
+        [118] = MiggreateToNewDisclosure,
     };
+
+    private static void MiggreateToNewDisclosure(BaseDatabase database)
+    {
+        var dic = database.GetCollection<Fund>().Query().Select(x => new { x.Id, x.Name }).ToArray().ToDictionary(x => x.Id, x => x.Name);
+        var old = database.GetCollection<FundPeriodicReport>().FindAll().ToArray();
+        var n = old.Select(x => new PeriodicalDisclosureNotice
+        {
+            FundCode = x.FundCode,
+            FundId = x.FundId,
+            FundName = dic[x.FundId],
+            Name = $"{dic[x.FundId]} {EnumDescriptionTypeConverter.GetEnumDescription(x.Type)} {x.PeriodEnd}",
+            PublishDate = x.PeriodEnd.AddDays(1),
+            ReportDate = x.PeriodEnd,
+            Type = x.Type switch
+            {
+                FundReportType.MonthlyReport => DisclosureType.Monthly,
+                FundReportType.QuarterlyReport => DisclosureType.Quarterly,
+                FundReportType.SemiAnnualReport => DisclosureType.SemiAnnually,
+                FundReportType.AnnualReport => DisclosureType.Annually,
+                _ => DisclosureType.OtherFundNotice,
+            },
+            Word = x.Word,
+            Excel = x.Excel,
+            Xbrl = x.Xbrl,
+            Pdf = x.Pdf,
+            Sealed = x.Sealed
+        }).ToArray();
+
+        var old2 = database.GetCollection<FundQuarterlyUpdate>().FindAll().ToArray();
+        var n2 = old2.Select(x => new QuarterlyUpdate
+        {
+            FundCode = x.FundCode,
+            FundId = x.FundId,
+            FundName = dic[x.FundId],
+            Name = $"{dic[x.FundId]} {EnumDescriptionTypeConverter.GetEnumDescription(x.Type)} {x.PeriodEnd}",
+            PublishDate = x.PeriodEnd.AddDays(1),
+            ReportDate = x.PeriodEnd,
+            Investor = x.Investor,
+            Operation = x.Operation,
+        });
+
+        database.GetCollection<IDisclosureNotice>().Upsert(n);
+        database.GetCollection<IDisclosureNotice>().Upsert(n2);
+    }
 
     private static void FixChannelConfig(BaseDatabase database)
     {
@@ -73,7 +119,7 @@ public static partial class DatabaseAssist
             FixMovedDb(db);
     }
 
-   static  void TraverseBson(BsonValue bson, Action<BsonDocument> visit)
+    static void TraverseBson(BsonValue bson, Action<BsonDocument> visit)
     {
         switch (bson.Type)
         {
@@ -111,8 +157,8 @@ public static partial class DatabaseAssist
         // ======================================
         // 第一步：全库遍历，收集所有 groups[2] 的值（去重）
         // ======================================
-        HashSet<string> allGroup2Values = new HashSet<string>(); 
-         
+        HashSet<string> allGroup2Values = new HashSet<string>();
+
         foreach (var colName in db.GetCollectionNames())
         {
             if (colName.StartsWith("$")) continue;

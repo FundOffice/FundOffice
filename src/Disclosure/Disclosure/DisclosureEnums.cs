@@ -29,7 +29,7 @@ public enum DisclosureType
     /// </summary>
     [Description("年报")] Annually,
 
-
+    QuarterlyUpdate,
     /// <summary>
     /// 临时报告起始
     /// </summary>
@@ -69,7 +69,7 @@ public enum DisclosureType
 
 
     [Description("其他管理人公告")] OtherManagerNotice,
-
+    
 }
 
 /// <summary>
@@ -89,16 +89,56 @@ public enum DisclosureFormat
 /// <summary>
 /// 信批状态
 /// </summary>
+[TypeConverter(nameof(EnumDescriptionTypeConverter))]
 public enum DisclosureStatus
 {
-    Pending,       // 待提交
-    Canceled,
+    /// <summary>
+    /// 待提交 / 未执行
+    /// </summary>
+    [Description("等待执行")]
+    Pending,
+
+    /// <summary>
+    /// 已取消
+    /// </summary>
+    [Description("已停止")]
+    Stopped,
+
+    /// <summary>
+    /// 处理中
+    /// </summary>
+    [Description("处理中")]
     Processing,
-    Submitted,     // 已提交
-    Verified,      // 审核通过
-    Rejected,     // 审核驳回
-    Published,     // 已发布
-    Failed,       // 失败
+
+    /// <summary>
+    /// 已提交
+    /// </summary>
+    [Description("已提交")]
+    Submitted,
+
+    /// <summary>
+    /// 审核通过
+    /// </summary>
+    [Description("审核通过")]
+    Verified,
+
+    /// <summary>
+    /// 审核驳回
+    /// </summary>
+    [Description("审核驳回")]
+    Rejected,
+
+    /// <summary>
+    /// 已发布
+    /// </summary>
+    [Description("已发布")]
+    Successed,
+
+    /// <summary>
+    /// 执行失败
+    /// </summary>
+    [Description("失败")]
+    Failed
 }
 
 /// <summary>
@@ -111,6 +151,8 @@ public static class DisclosureChannelCode
     public const string MeiShi = "meishi";
     public const string AMAC = "amac";      // 基金业协会
     public const string Custom = "custom";  // 自定义/其他平台
+
+    public const string QuarterlyUpdate = "quarterly_update"; // 季度更新（特殊通道，非公告披露）
 }
 
 /// <summary>
