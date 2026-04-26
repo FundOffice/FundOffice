@@ -114,6 +114,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
             InitializeMesage = "初始化任务";
             MissionSchedule.Init();
+            WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Task", true));
 
 
             InitializeMesage = "每日数据更新中";
@@ -132,7 +133,9 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             //启动api
             TrusteeGallay.Initialize();
             SigningGalley.Initialize();
+            WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Trustee", true));
             DisclosureChannelManager.Initialize();
+            WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
             IsInitializing = false;
         });
 

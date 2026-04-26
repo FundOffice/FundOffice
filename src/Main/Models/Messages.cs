@@ -76,3 +76,11 @@ public record TrusteeRunMessage(string Name, bool IsRunning);
 /// </summary>
 /// <param name="Date"></param>
 public record NewDay(DateOnly Date);
+
+
+/// <summary>
+/// 导航菜单是否可用
+/// </summary>
+/// <param name="Key"></param>
+/// <param name="IsEnabled"></param>
+public record MainMenuEnableMessage(string Key, bool IsEnabled);

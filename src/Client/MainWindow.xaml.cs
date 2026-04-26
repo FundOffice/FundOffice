@@ -113,14 +113,14 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
         IsActive = true;
         Version = Assembly.GetExecutingAssembly().GetName().Version;
 
-        MenuItems = [new MainMenu { Title = "管理人", IconBrush = Brushes.BlueViolet, Command = OpenPageCommand, Parameter = "ManagerPage", Icon = GetGeometry("f.house") },
-                    new MainMenu { Title = "基金", IconBrush = Brushes.Violet, Command = OpenPageCommand, Parameter = "FundsPage", Icon = GetGeometry("f.fire")},
-                    new MainMenu { Title = "客户", IconBrush = Brushes.ForestGreen, Command = OpenPageCommand, Parameter = "Customer", Icon = GetGeometry("f.user")},
-                    new MainMenu { Title = "TA", IconBrush = Brushes.Orange, Command = OpenPageCommand, Parameter = "TA", Icon = GetGeometry("f.calendar-days")},
-                    new MainMenu { Title = "信批", IconBrush = Brushes.OliveDrab, Command = OpenPageCommand, Parameter = "Disclosure", Icon = GetGeometry("f.disclosure")},
-                    new MainMenu { Title = "平台", IconBrush = Brushes.Brown, Command = OpenPageCommand, Parameter = "Trustee", Icon = GetGeometry("f.infinity")},
-                    new MainMenu { Title = "任务", IconBrush = Brushes.DarkOrchid, Command = OpenPageCommand, Parameter = "Task", Icon = GetGeometry("f.bolt")},
-                    new MainMenu { Title = "报表", IconBrush = Brushes.RoyalBlue, Command = OpenPageCommand, Parameter = "Statement", Icon = GetGeometry("f.square-poll-vertical")},
+        MenuItems = [new MainMenu { IsEnabled = true, Title = "管理人", IconBrush = Brushes.BlueViolet, Command = OpenPageCommand, Parameter = "ManagerPage", Icon = GetGeometry("f.house") },
+                     new MainMenu { IsEnabled = true, Title = "基金", IconBrush = Brushes.Violet, Command = OpenPageCommand, Parameter = "FundsPage", Icon = GetGeometry("f.fire")},
+                     new MainMenu { IsEnabled = true, Title = "客户", IconBrush = Brushes.ForestGreen, Command = OpenPageCommand, Parameter = "Customer", Icon = GetGeometry("f.user")},
+                     new MainMenu { IsEnabled = true, Title = "TA", IconBrush = Brushes.Orange, Command = OpenPageCommand, Parameter = "TA", Icon = GetGeometry("f.calendar-days")},
+                     new MainMenu { IsEnabled = false, Title = "信批", IconBrush = Brushes.OliveDrab, Command = OpenPageCommand, Parameter = "Disclosure", Icon = GetGeometry("f.disclosure")},
+                     new MainMenu { IsEnabled = false, Title = "平台", IconBrush = Brushes.Brown, Command = OpenPageCommand, Parameter = "Trustee", Icon = GetGeometry("f.infinity")},
+                     new MainMenu { IsEnabled = false, Title = "任务", IconBrush = Brushes.DarkOrchid, Command = OpenPageCommand, Parameter = "Task", Icon = GetGeometry("f.bolt")},
+                     new MainMenu { IsEnabled = true, Title = "报表", IconBrush = Brushes.RoyalBlue, Command = OpenPageCommand, Parameter = "Statement", Icon = GetGeometry("f.square-poll-vertical")},
                /*     new MainMenu { Title = "法规", IconBrush = Brushes.OrangeRed, Command = OpenPageCommand, Parameter = "Law", Icon = GetGeometry("f.scale-balanced")},  */];
 
 
@@ -469,7 +469,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
 }
 
 
-public partial class MainMenu : ObservableObject, IRecipient<UniformTip>
+public partial class MainMenu : ObservableObject, IRecipient<UniformTip>, IRecipient<MainMenuEnableMessage>
 {
     public MainMenu()
     {
@@ -481,13 +481,16 @@ public partial class MainMenu : ObservableObject, IRecipient<UniformTip>
     public required Brush IconBrush { get; set; }
 
 
+    [ObservableProperty]
+    public partial bool IsEnabled { get; set; }
+
     public Geometry? Icon { get; set; }
 
 
     public ICommand? Command { get; set; }
 
 
-    public object? Parameter { get; set; }
+    public string? Parameter { get; set; }
 
     [ObservableProperty]
     public partial string? Tip { get; set; }
@@ -514,5 +517,11 @@ public partial class MainMenu : ObservableObject, IRecipient<UniformTip>
             default:
                 break;
         }
+    }
+
+    public void Receive(MainMenuEnableMessage message)
+    {
+        if (message.Key == Parameter)
+            IsEnabled = message.IsEnabled;
     }
 }

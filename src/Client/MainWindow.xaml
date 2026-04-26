@@ -269,6 +269,7 @@
                         Background="Transparent"
                         Command="{Binding Command}"
                         CommandParameter="{Binding Parameter}"
+                        IsEnabled="{Binding IsEnabled}"
                         Style="{StaticResource ButtonCustom}">
                         <hc:Badge
                             Background="Red"
