@@ -77,7 +77,7 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
 
     public ConfigureDisclosureWorkflowWindowViewModel()
     {
-        Channels = DisclosureChannelManager.GetRegisteredChannels().Where(x => x.Code != DisclosureChannelCode.QuarterlyUpdate).ToArray();
+        Channels = DisclosureService.GetRegisteredChannels().Where(x => x.Code != DisclosureChannelCode.QuarterlyUpdate).ToArray();
 
         // 检查是否有对应的配置界面
         using var db = DbHelper.Base();
@@ -87,8 +87,8 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
         foreach (var c in Channels)
         {
             if (configs.TryGetValue(c.Code, out var config))
-                channelConfigs.Add(DisclosureChannelManager.CreateViewModel(config)!);
-            else channelConfigs.Add(DisclosureChannelManager.CreateViewModel(c.Code)!);
+                channelConfigs.Add(DisclosureService.CreateViewModel(config)!);
+            else channelConfigs.Add(DisclosureService.CreateViewModel(c.Code)!);
         }
 
         ChannelConfigs = channelConfigs.ToArray();
@@ -100,7 +100,7 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
         Types = Enum.GetValues<DisclosureType>().Except([DisclosureType.Temporary, DisclosureType.ManagerLevel, DisclosureType.QuarterlyUpdate]).ToArray();
 
 
-        var dd = DisclosureChannelManager.GetWorkflows();
+        var dd = DisclosureService.GetWorkflows();
     
         foreach (var c in Channels)
         {
@@ -172,7 +172,7 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
             TargetFunds = workflow.TargetFunds;
             Channel = workflow.Channel;
             Config = workflow.Config;
-            RequireConfigWork = DisclosureChannelManager.GetChannel(Channel)?.RequireConfigWork(Type) ?? false;
+            RequireConfigWork = DisclosureService.GetChannel(Channel)?.RequireConfigWork(Type) ?? false;
         }
 
         Funds = funds;
@@ -241,7 +241,7 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
             Config = this.Config,
         };
 
-        DisclosureChannelManager.UpdateWorkflow(obj);
+        DisclosureService.UpdateWorkflow(obj);
     }
 
 

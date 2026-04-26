@@ -1,13 +1,17 @@
-﻿using FMO.Utilities;
+﻿using CommunityToolkit.Mvvm.Messaging;
+using FMO.Logging;
+using FMO.Models;
+using FMO.Utilities;
 using LiteDB;
-using System.Collections.Concurrent;
 
 namespace FMO.Disclosure;
 
 
-public static class DisclosureWorkflowService
+public static partial class DisclosureService
 {
+    private static Dictionary<string, Queue<DisclosureInstance>> _instanceQueue = [];
 
+    private static Dictionary<string, Thread> _workThreads = [];
 
     public static IEnumerable<DisclosureWorkflow> GetApplicableWorkflows(IDisclosureNotice report)
     {
@@ -62,43 +66,53 @@ public static class DisclosureWorkflowService
 
 
 
+    public static ErrorReturn AddToQueue(DisclosureInstance instance)
+    {
+        var channel = GetChannel(instance.Channel);
+        if (channel is null)
+            return new ErrorReturn(false, $"未找到通道：{instance.Channel}");
+
+        if (!_workflows.ContainsKey(instance.WorkflowId))
+            return new ErrorReturn(false, $"未找到Workflow：{instance.WorkflowId}");
+
+        if (!_instanceQueue.ContainsKey(instance.Channel))
+            _instanceQueue[instance.Channel] = new Queue<DisclosureInstance>();
+        _instanceQueue[instance.Channel].Enqueue(instance);
+        return new ErrorReturn(true);
+    }
+
     /// <summary>
     /// 外层：数据库管理层
     /// 职责：加载数据 → 调用业务 → 统一保存结果
     /// </summary>
-    public static async Task<DisclosureResult> ExecuteDisclosureAsync(DisclosureInstance instance, CancellationToken cancellationToken = default)
+    private static async Task<ErrorReturn> ExecuteDisclosureAsync(DisclosureInstance instance, CancellationToken cancellationToken = default)
     {
         // 入参校验
         if (instance == null)
-            throw new ArgumentNullException(nameof(instance));
+            return new ErrorReturn(false, "实例不能为空");
 
-        DisclosureResult result;
+        if (instance.Status == DisclosureStatus.Successed)
+            return new ErrorReturn(true, "实例已成功，无需重复执行");
 
-        // 1. 加载/初始化结果，并标记执行中
-        using (var db = DbHelper.Base())
-        {
-            var col = db.GetCollection<DisclosureResult>();
-            result = col.FindById(instance.Id) ?? new DisclosureResult { Id = instance.Id };
-
-            if (result.Status == DisclosureStatus.Successed)
-                return result;
-
-            // 更新执行状态
-            result.StartedTime = DateTime.UtcNow;
-            result.Status = DisclosureStatus.Processing;
-            col.Upsert(result);
-        }
 
         try
         {
             IDisclosureNotice notice;
-            IWorkConfig config;
+            IWorkConfig? config;
 
             // 2. 加载业务数据（短连接）
             using (var db = DbHelper.Base())
             {
                 notice = db.GetCollection<IDisclosureNotice>().FindById(instance.NoticeId);
-                config = db.GetCollection<DisclosureWorkflow>().FindById(instance.WorkflowId)?.Config!;
+                config = _workflows[instance.WorkflowId]?.Config;
+
+                if (instance.StartedTime == default)
+                {
+                    instance.StartedTime = DateTime.Now;
+                }
+                instance.Status = DisclosureStatus.Processing;
+                db.GetCollection<DisclosureInstance>().Update(instance);
+                WeakReferenceMessenger.Default.Send(instance);
             }
 
             // 3. 调用内层纯逻辑（无DB）
@@ -106,30 +120,30 @@ public static class DisclosureWorkflowService
                 instance, notice, config, cancellationToken);
 
             // 4. 【外层统一赋值 + 统一保存】
-            result.Error = workResult.Error;
-            result.Status = workResult.Successed ? DisclosureStatus.Successed : DisclosureStatus.Failed;
-            result.CompletedTime = DateTime.Now;
+            instance.Error = workResult.Error;
+            instance.Status = workResult.Successed ? DisclosureStatus.Successed : DisclosureStatus.Failed;
+            if (!workResult.Successed)
+                instance.FailedTimes += 1;
+            instance.CompletedTime = DateTime.Now;
 
             using (var db = DbHelper.Base())
-            {
-                db.GetCollection<DisclosureResult>().Upsert(result);
-            }
+                db.GetCollection<DisclosureInstance>().Upsert(instance);
 
-            return result;
+            WeakReferenceMessenger.Default.Send(instance);
+            return workResult;
         }
         catch (Exception ex)
         {
             // 异常也由【外层统一处理、保存】 
-            result.Error = ex is OperationCanceledException ? "任务已取消" : $"执行异常：{ex.Message}";
-            result.Status = DisclosureStatus.Failed;
-            result.CompletedTime = DateTime.Now;
+            instance.Error = ex is OperationCanceledException ? "任务已取消" : $"执行异常：{ex.Message}";
+            instance.Status = DisclosureStatus.Failed;
+            instance.CompletedTime = DateTime.Now;
 
             using (var db = DbHelper.Base())
-            {
-                db.GetCollection<DisclosureResult>().Upsert(result);
-            }
+                db.GetCollection<DisclosureInstance>().Upsert(instance);
 
-            return result;
+            WeakReferenceMessenger.Default.Send(instance);
+            return new(false, ex.Message);
         }
     }
 
@@ -137,64 +151,97 @@ public static class DisclosureWorkflowService
     /// 内层：纯业务核心（0数据库操作）
     /// 只返回成功/失败信息，完全不碰DB
     /// </summary>
-    private static async Task<(bool Successed, string? Error)> ExecuteDisclosureCoreAsync(
+    private static async Task<ErrorReturn> ExecuteDisclosureCoreAsync(
         DisclosureInstance instance,
         IDisclosureNotice notice,
-        IWorkConfig config,
+        IWorkConfig? config,
         CancellationToken cancellationToken)
     {
         // 必须校验，失败直接 return 结果，不保存
         if (notice == null)
-            return (false, $"未找到报告：{instance.NoticeId}");
+            return new(false, $"未找到报告：{instance.NoticeId}");
 
-        if (config == null)
-            return (false, $"未找到信批配置：{instance.WorkflowId}");
-
-        var channel = DisclosureChannelManager.GetChannel(instance.Channel);
+        var channel = DisclosureService.GetChannel(instance.Channel);
         if (channel == null)
-            return (false, $"未找到通道：{instance.Channel}");
+            return new(false, $"未找到通道：{instance.Channel}");
 
-        var verify = channel.VerifyNotice(notice);
-        if (!verify.Successed)
-            return (false, $"验证失败：{verify.Error}");
+        if (channel.RequireConfigWork(notice.Type) && config is null)
+            return new(false, $"未找到信批配置：{instance.WorkflowId}");
 
-        // 执行异步披露
-        cancellationToken.ThrowIfCancellationRequested();
-        var result = await channel.Disclosure(notice, config).WaitAsync(cancellationToken);
+        try
+        {
+            var verify = channel.VerifyNotice(notice);
+            if (!verify.Successed)
+                return new(false, $"验证失败：{verify.Error}");
 
-        return (result.Successed, result.Error);
+            // 执行异步披露
+            cancellationToken.ThrowIfCancellationRequested();
+
+            return await channel.Disclosure(notice, config).WaitAsync(cancellationToken);
+        }
+        catch (Exception e)
+        {
+            return new(false, e.Message);
+        }
     }
 
 
     public static async Task BatchExecuteAsync(long[] noticeIds, CancellationToken cancellationToken = default)
     {
         using var db = DbHelper.Base();
-        var notice = db.GetCollection<DisclosureInstance>().Query().Where(Query.In(nameof(DisclosureInstance.NoticeId), noticeIds.Select(x => new BsonValue(x)))).ToList();
+        var instances = db.GetCollection<DisclosureInstance>().Query().Where(Query.In(nameof(DisclosureInstance.NoticeId), noticeIds.Select(x => new BsonValue(x)))).ToList();
 
-        ConcurrentDictionary<string, DisclosureResult> results = [];
-
-        // 按照通道分组，理论上不同通道之间可以并行执行
-        Parallel.ForEach(notice.GroupBy(x => x.Channel), async item =>
-        {
-            foreach (var instance in item)
-                results[instance.Id] = await ExecuteDisclosureAsync(instance, cancellationToken);
-        });
-
-
-
+        foreach (var instance in instances)
+            AddToQueue(instance);
     }
 
-}
 
-internal record DisclosureInstanceLog(string Level, string Message);
+    public static void StartWorker()
+    {
+        Task.Factory.StartNew(async () =>
+        {
+            var timer = new PeriodicTimer(TimeSpan.FromSeconds(60));
+
+            while (await timer.WaitForNextTickAsync())
+                LoopOnce();
+
+        }, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+    }
+
+    private static void LoopOnce()
+    {
+        foreach (var dic in _instanceQueue)
+        {
+            if (dic.Value.Count == 0) continue;
+
+            try
+            {
+                _ = Task.Run(() => HandleRun(dic.Value));
+            }
+            catch (Exception ex)
+            {
+                LogEx.Error($"[{dic.Key}] 处理队列异常：{ex}");
+            }
+        }
+    }
 
 
-public class DisclosureWorker
-{
 
 
+    private static async Task HandleRun(Queue<DisclosureInstance> disclosureInstances)
+    {
 
-
-
+        while (disclosureInstances.TryDequeue(out var instance))
+        {
+            try
+            {
+                await ExecuteDisclosureAsync(instance);
+            }
+            catch (Exception ex)
+            {
+                LogEx.Error(ex);
+            }
+        }
+    }
 }
 

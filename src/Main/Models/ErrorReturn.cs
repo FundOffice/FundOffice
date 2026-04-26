@@ -4,4 +4,4 @@ using System.Text;
 
 namespace FMO.Models;
 
-public record ErrorReturn(bool Successed, string? Error);
+public record ErrorReturn(bool Successed, string? Error = null);

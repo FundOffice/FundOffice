@@ -37,7 +37,7 @@ public interface IDisclosureChannel
 
     public ErrorReturn VerifyNotice(IDisclosureNotice Notice);
 
-    public Task<ErrorReturn> Disclosure(IDisclosureNotice Notice, IWorkConfig config);
+    public Task<ErrorReturn> Disclosure(IDisclosureNotice Notice, IWorkConfig? config);
  
 }
 

@@ -68,6 +68,7 @@
                                     VerticalContentAlignment="Center"
                                     Background="#eeeeee"
                                     Content="{TemplateBinding Header}"
+                                    ContentTemplate="{TemplateBinding HeaderTemplate}"
                                     DockPanel.Dock="Top"
                                     IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
                                     <ToggleButton.Style>
@@ -109,38 +110,58 @@
         </Style>
 
         <DataTemplate x:Key="RunDataTemplate" DataType="local:DisclosureRunViewModel">
-            <Expander Style="{StaticResource NoArrowExpander}">
-                <Expander.Header>
-                    <DockPanel>
-                        <DockPanel.Resources>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                            </Style>
-                        </DockPanel.Resources>
+            <Expander Header="{Binding}" Style="{StaticResource NoArrowExpander}">
+                <Expander.HeaderTemplate>
+                    <DataTemplate>
+                        <DockPanel MinHeight="22">
+                            <DockPanel.Resources>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DockPanel.Resources>
 
 
-                        <hc:SimplePanel DockPanel.Dock="Right">
-                            <DockPanel Visibility="{Binding HasInstance, Converter={StaticResource Boolean2VisibilityReConverter}}">
-                                <TextBlock
-                                    Margin="3,0"
-                                    Foreground="Red"
-                                    Text="未创建信批任务" />
-                                <Button
-                                    Command="{Binding CreateInstanceCommand}"
-                                    Content="创建"
-                                    Style="{StaticResource ButtonPrimary.Small}" />
-                            </DockPanel>
 
-                            <TextBlock
-                                DockPanel.Dock="Top"
-                                Text="{Binding Status, Converter={StaticResource EnumDescriptionConverter}}"
-                                Visibility="{Binding HasInstance, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
-                        </hc:SimplePanel>
-                        <TextBlock Foreground="DodgerBlue" Text="{Binding ChannelName}" />
 
-                    </DockPanel>
-                </Expander.Header>
+
+                            <hc:SimplePanel DockPanel.Dock="Right">
+                                <DockPanel Visibility="{Binding HasInstance, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                    <TextBlock
+                                        Margin="3,0"
+                                        Foreground="Red"
+                                        Text="未创建信批任务" />
+                                    <Button
+                                        Command="{Binding CreateInstanceCommand}"
+                                        Content="创建"
+                                        Style="{StaticResource ButtonPrimary.Small}" />
+                                </DockPanel>
+
+                                <DockPanel Visibility="{Binding HasInstance, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                    <Button
+                                        x:Name="btn"
+                                        hc:IconElement.Geometry="{StaticResource f.play}"
+                                        Command="{Binding StartRunCommand}"
+                                        DockPanel.Dock="Right"
+                                        Foreground="Green"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="Collapsed" />
+                                    <TextBlock Text="{Binding Status, Converter={StaticResource EnumDescriptionConverter}}" />
+                                </DockPanel>
+                            </hc:SimplePanel>
+                            <TextBlock Foreground="DodgerBlue" Text="{Binding ChannelName}" />
+
+                        </DockPanel>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Status}" Value="Pending">
+                                <Setter TargetName="btn" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Status}" Value="Failed">
+                                <Setter TargetName="btn" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </Expander.HeaderTemplate>
 
                 <hc:SimplePanel Visibility="{Binding HasInstance, Converter={StaticResource Boolean2VisibilityConverter}}">
                     <StackPanel x:Name="detail" Margin="4,0">
@@ -153,13 +174,21 @@
                         <DockPanel>
 
                             <TextBlock DockPanel.Dock="Right" Text="{Binding CompletedTime, StringFormat=yyyy/MM/dd HH:mm:ss}" />
-                            <TextBlock Text="完成" />
+                            <TextBlock Text="最近执行" />
                         </DockPanel>
-
 
                         <DockPanel>
 
-                            <TextBlock DockPanel.Dock="Right" Text="{Binding Error}" />
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding FailedTimes}" />
+                            <TextBlock Text="失败次数" />
+                        </DockPanel>
+
+                        <DockPanel>
+
+                            <TextBlock
+                                DockPanel.Dock="Right"
+                                Text="{Binding Error}"
+                                TextWrapping="Wrap" />
                             <TextBlock Text="错误" />
                         </DockPanel>
                     </StackPanel>
@@ -294,6 +323,7 @@
                                 </UniformGrid>
 
                                 <ListBox
+                                    Margin="-4,0"
                                     BorderThickness="0"
                                     ItemTemplate="{StaticResource RunDataTemplate}"
                                     ItemsSource="{Binding Runs}"
@@ -544,6 +574,7 @@
                                     </DockPanel>
 
                                     <ListBox
+                                        Margin="-4,0"
                                         BorderThickness="0"
                                         ItemTemplate="{StaticResource RunDataTemplate}"
                                         ItemsSource="{Binding Runs}"

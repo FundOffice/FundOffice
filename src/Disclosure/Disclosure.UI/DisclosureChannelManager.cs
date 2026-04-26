@@ -8,7 +8,7 @@ namespace FMO.Disclosure;
 /// 统一通道管理器：包含 通道实例注册 + 配置ViewModel创建
 /// 支持插件化、动态注册、无修改扩展
 /// </summary>
-public static class DisclosureChannelManager
+public static partial class DisclosureService
 {
     // 1. 已注册的通道实例（来自 DisclosureChannelGalley）
     private static readonly Dictionary<string, IDisclosureChannel> _channels = new();
@@ -29,10 +29,11 @@ public static class DisclosureChannelManager
     /// <summary>
     /// 静态构造：初始化默认通道
     /// </summary>
-    static DisclosureChannelManager()
+    static DisclosureService()
     {
         using var db = DbHelper.Base();
         _workflows = db.GetCollection<DisclosureWorkflow>().FindAll().ToDictionary(x => x.Id);
+
     }
 
     #region 初始化（原有默认通道）
@@ -47,6 +48,12 @@ public static class DisclosureChannelManager
 
         // 创建季度更新通道
         RegisterQuartlyUpdateChannel();
+
+        using var db = DbHelper.Base();
+        var ins = db.GetCollection<DisclosureInstance>().Find(x => x.Status == DisclosureStatus.Waiting || x.Status == DisclosureStatus.Processing).ToArray();
+        foreach (var item in ins)
+            AddToQueue(item);
+        StartWorker();
     }
 
     private static void RegisterQuartlyUpdateChannel()
@@ -68,7 +75,7 @@ public static class DisclosureChannelManager
             var id = DisclosureWorkflow.GetId(channel.Code, type);
             if (!_workflows.ContainsKey(id))
             {
-                var flow = new DisclosureWorkflow { Channel = channel.Code, Type = type, ForAllFunds = true, IsEnabled = true }; 
+                var flow = new DisclosureWorkflow { Channel = channel.Code, Type = type, ForAllFunds = true, IsEnabled = true };
                 _workflows[id] = flow;
                 using var db = DbHelper.Base();
                 db.GetCollection<DisclosureWorkflow>().Insert(flow);

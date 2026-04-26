@@ -95,9 +95,12 @@ public enum DisclosureStatus
     /// <summary>
     /// 待提交 / 未执行
     /// </summary>
-    [Description("等待执行")]
-    Pending,
+    [Description("初始化")]
+    Create,
+    Pending=Create,
 
+    [Description("等待执行")]
+    Waiting,
     /// <summary>
     /// 已取消
     /// </summary>
@@ -138,7 +141,7 @@ public enum DisclosureStatus
     /// 执行失败
     /// </summary>
     [Description("失败")]
-    Failed
+    Failed,
 }
 
 /// <summary>

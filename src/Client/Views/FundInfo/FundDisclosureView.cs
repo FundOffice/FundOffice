@@ -591,7 +591,7 @@ public partial class FundQuarterlyUpdateViewModel : ObservableObject
 
 }
 
-public partial class DisclosureRunViewModel : ObservableObject
+public partial class DisclosureRunViewModel : ObservableObject, IRecipient<DisclosureInstance>
 {
 
     public string Channel { get; }
@@ -632,18 +632,20 @@ public partial class DisclosureRunViewModel : ObservableObject
     [RelayCommand]
     public void CreateInstance()
     {
-        var inst = DisclosureWorkflowService.CreateInstance(Workflow, Notice);
+        var inst = DisclosureService.CreateInstance(Workflow, Notice);
         Fill(inst);
     }
 
     [SetsRequiredMembers]
     public DisclosureRunViewModel(IDisclosureNotice notice, DisclosureWorkflow workflow, DisclosureInstance? instance)
     {
+        WeakReferenceMessenger.Default.RegisterAll(this);
+
         Notice = notice;
         Workflow = workflow;
 
         Channel = workflow.Channel;
-        ChannelName = DisclosureChannelManager.GetChannel(workflow.Channel)?.Name ?? workflow.Channel;
+        ChannelName = DisclosureService.GetChannel(workflow.Channel)?.Name ?? workflow.Channel;
 
         if (instance is not null)
             Fill(instance);
@@ -660,7 +662,21 @@ public partial class DisclosureRunViewModel : ObservableObject
         Error = instance.Error;
     }
 
+    [RelayCommand]
+    public void StartRun()
+    {
+        if (!HasInstance) return;
 
+        using var db = DbHelper.Base();
+        var inst = db.GetCollection<DisclosureInstance>().FindById(InstanceId);
+        DisclosureService.AddToQueue(inst);
+        Status = DisclosureStatus.Waiting;
+    }
+
+    public void Receive(DisclosureInstance message)
+    {
+        if(message.Id == InstanceId) Fill(message);
+    }
 }
 
 public partial class QuarterlyUpdateViewModel : ObservableObject
