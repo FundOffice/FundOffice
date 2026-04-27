@@ -26,8 +26,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Disclosure\Disclosure\Disclosure.csproj" />
     <ProjectReference Include="..\..\Main\Data\Data.csproj" />
     <ProjectReference Include="..\..\SharedUI\SharedUI.csproj" />
+    <ProjectReference Include="..\..\Utility\PDF\PdfExt.csproj" />
     <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
   </ItemGroup>
 

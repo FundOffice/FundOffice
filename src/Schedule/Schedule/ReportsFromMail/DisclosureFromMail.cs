@@ -1,5 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
+using FMO.Disclosure;
 using FMO.Models;
+using FMO.PDF;
 using FMO.Utilities;
 using MimeKit;
 using Serilog;
@@ -106,6 +108,7 @@ public class DisclosureFromMailMission : MailMission
         foreach (MimePart item in mime.Attachments)
         {
             var filepath = item.FileName;
+            if (filepath is null || item.Content is null) continue;
             switch (Path.GetExtension(filepath).ToLower())
             {
                 case ".zip":
@@ -133,45 +136,61 @@ public class DisclosureFromMailMission : MailMission
         {
             if (!fundmap.TryGetValue(fund.Key, out int fundId)) continue;
 
+            var fundName = fund.First().FundName;
+
             foreach (var type in fund.AsEnumerable().GroupBy(x => x.Type))
             {
                 foreach (var r in type.AsEnumerable().GroupBy(x => x.Date))
                 {
                     // 只处理周期报告
-                    if (type.Key >= FundReportType.MonthlyReport && type.Key <= FundReportType.AnnualReport)
+                    if (type.Key >= DisclosureType.Monthly && type.Key <= DisclosureType.Annually)
                     {
-                        FundPeriodicReport fp = new FundPeriodicReport { FundId = fundId, FundCode = fund.Key, Type = type.Key, PeriodEnd = r.Key };
-
-                        foreach (var item in r)
+                        var fp = new PeriodicalDisclosureNotice
                         {
-                            switch (Path.GetExtension(item.FileName))
+                            FundId = fundId,
+                            FundCode = fund.Key,
+                            FundName = fundName,
+                            Name = $"{fundName}_{EnumDescriptionTypeConverter.GetEnumDescription(type.Key)}_{r.Key:yyyyMMdd}",
+                            Type = type.Key,
+                            ReportDate = r.Key
+                        };
+
+                        // 按文件类型分配
+                        foreach (var ext in r.GroupBy(x => Path.GetExtension(x.FileName)))
+                        {
+                            switch (ext.Key)
                             {
                                 case ".xlsx":
-                                    fp.Excel = new SimpleFile { File = FileMeta.Create(item.Stream, item.FileName) };
+                                    fp.Excel = new SimpleFile { File = FileMeta.Create(ext.First().Stream, ext.First().FileName) };
                                     break;
 
                                 case ".doc":
                                 case ".docx":
-                                    fp.Word = new SimpleFile { File = FileMeta.Create(item.Stream, item.FileName) };
+                                    fp.Word = new SimpleFile { File = FileMeta.Create(ext.First().Stream, ext.First().FileName) };
                                     break;
 
                                 case ".xbrl":
-                                    fp.Xbrl = new SimpleFile { File = FileMeta.Create(item.Stream, item.FileName) };
+                                    fp.Xbrl = new SimpleFile { File = FileMeta.Create(ext.First().Stream, ext.First().FileName) };
                                     break;
 
                                 case ".pdf":
-                                    if (!Regex.IsMatch(item.FileName, "复核函")) // 避免把复核函当成报告正文
-                                        fp.Pdf = new SimpleFile { File = FileMeta.Create(item.Stream, item.FileName) };
+                                    if (ext.Count(x => !Regex.IsMatch(x.FileName, "复核函")) == 1)// 避免把复核函当成报告正文
+                                        fp.Pdf = new SimpleFile { File = FileMeta.Create(ext.First().Stream, ext.First().FileName) }; 
+                                    else if (PdfHelper.Merge(ext.Select(x => x.Stream).ToArray()) is Stream nes) // 有些托管会发多个Pdf，把它们合并成一个
+                                        fp.Pdf = new SimpleFile { File = FileMeta.Create(nes, $"{fundName}_{EnumDescriptionTypeConverter.GetEnumDescription(type.Key)}_{r.Key:yyyyMMdd}.pdf") };
                                     break;
                             }
-                            item.Stream.Dispose();
+                            foreach (var ff in ext)
+                                ff.Stream.Dispose();
                         }
-                        db.GetCollection<FundPeriodicReport>().Upsert(fp);
+
+                        DisclosureService.RegisterNotice(fp);
+
                         log += $"\n{fund.Key}: {type.Key} {r.Key}";
                     }
-                    else if (type.Key == FundReportType.QuarterlyUpdate)
+                    else if (type.Key == DisclosureType.QuarterlyUpdate)
                     {
-                        FundQuarterlyUpdate fp = new() { FundId = fundId, FundCode = fund.Key, PeriodEnd = r.Key };
+                        QuarterlyUpdate fp = new() { FundId = fundId, FundCode = fund.Key, FundName = fundName, Name = $"{fundName}_{EnumDescriptionTypeConverter.GetEnumDescription(type.Key)}_{r.Key:yyyyMMdd}", ReportDate = r.Key };
                         foreach (var item in r)
                         {
                             if (Regex.IsMatch(item.FileName, "投资[者人]"))
@@ -181,7 +200,7 @@ public class DisclosureFromMailMission : MailMission
 
                             item.Stream.Dispose();
                         }
-                        db.GetCollection<FundQuarterlyUpdate>().Upsert(fp);
+                        DisclosureService.RegisterNotice(fp);
                         log += $"\n{fund.Key}: {type.Key} {r.Key}";
                     }
                 }
@@ -190,6 +209,11 @@ public class DisclosureFromMailMission : MailMission
 
         db.Commit();
     }
+
+
+
+
+
 
     private MemoryStream Copy(IMimeContent c)
     {
@@ -227,6 +251,7 @@ public class DisclosureFromMailMission : MailMission
         // 解析文件名
         // 备案号
         string code = "";
+        string fundName = "";
         var m = Regex.Match(path, "S[0-9A-Z]{5}", RegexOptions.IgnoreCase);
         if (m.Success) code = m.Value;
         else
@@ -235,7 +260,10 @@ public class DisclosureFromMailMission : MailMission
             foreach (var item in fundCodeMap)
             {
                 if (path.Contains(item.Name))
+                {
                     code = item.Code;
+                    fundName = item.Name;
+                }
             }
         }
 
@@ -278,27 +306,27 @@ public class DisclosureFromMailMission : MailMission
         switch (path)
         {
             case var p when p.Contains("投资者信息"):
-                reports.Add(new ParsedInfo(FundReportType.QuarterlyUpdate, code, date, path, ms));
+                reports.Add(new ParsedInfo(DisclosureType.QuarterlyUpdate, fundName, code, date, path, ms));
                 break;
 
             case var p when Regex.IsMatch(p, "运行信息|运行监测|季度更新"):
-                reports.Add(new ParsedInfo(FundReportType.QuarterlyUpdate, code, date, path, ms));
+                reports.Add(new ParsedInfo(DisclosureType.QuarterlyUpdate, fundName, code, date, path, ms));
                 break;
 
             case var p when p.Contains("月报"):
-                reports.Add(new ParsedInfo(FundReportType.MonthlyReport, code, date, path, ms));
+                reports.Add(new ParsedInfo(DisclosureType.Monthly, fundName, code, date, path, ms));
                 break;
 
             case var p when p.Contains("季报"):
-                reports.Add(new ParsedInfo(FundReportType.QuarterlyReport, code, date, path, ms));
+                reports.Add(new ParsedInfo(DisclosureType.Quarterly, fundName, code, date, path, ms));
                 break;
 
             case var p when p.Contains("半年报"):
-                reports.Add(new ParsedInfo(FundReportType.SemiAnnualReport, code, date, path, ms));
+                reports.Add(new ParsedInfo(DisclosureType.SemiAnnually, fundName, code, date, path, ms));
                 break;
 
             case var p when p.Contains("年报"):
-                reports.Add(new ParsedInfo(FundReportType.AnnualReport, code, date, path, ms));
+                reports.Add(new ParsedInfo(DisclosureType.Annually, fundName, code, date, path, ms));
                 break;
             default:
                 break;
@@ -355,7 +383,7 @@ public class DisclosureFromMailMission : MailMission
 
     }
 
-    record ParsedInfo(FundReportType Type, string Code, DateOnly Date, string FileName, Stream Stream);
+    record ParsedInfo(DisclosureType Type, string FundName, string Code, DateOnly Date, string FileName, Stream Stream);
 }
 
 
