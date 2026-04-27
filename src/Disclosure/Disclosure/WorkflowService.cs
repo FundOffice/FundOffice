@@ -9,17 +9,114 @@ namespace FMO.Disclosure;
 
 public static partial class DisclosureService
 {
+    /// <summary>
+    /// 待执行实例队列（内存）
+    /// </summary>
     private static Dictionary<string, Queue<DisclosureInstance>> _instanceQueue = [];
 
-    private static Dictionary<string, Thread> _workThreads = [];
 
-    public static IEnumerable<DisclosureWorkflow> GetApplicableWorkflows(IDisclosureNotice report)
+    internal static readonly Dictionary<string, IDisclosureChannel> _channels = new();
+
+
+
+
+    private static readonly Dictionary<string, DisclosureWorkflow> _workflows;
+
+    public static DisclosureType[] DisclosureTypes { get; } = Enum.GetValues<DisclosureType>().Except([DisclosureType.Temporary, DisclosureType.ManagerLevel]).ToArray();
+
+    /// <summary>
+    /// 静态构造：初始化默认通道
+    /// </summary>
+    static DisclosureService()
     {
         using var db = DbHelper.Base();
+        _workflows = db.GetCollection<DisclosureWorkflow>().Find(x => !string.IsNullOrWhiteSpace(x.Channel)).DistinctBy(x => x.Id).ToDictionary(x => x.Id);
+
+    }
+
+
+
+
+    /// <summary>
+    /// 初始化/更新工作流配置：根据通道支持的报告类型，自动创建对应的工作流配置（仅创建，不启用）
+    /// </summary>
+    /// <param name="channel"></param>
+    internal static void InitWorkflows(IDisclosureChannel channel)
+    {
+        // 季度更新通道特殊处理：仅创建一个季度更新类型的工作流，并确保其始终启用
+        if (channel is QuarterlyUpdateChannel)
+        {
+            var type = DisclosureType.QuarterlyUpdate;
+            var id = DisclosureWorkflow.GetId(channel.Code, type);
+            if (!_workflows.ContainsKey(id))
+            {
+                var flow = new DisclosureWorkflow { Channel = channel.Code, Type = type, ForAllFunds = true, IsEnabled = true };
+                _workflows[id] = flow;
+                using var db = DbHelper.Base();
+                db.GetCollection<DisclosureWorkflow>().Insert(flow);
+            }
+            else
+                _workflows[id].IsEnabled = true; // 确保季度更新通道的工作流始终启用
+
+            return;
+        }
+
+        List<DisclosureWorkflow> _toUpdate = [];
+        foreach (var type in DisclosureTypes)
+        {
+            if (!channel.IsSupported(type))
+                continue;
+
+            var id = DisclosureWorkflow.GetId(channel.Code, type);
+            if (!_workflows.ContainsKey(id))
+            {
+                var flow = new DisclosureWorkflow { Channel = channel.Code, Type = type };
+                _workflows[id] = flow;
+                _toUpdate.Add(flow);
+            }
+        }
+        if (_toUpdate.Count > 0)
+        {
+            using var db = DbHelper.Base();
+            var col = db.GetCollection<DisclosureWorkflow>().InsertBulk(_toUpdate);
+        }
+    }
+
+
+
+
+    #region 通道实例管理（原 Galley 功能）
+    public static bool Unregister(string channel) => _channels.Remove(channel);
+
+    public static IEnumerable<IDisclosureChannel> GetRegisteredChannels() => _channels.Values;
+
+
+
+    public static IDisclosureChannel? GetChannel(string? channel) =>
+        string.IsNullOrWhiteSpace(channel) ? null : _channels.TryGetValue(channel, out var instance) ? instance : null;
+    #endregion
+
+
+
+
+
+    public static DisclosureWorkflow[] GetWorkflows() => _workflows.Values.ToArray();
+
+    internal static void UpdateWorkflow(DisclosureWorkflow obj)
+    {
+        _workflows[obj.Id] = obj;
+
+        // 持久化到数据库
+        using var db = DbHelper.Base();
+        db.GetCollection<DisclosureWorkflow>().Upsert(obj);
+    }
+    public static IEnumerable<DisclosureWorkflow> GetApplicableWorkflows(IDisclosureNotice report)
+    {
+
         if (report.Type > DisclosureType.ManagerLevel)
-            return db.GetCollection<DisclosureWorkflow>().Find(x => x.IsEnabled && x.Type == report.Type).ToArray();
+            return _workflows.Values.Where(x => x.IsEnabled && x.Type == report.Type).ToArray();
         else if (report is IFundDisclosureNotice r)
-            return db.GetCollection<DisclosureWorkflow>().Query().Where(x => x.IsEnabled && x.Type == report.Type).Where(w => w.ForAllFunds || w.TargetFunds.Contains(r.FundId)).ToArray();
+            return _workflows.Values.Where(x => x.IsEnabled && x.Type == report.Type).Where(w => w.ForAllFunds || w.TargetFunds.Contains(r.FundId)).ToArray();
         else return [];
     }
 
@@ -99,6 +196,7 @@ public static partial class DisclosureService
         {
             IDisclosureNotice notice;
             IWorkConfig? config;
+            instance.LastRunTime = DateTime.Now;
 
             // 2. 加载业务数据（短连接）
             using (var db = DbHelper.Base())
@@ -125,6 +223,7 @@ public static partial class DisclosureService
             if (!workResult.Successed)
                 instance.FailedTimes += 1;
             instance.CompletedTime = DateTime.Now;
+            instance.AutoRun = instance.FailedTimes < 5;
 
             using (var db = DbHelper.Base())
                 db.GetCollection<DisclosureInstance>().Upsert(instance);
@@ -242,6 +341,31 @@ public static partial class DisclosureService
                 LogEx.Error(ex);
             }
         }
+    }
+
+
+
+
+    /// <summary>
+    /// 注册新报告
+    /// </summary>
+    /// <param name="notice"></param>
+    public static void RegisterNotice(IDisclosureNotice notice)
+    {
+        using var db = DbHelper.Base();
+        var exist = db.GetCollection<IDisclosureNotice>().FindById(notice.Id);
+        if (exist != null)
+        {
+            db.GetCollection<IDisclosureNotice>().Update(notice);
+            LogEx.Warning($"报告已存在，ID={notice.Id}，仅更新，不再注册");
+            return;
+        }
+
+        var instances = CreateInstance(notice);
+        foreach (var instance in instances)
+            AddToQueue(instance);
+        db.GetCollection<IDisclosureNotice>().Insert(notice);
+        db.GetCollection<DisclosureInstance>().InsertBulk(instances);
     }
 }
 

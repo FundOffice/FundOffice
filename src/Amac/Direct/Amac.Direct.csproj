@@ -13,9 +13,9 @@
   <ItemGroup>
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.5.1" />
   </ItemGroup>
+ 
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Disclosure\Disclosure\Disclosure.csproj" />
     <ProjectReference Include="..\..\Main\Models\Models.csproj" />
     <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
   </ItemGroup>

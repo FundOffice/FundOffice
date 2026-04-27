@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup> 
+    <ProjectReference Include="..\..\Disclosure\Disclosure\Disclosure.csproj" /> 
     <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
 	  <ProjectReference Include="..\..\Utility\Logging\Logging.csproj" />
 	  <ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer" />

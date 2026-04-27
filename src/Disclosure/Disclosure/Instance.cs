@@ -1,4 +1,6 @@
-﻿namespace FMO.Disclosure;
+﻿[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Disclosure.UI")]
+
+namespace FMO.Disclosure;
 
 /// <summary>
 /// 信批任务
@@ -19,9 +21,10 @@ public class DisclosureInstance
     public DisclosureType Type { get; init; }
 
     /// <summary>
-    /// 停止执行
+    /// 自动加入执行队列
+    /// 错误5次后不再自动加入执行队列，需人工干预
     /// </summary>
-    public bool IsStopped { get; set; }
+    public bool AutoRun { get; set; }
 
     public DisclosureStatus Status { get; internal set; }
 

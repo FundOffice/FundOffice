@@ -122,8 +122,11 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         using var db = DbHelper.Base();
 
-        var reports = db.GetCollection<IDisclosureNotice>().Query().Where("_type LIKE @0", $"%{nameof(PeriodicalDisclosureNotice)}%").
-            Where($"{nameof(PeriodicalDisclosureNotice.ReportDate)}.DayNumber=@0", pe.DayNumber).ToList().Cast<PeriodicalDisclosureNotice>().ToList();
+        //var reports = db.GetCollection<IDisclosureNotice>().Query().Where("_type LIKE @0", $"%{nameof(PeriodicalDisclosureNotice)}%").
+        //    Where($"{nameof(PeriodicalDisclosureNotice.ReportDate)}.DayNumber=@0", pe.DayNumber).ToList().Cast<PeriodicalDisclosureNotice>().ToList();
+        var reports = db.GetCollection<IDisclosureNotice>().Query().Where("ReportDate.DayNumber=@0", pe.DayNumber).ToList().OfType<PeriodicalDisclosureNotice>().ToList();
+
+
 
         var updates = db.GetCollection<IDisclosureNotice>().Query().Where("_type LIKE @0", $"%{nameof(QuarterlyUpdate)}%").
             Where($"{nameof(QuarterlyUpdate.ReportDate)}.DayNumber=@0", pe.DayNumber).ToList().Cast<QuarterlyUpdate>().ToList();
@@ -131,7 +134,7 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         var noticeIds = reports.Select(x => x.Id).Concat(updates.Select(x => x.Id)).ToArray();
 
-        var workflows = db.GetCollection<DisclosureWorkflow>().Find(x => x.IsEnabled && !string.IsNullOrWhiteSpace(x.Channel)).ToArray().ToLookup(x => x.Type);
+        var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && !string.IsNullOrWhiteSpace(x.Channel)).ToArray().ToLookup(x => x.Type);
 
         var run = db.GetCollection<DisclosureInstance>().Query().Where(Query.In(nameof(DisclosureInstance.NoticeId), noticeIds.Select(x => new BsonValue(x)))).ToArray().ToLookup(x => x.NoticeId);
 
@@ -168,179 +171,36 @@ public partial class DisclosurePageViewModel : ObservableObject
     }
 
 
-    [RelayCommand]
-    public async Task UploadMonthly()
-    {
-        var items = MonthlySource?.View?.OfType<FundPeriodicReportViewModel>().ToList();
-
-        if (items is null) return;
-
-        foreach (var v in items)
-        {
-            // 启动上传（不 await，让它在后台运行）
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await v.Upload();
-                    // 可选：成功后记录日志
-                }
-                catch (Exception ex)
-                {
-                    // 建议记录异常，避免静默失败
-                    LogEx.Error($"Upload failed for {v.FundName}: {ex}");
-                }
-            });
-
-            // 等待 5 秒后再启动下一个
-            await Task.Delay(TimeSpan.FromSeconds(5));
-        }
-    }
+  
 
 
-    [RelayCommand]
-    public async Task UploadQuarterly()
-    {
-        var items = QuarterlySource?.View?.OfType<FundPeriodicReportViewModel>().ToList();
+    //[RelayCommand]
+    //public async Task UploadQuarterlyReportToMeiShi()
+    //{
+    //    MeiShiAssit assit = new();
 
-        if (items is null) return;
-
-        foreach (var v in items)
-        {
-            // 启动上传（不 await，让它在后台运行）
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await v.Upload();
-                    // 可选：成功后记录日志
-                }
-                catch (Exception ex)
-                {
-                    // 建议记录异常，避免静默失败
-                    LogEx.Error($"Upload failed for {v.FundName}: {ex}");
-                }
-            });
-
-            // 等待 5 秒后再启动下一个
-            await Task.Delay(TimeSpan.FromSeconds(5));
-        }
-    }
-
-
-    [RelayCommand]
-    public async Task UploadAnnualy()
-    {
-        var items = AnnualSource?.View?.OfType<FundPeriodicReportViewModel>().ToList();
-
-        if (items is null) return;
-
-        foreach (var v in items)
-        {
-            // 启动上传（不 await，让它在后台运行）
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await v.Upload();
-                    // 可选：成功后记录日志
-                }
-                catch (Exception ex)
-                {
-                    // 建议记录异常，避免静默失败
-                    LogEx.Error($"Upload failed for {v.FundName}: {ex}");
-                }
-            });
-
-            // 等待 5 秒后再启动下一个
-            await Task.Delay(TimeSpan.FromSeconds(5));
-        }
-    }
-
-    [RelayCommand]
-    public void GenerateMeishiAnnouncesM()
-    {    // Validate inputs
-        if (SelectedMonth is null || SelectedYear <= 0 || SelectedMonth < 1 || SelectedMonth > 12)
-            return;
-
-
-        using var ms = new FileStream(@$"temp\{SelectedYear}年{SelectedMonth}月报.zip", FileMode.Create);
-        using ZipArchive archive = new ZipArchive(ms, ZipArchiveMode.Create);
-
-        foreach (var item in QuarterlySource.View)
-        {
-            if (item is FundPeriodicReportViewModel v)
-            {
-                if (v.Pdf?.Meta is not null)
-                    archive.CreateEntryFromFile(@$"files\hardlink\{v.Pdf.Meta.Id}", $"{v.FundName}-{SelectedYear}年{SelectedMonth}月度报告-{DateTime.Now:yyyyMMdd}.pdf");
-            }
-        }
-
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
-        {
-            FileName = "temp",
-            UseShellExecute = true
-        });
-    }
-
-
-    [RelayCommand]
-    public void GenerateMeishiAnnounces()
-    {    // Validate inputs
-        if (SelectedMonth is null || SelectedYear <= 0 || SelectedMonth < 1 || SelectedMonth > 12)
-            return;
-
-        int quarterIndex = (SelectedMonth.Value - 1) / 3; // 0, 1, 2, or 3
-        string[] quarters = ["一", "二", "三", "四"];
-        string q = quarters[quarterIndex];
-
-        using var ms = new FileStream(@$"temp\{SelectedYear}年{q}季报.zip", FileMode.Create);
-        using ZipArchive archive = new ZipArchive(ms, ZipArchiveMode.Create);
-
-        foreach (var item in QuarterlySource.View)
-        {
-            if (item is FundPeriodicReportViewModel v)
-            {
-                if (v.Pdf?.Meta is not null)
-                    archive.CreateEntryFromFile(@$"files\hardlink\{v.Pdf.Meta.Id}", $"{v.FundName}-{SelectedYear}年{q}季度报告-{DateTime.Now:yyyyMMdd}.pdf");
-            }
-        }
-
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
-        {
-            FileName = "temp",
-            UseShellExecute = true
-        });
-    }
-
-
-    [RelayCommand]
-    public async Task UploadQuarterlyReportToMeiShi()
-    {
-        MeiShiAssit assit = new();
-
-        foreach (var item in QuarterlySource.View)
-        {
-            if (item is FundPeriodicReportViewModel v)
-            {
-                string[] quarters = ["一", "二", "三", "四"];
-                string q = quarters[(v.PeriodEnd.Month - 1) / 3];
-                if (v.Pdf?.Meta is not null)
-                {
-                    File.Copy(@$"files\hardlink\{v.Pdf.Meta.Id}", @$"temp\{v.FundName}-{SelectedYear}年{q}季度报告.pdf", true);
-                    try
-                    {
-                        bool r = await assit.UploadDisclosureFile(v.FundName!, v.Code!, "", DateTime.Now, $"{v.FundName}-{SelectedYear}年{q}季度报告", @$"temp\{v.FundName}-{SelectedYear}年{q}季度报告.pdf");
-                        if (!r) WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"Failed to upload {v.FundName} - {SelectedYear}年{q}季度报告"));
-                    }
-                    catch (Exception e)
-                    {
-                        WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"Failed to upload {v.FundName} - {SelectedYear}年{q}季度报告"));
-                    }
-                }
-            }
-        }
-    }
+    //    foreach (var item in QuarterlySource.View)
+    //    {
+    //        if (item is FundPeriodicReportViewModel v)
+    //        {
+    //            string[] quarters = ["一", "二", "三", "四"];
+    //            string q = quarters[(v.PeriodEnd.Month - 1) / 3];
+    //            if (v.Pdf?.Meta is not null)
+    //            {
+    //                File.Copy(@$"files\hardlink\{v.Pdf.Meta.Id}", @$"temp\{v.FundName}-{SelectedYear}年{q}季度报告.pdf", true);
+    //                try
+    //                {
+    //                    bool r = await assit.UploadDisclosureFile(v.FundName!, v.Code!, "", DateTime.Now, $"{v.FundName}-{SelectedYear}年{q}季度报告", @$"temp\{v.FundName}-{SelectedYear}年{q}季度报告.pdf");
+    //                    if (!r) WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"Failed to upload {v.FundName} - {SelectedYear}年{q}季度报告"));
+    //                }
+    //                catch (Exception e)
+    //                {
+    //                    WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"Failed to upload {v.FundName} - {SelectedYear}年{q}季度报告"));
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 
 
     [RelayCommand]

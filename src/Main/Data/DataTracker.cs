@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
+using FMO.Disclosure;
 using FMO.Logging;
 using FMO.Models;
 using LiteDB;
@@ -1537,6 +1538,12 @@ public static partial class DataTracker
         db.GetCollection<TransferOrder>().Upsert(data);
 
         WeakReferenceMessenger.Default.Send(data);
+    }
+
+    public static void OnNewNotice(IDisclosureNotice notice)
+    {
+        DisclosureService.RegisterNotice(notice);
+        WeakReferenceMessenger.Default.Send(notice);
     }
 }
 

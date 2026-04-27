@@ -12,7 +12,7 @@ public class QuarterlyUpdateChannel : IDisclosureChannel
 
     public IWorkConfig? DefaultWorkConfig(DisclosureType type) => null;
 
-    public Task<ErrorReturn> Disclosure(IDisclosureNotice Notice, IWorkConfig config)
+    public Task<ErrorReturn> Disclosure(IDisclosureNotice Notice, IWorkConfig? config)
     {
         throw new NotImplementedException();
     }

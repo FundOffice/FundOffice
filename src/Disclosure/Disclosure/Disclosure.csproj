@@ -12,8 +12,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Amac\Direct\Amac.Direct.csproj" />
     <ProjectReference Include="..\..\Main\Models\Models.csproj" />
     <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
   </ItemGroup>
 
+
+	<ItemGroup> 
+		<PackageReference Include="MailKit" Version="4.16.0" />
+		<PackageReference Include="MimeKit" Version="4.16.0" />
+	</ItemGroup>
 </Project>

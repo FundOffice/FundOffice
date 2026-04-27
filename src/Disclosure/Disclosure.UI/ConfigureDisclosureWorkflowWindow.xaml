@@ -7,9 +7,8 @@
     xmlns:local="clr-namespace:FMO.Disclosure"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="配置信批"
-    Width="1500"
+    Width="1540"
     Height="650"
-    DataContextChanged="Window_DataContextChanged"
     Loaded="Window_Loaded"
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
@@ -40,7 +39,7 @@
 
 
         <DataTemplate x:Key="FlowItemTemplate">
-            <Grid>
+            <hc:SimplePanel>
                 <TextBlock
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
@@ -54,11 +53,20 @@
 
                     <DockPanel>
                         <CheckBox Content="启用" IsChecked="{Binding IsEnabled}" />
-                        <Button
+                        <ToggleButton
+                            x:Name="set"
                             Margin="4,0,0,0"
                             Content="配置"
-                            Style="{StaticResource ButtonDashedSuccess.Small}"
+                            IsChecked="{Binding ShowWorkConfigPop}"
+                            Style="{StaticResource ToggleButtonDefault.Small}"
                             Visibility="{Binding RequireConfigWork, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                        <!--<Button
+                            x:Name="set"
+                            Margin="4,0,0,0"
+                            Command="{Binding ConfigureWorkCommand}"
+                            Content="配置"
+                            Style="{StaticResource ButtonDashedSuccess.Small}"
+                            Visibility="{Binding RequireConfigWork, Converter={StaticResource Boolean2VisibilityConverter}}" />-->
                     </DockPanel>
 
                     <StackPanel Visibility="{Binding IsManagerLevel, Converter={StaticResource Boolean2VisibilityReConverter}}">
@@ -90,7 +98,22 @@
                         </DockPanel>
                     </StackPanel>
                 </StackPanel>
-            </Grid>
+
+                <Popup
+                    AllowsTransparency="True"
+                    IsOpen="{Binding IsChecked, ElementName=set}"
+                    Placement="Bottom"
+                    PlacementTarget="{Binding ElementName=set}"
+                    StaysOpen="False">
+                    <Border
+                        Background="WhiteSmoke"
+                        BorderBrush="RoyalBlue"
+                        BorderThickness="3"
+                        CornerRadius="5">
+                        <ContentControl Margin="5" Content="{Binding Config}" />
+                    </Border>
+                </Popup>
+            </hc:SimplePanel>
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding TargetFunds.Length}" Value="0">
                     <Setter TargetName="mask" Property="Visibility" Value="Visible" />
@@ -102,99 +125,105 @@
     </Window.Resources>
 
 
+    <DockPanel>
+        <ProgressBar
+            DockPanel.Dock="Top"
+            Style="{StaticResource ProgressBarFlat}"
+            Visibility="{Binding ShowLoading, Converter={StaticResource Boolean2VisibilityConverter}}"
+            Value="{Binding LoadProgress}" />
+        <DataGrid
+            x:Name="grid"
+            AutoGenerateColumns="False"
+            Background="White"
+            BorderThickness="0"
+            CanUserReorderColumns="False"
+            CanUserResizeColumns="False"
+            CanUserResizeRows="False"
+            CanUserSortColumns="False"
+            GridLinesVisibility="All"
+            HeadersVisibility="All"
+            HorizontalGridLinesBrush="LightGray"
+            IsReadOnly="True"
+            ItemsSource="{Binding Workflows}"
+            RowHeaderWidth="120"
+            RowHeight="120"
+            SelectionMode="Single"
+            SelectionUnit="Cell"
+            VerticalGridLinesBrush="LightGray">
+            <DataGrid.Columns />
 
-    <DataGrid
-        x:Name="grid"
-        AutoGenerateColumns="False"
-        Background="White"
-        BorderThickness="0"
-        CanUserReorderColumns="False"
-        CanUserResizeColumns="False"
-        CanUserResizeRows="False"
-        CanUserSortColumns="False"
-        GridLinesVisibility="All"
-        HeadersVisibility="All"
-        HorizontalGridLinesBrush="LightGray"
-        IsReadOnly="True"
-        ItemsSource="{Binding Workflows}"
-        RowHeaderWidth="120"
-        RowHeight="120"
-        SelectionMode="Single"
-        SelectionUnit="Cell"
-        VerticalGridLinesBrush="LightGray">
-        <DataGrid.Columns />
+            <DataGrid.RowHeaderStyle>
+                <Style TargetType="DataGridRowHeader">
+                    <Setter Property="HorizontalContentAlignment" Value="Center" />
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                    <Setter Property="BorderThickness" Value="1" />
+                    <Setter Property="BorderBrush" Value="LightGray" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="DataGridRowHeader">
+                                <Border BorderBrush="LightGray" BorderThickness="0,0,1,1">
 
-        <DataGrid.RowHeaderStyle>
-            <Style TargetType="DataGridRowHeader">
-                <Setter Property="HorizontalContentAlignment" Value="Center" />
-                <Setter Property="VerticalContentAlignment" Value="Center" />
-                <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="BorderBrush" Value="LightGray" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="DataGridRowHeader">
-                            <Border BorderBrush="LightGray" BorderThickness="0,0,1,1">
+                                    <DockPanel>
+                                        <TextBlock
+                                            Margin="0,0,0,3"
+                                            HorizontalAlignment="Center"
+                                            DockPanel.Dock="Bottom"
+                                            FontSize="10"
+                                            Foreground="Red"
+                                            Text="配置后可用"
+                                            Visibility="{Binding Config.IsAvailable, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
-                                <DockPanel>
-                                    <TextBlock
-                                        Margin="0,0,0,3"
-                                        HorizontalAlignment="Center"
-                                        DockPanel.Dock="Bottom"
-                                        FontSize="10"
-                                        Foreground="Red"
-                                        Text="配置后可用"
-                                        Visibility="{Binding Config.IsAvailable, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                                        <Button
+                                            Margin="0,2"
+                                            Command="{Binding SetChannelConfigCommand}"
+                                            Content="配置"
+                                            DockPanel.Dock="Bottom"
+                                            Style="{StaticResource ButtonDashedPrimary.Small}" />
 
-                                    <Button
-                                        Margin="0,2"
-                                        Command="{Binding SetChannelConfigCommand}"
-                                        Content="配置"
-                                        DockPanel.Dock="Bottom"
-                                        Style="{StaticResource ButtonDashedPrimary.Small}" />
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontSize="14"
+                                            Text="{Binding Head.Name}" />
+                                    </DockPanel>
 
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="14"
-                                        Text="{Binding Head.Name}" />
-                                </DockPanel>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </DataGrid.RowHeaderStyle>
 
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-        </DataGrid.RowHeaderStyle>
+            <!--  取消单元格选中高亮  -->
+            <DataGrid.CellStyle>
+                <Style TargetType="DataGridCell">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Config.IsAvailable}" Value="False">
+                            <Setter Property="IsEnabled" Value="False" />
+                        </DataTrigger>
 
-        <!--  取消单元格选中高亮  -->
-        <DataGrid.CellStyle>
-            <Style TargetType="DataGridCell">
-                <Style.Triggers>
-                    <DataTrigger Binding="{Binding Config.IsAvailable}" Value="False">
-                        <Setter Property="IsEnabled" Value="False" />
-                    </DataTrigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="BorderBrush" Value="Transparent" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.CellStyle>
 
-                    <Trigger Property="IsSelected" Value="True">
-                        <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="BorderBrush" Value="Transparent" />
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
-        </DataGrid.CellStyle>
-
-        <DataGrid.RowStyle>
-            <Style BasedOn="{StaticResource DataGridRowStyle}" TargetType="DataGridRow">
-                <Setter Property="Margin" Value="0" />
-            </Style>
-        </DataGrid.RowStyle>
+            <DataGrid.RowStyle>
+                <Style BasedOn="{StaticResource DataGridRowStyle}" TargetType="DataGridRow">
+                    <Setter Property="Margin" Value="0" />
+                </Style>
+            </DataGrid.RowStyle>
 
 
 
-        <DataGrid.ColumnHeaderStyle>
-            <Style BasedOn="{StaticResource DataGridColumnHeaderStyle}" TargetType="DataGridColumnHeader">
-                <Setter Property="HorizontalAlignment" Value="Center" />
-            </Style>
-        </DataGrid.ColumnHeaderStyle>
+            <DataGrid.ColumnHeaderStyle>
+                <Style BasedOn="{StaticResource DataGridColumnHeaderStyle}" TargetType="DataGridColumnHeader">
+                    <Setter Property="HorizontalAlignment" Value="Center" />
+                </Style>
+            </DataGrid.ColumnHeaderStyle>
 
-    </DataGrid>
+        </DataGrid>
+    </DockPanel>
 </Window>

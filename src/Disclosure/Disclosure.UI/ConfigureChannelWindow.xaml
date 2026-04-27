@@ -20,121 +20,7 @@
 
 
 
-            <DataTemplate DataType="{x:Type local:EmailChannelConfigViewModel}">
-                <StackPanel>
-                    <StackPanel.Resources>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Width" Value="60" />
-                        </Style>
-
-                        <Style TargetType="BulletDecorator">
-                            <Setter Property="Margin" Value="0,1" />
-                        </Style>
-                    </StackPanel.Resources>
-                    <BulletDecorator>
-                        <BulletDecorator.Bullet>
-                            <TextBlock Text="SMTP" />
-                        </BulletDecorator.Bullet>
-                        <TextBox Text="{Binding SmtpHost}" />
-                    </BulletDecorator>
-
-                    <DockPanel>
-                        <TextBlock Text="Port" />
-                        <TextBox Width="50" Text="{Binding SmtpPort}" />
-
-                        <CheckBox
-                            Margin="8,0"
-                            Content="SSL"
-                            IsChecked="{Binding UseSsl}" />
-                    </DockPanel>
-
-                    <BulletDecorator>
-                        <BulletDecorator.Bullet>
-                            <TextBlock Text="用户名" />
-                        </BulletDecorator.Bullet>
-                        <TextBox Text="{Binding UserName}" />
-                    </BulletDecorator>
-
-
-                    <BulletDecorator>
-                        <BulletDecorator.Bullet>
-                            <TextBlock Text="授权码" />
-                        </BulletDecorator.Bullet>
-                        <TextBox Text="{Binding Password}" />
-                    </BulletDecorator>
-
-                </StackPanel>
-            </DataTemplate>
-
-
-            <DataTemplate DataType="{x:Type local:PfidChannelConfigViewModel}">
-                <StackPanel>
-                    <StackPanel.Resources>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Width" Value="60" />
-                        </Style>
-
-                        <Style TargetType="BulletDecorator">
-                            <Setter Property="Margin" Value="0,1" />
-                        </Style>
-                    </StackPanel.Resources>
-
-
-                    <BulletDecorator>
-                        <BulletDecorator.Bullet>
-                            <TextBlock Text="用户名" />
-                        </BulletDecorator.Bullet>
-                        <TextBox Text="{Binding UserName}" />
-                    </BulletDecorator>
-
-
-                    <BulletDecorator>
-                        <BulletDecorator.Bullet>
-                            <TextBlock Text="密码" />
-                        </BulletDecorator.Bullet>
-                        <TextBox Text="{Binding Password}" />
-                    </BulletDecorator>
-
-                    <BulletDecorator>
-                        <BulletDecorator.Bullet>
-                            <TextBlock Text="密钥" />
-                        </BulletDecorator.Bullet>
-                        <TextBox Text="{Binding Secret}" />
-                    </BulletDecorator>
-                </StackPanel>
-            </DataTemplate>
-
-
-            <DataTemplate DataType="{x:Type local:MeiShiChannelConfigViewModel}">
-                <StackPanel>
-                    <StackPanel.Resources>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Width" Value="60" />
-                        </Style>
-
-                        <Style TargetType="BulletDecorator">
-                            <Setter Property="Margin" Value="0,1" />
-                        </Style>
-                    </StackPanel.Resources>
-
-
-                    <BulletDecorator>
-                        <BulletDecorator.Bullet>
-                            <TextBlock Text="用户名" />
-                        </BulletDecorator.Bullet>
-                        <TextBox Text="{Binding UserName}" />
-                    </BulletDecorator>
-
-
-                    <BulletDecorator>
-                        <BulletDecorator.Bullet>
-                            <TextBlock Text="密码" />
-                        </BulletDecorator.Bullet>
-                        <TextBox Text="{Binding Password}" />
-                    </BulletDecorator>
-
-                </StackPanel>
-            </DataTemplate>
+           
 
 
 
@@ -153,6 +39,7 @@
                 Margin="5,2"
                 HorizontalAlignment="Stretch"
                 Command="{Binding SaveCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                 Content="保存"
                 Style="{StaticResource ButtonPrimary}" />
         </DockPanel>

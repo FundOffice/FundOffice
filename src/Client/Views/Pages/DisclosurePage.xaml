@@ -595,10 +595,6 @@
                                 VerticalAlignment="Center"
                                 FontWeight="Bold"
                                 Text="季度更新" />
-                            <Button
-                                hc:IconElement.Geometry="{StaticResource f.upload}"
-                                Command="{Binding UploadOperationCommand}"
-                                Style="{StaticResource ButtonIcon.Small}" />
 
                         </DockPanel>
                     </Expander.Header>
@@ -632,15 +628,7 @@
                                 VerticalAlignment="Center"
                                 FontWeight="Bold"
                                 Text="月报" />
-                            <Button
-                                hc:IconElement.Geometry="{StaticResource f.upload}"
-                                Command="{Binding UploadMonthlyCommand}"
-                                Style="{StaticResource ButtonIcon.Small}" />
 
-                            <Button
-                                hc:IconElement.Geometry="{StaticResource f.box}"
-                                Command="{Binding GenerateMeishiAnnouncesMCommand}"
-                                Style="{StaticResource ButtonIcon.Small}" />
                         </DockPanel>
                     </Expander.Header>
 
@@ -668,16 +656,6 @@
                                 VerticalAlignment="Center"
                                 FontWeight="Bold"
                                 Text="季报" />
-                            <Button
-                                hc:IconElement.Geometry="{StaticResource f.upload}"
-                                Command="{Binding UploadQuarterlyCommand}"
-                                Style="{StaticResource ButtonIcon.Small}" />
-
-                            <Button
-                                hc:IconElement.Geometry="{StaticResource f.cloud-arrow-up}"
-                                Command="{Binding UploadQuarterlyReportToMeiShiCommand}"
-                                Content="易私募"
-                                Style="{StaticResource ButtonDefault.Small}" />
                         </DockPanel>
                     </Expander.Header>
                     <ListBox
@@ -725,15 +703,6 @@
                                 VerticalAlignment="Center"
                                 FontWeight="Bold"
                                 Text="年报" />
-                            <Button
-                                hc:IconElement.Geometry="{StaticResource f.upload}"
-                                Command="{Binding UploadAnnualyCommand}"
-                                Style="{StaticResource ButtonIcon.Small}" />
-
-                            <Button
-                                hc:IconElement.Geometry="{StaticResource f.box}"
-                                Command="{Binding GenerateMeishiAnnouncesCommand}"
-                                Style="{StaticResource ButtonIcon.Small}" />
                         </DockPanel>
                     </Expander.Header>
                     <ListBox

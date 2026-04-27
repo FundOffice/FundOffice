@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FMO.Utilities;
+using System.Windows;
 
 namespace FMO.Disclosure;
 
@@ -19,7 +20,7 @@ public abstract partial class ChannelConfigViewModel : ObservableObject
     public partial string? Error { get; set; }
 
     [RelayCommand]
-    public void Save()
+    public void Save(Window window)
     {
         Error = "";
 
@@ -28,6 +29,8 @@ public abstract partial class ChannelConfigViewModel : ObservableObject
         using var db = DbHelper.Base();
         db.GetCollection<DisclosureChannelConfig>().Upsert(BuildOverride());
 
+        if (IsAvailable)
+            window.Close();
     }
 
     protected abstract DisclosureChannelConfig BuildOverride();

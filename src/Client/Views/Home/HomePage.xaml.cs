@@ -134,7 +134,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             TrusteeGallay.Initialize();
             SigningGalley.Initialize();
             WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Trustee", true));
-            DisclosureService.Initialize();
+            DisclosureChannelManager.Initialize();
             WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
             IsInitializing = false;
         });

@@ -6,7 +6,9 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace FMO.Disclosure;
 
@@ -18,41 +20,57 @@ public partial class ConfigureDisclosureWorkflowWindow : Window
     public ConfigureDisclosureWorkflowWindow()
     {
         InitializeComponent();
+
+        GenerateColumns();
+
+        //Task.Run(() =>
+        //{
+        //    var data = new ConfigureDisclosureWorkflowWindowViewModel();
+
+        //    Dispatcher.InvokeAsync(() => DataContext = data);
+        //});
     }
 
-    private void Window_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    private void GenerateColumns()
     {
-        if (DataContext is ConfigureDisclosureWorkflowWindowViewModel vm)
+        var template = (DataTemplate)FindResource("FlowItemTemplate");
+
+        // 循环生成所有列
+        for (int i = 0; i < DisclosureService.DisclosureTypes.Length; i++)
         {
-            // 1. 拿到模板
-            var template = (DataTemplate)FindResource("FlowItemTemplate");
-
-            // 循环生成所有列
-            for (int i = 0; i < vm.Types.Length; i++)
+            var type = DisclosureService.DisclosureTypes[i];
+            if (type == DisclosureType.QuarterlyUpdate)
             {
-
-                // 2. 动态给 Border 设置 DataContext = Workflows[i]
-                var dt = new DataTemplate();
-
-                // 用 XamlWriter/XamlReader 复制模板内容太麻烦，换个思路：
-                // 直接让 ContentControl 用资源里的模板
-                dt.VisualTree = new FrameworkElementFactory(typeof(ContentControl));
-                dt.VisualTree.SetBinding(ContentControl.ContentProperty, new Binding($"Workflows[{i}]"));
-                dt.VisualTree.SetResourceReference(ContentControl.ContentTemplateProperty, "FlowItemTemplate");
-
-
-                // 4. 创建列
-                var col = new DataGridTemplateColumn
-                {
-                    Header = EnumDescriptionTypeConverter.GetEnumDescription(vm.Types[i]),
-                    Width = 120,
-                    CellTemplate = dt
-                };
-
-                grid.Columns.Add(col);
+                Style style = new(typeof(TextBlock));
+                style.Setters.Add(new Setter(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center));
+                style.Setters.Add(new Setter(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Center));
+                style.Setters.Add(new Setter(TextBlock.ForegroundProperty, Brushes.Black));
+                grid.Columns.Add(new DataGridTextColumn { Header = "季度更新", ElementStyle = style, Binding = new Binding() { Source = "无需配置" } });
+                continue; // 季度更新通道特殊，不展示在这里
             }
+            // 2. 动态给 Border 设置 DataContext = Workflows[i]
+            var dt = new DataTemplate();
+
+            // 用 XamlWriter/XamlReader 复制模板内容太麻烦，换个思路：
+            // 直接让 ContentControl 用资源里的模板
+            dt.VisualTree = new FrameworkElementFactory(typeof(ContentControl));
+            dt.VisualTree.SetBinding(ContentControl.ContentProperty, new Binding($"Workflows[{i}]"));
+            dt.VisualTree.SetResourceReference(ContentControl.ContentTemplateProperty, "FlowItemTemplate");
+
+
+            // 4. 创建列
+            var col = new DataGridTemplateColumn
+            {
+                Header = EnumDescriptionTypeConverter.GetEnumDescription(type),
+                Width = 120,
+                CellTemplate = dt
+            };
+
+            grid.Columns.Add(col);
         }
     }
+
+
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
@@ -74,10 +92,16 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
 
     public ObservableCollection<WorkflowRow> Workflows { get; } = [];
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowLoading))]
+    public partial double LoadProgress { get; set; } = 0.1;
+
+
+    public bool ShowLoading => LoadProgress <= 99;
 
     public ConfigureDisclosureWorkflowWindowViewModel()
     {
-        Channels = DisclosureService.GetRegisteredChannels().Where(x => x.Code != DisclosureChannelCode.QuarterlyUpdate).ToArray();
+        Channels = DisclosureService.GetRegisteredChannels().ToArray();//.Where(x => x.Code != DisclosureChannelCode.QuarterlyUpdate).ToArray();
 
         // 检查是否有对应的配置界面
         using var db = DbHelper.Base();
@@ -87,8 +111,8 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
         foreach (var c in Channels)
         {
             if (configs.TryGetValue(c.Code, out var config))
-                channelConfigs.Add(DisclosureService.CreateViewModel(config)!);
-            else channelConfigs.Add(DisclosureService.CreateViewModel(c.Code)!);
+                channelConfigs.Add(DisclosureChannelManager.CreateViewModel(config)!);
+            else channelConfigs.Add(DisclosureChannelManager.CreateViewModel(c.Code)!);
         }
 
         ChannelConfigs = channelConfigs.ToArray();
@@ -97,32 +121,36 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
         var funds = db.GetCollection<Fund>().Query().Select(x => new { Name = x.Name, Code = x.Code!, Id = x.Id, }).ToArray();
 
 
-        Types = Enum.GetValues<DisclosureType>().Except([DisclosureType.Temporary, DisclosureType.ManagerLevel, DisclosureType.QuarterlyUpdate]).ToArray();
-
+        Types = DisclosureService.DisclosureTypes;//.Except([DisclosureType.Temporary, DisclosureType.ManagerLevel, DisclosureType.QuarterlyUpdate]).ToArray();
 
         var dd = DisclosureService.GetWorkflows();
-    
-        foreach (var c in Channels)
+
+        Task.Run(() =>
         {
-            var rowd = from a in Types
-                       join b in dd.Where(x => x.Channel == c.Code)  on a equals b.Type
-                       into instanceGroup
-                       from instance in instanceGroup.DefaultIfEmpty()
-                       select instance;
-
-
-            Workflows.Add(new WorkflowRow
+            foreach (var c in Channels)
             {
-                Head = c,
-                Config = cm[c.Code],
-                Workflows = rowd.Select(x => new DisclosureWorkflowViewModel(x, funds.Select(x => new DisclosureWorkflowViewModel.FundSelectInfo
+                var rowd = from a in Types
+                           join b in dd.Where(x => x.Channel == c.Code) on a equals b.Type
+                           into instanceGroup
+                           from instance in instanceGroup.DefaultIfEmpty()
+                           select instance;
+
+
+                WorkflowRow item = new()
                 {
-                    Code = x.Code,
-                    Name = x.Name,
-                    Id = x.Id
-                }).ToArray())).ToArray()
-            });
-        }
+                    Head = c,
+                    Config = cm[c.Code],
+                    Workflows = rowd.Select(x => new DisclosureWorkflowViewModel(x, funds.Select(x => new DisclosureWorkflowViewModel.FundSelectInfo
+                    {
+                        Code = x.Code,
+                        Name = x.Name,
+                        Id = x.Id
+                    }).ToArray())).ToArray()
+                };
+                Application.Current.Dispatcher.InvokeAsync(() => Workflows.Add(item));
+                LoadProgress += 100.0 / Channels.Length;
+            }
+        });
     }
 
 }
@@ -217,6 +245,9 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
     public partial int[] TargetFunds { get; set; } = [];
 
 
+    [ObservableProperty]
+    public partial bool ShowWorkConfigPop { get; set; }
+
     public string Channel { get; init; } = "";
 
     [ObservableProperty]
@@ -256,6 +287,17 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
         }
     }
 
+
+ 
+
+    partial void OnShowWorkConfigPopChanged(bool value)
+    {
+        if (Config is null)
+            Config = DisclosureService.GetChannel(Channel)!.DefaultWorkConfig(Type);
+
+        if(!value)
+            OnPropertyChanged(nameof(Config));
+    }
 
     public class FundSelectInfo
     {

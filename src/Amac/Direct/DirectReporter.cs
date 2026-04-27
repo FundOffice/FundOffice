@@ -52,7 +52,7 @@ public enum DirectFileType
 
 
 
-public class DirectReporter
+public class AmacDirectReporter
 {
 
 #if TEST_PFID
@@ -99,27 +99,84 @@ public class DirectReporter
 
     // 3秒限制
     private static readonly TimeSpan _interval = TimeSpan.FromSeconds(3);
+ 
+    /// <summary>
+    /// 上报信批
+    /// </summary>
+    /// <param name="report"></param>
+    /// <param name="acc"></param>
+    /// <param name="ignoreWarning"></param>
+    /// <returns></returns>
+    public static async Task<ErrorReturn> DislosurePeriodical(PeriodicalDisclosureNotice report, AmacReportAccount acc, bool ignoreWarning = false)
+    {
+        using var db = DbHelper.Base();
+        var result = db.GetCollection<DirectAmacResult>().FindById(report.Id) ?? new();
 
-    public static async Task<AmacProcessResult> UploadReport(FundPeriodicReport report, AmacReportAccount acc) => await UploadReport(report, x => x.Excel?.File, acc);
-    public static async Task<AmacProcessResult> UploadReport(FundQuarterlyUpdate report, AmacReportAccount acc) => await UploadReport(report, x => x.Operation?.File, acc);
+        // 检查是否已经上传过，如果已经上传过但未成功，且距离上次上传时间超过60分钟，则允许重新上传；
+        if (DateTime.Now - result.UploadTime > TimeSpan.FromMinutes(60))
+            result = await UploadReport(report, x => x.Excel?.File, acc);
 
-    public static async Task<AmacProcessResult> UploadReport<T>(T report, Func<T, FileMeta?> file, AmacReportAccount acc) where T : IPeriodical
+        if (result.UploadCode == 0)
+            return new(true);
+
+        // 读取错误信息
+        var err = await QueryResult(result.Handle!, result.FileType, acc);
+
+        // 忽略警告直接提交（目前只有一种警告，状态码12，其他错误不允许直接提交）
+        if (result.UploadCode == 12 && ignoreWarning)
+        {
+            var r = await DelaySummit(result, acc);
+            return new(r.Successed, r.Error + err.Error);
+        }
+
+        //请求还在队列中，等待系统处理，系统压力较大。
+        if (result.UploadCode == 100)
+        {
+            await Task.Delay(TimeSpan.FromMinutes(3));
+            err = await QueryResult(result.Handle!, result.FileType, acc);
+            if (err.Successed)
+                return new(true, "提交成功");
+        }
+        // 其他错误，返回错误信息
+        return new(false, err.Error);
+    }
+
+    public static async Task<ErrorReturn> DelaySummit(DirectAmacResult report, AmacReportAccount acc)
+    {
+        if (string.IsNullOrWhiteSpace(report.Handle)) return new(false, "无法提交：处理句柄为空");
+
+        while (DateTime.Now - report.UploadTime < TimeSpan.FromMinutes(30))
+        {
+            await Task.Delay(TimeSpan.FromMinutes(1));
+
+            var r = await Submit(report.Handle, report.FileType, "基金管理人", acc);
+            if (r.Successed)
+            {
+                using var db = DbHelper.Base();
+                db.GetCollection<DirectAmacResult>().Update(report);
+            }
+            return r;
+        }
+        return new(false, "等待超时，未能自动提交，请手动提交");
+    }
+
+    public static async Task<DirectAmacResult> UploadReport<T>(T report, Func<T, FileMeta?> file, AmacReportAccount acc) where T : IFundPeriodicalDisclosure
     {
         var type = report.Type switch
         {
-            FundReportType.MonthlyReport => DirectFileType.PB0001,
-            FundReportType.QuarterlyReport => DirectFileType.PB0002,
-            FundReportType.SemiAnnualReport => DirectFileType.PB0004,
-            FundReportType.AnnualReport => DirectFileType.PB0003,
-            FundReportType.QuarterlyUpdate => DirectFileType.RS0001,
+            DisclosureType.Monthly => DirectFileType.PB0001,
+            DisclosureType.Quarterly => DirectFileType.PB0002,
+            DisclosureType.SemiAnnually => DirectFileType.PB0004,
+            DisclosureType.Annually => DirectFileType.PB0003,
+            DisclosureType.QuarterlyUpdate => DirectFileType.RS0001,
             _ => DirectFileType.Unk
         };
 
-        if (report.FundCode is null) return new AmacProcessResult { Id = report.Id, FileType = type, UploadError = "基金备案编码为空" };
-        if (type == DirectFileType.Unk) return new AmacProcessResult { Id = report.Id, FileType = type, UploadError = "未知的报告类型" };
-        if (file(report) is not FileMeta fm || !fm.Exists) return new AmacProcessResult { Id = report.Id, FileType = type, UploadError = "报告文件不存在" };
+        if (report.FundCode is null) return new DirectAmacResult { Id = report.Id, FileType = type, UploadError = "基金备案编码为空" };
+        if (type == DirectFileType.Unk) return new DirectAmacResult { Id = report.Id, FileType = type, UploadError = "未知的报告类型" };
+        if (file(report) is not FileMeta fm || !fm.Exists) return new DirectAmacResult { Id = report.Id, FileType = type, UploadError = "报告文件不存在" };
 
-        var date = new DateOnly(report.PeriodEnd.Year, report.PeriodEnd.Month, 1).AddMonths(1).AddDays(-1);
+        var date = new DateOnly(report.ReportDate.Year, report.ReportDate.Month, 1).AddMonths(1).AddDays(-1);
         // 生成zip
         var path = Path.GetTempFileName();
         try
@@ -130,20 +187,20 @@ public class DirectReporter
                 using (var entryStream = entry.Open())
                 {
                     using var fs = fm.OpenRead();
-                    if (fs is null) return new AmacProcessResult { Id = report.Id, FileType = type, UploadError = "无法读取文件" };
+                    if (fs is null) return new DirectAmacResult { Id = report.Id, FileType = type, UploadError = "无法读取文件" };
 
                     fs.CopyTo(entryStream);
                     entryStream.Flush();
                 }
 
-                if (report.Type == FundReportType.AnnualReport && report is FundPeriodicReport fp && fp.Sealed?.File is FileMeta fmm)
+                if (report.Type == DisclosureType.Annually && report is FundPeriodicReport fp && fp.Sealed?.File is FileMeta fmm)
                 {
                     entry = archive.CreateEntry($"01_{report.FundCode}_年报.pdf");
                     using (var es = entry.Open())
                     {
                         using (var ffs = fmm.OpenRead())
                         {
-                            if (ffs is null) return new AmacProcessResult { Id = report.Id, FileType = type, UploadError = "无法读取年报附件" };
+                            if (ffs is null) return new DirectAmacResult { Id = report.Id, FileType = type, UploadError = "无法读取年报附件" };
                             ffs.CopyTo(es);
                             es.Flush();
                         }
@@ -154,12 +211,20 @@ public class DirectReporter
             using var db = DbHelper.Base();
             var manager = db.GetCollection<Manager>().Query().First();
             var result = await UploadFile(type, path, date, acc, manager.Name, report.FundCode);
-            var r = new AmacProcessResult { Id = report.Id, FileType = type, Handle = result!.Handle, UploadCode = result.ProcessCode switch { "00" or "100" => 0, var n => int.Parse(n!) }, UploadError = result.ProcessMessage };
+            var r = new DirectAmacResult
+            {
+                Id = report.Id,
+                FileType = type,
+                Handle = result!.Handle,
+                UploadCode = result.ProcessCode switch { "00" => 0, var n => int.Parse(n!) },
+                UploadError = result.ProcessMessage,
+                UploadTime = DateTime.Now
+            };
 
-            db.GetCollection<AmacProcessResult>().Upsert(r);
+            db.GetCollection<DirectAmacResult>().Upsert(r);
             return r;
         }
-        catch (Exception ex) { LogEx.Error(ex); return new AmacProcessResult { Id = report.Id, FileType = type, UploadError = ex.Message }; }
+        catch (Exception ex) { LogEx.Error(ex); return new DirectAmacResult { Id = report.Id, FileType = type, UploadError = ex.Message }; }
         finally { File.Delete(path); }
     }
 
@@ -359,7 +424,152 @@ public class DirectReporter
         }
     }
 
+    public static async Task<ErrorReturn> QueryResult(string handle, DirectFileType type, AmacReportAccount acc)
+    {
+        try
+        {
+            // 异步加锁（不会阻塞线程）
+            await _slimLock.WaitAsync();
 
+            var now = DateTime.Now;
+            var waitTime = _interval - (now - _lastExecuteTime);
+
+            // 异步等待剩余时间（安全、不卡）
+            if (waitTime > TimeSpan.Zero)
+                await Task.Delay(waitTime);
+
+
+            string UserName = acc.Name;
+            string DirectPwd = acc.Password;
+            string PublicKey = acc.Key;
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "imgfornote");
+
+            // 生成认证头部
+            var pwd = Sm3Utils.Encrypt32(DirectPwd);
+            var salt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+            var sign = Sm3Utils.Encrypt(UserName + salt + pwd);
+
+
+            HttpRequestMessage request = new HttpRequestMessage { Method = HttpMethod.Post };
+            request.Headers.Add("userName", UserName);
+            request.Headers.Add("salt", salt);
+            request.Headers.Add("sign", sign);
+            request.Headers.Add("User-Agent", "imgfornote");
+
+            var jsonOptions = new JsonSerializerOptions
+            {
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // 关键：不转义中文
+                WriteIndented = false // 是否格式化（可选）
+            };
+            var json = JsonSerializer.Serialize(new { handle = new string[] { handle } }, jsonOptions);
+
+            // 发送请求
+            request.RequestUri = new Uri(type < DirectFileType.RS0001 ? DisclosureResultUrl : OperationResultUrl);
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+
+            var response = await httpClient.SendAsync(request);
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            var result = JsonSerializer.Deserialize<List<ValidationResultItem>>(responseContent);
+
+            // 更新最后执行时间
+            _lastExecuteTime = DateTime.Now;
+
+            if (result?.FirstOrDefault() is ValidationResultItem root)
+            {
+                if (root.processCode == "00")
+                    return new(true, "操作成功");
+                else
+                    return new(false, string.Join("\n", root.verifyMessage.children.Where(x => x.children is not null).
+                       SelectMany(x => x.children.Select(y => $"Level: {y.deepLevel}, Message: {y.description}"))));
+            }
+            else
+                return new(false, "未获取到返回信息");
+        }
+        catch (Exception e)
+        {
+            LogEx.Error(e);
+            return new(false, e.Message);
+        }
+        finally
+        {
+            // 释放锁
+            _slimLock.Release();
+        }
+    }
+
+    public static async Task<ErrorReturn> Submit(string handle, DirectFileType type, string company, AmacReportAccount acc)
+    {
+        try
+        {
+            // 异步加锁（不会阻塞线程）
+            await _slimLock.WaitAsync();
+
+            var now = DateTime.Now;
+            var waitTime = _interval - (now - _lastExecuteTime);
+
+            // 异步等待剩余时间（安全、不卡）
+            if (waitTime > TimeSpan.Zero)
+                await Task.Delay(waitTime);
+
+
+            string UserName = acc.Name;
+            string DirectPwd = acc.Password;
+            string PublicKey = acc.Key;
+
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "imgfornote");
+
+            // 生成认证头部
+            var pwd = Sm3Utils.Encrypt32(DirectPwd);
+            var salt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+            var sign = Sm3Utils.Encrypt(UserName + salt + pwd);
+
+
+            HttpRequestMessage request = new HttpRequestMessage { Method = HttpMethod.Post };
+            request.Headers.TryAddWithoutValidation("userName", UserName);
+            request.Headers.Add("salt", salt);
+            request.Headers.Add("sign", sign);
+            request.Headers.Add("User-Agent", "imgfornote");
+
+            var jsonOptions = new JsonSerializerOptions
+            {
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping, // 关键：不转义中文
+                WriteIndented = false // 是否格式化（可选）
+            };
+            var json = JsonSerializer.Serialize(new { handle = handle, subCompany = company }, jsonOptions);
+
+            // 发送请求
+            request.RequestUri = new Uri(type < DirectFileType.RS0001 ? DisclosureSubmitUrl : OperationSubmitUrl);
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+
+            var response = await httpClient.SendAsync(request);
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            var pr = JsonSerializer.Deserialize<ProcessResponse>(responseContent);
+
+            // 更新最后执行时间
+            _lastExecuteTime = DateTime.Now;
+
+            return pr is null ? new(false, "提交失败：未获取到返回信息") :
+                pr.ProcessCode == "00" ? new(true, "提交成功") :
+                new(false, $"提交失败：{pr.ProcessMessage}，状态码：{pr.ProcessCode}, {GetStatusMessage(pr.ProcessCode)}");
+        }
+        catch (Exception e)
+        {
+            LogEx.Error(e);
+            return new(false, e.Message);
+        }
+        finally
+        {
+            // 释放锁
+            _slimLock.Release();
+        }
+    }
     public static async Task Submit(AmacProcessResult handle, string company, AmacReportAccount acc)
     {
         try
@@ -539,4 +749,25 @@ public class AmacProcessResult
 
     public string? SubmitError { get; set; }
     public int SubmitCode { get; set; } = -1;
+}
+
+
+public class DirectAmacResult
+{
+
+    public long Id { get; set; }
+
+
+    public DirectFileType FileType { get; set; }
+
+    public int UploadCode { get; internal set; } = -1;
+
+    public string? UploadError { get; internal set; }
+
+    public DateTime UploadTime { get; set; }
+
+    public string? Handle { get; internal set; }
+
+
+    public DateTime SummitTime { get; set; }
 }

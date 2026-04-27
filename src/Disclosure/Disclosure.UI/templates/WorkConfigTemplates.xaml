@@ -1,0 +1,14 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:FMO.Disclosure;assembly=Disclosure">
+    <DataTemplate DataType="{x:Type local:EmailWorkConfig}">
+        <CheckBox IsChecked="{Binding ContinueSendOnMissingEmail}">
+            <TextBlock TextWrapping="Wrap">
+                <Run Text="当缺少部分投资人收件地址时，继续发送" />
+                <LineBreak />
+                <Run Text="未选中时，所有投资人都有收件地址时才会发送" />
+            </TextBlock>
+        </CheckBox>
+    </DataTemplate>
+</ResourceDictionary>

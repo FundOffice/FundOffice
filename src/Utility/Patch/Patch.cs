@@ -52,7 +52,20 @@ public static partial class DatabaseAssist
         [113] = FixMove,
         [117] = FixChannelConfig,
         [118] = MiggreateToNewDisclosure,
+        [120] = MoveDisclosureModels,
     };
+
+    private static void MoveDisclosureModels(BaseDatabase db)
+    {
+        var data = db.GetCollection("IDisclosureNotice").FindAll().ToArray().Select(x =>
+        {
+            var type = Regex.Match(x["_type"].AsString, @"FMO\.Disclosure\.(\w+),").Groups[1].Value;
+            x["_type"] = $"FMO.Disclosure.{type}, Models";
+            return x;
+        }).ToArray();
+
+        db.GetCollection("IDisclosureNotice").Upsert(data   );
+    }
 
     private static void MiggreateToNewDisclosure(BaseDatabase database)
     {

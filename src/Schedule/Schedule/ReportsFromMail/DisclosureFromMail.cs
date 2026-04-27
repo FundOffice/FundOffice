@@ -184,7 +184,7 @@ public class DisclosureFromMailMission : MailMission
                                 ff.Stream.Dispose();
                         }
 
-                        DisclosureService.RegisterNotice(fp);
+                        DataTracker.OnNewNotice(fp); 
 
                         log += $"\n{fund.Key}: {type.Key} {r.Key}";
                     }
@@ -200,7 +200,8 @@ public class DisclosureFromMailMission : MailMission
 
                             item.Stream.Dispose();
                         }
-                        DisclosureService.RegisterNotice(fp);
+
+                        DataTracker.OnNewNotice(fp);
                         log += $"\n{fund.Key}: {type.Key} {r.Key}";
                     }
                 }

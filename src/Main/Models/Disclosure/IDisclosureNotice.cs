@@ -34,6 +34,17 @@ public interface IFundDisclosureNotice : IDisclosureNotice
     public string FundName { get; }
 
     public string FundCode { get; }
+
+}
+
+public interface IDisclosureFile
+{
+    public SimpleFile? File { get; }
+}
+
+public interface IFundDisclosureNoticeWithFile : IFundDisclosureNotice
+{
+    public SimpleFile? File { get; }
 }
 
 
@@ -76,7 +87,6 @@ public class PeriodicalDisclosureNotice : IFundPeriodicalDisclosure
     public SimpleFile? Pdf { get; set; }
 
     public SimpleFile? Sealed { get; set; }
-
 
 }
 
@@ -124,7 +134,7 @@ public class QuarterlyUpdate : IFundPeriodicalDisclosure
 /// <summary>
 /// 临时报告
 /// </summary>
-public class TemporaryDisclosureNotice : IFundDisclosureNotice
+public class TemporaryDisclosureNotice : IFundDisclosureNotice, IDisclosureFile
 {
     public long Id { get; init; }
 
@@ -152,7 +162,7 @@ public class TemporaryDisclosureNotice : IFundDisclosureNotice
 /// <summary>
 /// 临时开放公告
 /// </summary>
-public class TemporaryOpenNotice : IFundDisclosureNotice
+public class TemporaryOpenNotice : IFundDisclosureNotice, IDisclosureFile
 {
     public long Id => OpenDay.DayNumber << 32 | FundId << 10 | ((int)Type);
 
@@ -173,15 +183,14 @@ public class TemporaryOpenNotice : IFundDisclosureNotice
 
     public bool AllowRedemption { get; set; }
 
-
-
+    public SimpleFile? File { get; set; }
 }
 
 
 /// <summary>
 /// 巨额赎回公告
 /// </summary>
-public class HugeRedemptionNotice : IFundDisclosureNotice
+public class HugeRedemptionNotice : IFundDisclosureNotice, IDisclosureFile
 {
     public long Id => OpenDay.DayNumber << 32 | FundId << 10 | ((int)Type);
 
@@ -208,12 +217,14 @@ public class HugeRedemptionNotice : IFundDisclosureNotice
     /// 是否全部兑付
     /// </summary>
     public bool IsFullyPaied { get; set; }
+
+    public SimpleFile? File { get; set; }
 }
 
 /// <summary>
 /// 产品成立公告
 /// </summary>
-public class FundSetupNotice : IFundDisclosureNotice
+public class FundSetupNotice : IFundDisclosureNotice, IDisclosureFile
 {
     public long Id => SetupDay.DayNumber << 32 | FundId << 10 | ((int)Type);
 
@@ -230,6 +241,8 @@ public class FundSetupNotice : IFundDisclosureNotice
     public string Name => $"{FundName} 产品成立公告";
 
     public DateOnly SetupDay { get; set; }
+
+    public SimpleFile? File { get; set; }
 }
 
 
@@ -241,7 +254,7 @@ public class FundSetupNotice : IFundDisclosureNotice
 /// <summary>
 /// 管理人公告
 /// </summary>
-public class ManagerDisclosureNotice : IDisclosureNotice
+public class ManagerDisclosureNotice : IDisclosureNotice, IDisclosureFile
 {
     public long Id { get; init; }
 

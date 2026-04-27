@@ -30,7 +30,7 @@ public partial class FundDisclosureView : UserControl
 }
 
 
-public partial class FundDisclosureViewModel : ObservableObject, IRecipient<FundPeriodicReport>
+public partial class FundDisclosureViewModel : ObservableObject, IRecipient<IDisclosureNotice>
 {
     public FundDisclosureViewModel(int fid)
     {
@@ -42,27 +42,37 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<Fund
 
         Announcements = [.. data.Select(x => new AnnouncementViewModel(x))];
 
-        PeriodicDisclosure = [.. db.GetCollection<FundPeriodicReport>().Find(x => x.FundId == fid).Select(x => new FundPeriodicReportViewModel(x))];
+       
+        IEnumerable<PeriodicalDisclosureNotice> notices = db.GetCollection<IDisclosureNotice>().Query().
+            Where(Query.EQ(nameof(PeriodicalDisclosureNotice.FundId), fid)).ToArray().OfType<PeriodicalDisclosureNotice>();
 
-        var qu = db.GetCollection<FundQuarterlyUpdate>().Find(x => x.FundId == fid).ToArray();
+        var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && !string.IsNullOrWhiteSpace(x.Channel)).ToArray().ToLookup(x=>x.Type);
+
+        var run = db.GetCollection<DisclosureInstance>().Query().Where(Query.In(nameof(DisclosureInstance.NoticeId), notices.Select(x => new BsonValue(x.Id)))).ToArray().ToLookup(x => x.NoticeId);
+
+        PeriodicDisclosure = [.. notices.Select(x => new PeriodicReportViewModel(x, workflows[x.Type], run[x.Id]))];
+
+
+        var qu = db.GetCollection<IDisclosureNotice>().Query().
+            Where(Query.EQ(nameof(PeriodicalDisclosureNotice.FundId), fid)).ToArray().OfType<QuarterlyUpdate>();
         var dic = db.GetCollection<AmacProcessResult>().Query().Where(Query.In("_id", qu.Select(x => new BsonValue(x.Id)))).ToArray().ToDictionary(x => x.Id, x => x);
-        QuarterlyDisclosure = [.. qu.Select(x => new FundQuarterlyUpdateViewModel(x, dic.TryGetValue(x.Id, out var v) ? v : null))];
+        QuarterlyDisclosure = [.. qu.Select(x => new QuarterlyUpdateViewModel(x, workflows[x.Type], run[x.Id], null))];
 
 
         //if (PeriodicDisclosure.Count == 0) PeriodicDisclosure = [new FundPeriodicReport { FundId = FundId, Type = PeriodicReportType.MonthlyReport }, new FundQuarterlyUpdate { FundId = FundId }];
 
 
         Monthly.Source = PeriodicDisclosure;
-        Monthly.Filter += (s, e) => e.Accepted = e.Item switch { FundPeriodicReportViewModel r => r.Type == FundReportType.MonthlyReport, _ => false };
+        Monthly.Filter += (s, e) => e.Accepted = e.Item switch { PeriodicReportViewModel r => r.Type == DisclosureType.Monthly, _ => false };
 
         Quarterly.Source = PeriodicDisclosure;
-        Quarterly.Filter += (s, e) => e.Accepted = e.Item switch { FundPeriodicReportViewModel r => r.Type == FundReportType.QuarterlyReport, _ => false };
+        Quarterly.Filter += (s, e) => e.Accepted = e.Item switch { PeriodicReportViewModel r => r.Type == DisclosureType.Quarterly, _ => false };
 
         SemiAnnually.Source = PeriodicDisclosure;
-        SemiAnnually.Filter += (s, e) => e.Accepted = e.Item switch { FundPeriodicReportViewModel r => r.Type == FundReportType.SemiAnnualReport, _ => false };
+        SemiAnnually.Filter += (s, e) => e.Accepted = e.Item switch { PeriodicReportViewModel r => r.Type == DisclosureType.SemiAnnually, _ => false };
 
         Annually.Source = PeriodicDisclosure;
-        Annually.Filter += (s, e) => e.Accepted = e.Item switch { FundPeriodicReportViewModel r => r.Type == FundReportType.AnnualReport, _ => false };
+        Annually.Filter += (s, e) => e.Accepted = e.Item switch { PeriodicReportViewModel r => r.Type == DisclosureType.Annually, _ => false };
 
         QuarterlyUpdate.Source = QuarterlyDisclosure;
     }
@@ -79,9 +89,9 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<Fund
     public CollectionViewSource QuarterlyUpdate { get; } = new();
 
 
-    public ObservableCollection<FundPeriodicReportViewModel> PeriodicDisclosure { get; }
+    public ObservableCollection<PeriodicReportViewModel> PeriodicDisclosure { get; }
 
-    public ObservableCollection<FundQuarterlyUpdateViewModel> QuarterlyDisclosure { get; }
+    public ObservableCollection<QuarterlyUpdateViewModel> QuarterlyDisclosure { get; }
 
     [RelayCommand]
     public void AddAnnouncement()
@@ -93,122 +103,13 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<Fund
         Announcements?.Add(new(obj));
     }
 
-    public void Receive(FundPeriodicReport message)
+    public void Receive(IDisclosureNotice message)
     {
     }
 }
 
 
 
-
-
-public partial class FundPeriodicReportViewModel : ObservableObject
-{
-    private readonly FundPeriodicReport report;
-
-    public FundPeriodicReportViewModel(FundPeriodicReport report)
-    {
-        Id = report.Id;
-        Code = report.FundCode;
-        //Type = report.Type;
-        PeriodEnd = report.PeriodEnd;
-        Word = new(report.Word);
-        Excel = new(report.Excel);
-        Pdf = new(report.Pdf);
-        Xbrl = new(report.Xbrl);
-        Sealed = new(report.Sealed);
-        this.report = report;
-
-
-        Word.FileChanged += f => UpdateFile(new { Word = f });
-        Excel.FileChanged += f => UpdateFile(new { Excel = f });
-        Pdf.FileChanged += f => UpdateFile(new { Pdf = f });
-        Xbrl.FileChanged += f => UpdateFile(new { Xbrl = f });
-        Sealed.FileChanged += f => UpdateFile(new { Sealed = f });
-    }
-
-
-
-    private void UpdateFile<T>(T v)
-    {
-        if (Id == 0) return;
-        using var db = DbHelper.Base();
-        report.UpdateFrom(v!);
-        db.GetCollection<FundPeriodicReport>().UpdateMany(BsonMapper.Global.ToDocument(v).ToString(), $"_id={Id}");
-    }
-
-
-
-    public int Id { get; }
-    public string? Code { get; }
-    public FundReportType Type { get; }
-
-    public string Title => Type switch
-    {
-        FundReportType.QuarterlyReport => $"{PeriodEnd:yy} {PeriodEnd.Month switch { < 4 => "Q1", < 7 => "Q2", < 10 => "Q3", _ => "Q4" }}",
-        FundReportType.SemiAnnualReport => $"{PeriodEnd:yy} {PeriodEnd.Month switch { < 7 => "上半年", _ => "下半年" }}",
-        FundReportType.AnnualReport => $"{PeriodEnd:yy}",
-        _ => $"{PeriodEnd:yy/MM}",
-    };
-
-
-    public string? FundName { get; set; }
-
-    public DateOnly PeriodEnd { get; }
-
-    public SimpleFileViewModel Word { get; }
-
-    public SimpleFileViewModel Excel { get; }
-
-    public SimpleFileViewModel Xbrl { get; }
-
-    public SimpleFileViewModel Pdf { get; }
-
-
-    public SimpleFileViewModel Sealed { get; }
-
-
-    [RelayCommand]
-    public async Task Upload()
-    {
-        // 获取 账号
-        using var db = DbHelper.Base();
-        var acc = db.GetCollection<AmacReportAccount>().FindOne(x => x.Id == "pof");
-
-        if (acc is null || string.IsNullOrWhiteSpace(acc.Name) || string.IsNullOrWhiteSpace(acc.Password) || string.IsNullOrWhiteSpace(acc.Key))
-        {
-            HandyControl.Controls.Growl.Info("请先在[平台]中设置信批账号");
-            return;
-        }
-
-        var manager = db.GetCollection<Manager>().Query().First();
-
-        var result = await DirectReporter.UploadReport(report, acc);
-
-        if (result.UploadCode != 0)
-        {
-            HandyControl.Controls.Growl.Info($"上传文件失败:{result.UploadError}");
-            return;
-        }
-
-        HandyControl.Controls.Growl.Info($"上传报告成功，请等待校验结果");
-        await Task.Delay(20 * 1000);
-
-        await DirectReporter.QueryResult(result, acc);
-
-        if (result.ResultInfo?.Count > 0)
-            HandyControl.Controls.Growl.Info($"{result.ResultInfo[0].Message}");
-        else
-            HandyControl.Controls.Growl.Info($"校验异常");
-
-        //if (result.ValidateCode == 0)
-        //{
-        //    await Task.Delay(2000);
-        //    await DirectReporter.Submit(result, manager.Name, acc);
-        //    HandyControl.Controls.Growl.Info($"报告提交:{result.SubmitError}");
-        //}
-    }
-}
 
 public partial class PeriodicReportViewModel : ObservableObject
 {
@@ -329,261 +230,7 @@ public partial class PeriodicReportViewModel : ObservableObject
 }
 
 
-public partial class FundQuarterlyUpdateViewModel : ObservableObject
-{
-    private readonly FundQuarterlyUpdate report;
 
-    public FundQuarterlyUpdateViewModel(FundQuarterlyUpdate report, AmacProcessResult result)
-    {
-        Id = report.Id;
-        FundId = report.FundId;
-        Type = report.Type;
-        PeriodEnd = report.PeriodEnd;
-        Investor = new(report.Investor);
-        Operation = new(report.Operation);
-        this.report = report;
-
-        OperationResult = new(result);
-
-        Investor.FileChanged += f =>
-        {
-            using var db = DbHelper.Base();
-            db.GetCollection<FundQuarterlyUpdate>().UpdateMany(BsonMapper.Global.ToDocument(new { Investor = f }).ToString(), $"_id={Id}");
-            //var i = db.GetCollection<FundQuarterlyUpdate>().FindById(Id);
-            //i.Investor = f;
-            //db.GetCollection<FundQuarterlyUpdate>().Update(i);
-        };
-
-        Operation.FileChanged += f =>
-        {
-            using var db = DbHelper.Base();
-            db.GetCollection<FundQuarterlyUpdate>().UpdateMany(BsonMapper.Global.ToDocument(new { Operation = f }).ToString(), $"_id={Id}");
-            //var i = db.GetCollection<FundQuarterlyUpdate>().FindById(Id);
-            //i.Operation = f;
-            //db.GetCollection<FundQuarterlyUpdate>().Update(i);
-        };
-
-    }
-
-    public int Id { get; }
-    public int FundId { get; }
-
-    public FundReportType Type { get; }
-    public string Title => $"{PeriodEnd:yy} {PeriodEnd.Month switch { < 4 => "Q1", < 7 => "Q2", < 10 => "Q3", _ => "Q4" }}";
-
-    public string? FundName { get; set; }
-
-    public DateOnly PeriodEnd { get; }
-
-    public SimpleFileViewModel Investor { get; }
-
-    public SimpleFileViewModel Operation { get; }
-
-    public AmacDirectResultViewModel OperationResult { get; }
-
-    [RelayCommand]
-    public async Task UploadOperation()
-    {
-        // 获取 账号
-        using var db = DbHelper.Base();
-        var acc = db.GetCollection<AmacReportAccount>().FindOne(x => x.Id == "pmg");
-
-        if (acc is null || string.IsNullOrWhiteSpace(acc.Name) || string.IsNullOrWhiteSpace(acc.Password) || string.IsNullOrWhiteSpace(acc.Key))
-        {
-            HandyControl.Controls.Growl.Info("请先在[平台]中设置信批账号");
-            return;
-        }
-
-        var manager = db.GetCollection<Manager>().Query().First();
-
-        // 检查是否有上传记录
-        var result = db.GetCollection<AmacProcessResult>().FindById(Id);
-        if (result is null)
-        {
-            result = await DirectReporter.UploadReport(report, acc);
-            if (result.UploadCode != 0)
-            {
-                HandyControl.Controls.Growl.Info($"上传文件失败:{result.UploadError}");
-                return;
-            }
-
-            HandyControl.Controls.Growl.Info($"上传报告成功，请等待校验结果");
-            //await Task.Delay(20 * 1000);
-        }
-        else HandyControl.Controls.Growl.Info("存在上传记录，继续查询结果");
-
-        OperationResult.Status = AmacDirectResultViewModel.State.Upload;
-        OperationResult.IsSuccess = result.UploadCode == 0;
-
-        await DirectReporter.QueryResult(result, acc);
-        OperationResult.Status = AmacDirectResultViewModel.State.Verify;
-        OperationResult.IsSuccess = result.ValidateCode == 0;
-
-        // 重新上传
-        if (result.ValidateCode == 99)
-        {
-            result = await DirectReporter.UploadReport(report, acc);
-            if (result.UploadCode != 0)
-            {
-                HandyControl.Controls.Growl.Info($"上传文件失败:{result.UploadError}");
-                return;
-            }
-
-            HandyControl.Controls.Growl.Info($"上传报告成功，请等待校验结果");
-            //await Task.Delay(20 * 1000);
-
-            OperationResult.Status = AmacDirectResultViewModel.State.Upload;
-            OperationResult.IsSuccess = result.UploadCode == 0;
-
-            await DirectReporter.QueryResult(result, acc);
-            OperationResult.Status = AmacDirectResultViewModel.State.Verify;
-            OperationResult.IsSuccess = result.ValidateCode == 0;
-        }
-
-        if (result.ValidateCode == 0 || result.ValidateCode == 10) // 已完成
-        {
-            result.SubmitCode = 0;
-            OperationResult.Status = AmacDirectResultViewModel.State.Submit;
-            OperationResult.IsSuccess = true;
-            db.GetCollection<AmacProcessResult>().Update(result);
-            return;
-        }
-
-        if (result.ResultInfo?.Count > 0)
-            HandyControl.Controls.Growl.Info($"{result.ResultInfo[0].Message}");
-        else
-            HandyControl.Controls.Growl.Info($"校验异常");
-
-        if (result.ValidateCode != 0)
-        {
-            Growl.Warning($"{FundName} 季度更新存在警告或错误，请手动检查后提交");
-            return;
-        }
-
-        await DirectReporter.Submit(result, manager.Name, acc);
-
-        if (result.SubmitError?.Contains("handle参数错误或已失效") ?? false)
-        {
-            db.GetCollection<AmacProcessResult>().Delete(Id);
-            OperationResult.Status = AmacDirectResultViewModel.State.None;
-        }
-
-        HandyControl.Controls.Growl.Info($"报告提交, Code:{result.SubmitCode},{result.SubmitError}");
-    }
-
-    [RelayCommand]
-    public async Task SubmitOperation()
-    {
-        using var db = DbHelper.Base();
-        var acc = db.GetCollection<AmacReportAccount>().FindOne(x => x.Id == "pmg");
-
-        if (acc is null || string.IsNullOrWhiteSpace(acc.Name) || string.IsNullOrWhiteSpace(acc.Password) || string.IsNullOrWhiteSpace(acc.Key))
-        {
-            HandyControl.Controls.Growl.Info("请先在[平台]中设置信批账号");
-            return;
-        }
-
-        var result = db.GetCollection<AmacProcessResult>().FindById(Id);
-        var manager = db.GetCollection<Manager>().Query().First();
-
-        if (MessageBox.Show($"季度更新存在警告或错误", "是否强制提交", button: System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.Yes)
-        {
-            //await Task.Delay(5000);
-            await DirectReporter.Submit(result, manager.Name, acc);
-            HandyControl.Controls.Growl.Info($"报告提交, Code:{result.SubmitCode},{result.SubmitError}");
-
-            if (result.SubmitCode == 0)
-            {
-                OperationResult.Status = AmacDirectResultViewModel.State.Submit;
-                OperationResult.IsSuccess = true;
-            }
-        }
-    }
-
-
-    [RelayCommand]
-    public async Task GenerateInvestorSheet()
-    {
-        try
-        {
-            var path = @"ambers_investor.xlsx";
-
-            var old = Investor.Meta;
-            using var db = DbHelper.Base();
-            var ta = db.GetCollection<TransferRecord>().Find(x => x.FundId == FundId && x.ConfirmedDate < PeriodEnd).ToArray();
-
-            // 排除已全部赎回的
-            var groupd = ta.GroupBy(x => x.InvestorId).Select(x => (id: x.Key, share: x.Sum(y => y.ShareChange()), saler: x.First().Agency)).Where(x => x.share > 0).ToDictionary(x => x.id, x => x);
-            var ids = groupd.Keys.Select(x => new BsonValue(x));
-            var data = db.GetCollection<Investor>().Find(Query.In("_id", new BsonArray(ids))).ToList();
-            var manager = db.GetCollection<Manager>().FindOne(x => x.IsMaster).Name;
-
-            // 数据校验
-            var nv = db.GetDailyCollection(FundId).Find(x => x.Date <= PeriodEnd).LastOrDefault();
-            if (nv is null || nv.Share != groupd.Sum(x => x.Value.share))
-            {
-                HandyControl.Controls.Growl.Warning($"{FundName} 的基金份额异常，生成的投资者信息表可能不正确！！");
-                return;
-            }
-
-            // 写入
-            var outp = @$"temp\investor_{Id}.xlsx";
-
-            var obj = new
-            {
-                i = data.Select(x => new
-                {
-                    Type = x.Type.ToAmacString(),
-                    Name = x.Name,
-                    IDType = x.Identity!.Type.ToAmacString(),
-                    IDType2 = x.Identity?.Other,
-                    ID = x.Identity?.Id,
-                    Share = (groupd[x.Id].share / 10000).ToString(),
-                    Saler = groupd[x.Id].saler?.Contains("直销") ?? true ? manager : groupd[x.Id].saler
-                })
-            };
-
-            Tpl.GenerateByPredefined(outp, path, obj);
-
-            // 保存
-            var r = db.GetCollection<FundQuarterlyUpdate>().FindById(Id);
-            r.Investor = new SimpleFile { File = FileMeta.Create(outp) };
-            db.GetCollection<FundQuarterlyUpdate>().Update(r);
-            Investor.Meta = r.Investor.File;
-            File.Delete(outp);
-
-            old?.Delete();
-            //PackDiscloseSheets(data);
-        }
-        catch (Exception e)
-        {
-            LogEx.Error(e);
-            HandyControl.Controls.Growl.Warning("生成投资者信息表出错");
-        }
-    }
-
-
-    /// <summary>
-    /// 打包风险揭示书
-    /// </summary>
-    private void PackDiscloseSheets(List<Investor> data)
-    {
-        using var db = DbHelper.Base();
-        var orders = db.GetCollection<TransferOrder>().Find(x => x.FundId == FundId && x.Date < PeriodEnd).OrderByDescending(x => x.Date).ToArray();
-
-        var ids = data.Select(x => x.Id).ToList();
-
-        var d = orders.Where(x => x.RiskDiscloure?.File is not null).GroupBy(x => x.InvestorId).
-            Where(x => ids.Contains(x.Key)).Select(x => x.First()).Select(x => (x.InvestorId, File: x.RiskDiscloure!.File!)).ToList();
-
-        if (d.Count != data.Count)
-            HandyControl.Controls.Growl.Warning("风险揭示书数量不全");
-
-        ZipSplitter.CreateSplitZip(d.Select(x => x.File).ToArray(), "temp", $"{FundName}_风险揭示书", 20 * 1024 * 1024);
-
-    }
-
-}
 
 public partial class DisclosureRunViewModel : ObservableObject, IRecipient<DisclosureInstance>
 {
@@ -669,7 +316,7 @@ public partial class DisclosureRunViewModel : ObservableObject, IRecipient<Discl
 
     public void Receive(DisclosureInstance message)
     {
-        if(message.Id == InstanceId) Fill(message);
+        if (message.Id == InstanceId) Fill(message);
     }
 }
 
@@ -764,7 +411,7 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
         var result = db.GetCollection<AmacProcessResult>().FindById(Id);
         if (result is null)
         {
-            result = await DirectReporter.UploadReport(report, acc);
+            result = await AmacDirectReporter.UploadReport(report, acc);
             if (result.UploadCode != 0)
             {
                 HandyControl.Controls.Growl.Info($"上传文件失败:{result.UploadError}");
@@ -779,14 +426,14 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
         OperationResult.Status = AmacDirectResultViewModel.State.Upload;
         OperationResult.IsSuccess = result.UploadCode == 0;
 
-        await DirectReporter.QueryResult(result, acc);
+        await AmacDirectReporter.QueryResult(result, acc);
         OperationResult.Status = AmacDirectResultViewModel.State.Verify;
         OperationResult.IsSuccess = result.ValidateCode == 0;
 
         // 重新上传
         if (result.ValidateCode == 99)
         {
-            result = await DirectReporter.UploadReport(report, acc);
+            result = await AmacDirectReporter.UploadReport(report, acc);
             if (result.UploadCode != 0)
             {
                 HandyControl.Controls.Growl.Info($"上传文件失败:{result.UploadError}");
@@ -799,7 +446,7 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
             OperationResult.Status = AmacDirectResultViewModel.State.Upload;
             OperationResult.IsSuccess = result.UploadCode == 0;
 
-            await DirectReporter.QueryResult(result, acc);
+            await AmacDirectReporter.QueryResult(result, acc);
             OperationResult.Status = AmacDirectResultViewModel.State.Verify;
             OperationResult.IsSuccess = result.ValidateCode == 0;
         }
@@ -824,7 +471,7 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
             return;
         }
 
-        await DirectReporter.Submit(result, manager.Name, acc);
+        await AmacDirectReporter.Submit(result, manager.Name, acc);
 
         if (result.SubmitError?.Contains("handle参数错误或已失效") ?? false)
         {
@@ -853,7 +500,7 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
         if (MessageBox.Show($"季度更新存在警告或错误", "是否强制提交", button: System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.Yes)
         {
             //await Task.Delay(5000);
-            await DirectReporter.Submit(result, manager.Name, acc);
+            await AmacDirectReporter.Submit(result, manager.Name, acc);
             HandyControl.Controls.Growl.Info($"报告提交, Code:{result.SubmitCode},{result.SubmitError}");
 
             if (result.SubmitCode == 0)

@@ -179,7 +179,7 @@ public class SimpleFile
 
     public FileMeta? File { get; set; }
 
-
+    public bool Exists => File?.Exists ?? false;
 }
 
 public class MultiFile
