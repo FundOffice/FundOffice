@@ -506,13 +506,7 @@ public partial class FundQuarterlyUpdateViewModel : ObservableObject
     {
         try
         {
-            var path = @$"files\tpl\ambers_investor.xlsx";
-
-            if (!File.Exists(path))
-            {
-                WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "投资人表模板不存在，无法生成"));
-                return;
-            }
+            var path = @"ambers_investor.xlsx";
 
             var old = Investor.Meta;
             using var db = DbHelper.Base();
@@ -549,7 +543,7 @@ public partial class FundQuarterlyUpdateViewModel : ObservableObject
                 })
             };
 
-            Tpl.Generate(outp, path, obj);
+            Tpl.GenerateByPredefined(outp, path, obj);
 
             // 保存
             var r = db.GetCollection<FundQuarterlyUpdate>().FindById(Id);
@@ -876,13 +870,7 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
     {
         try
         {
-            var path = @$"files\tpl\ambers_investor.xlsx";
-
-            if (!File.Exists(path))
-            {
-                WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "投资人表模板不存在，无法生成"));
-                return;
-            }
+            var path = @"ambers_investor.xlsx";
 
             var old = Investor.Meta;
             using var db = DbHelper.Base();
@@ -919,12 +907,12 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
                 })
             };
 
-            Tpl.Generate(outp, path, obj);
+            Tpl.GenerateByPredefined(outp, path, obj);
 
             // 保存
-            var r = db.GetCollection<FundQuarterlyUpdate>().FindById(Id);
+            var r = db.GetCollection<QuarterlyUpdate>(nameof(IDisclosureNotice)).FindById(Id);
             r.Investor = new SimpleFile { File = FileMeta.Create(outp) };
-            db.GetCollection<FundQuarterlyUpdate>().Update(r);
+            db.GetCollection<IDisclosureNotice>().Update(r);
             Investor.Meta = r.Investor.File;
             File.Delete(outp);
 

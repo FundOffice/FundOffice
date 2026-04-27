@@ -12,6 +12,28 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="tpl\ambers_investor.xlsx" />
+    <None Remove="tpl\pfid_investor.xlsx" />
+    <None Remove="tpl\产品分红公告.docx" />
+    <None Remove="tpl\产品成立公告.docx" />
+    <None Remove="tpl\信息变更承诺函.docx" />
+    <None Remove="tpl\备案承诺函.docx" />
+    <None Remove="tpl\清算承诺函.docx" />
+    <None Remove="tpl\赎回申请表.docx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="tpl\ambers_investor.xlsx" />
+    <EmbeddedResource Include="tpl\pfid_investor.xlsx" />
+    <EmbeddedResource Include="tpl\产品分红公告.docx" />
+    <EmbeddedResource Include="tpl\产品成立公告.docx" />
+    <EmbeddedResource Include="tpl\信息变更承诺函.docx" />
+    <EmbeddedResource Include="tpl\备案承诺函.docx" />
+    <EmbeddedResource Include="tpl\清算承诺函.docx" />
+    <EmbeddedResource Include="tpl\赎回申请表.docx" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="MiniExcel" Version="1.43.1" />
     <PackageReference Include="MiniWord" Version="0.9.2" />
     <PackageReference Include="Serilog" Version="4.3.1" />

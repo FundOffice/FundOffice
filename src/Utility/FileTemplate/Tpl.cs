@@ -3,6 +3,7 @@ using MiniExcelLibs;
 using MiniSoftware;
 using Serilog;
 using System.IO.Compression;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
@@ -26,7 +27,8 @@ public static class Tpl
 
             if (Regex.IsMatch(tpl, @"\.doc|\.docx", RegexOptions.IgnoreCase))
             {
-                MiniWord.SaveAsByTemplate(path, tpl, obj);
+                if (File.Exists(path))
+                    MiniWord.SaveAsByTemplate(path, tpl, obj);
                 return true;
             }
             if (Regex.IsMatch(tpl, @"\.xls|\.xlsx", RegexOptions.IgnoreCase))
@@ -50,10 +52,44 @@ public static class Tpl
     public static bool GenerateByPredefined(string path, string tplName, object obj)
     {
         if (string.IsNullOrWhiteSpace(tplName)) return false;
-        if (!IsExists(tplName)) return false;
+        if (IsExists(tplName))
+        {
+            try
+            {
+                Generate(path, GetPath(tplName), obj); return true;
+            }
+            catch { return false; }
+        }
+        else
+        {
+            var buffer = GetPredefinedTemplate(tplName);
+            if (buffer is null) return false;
+            try
+            {
+                var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}_{tplName}");
+                File.WriteAllBytes(tempPath, buffer);
+                Generate(path, tempPath, obj); return true;
+            }
+            catch { return false; }
 
-        try { Generate(path, GetPath(tplName), obj); return true; } catch { return false; }
+        }
     }
+
+
+    private static byte[]? GetPredefinedTemplate(string fileName)
+    {
+        Assembly assembly = Assembly.GetCallingAssembly();
+        var stream = assembly.GetManifestResourceStream(@$"FileTemplate.tpl.{fileName}");
+        if (stream is null)
+        {
+            Log.Error($"未找到内嵌资源：{fileName}");
+            return null;
+        }
+        byte[] buffer = new byte[stream.Length];
+        stream.ReadExactly(buffer, 0, (int)stream.Length);
+        return buffer;
+    }
+
 
 
     public static bool GenerateRegisterAnounce(Fund fund, string path)
