@@ -2,6 +2,7 @@
 using LiteDB;
 using PDFiumSharp;
 using PDFiumSharp.Enums;
+using PDFiumSharp.Types;
 using System.Formats.Asn1;
 using System.IO;
 using System.Security.Cryptography;
@@ -59,7 +60,7 @@ public static class PdfHelper
                  {
                      string middle = match.Groups[2].Value;
                      string cleaned = Regex.Replace(middle, @"\s+", "");
-                     return $"{ match.Groups[1].Value}{ cleaned}\n{ match.Groups[3].Value}";
+                     return $"{match.Groups[1].Value}{cleaned}\n{match.Groups[3].Value}";
                  });
 
 
@@ -155,8 +156,47 @@ public static class PdfHelper
         }
     }
 
+    public static Stream? Merge(params Stream[] streams)
+    {
+        if (streams == null || streams.Length == 0) return null;
+        if (streams.Length == 1) return streams[0];
+
+        var newdoc = PDFium.FPDF_CreateNewDocument();
+        int pid = 0;
+        foreach (var s in streams)
+        {
+            var d = Load(s);
+            if (d is null) break;
+            int d1c = PDFium.FPDF_GetPageCount(d.Value);
+
+            PDFium.FPDF_ImportPages(newdoc, d.Value, pid, Enumerable.Range(pid, d1c).ToArray());
+            pid += d1c;
+            PDFium.FPDF_CloseDocument(d.Value);
+        }
+
+        using var ms = new MemoryStream();
+        PDFium.FPDF_SaveAsCopy(newdoc, ms, SaveFlags.None);
+        PDFium.FPDF_CloseDocument(newdoc);
+        ms.Seek(0, SeekOrigin.Begin);
+        return ms;
+    }
 
 
+    public static FPDF_DOCUMENT? Load(Stream s)
+    {
+        if (s is null) return null;
+        if (!s.CanSeek)
+        {
+            var ms = new MemoryStream();
+            s.CopyTo(ms);
+            ms.Seek(0, SeekOrigin.Begin);
+            return Load(ms);
+        }
+        s.Seek(0, SeekOrigin.Begin);
+        byte[] buf = new byte[s.Length];
+        s.ReadExactly(buf);
+        return PDFium.FPDF_LoadDocument(buf);
+    }
 
     public static MemoryStream ExportToPdf(string[] images)
     {
