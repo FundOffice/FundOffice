@@ -68,6 +68,7 @@ public partial class App : Application
 
         //    DataTracker.OnDailyValue([new DailyValue { FundId = 5 }]);
         //});
+        ResourceModuleInitializer.Initialize();
 
 
         Log.Logger = new LoggerConfiguration().WriteTo.LiteDB(@"logs.db", "logex").CreateLogger();
