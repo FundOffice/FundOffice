@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../src/Disclosure/Disclosure/Disclosure.csproj" />
+  <Project Path="TestDisclosureChannel/TestDisclosureChannel.csproj" Id="fea4dcc8-b991-4c6d-b2c8-2881fb951f54" />
+</Solution>
