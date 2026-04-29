@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using FMO.Models;
+using FMO.Utilities;
+using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
@@ -15,6 +17,24 @@ namespace FMO.Shared;
 /// </summary>
 public static class MaskService
 {
+    private static Dictionary<string, string> _maskMap = [];
+    // 常用姓氏（单姓 + 复姓）
+    private static readonly List<string> _lNames = new List<string>
+    {
+        "王", "李", "张", "刘", "陈", "杨", "赵", "黄", "周", "吴",
+        "徐", "孙", "胡", "朱", "高", "林", "何", "郭", "马", "罗",
+        "欧阳", "上官", "司马", "东方", "夏侯", "诸葛", "闻人", "拓跋"
+    };
+
+    // 常用男名用字
+    private static readonly List<string> _fNames = new List<string>
+    {
+        "伟", "强", "磊", "军", "洋", "勇", "杰", "波", "明", "亮",
+        "超", "浩", "凯", "健", "俊", "飞", "鹏", "峰", "旭", "晨" ,
+        "芳", "娜", "敏", "静", "颖", "琳", "倩", "婷", "丽", "娟",
+        "艳", "梅", "雪", "玲", "佳", "怡", "梦", "琪", "雨", "欣"
+    };
+
     #region 依赖属性
     // 启用遮罩标记
     public static readonly DependencyProperty IsMaskProperty =
@@ -85,7 +105,58 @@ public static class MaskService
             typeof(Window),
             Window.KeyDownEvent,
             new KeyEventHandler(OnGlobalKeyDown));
+
+        GenerateMap();
     }
+
+    private static void GenerateMap()
+    {
+        using var db = DbHelper.Base();
+        var m = db.GetCollection<Manager>().Query().First();
+        if (m is not null)
+            _maskMap.TryAdd(m.Name, "暴富基金公司");
+
+        int fid = 1;
+        var cus = db.GetCollection<Investor>().Query().Select(x => new { x.Name, x.EntityType }).ToArray();
+        foreach (var c in cus)
+            _maskMap.TryAdd(c.Name, c.EntityType switch
+            {
+                EntityType.Natural => $"{_lNames[Random.Shared.Next(_lNames.Count)]}{_fNames[Random.Shared.Next(_fNames.Count)]}",
+                EntityType.Product => $"暴富{fid++}号",
+                EntityType.Institution => $"演示机构{fid++}",
+                _ => $"演示客户"
+            });
+
+        var pr = db.GetCollection<Participant>().Query().Select(x => new { x.Name, x.Email, x.Phone, x.CertCode, x.Identity.Id }).ToArray();
+        foreach (var p in pr)
+        {
+            _maskMap.TryAdd(p.Name ?? "", $"{_lNames[Random.Shared.Next(_lNames.Count)]}{_fNames[Random.Shared.Next(_fNames.Count)]}");
+            _maskMap.TryAdd(p.Email ?? "", "xxx@163.com");
+            _maskMap.TryAdd(p.Phone ?? "", "13912345678");
+            _maskMap.TryAdd(p.CertCode ?? "", "A12345678");
+            _maskMap.TryAdd(p.Id ?? "", "*************1234");
+            if (p.Id?.Length == 18)
+                _maskMap.TryAdd($"{p.Id[..6]}******{p.Id[^6..]}", "*************1234");
+        }
+
+        var funds = db.GetCollection<Fund>().Query().Select(x => new { x.Name, x.ShortName }).ToArray();
+        foreach (var f in funds)
+        {
+            _maskMap.TryAdd(f.Name, $"暴富{fid++}号");
+            _maskMap.TryAdd(f.ShortName ?? "", $"暴富{fid++}号");
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+
 
     #region 核心：动态控件自动生效 + 绑定更新监听
     private static void OnFrameworkElementLoaded(object sender, RoutedEventArgs e)
@@ -403,6 +474,11 @@ public static class MaskService
     private static string ToNewText(string? old)
     {
         if (string.IsNullOrWhiteSpace(old)) return "";
+
+
+        if (_maskMap.TryGetValue(old, out var result))
+            return result;
+        else return $"演示{old.GetHashCode()}";
 
         if (DateOnly.TryParse(old, out DateOnly d))
             return "2000-01-01";

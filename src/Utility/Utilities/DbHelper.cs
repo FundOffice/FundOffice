@@ -89,9 +89,13 @@ public static class DbHelper
 {
     private static string _password;
 
+
+    private const string _dbfolder = "data2";
+
+
     static DbHelper()
     {
-        Directory.CreateDirectory("data");
+        Directory.CreateDirectory(_dbfolder);
 
         _password = ConfigurationManager.AppSettings["dbpw"] ?? "fjd32890f5djflds";
         _password += "jgkfld9024039284jrwe";
@@ -105,44 +109,16 @@ public static class DbHelper
     }
 
 
-    public static BaseDatabase Base()
-    {
-#if Demo
-        return new BaseDatabase(@$"FileName=data2\base.db;Password={_password};Connection=Shared");
-#else
-        return new BaseDatabase(@$"FileName=data\base.db;Password={_password};Connection=Shared");
-#endif
-    }
+    public static BaseDatabase Base() => new BaseDatabase(@$"FileName={_dbfolder}\base.db;Password={_password};Connection=Shared");
 
-    public static BaseDatabase ShareClass()
-    {
-#if Demo
-        return new BaseDatabase(@$"FileName=data2\sc.db;Password={_password};Connection=Shared");
-#else
-        return new BaseDatabase(@$"FileName=data\sc.db;Password={_password};Connection=Shared");
-#endif
-    }
+    public static BaseDatabase ShareClass() => new BaseDatabase(@$"FileName={_dbfolder}\sc.db;Password={_password};Connection=Shared");
 
 
 
-    public static LiteDatabase Platform()
-    {
-#if Demo
-        return new LiteDatabase(@$"FileName=data2\platform.db;Password={_password};Connection=Shared");
-#else
-        return new LiteDatabase(@$"FileName=data\platform.db;Password={_password};Connection=Shared");
-#endif
-    }
+    public static LiteDatabase Platform() => new LiteDatabase(@$"FileName={_dbfolder}\platform.db;Password={_password};Connection=Shared");
 
 
-    public static LiteDatabase Mission()
-    {
-#if Demo
-        return new LiteDatabase(@$"FileName=data2\mission.db;Password=891uiu89f41uf9dij432u89;Connection=Shared");
-#else
-        return new LiteDatabase(@$"FileName=data\mission.db;Password=891uiu89f41uf9dij432u89;Connection=Shared");
-#endif
-    }
+    public static LiteDatabase Mission() => new LiteDatabase(@$"FileName={_dbfolder}\mission.db;Password=891uiu89f41uf9dij432u89;Connection=Shared");
 
 
 
