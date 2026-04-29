@@ -143,7 +143,7 @@ public static partial class DatabaseAssist
         using (var db = DbHelper.Platform())
             FixMovedDb(db);
 
-        using (var db = new MissionDatabase())
+        using (var db = DbHelper.Mission())
             FixMovedDb(db);
     }
 

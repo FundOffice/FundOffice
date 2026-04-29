@@ -41,7 +41,7 @@ public class DisclosureFromMailMission : MailMission
 
         // 获取所有文件
         var files = di.GetFiles();
-        using var db = new MissionDatabase();
+        using var db = DbHelper.Mission();
         // 排除估值表，加快效率
         var cat = db.GetCollection<MailCategoryInfo>().Find(x => x.Category == MailCategory.ValueSheet).Select(x => x.Id).ToList();//.FindAll().Where(x => x.Category.HasFlag(MailCategory.Disclosure)).Select(x => x.Id).ToArray();
 
@@ -88,7 +88,7 @@ public class DisclosureFromMailMission : MailMission
         log += "\n" + string.Join("\n", logBag);
         //log += $"完成";
 
-        using (var mdb = new MissionDatabase())
+        using (var mdb = DbHelper.Mission())
             mdb.GetCollection<MissionRecord>().Insert(new MissionRecord { MissionId = Id, Time = DateTime.Now, Record = log });
 
         return true;

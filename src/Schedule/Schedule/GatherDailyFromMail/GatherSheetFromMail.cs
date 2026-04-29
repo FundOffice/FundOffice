@@ -87,7 +87,7 @@ public class GatherDailyFromMailMission : Mission
                 }
 
                 var rec = new MissionRecord { MissionId = Id, Time = time, Record = log };
-                using (var db = new MissionDatabase())
+                using (var db = DbHelper.Mission())
                 {
                     var c = db.GetCollection<MissionRecord>();
                     c.Insert(rec);
@@ -106,7 +106,7 @@ public class GatherDailyFromMailMission : Mission
 
                 log += "\n账户名或密码错误，请检查配置";
                 var rec = new MissionRecord { MissionId = Id, Time = time, Record = log };
-                using (var db = new MissionDatabase())
+                using (var db = DbHelper.Mission())
                 {
                     db.GetCollection<Mission>().Update(this);
 
@@ -127,7 +127,7 @@ public class GatherDailyFromMailMission : Mission
             List<string> mails = new();
             if (!IgnoreCache)
             {
-                using (var db = new MissionDatabase())
+                using (var db = DbHelper.Mission())
                     mails = db.GetCollection<GzMailInfo>().Query().Select(x => x.Id).ToList();
             }
 
@@ -166,7 +166,7 @@ public class GatherDailyFromMailMission : Mission
         }
 
 
-        using (var db = new MissionDatabase())
+        using (var db = DbHelper.Mission())
         {
             var c = db.GetCollection<MissionRecord>();
             c.Insert(new MissionRecord { MissionId = Id, Time = time, Record = log });
@@ -182,7 +182,7 @@ public class GatherDailyFromMailMission : Mission
             Extract(gz, msg, funds, ref log);
 
         ///记录
-        using (var db = new MissionDatabase())
+        using (var db = DbHelper.Mission())
             db.GetCollection<GzMailInfo>().Upsert(gz);
     }
 

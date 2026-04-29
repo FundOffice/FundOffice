@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
+using FMO.Utilities;
 using MimeKit;
 using Serilog;
 using System.IO;
@@ -91,7 +92,7 @@ public class MailCacheMission : MailMission
                 }
 
                 var rec = new MissionRecord { MissionId = Id, Time = time, Record = log };
-                using (var db = new MissionDatabase())
+                using (var db = DbHelper.Mission())
                 {
                     var c = db.GetCollection<MissionRecord>();
                     c.Insert(rec);
@@ -111,7 +112,7 @@ public class MailCacheMission : MailMission
 
                 log += "\n账户名或密码错误，请检查配置";
                 var rec = new MissionRecord { MissionId = Id, Time = time, Record = log };
-                using (var db = new MissionDatabase())
+                using (var db = DbHelper.Mission())
                 {
                     db.GetCollection<Mission>().Update(this);
 
@@ -181,7 +182,7 @@ public class MailCacheMission : MailMission
         }
 
 
-        using (var db = new MissionDatabase())
+        using (var db = DbHelper.Mission())
         {
             var c = db.GetCollection<MissionRecord>();
             c.Insert(new MissionRecord { MissionId = Id, Time = time, Record = log });

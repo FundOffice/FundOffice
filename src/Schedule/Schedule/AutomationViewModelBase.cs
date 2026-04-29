@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.Logging;
+using FMO.Utilities;
 using Serilog;
 using System.ComponentModel;
 using System.Reflection;
@@ -86,7 +87,7 @@ public partial class AutomationViewModelBase : ObservableObject, IRecipient<Miss
         }
         else
         {
-            using var db = new MissionDatabase();
+            using var db = DbHelper.Mission();
             var mission = db.GetCollection<Mission>().FindById(Id);
             NextRunDate = mission?.NextRun;
             NextRunTime = mission?.NextRun;
@@ -105,7 +106,7 @@ public partial class AutomationViewModelBase : ObservableObject, IRecipient<Miss
     [RelayCommand]
     public void ShowLog()
     {
-        using var db = new MissionDatabase();
+        using var db = DbHelper.Mission();
         WorkLog = string.Join("\n\n", db.GetCollection<MissionRecord>().Find(x => x.MissionId == Id).
             OrderByDescending(x => x.Time).Take(10).Select(x => $"{x.Time}\n{x.Record}"));
 
@@ -192,7 +193,7 @@ public partial class MissionViewModel<T> : AutomationViewModelBase where T : Mis
                         Mission.IsEnabled = IsActivated;
                         NextRunDate = Mission.NextRun;
                         NextRunTime = Mission.NextRun;
-                        using var db = new MissionDatabase();
+                        using var db = DbHelper.Mission();
                         db.GetCollection<Mission>().Upsert(Mission);
                     }
                     break;

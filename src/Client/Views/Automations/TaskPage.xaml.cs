@@ -89,7 +89,7 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
     public void AddTask(MissionTemplate template)
     { 
         var m = template.CreateMission();
-        using var db = new MissionDatabase();
+        using var db = DbHelper.Mission();
         db.GetCollection<Mission>().Insert(m);
 
         if (m is DailyFromMailMission || m is TAFromMailMission)

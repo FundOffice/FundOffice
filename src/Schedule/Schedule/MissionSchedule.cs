@@ -1,4 +1,5 @@
 ﻿using FMO.Logging;
+using FMO.Utilities;
 using LiteDB;
 
 namespace FMO.Schedule;
@@ -24,7 +25,7 @@ public static class MissionSchedule
 
     public static void Init()
     {
-        using var db = new MissionDatabase();
+        using var db = DbHelper.Mission();
         var ms = db.GetCollection<BsonDocument>("Mission").FindAll().ToList();// db.GetCollection<Mission>().FindAll().ToArray();
 
         missions = [.. ms.Select(x =>
@@ -78,7 +79,7 @@ public static class MissionSchedule
 
     public static void SaveChanges(Mission m)
     {
-        using var db = new MissionDatabase();
+        using var db = DbHelper.Mission();
         db.GetCollection<Mission>().Upsert(m);
         if (!missions.Contains(m)) missions.Add(m);
     }
@@ -89,7 +90,7 @@ public static class MissionSchedule
         if (m is not null)
         {
             missions.Remove(m);
-            using var db = new MissionDatabase();
+            using var db = DbHelper.Mission();
             db.GetCollection<Mission>().Delete(id);
         }
     }

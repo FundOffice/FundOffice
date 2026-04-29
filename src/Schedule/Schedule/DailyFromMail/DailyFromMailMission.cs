@@ -40,7 +40,7 @@ public class DailyFromMailMission : MailMission
         string log = "";
         // 获取所有文件
         var files = di.GetFiles();
-        using var db = new MissionDatabase();
+        using var db = DbHelper.Mission();
         LiteDB.ILiteCollection<MailMissionRecord> coll = db.GetCollection<MailMissionRecord>($"mm_{Id}");
         var cat = db.GetCollection<MailCategoryInfo>().FindAll().Where(x => x.Category != MailCategory.Unk && x.Category.HasFlag(MailCategory.ValueSheet)).Select(x => x.Id).ToArray();
 
@@ -66,7 +66,7 @@ public class DailyFromMailMission : MailMission
             WeakReferenceMessenger.Default.Send(new MissionProgressMessage { Id = Id, Progress = progress });
         }
 
-        using (var mdb = new MissionDatabase())
+        using (var mdb = DbHelper.Mission())
             mdb.GetCollection<MissionRecord>().Insert(new MissionRecord { MissionId = Id, Time = DateTime.Now, Record = log });
 
         WeakReferenceMessenger.Default.Send(new MissionProgressMessage { Id = Id, Progress = 100 });

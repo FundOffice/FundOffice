@@ -1,4 +1,5 @@
-﻿using MimeKit;
+﻿using FMO.Utilities;
+using MimeKit;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -41,7 +42,7 @@ public class MailMission : Mission
         if (Regex.IsMatch($"{message.Subject} {message.TextBody}", "类季报|类月报|类年报|类半年报|季度更新"))
             category |= MailCategory.Disclosure;
 
-        using var db = new MissionDatabase();
+        using var db = DbHelper.Mission();
         db.GetCollection<MailCategoryInfo>().Upsert(new MailCategoryInfo(message.MessageId, message.Subject, MailCategory.ValueSheet));
         return category;
     }

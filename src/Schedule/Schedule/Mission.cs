@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using FMO.Models;
+using FMO.Utilities;
 using Serilog;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -74,7 +75,7 @@ public abstract class Mission
                 WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"[{Id}]任务执行出错，请查看log"));
             }
 
-            using (var db = new MissionDatabase())
+            using (var db = DbHelper.Mission())
             {
                 db.GetCollection<Mission>().Upsert(this);
                 db.GetCollection<MissionRecord>().Insert(new MissionRecord { MissionId = Id, Record = WorkLog, Time = now });

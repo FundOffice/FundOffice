@@ -9,8 +9,11 @@ namespace FMO.Utilities;
 
 public class BaseDatabase : LiteDatabase
 {
-
+#if Demo
+    private const string connectionString = @"FileName=data2\base.db;Password=891uiu89f41uf9dij432u89;Connection=Shared";
+#else
     private const string connectionString = @"FileName=data\base.db;Password=891uiu89f41uf9dij432u89;Connection=Shared";
+#endif
 
     public BaseDatabase() : base(connectionString, null)
     {
@@ -104,17 +107,43 @@ public static class DbHelper
 
     public static BaseDatabase Base()
     {
+#if Demo
+        return new BaseDatabase(@$"FileName=data2\base.db;Password={_password};Connection=Shared");
+#else
         return new BaseDatabase(@$"FileName=data\base.db;Password={_password};Connection=Shared");
+#endif
     }
 
     public static BaseDatabase ShareClass()
     {
+#if Demo
+        return new BaseDatabase(@$"FileName=data2\sc.db;Password={_password};Connection=Shared");
+#else
         return new BaseDatabase(@$"FileName=data\sc.db;Password={_password};Connection=Shared");
+#endif
     }
-    
-    
 
-    public static LiteDatabase Platform() => new LiteDatabase(@$"FileName=data\platform.db;Password={_password};Connection=Shared");
+
+
+    public static LiteDatabase Platform()
+    {
+#if Demo
+        return new LiteDatabase(@$"FileName=data2\platform.db;Password={_password};Connection=Shared");
+#else
+        return new LiteDatabase(@$"FileName=data\platform.db;Password={_password};Connection=Shared");
+#endif
+    }
+
+
+    public static LiteDatabase Mission()
+    {
+#if Demo
+        return new LiteDatabase(@$"FileName=data2\mission.db;Password=891uiu89f41uf9dij432u89;Connection=Shared");
+#else
+        return new LiteDatabase(@$"FileName=data\mission.db;Password=891uiu89f41uf9dij432u89;Connection=Shared");
+#endif
+    }
+
 
 
     public static string[] ListAllFileId()
@@ -187,34 +216,4 @@ public static class DbHelper
 
 
 }
-
-
-//public class TrusteeDatabase : LiteDatabase
-//{
-
-//    private const string connectionString = @"FileName=data\trustee.db;Password=f34902ufdisuf8s1;Connection=Shared";
-
-//    public TrusteeDatabase() : base(connectionString, null)
-//    {
-//    }
-//}
-
-//public class DSDatabase : LiteDatabase
-//{
-
-//    private const string connectionString = @"FileName=data\digital.db;Password=f34902ufdisuf8s1;Connection=Shared";
-
-//    public DSDatabase() : base(connectionString, null)
-//    {
-//    }
-//}
-
-public class FileIndexDatabase : LiteDatabase
-{
-
-    private const string connectionString = @"FileName=data\filestorage.db;Connection=Shared";
-
-    public FileIndexDatabase() : base(connectionString, null)
-    {
-    }
-}
+ 
