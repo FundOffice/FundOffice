@@ -19,7 +19,6 @@ using System.Windows.Media.Imaging;
 
 namespace FMO.ESigning.MeiShi;
 
-
 public class MeiShiConfig : ISigningConfig
 {
     public string Id => "meishi";
@@ -47,6 +46,7 @@ public class MeiShiConfig : ISigningConfig
 //}
 
 
+[ESignDefine(typeof(MeiShiViewModel))]
 public partial class MeiShiAssit : ISigning
 {
 

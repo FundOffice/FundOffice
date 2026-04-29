@@ -1,4 +1,5 @@
 
+using CommunityToolkit.Mvvm.Messaging;
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
@@ -8,6 +9,12 @@ using System.Reflection;
 
 namespace FMO.Trustee;
 
+
+public interface IAPIConfig
+{
+    public string Id { get; }
+
+}
 
 public abstract class TrusteeApiBase : ITrustee
 {
@@ -23,7 +30,7 @@ public abstract class TrusteeApiBase : ITrustee
     public abstract string Domain { get; }
 
 
-    public bool IsValid { get; private set; } = true;
+    public bool IsValid { get; private set; }
 
 
     /// <summary>
@@ -41,13 +48,22 @@ public abstract class TrusteeApiBase : ITrustee
     private static ILiteDatabase _db { get; } = new LiteDatabase(@$"FileName=data\platformlog.db;Connection=Shared");
 
 
+    public async Task<bool> VerifyConfig()
+    {
+        IsValid = true;
+        var r = await VerifyConfigOverride();
+        SetStatus(r);
+        return r;
+    }
+
+    protected abstract Task<bool> VerifyConfigOverride();
 
 
     public abstract Task<ReturnWrap<Investor>> QueryInvestors();
 
 
 
-    public abstract Task<ReturnWrap<TransferRequest>> QueryTransferRequests(DateOnly begin, DateOnly end);
+    public abstract Task<ReturnWrap<TransferRequest>> QueryTransferRequests(DateOnly begin, DateOnly end, string? fundCode = null);
 
 
 
@@ -63,7 +79,7 @@ public abstract class TrusteeApiBase : ITrustee
     /// <param name="begin"></param>
     /// <param name="end"></param>
     /// <returns></returns>
-    public abstract Task<ReturnWrap<TransferRecord>> QueryTransferRecords(DateOnly begin, DateOnly end);
+    public abstract Task<ReturnWrap<TransferRecord>> QueryTransferRecords(DateOnly begin, DateOnly end, string? fundCode = null);
 
 
 
@@ -75,10 +91,10 @@ public abstract class TrusteeApiBase : ITrustee
 
 
 
-    public abstract Task<ReturnWrap<BankTransaction>> QueryCustodialAccountTransction(DateOnly begin, DateOnly end = default);
+    public abstract Task<ReturnWrap<BankTransaction>> QueryCustodialAccountTransction(DateOnly begin, DateOnly end, string? fundCode = null);
 
 
-    public abstract Task<ReturnWrap<RaisingBankTransaction>> QueryRaisingAccountTransction(DateOnly begin, DateOnly end);
+    public abstract Task<ReturnWrap<RaisingBankTransaction>> QueryRaisingAccountTransction(DateOnly begin, DateOnly end, string? fundCode = null);
 
 
 
@@ -86,7 +102,7 @@ public abstract class TrusteeApiBase : ITrustee
 
 
     public abstract Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end, string? fundCode = null);
-     
+
 
 
     public abstract bool Prepare();
@@ -104,8 +120,18 @@ public abstract class TrusteeApiBase : ITrustee
     public bool LoadConfig()
     {
         using var db = DbHelper.Platform();
-        var config = db.GetCollection<IAPIConfig>().FindById(Identifier);
-        return LoadConfigOverride(config);
+        try
+        {
+            IsValid = db.GetCollection<TrusteeStatus>().FindById(Identifier)?.Status ?? false;
+
+            if (db.GetCollection<IAPIConfig>().FindById(Identifier) is IAPIConfig config) 
+                return LoadConfigOverride(config);
+        }
+        catch/*(Exception e) */{ WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"加载{Title}的配置文件出错")); }
+
+
+        IsValid = db.GetCollection<TrusteeStatus>().FindById(Identifier)?.Status ?? false;
+        return false;
     }
 
     protected abstract bool LoadConfigOverride(IAPIConfig config);
@@ -143,9 +169,16 @@ public abstract class TrusteeApiBase : ITrustee
 
     public static LogInfo[]? GetLogs()
     {
-        var dic = _db.GetCollection<LogInfo>().FindAll().OrderByDescending(x => x.Time).GroupBy(x => x.Identifier).ToDictionary(x => x.Key, x => x.GroupBy(y => y.Method ?? "").ToDictionary(y => y.Key, y => y.Take(5)));
-        return dic.SelectMany(x => x.Value.SelectMany(y => y.Value)).OrderByDescending(x => x.Time).ToArray();
-
+        try
+        {
+            var dic = _db.GetCollection<LogInfo>().Query().OrderByDescending(x => x.Time).Limit(1000).ToList().GroupBy(x => x.Identifier).ToDictionary(x => x.Key, x => x.GroupBy(y => y.Method ?? "").ToDictionary(y => y.Key, y => y.Take(5)));
+            return dic.SelectMany(x => x.Value.SelectMany(y => y.Value)).OrderByDescending(x => x.Time).ToArray();
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Error($"Can Not Load Log {ex.Message}");
+            return [];
+        }
         // return _db.GetCollection<LogInfo>().FindAll().GroupBy(x=>x.Identifier).Select(x=> (x.Key, x.GroupBy(x=>x.Method).Select(y=> (y.Key, y.Take(5))))).ToArray();
     }
 
@@ -156,12 +189,12 @@ public abstract class TrusteeApiBase : ITrustee
     /// <param name="identifier"></param>
     /// <param name="method"></param>
     /// <param name="info"></param>
-    public static void ReportJsonUnexpected(string identifier, string method, string info)
-    {
-        _db.GetCollection<LogInfo>().Insert(new LogInfo { Identifier = identifier, Log = info, Method = method, Content = "解析异常", Time = DateTime.Now });
-    }
+    //public static void ReportJsonUnexpected(string identifier, string method, string info)
+    //{
+    //    _db.GetCollection<LogInfo>().Insert(new LogInfo { Identifier = identifier, Log = info, Method = method, Content = "解析异常", Time = DateTime.Now });
+    //}
 
-  
+
     protected virtual Dictionary<string, object> GenerateParams(object? obj)
     {
         Dictionary<string, object>? dic = new();
@@ -169,7 +202,11 @@ public abstract class TrusteeApiBase : ITrustee
         {
             var ps = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead);
             foreach (var item in ps)
-                dic.Add(item.Name, item.GetValue(obj)!);
+            {
+                var value = item.GetValue(obj);
+                if (value is not null)
+                    dic.Add(item.Name, value);
+            }
         }
         return dic;
     }
@@ -180,7 +217,7 @@ public abstract class TrusteeApiBase : ITrustee
     {
         ++ConsecutiveErrorCount;
         if (ConsecutiveErrorCount > 5)
-            SetDisabled();
+            SetStatus();
     }
 
 
@@ -209,12 +246,25 @@ public abstract class TrusteeApiBase : ITrustee
 
         return Domain + part;
 
-//#if DEBUG
-//        return TestDomain + part;
-//#else
-//        return Domain + part;
-//#endif
+        //#if DEBUG
+        //        return TestDomain + part;
+        //#else
+        //        return Domain + part;
+        //#endif
     }
+
+
+#if DEBUG
+    protected static string? GetCache(string Identifier, string Method, object Params)
+    {
+        return _db.GetCollection<APIDebugCache>().Find(x => x.Identifier == Identifier && x.Method == Method && x.Params == Params).LastOrDefault()?.Json;
+    }
+
+    protected static void SetCache(string Identifier, string Method, object Params, string json)
+    {
+        _db.GetCollection<APIDebugCache>().Insert(new APIDebugCache(Identifier, Method, Params, json));
+    }
+#endif
 
 
     protected static decimal ParseDecimal(string value)
@@ -258,14 +308,22 @@ public abstract class TrusteeApiBase : ITrustee
 
         return list.ToArray();
     }
-     
+
     /// <summary>
     /// 设置不可用
     /// </summary>
-    protected void SetDisabled()
+    protected void SetStatus(bool status = false)
     {
-        IsValid = false;
+        //if (status == IsValid) return;
+
+        IsValid = status;
+        using var db = DbHelper.Platform();
+        db.GetCollection<TrusteeStatus>().Upsert(new TrusteeStatus(Identifier, status));
+        WeakReferenceMessenger.Default.Send(new TrusteeStatus(Identifier, status));
     }
+
+
+    internal void Renew() => IsValid = true;
 
     public abstract bool IsSuit(string? comapny);
 
@@ -294,58 +352,7 @@ public abstract class TrusteeApiBase : ITrustee
 }
 
 
-internal class JsonBase
-{
-    private static ILiteDatabase _db { get; } = new LiteDatabase(@$"FileName=data\platformlog.db;Connection=Shared");
+#if DEBUG
 
-
-    public int Id { get; set; }
-
-
-    protected static decimal ParseDecimal(string value)
-    {
-        if (string.IsNullOrEmpty(value))
-            return 0;
-
-        if (decimal.TryParse(value, out var result))
-            return result;
-
-        throw new FormatException($"无法将 '{value}' 解析为decimal类型");
-    }
-
-    public static void ReportJsonUnexpected(string identifier, string method, string info)
-    {
-        _db.GetCollection<TrusteeJsonUnexpected>().Insert(new TrusteeJsonUnexpected(identifier, method, info));
-    }
-
-
-    protected static string ParseCurrency(string currencyCode)
-    {
-        switch (currencyCode)
-        {
-            case "156":
-                return "CNY"; // 人民币
-            case "250":
-                return "CHF"; // 瑞士法郎
-            case "280":
-                return "DEM"; // 德国马克（已停用）
-            case "344":
-                return "HKD"; // 港元
-            case "392":
-                return "JPY"; // 日元
-            case "826":
-                return "GBP"; // 英镑
-            case "840":
-                return "USD"; // 美元
-            case "954":
-                return "EUR"; // 欧元
-            default:
-                return "";  // 或者抛出异常，根据需要处理无效编码
-        }
-    }
-}
-
-public record TrusteeJsonUnexpected(string Identifier, string Method, string Message);
-
-
-public record JsonEntityMap(int Id, object EntityId);
+public record APIDebugCache(string Identifier, string Method, object Params, string Json);
+#endif

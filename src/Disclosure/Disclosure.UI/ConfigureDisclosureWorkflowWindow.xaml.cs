@@ -110,9 +110,13 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
         List<ChannelConfigViewModel> channelConfigs = new();
         foreach (var c in Channels)
         {
+            var vm = DisclosureChannelManager.CreateViewModel(c.Code);
+            if (vm is null) continue;
+
             if (configs.TryGetValue(c.Code, out var config))
-                channelConfigs.Add(DisclosureChannelManager.CreateViewModel(config)!);
-            else channelConfigs.Add(DisclosureChannelManager.CreateViewModel(c.Code)!);
+                vm.UpdateFrom(config);
+
+            channelConfigs.Add(vm);
         }
 
         ChannelConfigs = channelConfigs.ToArray();

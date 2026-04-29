@@ -11,6 +11,7 @@ using System.Web;
 
 namespace FMO.Trustee;
 
+[TrusteeDefine(typeof(XYZQViewModel))]
 public class XYZQ : TrusteeApiBase
 {
     public const string _Identifier = "trustee_xyzq";

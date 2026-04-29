@@ -169,6 +169,28 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
         sb.AppendLine("        }");
         sb.AppendLine();
 
+        // 🔹 带源类型参数的构造函数
+        sb.AppendLine($"        public void FillBy({model.SourceTypeName}? obj)");
+        sb.AppendLine("        {");
+        sb.AppendLine($"             if(obj is {model.SourceTypeName} val)");
+        sb.AppendLine("              {");
+
+        // 先处理需生成 property 的
+        foreach (var prop in model.PropertiesToGenerate)
+        {
+            sb.AppendLine($"                {prop.Name} = val.{prop.Name};");
+        }
+        // 再处理只需赋值的（父类已有 property）
+        foreach (var prop in model.PropertiesToAssignOnly)
+        {
+            sb.AppendLine($"                {prop.Name} = val.{prop.Name};");
+        }
+        sb.AppendLine("              }");
+        sb.AppendLine("        }");
+        sb.AppendLine();
+
+
+
         // 🔹 Build() 方法
         sb.AppendLine($"        public {model.SourceTypeName} Build()");
         sb.AppendLine("        {");

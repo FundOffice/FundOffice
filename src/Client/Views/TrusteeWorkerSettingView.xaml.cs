@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DocumentFormat.OpenXml.Office2010.Excel;
 using FMO.Models;
 using FMO.Trustee;
 using FMO.Utilities;
@@ -49,12 +48,8 @@ public partial class TrusteeWorkerSettingViewModel : ObservableObject
         using var pdb = DbHelper.Platform();
         var ranges = pdb.GetCollection<TrusteeMethodShotRange>().FindAll().ToArray();
 
-        var cms = Create(CMS._Identifier, ranges);
-        var citics = Create(CITICS._Identifier, ranges);
-        var csc = Create(CSC._Identifier, ranges);
-        var xyzq = Create(XYZQ._Identifier, ranges);
 
-        Configs = [cms, citics, csc, xyzq];
+        Configs = TrusteeGallay.Trustees.Select(x => Create(x.Identifier, ranges)).ToArray();
 
 
         var cfg = pdb.GetCollection<WorkConfig>().FindAll().ToArray();
@@ -117,7 +112,7 @@ public partial class TrusteeMethodConfigViewModel : ObservableObject
         var start = StartDate();
         DateBegin ??= start;
         DateEnd ??= start;
-        if(DateBegin > DateEnd)
+        if (DateBegin > DateEnd)
             DateBegin = DateEnd;
 
         var ran = new TrusteeMethodShotRange($"{Identifier}.{Method}", DateBegin.Value, DateEnd.Value);

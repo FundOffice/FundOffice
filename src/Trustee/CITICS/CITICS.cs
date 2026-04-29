@@ -14,6 +14,7 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace FMO.Trustee;
 
+[TrusteeDefine(typeof(CITICSViewModel))]
 public partial class CITICS : TrusteeApiBase
 {
     public const string _Identifier = "trustee_citics";

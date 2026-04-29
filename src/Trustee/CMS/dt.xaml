@@ -1,0 +1,56 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO.Trustee">
+
+    <DataTemplate DataType="{x:Type local:CMSViewModel}">
+        <StackPanel>
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="Company ID" />
+                </BulletDecorator.Bullet>
+                <TextBox Text="{Binding CompanyId, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+            </BulletDecorator>
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="Server Type" />
+                </BulletDecorator.Bullet>
+                <TextBox Text="{Binding ServerType, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+            </BulletDecorator>
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="Licence Key" />
+                </BulletDecorator.Bullet>
+                <TextBox Text="{Binding LicenceKey, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+            </BulletDecorator>
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="User No" />
+                </BulletDecorator.Bullet>
+                <TextBox Text="{Binding UserNo, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+            </BulletDecorator>
+
+            <DockPanel LastChildFill="False">
+                <Viewbox Width="16" Visibility="{Binding CertIsValid, Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <Path Data="{StaticResource f.shield}" Fill="Green" />
+                </Viewbox>
+                <TextBlock VerticalAlignment="Center" Text="已选择" />
+                <Button
+                    Command="{Binding ChooseCertificateFileCommand}"
+                    Content="选择证书"
+                    Style="{StaticResource ButtonDefault.Small}" />
+                <hc:TextBox
+                    Margin="2,0"
+                    Padding="10,0"
+                    hc:InfoElement.Placeholder="证书密码"
+                    Style="{StaticResource TextBoxExtend.Small}"
+                    Text="{Binding Password, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                <Button
+                    Command="{Binding CheckCertificateCommand}"
+                    Content="校验"
+                    Style="{StaticResource ButtonDefault.Small}" />
+            </DockPanel>
+        </StackPanel>
+    </DataTemplate>
+</ResourceDictionary>

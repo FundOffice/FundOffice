@@ -2,15 +2,11 @@
     x:Class="FMO.PlatformPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:citics="clr-namespace:FMO.Trustee;assembly=CITICS"
-    xmlns:cms="clr-namespace:FMO.Trustee;assembly=CMS"
-    xmlns:csc="clr-namespace:FMO.Trustee;assembly=CSC"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:FMO"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
-    xmlns:xyzq="clr-namespace:FMO.Trustee;assembly=XYZQ"
     d:DataContext="{d:DesignInstance Type=local:PlatformPageViewModel}"
     d:DesignHeight="450"
     d:DesignWidth="1300"
@@ -128,124 +124,11 @@
         </DataTemplate>
 
 
-        <DataTemplate DataType="{x:Type csc:CSCViewModel}">
-            <StackPanel>
-                <BulletDecorator>
-                    <BulletDecorator.Bullet>
-                        <TextBlock Text="API Key" />
-                    </BulletDecorator.Bullet>
-                    <TextBox Text="{Binding APIKey, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                </BulletDecorator>
-
-                <BulletDecorator>
-                    <BulletDecorator.Bullet>
-                        <TextBlock Text="API Secret" />
-                    </BulletDecorator.Bullet>
-                    <TextBox Text="{Binding APISecret, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                </BulletDecorator>
-
-                <BulletDecorator>
-                    <BulletDecorator.Bullet>
-                        <TextBlock Text="Encrypt Key" />
-                    </BulletDecorator.Bullet>
-                    <TextBox Text="{Binding EncryptKey, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                </BulletDecorator>
-            </StackPanel>
-
-        </DataTemplate>
 
 
-        <DataTemplate DataType="{x:Type xyzq:XYZQViewModel}">
-            <StackPanel>
-                <BulletDecorator>
-                    <BulletDecorator.Bullet>
-                        <TextBlock Text="ClientId" />
-                    </BulletDecorator.Bullet>
-                    <TextBox Text="{Binding ClientId, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                </BulletDecorator>
-
-                <BulletDecorator>
-                    <BulletDecorator.Bullet>
-                        <TextBlock Text="ClientSecret" />
-                    </BulletDecorator.Bullet>
-                    <TextBox Text="{Binding ClientSecret, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                </BulletDecorator>
-
-                <BulletDecorator>
-                    <BulletDecorator.Bullet>
-                        <TextBlock Text="UserName" />
-                    </BulletDecorator.Bullet>
-                    <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                </BulletDecorator>
-                <BulletDecorator>
-                    <BulletDecorator.Bullet>
-                        <TextBlock Text="Password" />
-                    </BulletDecorator.Bullet>
-                    <TextBox Text="{Binding Password, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                </BulletDecorator>
-            </StackPanel>
-
-        </DataTemplate>
-
-        <DataTemplate DataType="{x:Type citics:CITICSViewModel}">
-            <BulletDecorator>
-                <BulletDecorator.Bullet>
-                    <TextBlock Text="Custom Auth" />
-                </BulletDecorator.Bullet>
-                <TextBox Text="{Binding CustomerAuth, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-            </BulletDecorator>
-        </DataTemplate>
 
 
-        <DataTemplate DataType="{x:Type cms:CMSViewModel}">
-            <StackPanel>
-                <BulletDecorator>
-                    <BulletDecorator.Bullet>
-                        <TextBlock Text="Company ID" />
-                    </BulletDecorator.Bullet>
-                    <TextBox Text="{Binding CompanyId, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                </BulletDecorator>
-                <BulletDecorator>
-                    <BulletDecorator.Bullet>
-                        <TextBlock Text="Server Type" />
-                    </BulletDecorator.Bullet>
-                    <TextBox Text="{Binding ServerType, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                </BulletDecorator>
-                <BulletDecorator>
-                    <BulletDecorator.Bullet>
-                        <TextBlock Text="Licence Key" />
-                    </BulletDecorator.Bullet>
-                    <TextBox Text="{Binding LicenceKey, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                </BulletDecorator>
-                <BulletDecorator>
-                    <BulletDecorator.Bullet>
-                        <TextBlock Text="User No" />
-                    </BulletDecorator.Bullet>
-                    <TextBox Text="{Binding UserNo, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                </BulletDecorator>
 
-                <DockPanel LastChildFill="False">
-                    <Viewbox Width="16" Visibility="{Binding CertIsValid, Converter={StaticResource Boolean2VisibilityConverter}}">
-                        <Path Data="{StaticResource f.shield}" Fill="Green" />
-                    </Viewbox>
-                    <TextBlock VerticalAlignment="Center" Text="已选择" />
-                    <Button
-                        Command="{Binding ChooseCertificateFileCommand}"
-                        Content="选择证书"
-                        Style="{StaticResource ButtonDefault.Small}" />
-                    <hc:TextBox
-                        Margin="2,0"
-                        Padding="10,0"
-                        hc:InfoElement.Placeholder="证书密码"
-                        Style="{StaticResource TextBoxExtend.Small}"
-                        Text="{Binding Password, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                    <Button
-                        Command="{Binding CheckCertificateCommand}"
-                        Content="校验"
-                        Style="{StaticResource ButtonDefault.Small}" />
-                </DockPanel>
-            </StackPanel>
-        </DataTemplate>
 
 
         <Style

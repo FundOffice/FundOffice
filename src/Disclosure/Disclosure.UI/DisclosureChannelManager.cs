@@ -14,10 +14,10 @@ public static class DisclosureChannelManager
     public static void Initialize()
     {
         // 注册通道实例
-        Register<QuarterlyUpdateChannelConfig>(new QuarterlyUpdateChannel(), () => new QuarterlyUpdateChannelConfigViewModel(), (x) => new QuarterlyUpdateChannelConfigViewModel(x));
+        Register(new QuarterlyUpdateChannel(), () => new QuarterlyUpdateChannelConfigViewModel());
 
-        Register<EmailChannelConfig>(new EmailDisclosureChannel(), () => new EmailChannelConfigViewModel(), (x) => new EmailChannelConfigViewModel(x));
-        Register<PfidChannelConfig>(new PFIDDisclosureChannel(), () => new PfidChannelConfigViewModel(), (x) => new PfidChannelConfigViewModel(x));
+        Register(new EmailDisclosureChannel(), () => new EmailChannelConfigViewModel());
+        Register(new PFIDDisclosureChannel(), () => new PfidChannelConfigViewModel());
         //Register<MeiShiChannelConfig>(new MeiShiDisclosureChannel(), () => new MeiShiChannelConfigViewModel(), (x) => new MeiShiChannelConfigViewModel(x));
         
         // 创建季度更新通道
@@ -41,11 +41,16 @@ public static class DisclosureChannelManager
         DisclosureService.InitWorkflows(channel);
         return true;
     }
-    private static void RegisterQuartlyUpdateChannel()
+
+    public static bool Register(IDisclosureChannel channel, Func<ChannelConfigViewModel?> creator)
     {
-        QuarterlyUpdateChannel quarterlyUpdateChannel = new();
-        DisclosureService._channels[DisclosureChannelCode.QuarterlyUpdate] = quarterlyUpdateChannel;
-        DisclosureService.InitWorkflows(quarterlyUpdateChannel);
+        if (string.IsNullOrWhiteSpace(channel.Code) || creator == null) return false;
+
+        DisclosureService._channels[channel.Code] = channel;
+        _codeCreators[channel.Code] = creator;
+        //_typeCreators[configType] = config => creator2(config);
+        DisclosureService.InitWorkflows(channel);
+        return true;
     }
 
 
@@ -58,12 +63,14 @@ public static class DisclosureChannelManager
     }
 
     // 原方法 2：按实体创建（不变）
-    public static ChannelConfigViewModel? CreateViewModel(IDisclosureChannelConfig config)
-    {
-        if (config is null) return null;
-        var type = config.GetType();
-        return _typeCreators.TryGetValue(type, out var func) ? func(config) : null;
-    }
+    //public static ChannelConfigViewModel? CreateViewModel(IDisclosureChannelConfig config)
+    //{
+    //    if (config is null) return null;
+    //    var type = config.GetType();
+    //    _codeCreators.TryGetValue(config.ChannelCode, out var func) ? func().UpdateFrom(config)
+
+    //    return _typeCreators.TryGetValue(type, out var func) ? func(config) : null;
+    //}
 }
 
 /// <summary>

@@ -18,6 +18,7 @@ namespace FMO.Trustee;
 /// <summary>
 /// 中信建投证券
 /// </summary>
+[TrusteeDefine(typeof(CSCViewModel))]
 public partial class CSC : TrusteeApiBase
 {
     public const string _Identifier = "trustee_csc";

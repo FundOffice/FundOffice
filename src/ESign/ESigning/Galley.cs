@@ -8,7 +8,7 @@ public static class SigningGalley
     private static Dictionary<string, ESignViewModelBase> _viewModels = [];
 
 
-    public static ESignViewModelBase[] ViewModels => _viewModels.Values.ToArray();
+    public static ESignViewModelBase[] ViewModels => _viewModels.Values.OrderBy(x => x.Id).ToArray();
 
     public static ESigningWorker Worker { get; } = new();
 

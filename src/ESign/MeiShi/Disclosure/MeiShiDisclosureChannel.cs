@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 
 namespace FMO.ESigning.MeiShi;
 
-
+[DisclosureDefine(typeof(MeiShiChannelConfig), typeof(MeiShiChannelConfigViewModel))]
 public partial class MeiShiAssit : IDisclosureChannel
 {
     public string Code => DisclosureChannelCode.MeiShi;

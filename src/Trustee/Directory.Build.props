@@ -1,0 +1,45 @@
+<Project>
+	<!-- 
+    ESign 子项目输出自动复制配置（防换行符版）
+    位置：src\ESign\Directory.Build.props
+    注意：所有 PropertyGroup 的值必须写在同一行，否则 MSBuild 会注入 \r\n 导致路径非法
+  -->
+
+	<PropertyGroup>
+		<!-- 确保 SolutionDir 末尾有反斜杠（CLI 构建时通常没有，VS 通常有）-->
+		<_EsignSolDir Condition="!HasTrailingSlash('$(SolutionDir)')">$(SolutionDir)\</_EsignSolDir>
+		<_EsignSolDir Condition="HasTrailingSlash('$(SolutionDir)')">$(SolutionDir)</_EsignSolDir>
+
+		<!-- Client 基础输出路径（单行定义）-->
+		<_EsignClientBase>$(_EsignSolDir)src\Client\bin\$(Configuration)\</_EsignClientBase>
+
+		<!-- 动态计算 Client 目标框架目录（单行定义，严格避免换行）-->
+		<_EsignClientOutput Condition="'$(TargetFramework)' != ''">$(_EsignClientBase)$(TargetFramework)\</_EsignClientOutput>
+		<_EsignClientOutput Condition="'$(TargetFramework)' == ''">$(_EsignClientBase)net10.0-windows\</_EsignClientOutput>
+
+		<!-- 发布模式优先使用 PublishDir -->
+		<_EsignClientOutput Condition="'$(PublishDir)' != ''">$(PublishDir)</_EsignClientOutput>
+
+		<!-- 最终目标目录（单行）-->
+		<EsignTargetDir>$(_EsignClientOutput)trustee\</EsignTargetDir>
+	</PropertyGroup>
+
+	<!-- 核心复制 Target -->
+	<Target Name="_CopyEsignDllsToClient"
+			AfterTargets="Build;Publish"
+			Condition="'$(ProjectName)' != 'Interface' AND '$(ProjectName)' != 'Trustee'">
+
+		<!-- 1. 创建目录（MakeDir 自带容错，已存在则跳过）-->
+		<MakeDir Directories="$(EsignTargetDir)" />
+
+		<!-- 🟢 始终复制：.NET 运行必需文件（Debug/Release 都需要） -->
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(EsignTargetDir)" SkipUnchangedFiles="true" />
+		<Copy SourceFiles="$(TargetDir)$(ProjectName).deps.json" DestinationFolder="$(EsignTargetDir)" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)$(ProjectName).deps.json')" />
+		<Copy SourceFiles="$(TargetDir)$(ProjectName).runtimeconfig.json" DestinationFolder="$(EsignTargetDir)" SkipUnchangedFiles="true" Condition="Exists('$(TargetDir)$(ProjectName).runtimeconfig.json')" />
+
+		<!-- 🟡 仅 Debug 复制：调试符号与文档（自动跳过 Release） -->
+		<Copy SourceFiles="$(TargetDir)$(ProjectName).pdb" DestinationFolder="$(EsignTargetDir)" SkipUnchangedFiles="true" Condition="'$(Configuration)' == 'Debug' AND Exists('$(TargetDir)$(ProjectName).pdb')" />
+		<Copy SourceFiles="$(TargetDir)$(ProjectName).xml" DestinationFolder="$(EsignTargetDir)" SkipUnchangedFiles="true" Condition="'$(Configuration)' == 'Debug' AND Exists('$(TargetDir)$(ProjectName).xml')" />
+
+	</Target>
+</Project>

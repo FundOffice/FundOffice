@@ -6,10 +6,13 @@ namespace FMO.Trustee;
 
 public static class TrusteeGallay
 {
-    public static ITrustee[] Trustees { get; }
+    private static Dictionary<string, ITrustee> _signs = [];
+    private static Dictionary<string, TrusteeViewModelBase> _viewModels = [];
+
+    public static ITrustee[] Trustees => _signs.Values.ToArray();
 
 
-    public static TrusteeViewModelBase[] TrusteeViewModels { get; }
+    public static TrusteeViewModelBase[] TrusteeViewModels => _viewModels.Values.OrderBy(x => x.Idenitifier).ToArray();
 
 
     public static TrusteeWorker Worker { get; }
@@ -24,15 +27,23 @@ public static class TrusteeGallay
         }
 
 
-        TrusteeViewModels = [new CMSViewModel(), new CITICSViewModel(), new CSCViewModel(), new XYZQViewModel()];
+        //TrusteeViewModels = [new CMSViewModel(), new CITICSViewModel(), new CSCViewModel(), new XYZQViewModel()];
 
-        Trustees = TrusteeViewModels.OfType<ITrusteeViewModel>().Select(x => x.Assist).ToArray();
+        //Trustees = TrusteeViewModels.OfType<ITrusteeViewModel>().Select(x => x.Assist).ToArray();
 
 
         Worker = new TrusteeWorker(Trustees);
     }
 
     public static ITrustee? Find(int id) => Worker.Find(id);
+
+    public static void Register(ITrustee obj, TrusteeViewModelBase viewModel)
+    {
+        _signs[obj.Identifier] = obj;
+        _viewModels[obj.Identifier] = viewModel;
+
+    }
+
 
     /// <summary>
     /// 放到首页中

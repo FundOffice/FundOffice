@@ -11,6 +11,7 @@ using System.Web;
 
 namespace FMO.Trustee;
 
+[TrusteeDefine(typeof(CMSViewModel))]
 public partial class CMS : TrusteeApiBase
 {
     public const string _Identifier = "trustee_cms";

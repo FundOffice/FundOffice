@@ -1,0 +1,38 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:FMO.Trustee">
+
+
+    <DataTemplate DataType="{x:Type local:XYZQViewModel}">
+        <StackPanel>
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="ClientId" />
+                </BulletDecorator.Bullet>
+                <TextBox Text="{Binding ClientId, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+            </BulletDecorator>
+
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="ClientSecret" />
+                </BulletDecorator.Bullet>
+                <TextBox Text="{Binding ClientSecret, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+            </BulletDecorator>
+
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="UserName" />
+                </BulletDecorator.Bullet>
+                <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+            </BulletDecorator>
+            <BulletDecorator>
+                <BulletDecorator.Bullet>
+                    <TextBlock Text="Password" />
+                </BulletDecorator.Bullet>
+                <TextBox Text="{Binding Password, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+            </BulletDecorator>
+        </StackPanel>
+
+    </DataTemplate>
+</ResourceDictionary>

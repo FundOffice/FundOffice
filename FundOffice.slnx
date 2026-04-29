@@ -22,7 +22,6 @@
     <Project Path="src/Trustee/CITICS/CITICS.csproj" />
     <Project Path="src/Trustee/CMS/CMS.csproj" />
     <Project Path="src/Trustee/CSC/CSC.csproj" />
-    <Project Path="src/Trustee/Interface/Interface.csproj" />
     <Project Path="src/Trustee/Trustee/Trustee.csproj" />
     <Project Path="src/Trustee/XYZQ/XYZQ.csproj" />
   </Folder>

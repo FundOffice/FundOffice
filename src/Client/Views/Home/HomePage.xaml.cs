@@ -17,6 +17,8 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Reflection;
+using System.Runtime.Loader;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -132,11 +134,18 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
             //启动api
             TrusteeGallay.Initialize();
+
+            // 加载信批组件
+            InitializeDisclosureChannels();
+
+            // 加载电签组件
             InitializeSignings();
 
-            DisclosureChannelManager.Initialize();
-            //DisclosureChannelManager.Register<MeiShiChannelConfig>(new MeiShiAssit(), () => new MeiShiChannelConfigViewModel(), (x) => new MeiShiChannelConfigViewModel(x));
-            WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
+            // 加载托管组件
+            InitializeTrustees();
+
+            WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Trustee", true));
+
             IsInitializing = false;
         });
 
@@ -152,12 +161,232 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
     }
 
+    #region 组件
     private static void InitializeSignings()
     {
         SigningGalley.Initialize();
-        //SigningGalley.Register(new MeiShiAssit(), new MeiShiViewModel());
-        WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Trustee", true));
+
+
+        // 1. 获取主程序目录 + esign 子文件夹
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string esignDir = Path.Combine(baseDir, "esign");
+
+
+        if (!Directory.Exists(esignDir))
+        {
+            LogEx.Warning("esign 目录不存在，退出加载");
+            return;
+        }
+
+        // 2. 获取所有 dll 文件
+        string[] dllFiles = Directory.GetFiles(esignDir, "*.dll", SearchOption.TopDirectoryOnly);
+
+        foreach (var dllPath in dllFiles)
+        {
+            try
+            {
+                // 3. 加载程序集
+                Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dllPath);
+
+                // 4. 遍历程序集中的所有公共类
+                foreach (Type type in assembly.GetExportedTypes())
+                {
+                    LoadESign(type);
+                    LoadDisclosure(type);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogEx.Error($"注册电子签名组件失败，错误：{ex.Message}");
+            }
+        }
+
     }
+
+    private static bool LoadESign(Type type)
+    {
+        try
+        {
+            // 5. 过滤：必须是类 + 实现 ISigning + 标记 [ES]
+            if (!type.IsClass || type.IsAbstract || !typeof(ISigning).IsAssignableFrom(type))
+                return false;
+
+            // 6. 获取 ES 特性
+            var esAttr = type.GetCustomAttribute<ESignDefineAttribute>();
+            if (esAttr == null) return false;
+
+            // 7. 拿到泛型参数 
+            Type vmType = esAttr.ViewModelType;
+            if (vmType.BaseType == null || !vmType.IsSubclassOf(typeof(ESignViewModelBase)))
+                return false;
+
+
+            // 8. 创建实例
+            var assistInstance = Activator.CreateInstance(type) as ISigning;
+            var vmInstance = Activator.CreateInstance(vmType) as ESignViewModelBase;
+
+            // 9. 自动注册
+            SigningGalley.Register(assistInstance!, vmInstance!);
+
+        }
+        catch (Exception ex)
+        {
+            LogEx.Error($"注册电子签名组件失败：{type.Name}，错误：{ex.Message}");
+        }
+
+        return true;
+    }
+
+    private static void InitializeTrustees()
+    {
+
+        // 1. 获取主程序目录 + trustee 子文件夹
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string trusteeDir = Path.Combine(baseDir, "trustee");
+
+
+        if (!Directory.Exists(trusteeDir))
+        {
+            LogEx.Warning("trustee 目录不存在，退出加载");
+            return;
+        }
+
+        // 2. 获取所有 dll 文件
+        string[] dllFiles = Directory.GetFiles(trusteeDir, "*.dll", SearchOption.TopDirectoryOnly);
+
+        foreach (var dllPath in dllFiles)
+        {
+            try
+            {
+                // 3. 加载程序集
+                Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dllPath);
+
+                // 4. 遍历程序集中的所有公共类
+                foreach (Type type in assembly.GetExportedTypes())
+                {
+                    LoadTrustee(type);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogEx.Error($"注册电子签名组件失败，错误：{ex.Message}");
+            }
+        }
+
+    }
+
+    private static bool LoadTrustee(Type type)
+    {
+        try
+        {
+            // 5. 过滤：必须是类 + 实现 ISigning + 标记 [ES]
+            if (!type.IsClass || type.IsAbstract || !typeof(ITrustee).IsAssignableFrom(type))
+                return false;
+
+            // 6. 获取 ES 特性
+            var esAttr = type.GetCustomAttribute<TrusteeDefineAttribute>();
+            if (esAttr == null) return false;
+
+            // 7. 拿到泛型参数 
+            Type vmType = esAttr.ViewModelType;
+            if (vmType.BaseType == null || !vmType.IsSubclassOf(typeof(TrusteeViewModelBase)))
+                return false;
+
+
+            // 8. 创建实例
+            var assistInstance = Activator.CreateInstance(type) as ITrustee;
+            var vmInstance = Activator.CreateInstance(vmType) as TrusteeViewModelBase;
+
+            // 9. 自动注册
+            TrusteeGallay.Register(assistInstance!, vmInstance!);
+
+        }
+        catch (Exception ex)
+        {
+            LogEx.Error($"注册电子签名组件失败：{type.Name}，错误：{ex.Message}");
+        }
+
+        return true;
+    }
+
+    private static void InitializeDisclosureChannels()
+    {
+        DisclosureChannelManager.Initialize();
+
+
+        // 1. 获取主程序目录 + disclosure 子文件夹
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string disDir = Path.Combine(baseDir, "disclosure");
+
+
+        if (!Directory.Exists(disDir))
+        {
+            LogEx.Warning("disclosure 目录不存在，退出加载");
+            WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
+            return;
+        }
+
+        // 2. 获取所有 dll 文件
+        string[] dllFiles = Directory.GetFiles(disDir, "*.dll", SearchOption.TopDirectoryOnly);
+
+        foreach (var dllPath in dllFiles)
+        {
+            try
+            {
+                // 3. 加载程序集
+                Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dllPath);
+
+                // 4. 遍历程序集中的所有公共类
+                foreach (Type type in assembly.GetExportedTypes())
+                {
+                    LoadDisclosure(type);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogEx.Error($"注册信批组件失败，错误：{ex.Message}");
+            }
+        }
+
+        WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
+    }
+
+    private static bool LoadDisclosure(Type type)
+    {
+        try
+        {
+            // 5. 过滤：必须是类 + 实现 IDisclosureChannel + 标记 [ES]
+            if (!type.IsClass || type.IsAbstract || !typeof(IDisclosureChannel).IsAssignableFrom(type))
+                return false;
+
+            // 6. 获取 ES 特性
+            var esAttr = type.GetCustomAttribute<DisclosureDefineAttribute>();
+            if (esAttr == null) return false;
+
+            // 7. 拿到泛型参数 
+            Type cfType = esAttr.ConfigType;
+            Type vmType = esAttr.ViewModelType;
+
+            if (cfType.BaseType == null || !cfType.IsSubclassOf(typeof(DisclosureChannelConfig)))
+                return false;
+            if (vmType.BaseType == null || !vmType.IsSubclassOf(typeof(ChannelConfigViewModel)))
+                return false;
+
+
+            // 8. 创建实例
+            var assistInstance = Activator.CreateInstance(type) as IDisclosureChannel;
+
+            // 9. 自动注册
+            DisclosureChannelManager.Register(assistInstance!, () => Activator.CreateInstance(vmType) as ChannelConfigViewModel);
+        }
+        catch (Exception ex)
+        {
+            LogEx.Error($"注册信批组件失败：{type.Name}，错误：{ex.Message}");
+        }
+
+        return true;
+    } 
+    #endregion
 
     private void LoadTrusteeMessages()
     {

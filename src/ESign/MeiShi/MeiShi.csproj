@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
 	  <UseWPF>true</UseWPF>
 	  <LangVersion>preview</LangVersion>
+	  <GenerateDocumentationFile>False</GenerateDocumentationFile>
+	  <SignAssembly>False</SignAssembly>
   </PropertyGroup>
 
   <ItemGroup>
