@@ -77,6 +77,10 @@
             </oxy:TrackerControl>
         </ControlTemplate>
 
+        <Style x:Key="MaskText" TargetType="TextBlock">
+            <Setter Property="shared:MaskService.IsMask" Value="True" />
+        </Style>
+
         <Style x:Key="ToggleButton.HyperlinkLike" TargetType="ToggleButton">
             <!--  基础样式设置  -->
             <Setter Property="Foreground" Value="#0066CC" />
@@ -316,8 +320,14 @@
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Binding="{Binding Id}" Header="Id" />
                                                 <DataGridTextColumn Binding="{Binding RequestDate, StringFormat=yyyy-MM-dd}" Header="日期" />
-                                                <DataGridTextColumn Binding="{Binding FundName}" Header="基金" />
-                                                <DataGridTextColumn Binding="{Binding InvestorName}" Header="投资人" />
+                                                <DataGridTextColumn
+                                                    Binding="{Binding FundName}"
+                                                    ElementStyle="{StaticResource MaskText}"
+                                                    Header="基金" />
+                                                <DataGridTextColumn
+                                                    Binding="{Binding InvestorName}"
+                                                    ElementStyle="{StaticResource MaskText}"
+                                                    Header="投资人" />
                                                 <DataGridTextColumn Binding="{Binding RequestType}" Header="类型" />
                                                 <DataGridTextColumn Binding="{Binding RequestAmount}" Header="金额" />
                                                 <DataGridTextColumn Binding="{Binding RequestShare}" Header="份额" />
@@ -338,8 +348,14 @@
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Binding="{Binding Id}" Header="Id" />
                                                 <DataGridTextColumn Binding="{Binding RequestDate, StringFormat=yyyy-MM-dd}" Header="日期" />
-                                                <DataGridTextColumn Binding="{Binding FundName}" Header="基金" />
-                                                <DataGridTextColumn Binding="{Binding InvestorName}" Header="投资人" />
+                                                <DataGridTextColumn
+                                                    Binding="{Binding FundName}"
+                                                    ElementStyle="{StaticResource MaskText}"
+                                                    Header="基金" />
+                                                <DataGridTextColumn
+                                                    Binding="{Binding InvestorName}"
+                                                    ElementStyle="{StaticResource MaskText}"
+                                                    Header="投资人" />
                                                 <DataGridTextColumn Binding="{Binding RequestType}" Header="类型" />
                                                 <DataGridTextColumn Binding="{Binding RequestAmount, Converter={StaticResource ZeroToBlankConverter}}" Header="金额" />
                                                 <DataGridTextColumn Binding="{Binding RequestShare, Converter={StaticResource ZeroToBlankConverter}}" Header="份额" />
@@ -361,8 +377,14 @@
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Binding="{Binding Id}" Header="Id" />
                                                 <DataGridTextColumn Binding="{Binding RequestDate, StringFormat=yyyy-MM-dd}" Header="日期" />
-                                                <DataGridTextColumn Binding="{Binding FundName}" Header="基金" />
-                                                <DataGridTextColumn Binding="{Binding InvestorName}" Header="投资人" />
+                                                <DataGridTextColumn
+                                                    Binding="{Binding FundName}"
+                                                    ElementStyle="{StaticResource MaskText}"
+                                                    Header="基金" />
+                                                <DataGridTextColumn
+                                                    Binding="{Binding InvestorName}"
+                                                    ElementStyle="{StaticResource MaskText}"
+                                                    Header="投资人" />
                                                 <DataGridTextColumn Binding="{Binding RequestType}" Header="类型" />
                                                 <DataGridTextColumn Binding="{Binding RequestAmount, Converter={StaticResource ZeroToBlankConverter}}" Header="金额" />
                                                 <DataGridTextColumn Binding="{Binding RequestShare, Converter={StaticResource ZeroToBlankConverter}}" Header="份额" />
