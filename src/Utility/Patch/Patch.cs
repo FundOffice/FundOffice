@@ -53,7 +53,22 @@ public static partial class DatabaseAssist
         [117] = FixChannelConfig,
         [118] = MiggreateToNewDisclosure,
         [120] = MoveDisclosureModels,
+        [121] = MoveAmacDirectAcc,
     };
+
+    private static void MoveAmacDirectAcc(BaseDatabase db)
+    {
+        var ac = db.GetCollection<AmacReportAccount>().FindAll().ToArray();
+
+        foreach (var item in ac)
+        {
+            if (item.Id == "pmg")
+                db.GetCollection<DisclosureChannelConfig>().Upsert(new QuarterlyUpdateChannelConfig { UserName = item.Name, Password = item.Password, Secret = item.Key });
+            else if (item.Id == "pof")
+                db.GetCollection<DisclosureChannelConfig>().Upsert(new PfidChannelConfig { UserName = item.Name, Password = item.Password, Secret = item.Key });
+        }
+
+    }
 
     private static void MoveDisclosureModels(BaseDatabase db)
     {
@@ -64,7 +79,7 @@ public static partial class DatabaseAssist
             return x;
         }).ToArray();
 
-        db.GetCollection("IDisclosureNotice").Upsert(data   );
+        db.GetCollection("IDisclosureNotice").Upsert(data);
     }
 
     private static void MiggreateToNewDisclosure(BaseDatabase database)
