@@ -1,4 +1,8 @@
-namespace FMO.Disclosure;
+
+using FMO.Disclosure;
+
+namespace FMO.ESigning.MeiShi;
+
 
 /// <summary>
 /// 美市通道配置

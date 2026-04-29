@@ -132,9 +132,10 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
             //启动api
             TrusteeGallay.Initialize();
-            SigningGalley.Initialize();
-            WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Trustee", true));
+            InitializeSignings();
+
             DisclosureChannelManager.Initialize();
+            //DisclosureChannelManager.Register<MeiShiChannelConfig>(new MeiShiAssit(), () => new MeiShiChannelConfigViewModel(), (x) => new MeiShiChannelConfigViewModel(x));
             WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
             IsInitializing = false;
         });
@@ -151,7 +152,12 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
     }
 
-
+    private static void InitializeSignings()
+    {
+        SigningGalley.Initialize();
+        //SigningGalley.Register(new MeiShiAssit(), new MeiShiViewModel());
+        WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Trustee", true));
+    }
 
     private void LoadTrusteeMessages()
     {

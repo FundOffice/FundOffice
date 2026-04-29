@@ -171,6 +171,8 @@ public partial class PeriodicReportViewModel : ObservableObject
 
     public string? FundName { get; set; }
 
+    public string? DisplayName => Fund.GetDefaultShortName(FundName);
+
     public DateOnly PeriodEnd { get; }
 
     public SimpleFileViewModel Word { get; }
@@ -377,6 +379,9 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
 
     public string? FundName { get; set; }
     public string FundCode { get; }
+
+    public string? DisplayName => Fund.GetDefaultShortName(FundName);
+
     public DateOnly PeriodEnd { get; }
 
     public SimpleFileViewModel Investor { get; }

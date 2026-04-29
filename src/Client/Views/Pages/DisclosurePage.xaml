@@ -262,18 +262,13 @@
                     <Style BasedOn="{StaticResource GroupBoxTab}" TargetType="GroupBox" />
 
                     <DataTemplate x:Key="ReportItem">
-                        <Border>
+                        <Border MinWidth="240">
                             <StackPanel Margin="4">
                                 <DockPanel DockPanel.Dock="Top">
                                     <TextBlock
                                         shared:MaskService.IsMask="True"
                                         FontSize="15"
-                                        Text="{Binding FundName}" />
-                                    <Button
-                                        hc:IconElement.Geometry="{StaticResource f.upload}"
-                                        Command="{Binding UploadCommand}"
-                                        DockPanel.Dock="Right"
-                                        Style="{StaticResource ButtonIcon.Small}" />
+                                        Text="{Binding DisplayName}" />
 
                                 </DockPanel>
 
@@ -334,19 +329,14 @@
                     </DataTemplate>
 
                     <DataTemplate x:Key="ReportItem2">
-                        <Border>
+                        <Border MinWidth="240">
                             <StackPanel Margin="4">
 
                                 <DockPanel DockPanel.Dock="Top">
                                     <TextBlock
                                         shared:MaskService.IsMask="True"
                                         FontSize="15"
-                                        Text="{Binding FundName}" />
-                                    <Button
-                                        hc:IconElement.Geometry="{StaticResource f.upload}"
-                                        Command="{Binding UploadCommand}"
-                                        DockPanel.Dock="Right"
-                                        Style="{StaticResource ButtonIcon.Small}" />
+                                        Text="{Binding DisplayName}" />
 
                                 </DockPanel>
 
@@ -412,141 +402,18 @@
 
 
                     <DataTemplate x:Key="QuarterlyUpdateItem">
-                        <Border>
+                        <Border MinWidth="240">
                             <DockPanel Margin="4">
                                 <DockPanel DockPanel.Dock="Top">
                                     <TextBlock
                                         shared:MaskService.IsMask="True"
                                         FontSize="15"
-                                        Text="{Binding FundName}" />
+                                        Text="{Binding DisplayName}" />
 
                                 </DockPanel>
 
                                 <StackPanel>
                                     <DockPanel>
-
-                                        <ContentControl Content="{Binding OperationResult}" DockPanel.Dock="Right">
-                                            <ContentControl.ContentTemplate>
-                                                <DataTemplate>
-                                                    <DockPanel>
-                                                        <hc:SimplePanel x:Name="s1" Visibility="Collapsed">
-                                                            <TextBlock
-                                                                x:Name="noup"
-                                                                VerticalAlignment="Center"
-                                                                FontSize="10"
-                                                                Foreground="Gray"
-                                                                Text="未上报" />
-                                                            <TextBlock
-                                                                x:Name="upfail"
-                                                                VerticalAlignment="Center"
-                                                                FontSize="10"
-                                                                Foreground="Red"
-                                                                Text="上报出错"
-                                                                Visibility="Collapsed" />
-                                                            <Button
-                                                                x:Name="upd"
-                                                                Command="{Binding DataContext.UploadOperationCommand, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
-                                                                Content="上报"
-                                                                Style="{StaticResource ButtonPrimary.Small}"
-                                                                Visibility="Collapsed" />
-                                                        </hc:SimplePanel>
-
-                                                        <Button
-                                                            x:Name="verify"
-                                                            hc:IconElement.Geometry="{StaticResource f.circle-question}"
-                                                            Foreground="Red"
-                                                            Style="{StaticResource ButtonIcon.Small}"
-                                                            Visibility="Collapsed">
-                                                            <Button.ToolTip>
-                                                                <ListBox BorderThickness="0" ItemsSource="{Binding Validations}">
-                                                                    <ListBox.ItemTemplate>
-                                                                        <DataTemplate>
-                                                                            <TextBlock x:Name="t" Text="{Binding Message}" />
-                                                                            <DataTemplate.Triggers>
-                                                                                <DataTrigger Binding="{Binding Level}" Value="Error">
-                                                                                    <Setter TargetName="t" Property="Foreground" Value="Red" />
-                                                                                </DataTrigger>
-                                                                            </DataTemplate.Triggers>
-                                                                        </DataTemplate>
-                                                                    </ListBox.ItemTemplate>
-                                                                </ListBox>
-                                                            </Button.ToolTip>
-                                                        </Button>
-
-
-                                                        <TextBlock
-                                                            x:Name="ok"
-                                                            VerticalAlignment="Center"
-                                                            FontSize="10"
-                                                            FontWeight="Bold"
-                                                            Foreground="Green"
-                                                            Text="已上报"
-                                                            Visibility="Collapsed" />
-
-                                                        <Button
-                                                            x:Name="submit"
-                                                            hc:IconElement.Geometry="{StaticResource f.file-circle-check}"
-                                                            Command="{Binding DataContext.SubmitOperationCommand, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
-                                                            Style="{StaticResource ButtonIcon.Small}"
-                                                            Visibility="Collapsed" />
-
-                                                    </DockPanel>
-
-                                                    <DataTemplate.Triggers>
-
-                                                        <DataTrigger Binding="{Binding ValidationCode}" Value="0">
-                                                            <Setter TargetName="verify" Property="Foreground" Value="Green" />
-                                                        </DataTrigger>
-
-                                                        <DataTrigger Binding="{Binding Status}" Value="Verify">
-                                                            <Setter TargetName="verify" Property="Visibility" Value="Visible" />
-                                                            <Setter TargetName="submit" Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
-
-                                                        <DataTrigger Binding="{Binding Status}" Value="None">
-                                                            <Setter TargetName="s1" Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
-
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding Status}" Value="Upload" />
-                                                                <Condition Binding="{Binding IsSuccess}" Value="False" />
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter TargetName="s1" Property="Visibility" Value="Visible" />
-                                                            <Setter TargetName="upfail" Property="Visibility" Value="Visible" />
-                                                            <Setter TargetName="noup" Property="Visibility" Value="Collapsed" />
-                                                        </MultiDataTrigger>
-
-
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding Status}" Value="Submit" />
-                                                                <Condition Binding="{Binding IsSuccess}" Value="False" />
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter TargetName="verify" Property="Visibility" Value="Visible" />
-                                                            <Setter TargetName="submit" Property="Visibility" Value="Visible" />
-                                                        </MultiDataTrigger>
-
-
-                                                        <MultiDataTrigger>
-                                                            <MultiDataTrigger.Conditions>
-                                                                <Condition Binding="{Binding Status}" Value="Submit" />
-                                                                <Condition Binding="{Binding IsSuccess}" Value="True" />
-                                                            </MultiDataTrigger.Conditions>
-                                                            <Setter TargetName="ok" Property="Visibility" Value="Visible" />
-                                                        </MultiDataTrigger>
-
-
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="upd" Property="Visibility" Value="Visible" />
-                                                            <Setter TargetName="noup" Property="Visibility" Value="Collapsed" />
-                                                            <Setter TargetName="upfail" Property="Visibility" Value="Collapsed" />
-                                                        </Trigger>
-                                                    </DataTemplate.Triggers>
-
-                                                </DataTemplate>
-                                            </ContentControl.ContentTemplate>
-                                        </ContentControl>
 
                                         <shared:FileView Content="{Binding Operation}" Style="{StaticResource IconViewFileStyle}">
                                             <shared:FileView.Header>
@@ -563,7 +430,8 @@
                                             Command="{Binding GenerateInvestorSheetCommand}"
                                             Content="生成"
                                             DockPanel.Dock="Right"
-                                            Style="{StaticResource ButtonPrimary.Small}" />
+                                            Style="{StaticResource ButtonPrimary.Small}"
+                                            Visibility="{Binding Investor.Exists, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
                                         <shared:FileView Content="{Binding Investor}" Style="{StaticResource IconViewFileStyle}">
                                             <shared:FileView.Header>

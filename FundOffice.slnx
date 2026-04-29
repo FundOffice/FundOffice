@@ -13,7 +13,6 @@
   <Folder Name="/ESign/">
     <Project Path="src/ESign/ESigning/ESigning.csproj" />
     <Project Path="src/ESign/MeiShi/MeiShi.csproj" />
-    <Project Path="src/ESign/Galley/Galley.csproj" />
   </Folder>
   <Folder Name="/Main/">
     <Project Path="src/Main/Data/Data.csproj" />
@@ -30,14 +29,14 @@
   <Folder Name="/Utility/">
     <Project Path="src/Utility/FileTemplate/FileTemplate.csproj" />
     <Project Path="src/Utility/Logging/Logging.csproj" />
-    <Project Path="src/Utility/SourceGenerator/SourceGenerator.csproj" />
-    <Project Path="src/Utility/Utilities/Utilities.csproj" />
     <Project Path="src/Utility/OCR/OCR.csproj" />
     <Project Path="src/Utility/Patch/Patch.csproj" />
     <Project Path="src/Utility/PDF/PdfExt.csproj" />
+    <Project Path="src/Utility/SourceGenerator/SourceGenerator.csproj" />
+    <Project Path="src/Utility/Utilities/Utilities.csproj" />
   </Folder>
-  <Project Path="src/Schedule/Schedule/Schedule.csproj" />
-  <Project Path="src/SharedUI/SharedUI.csproj" />
   <Project Path="src/Client/FundOffice.csproj" />
   <Project Path="src/Plugin/Plugin/Plugin.csproj" />
+  <Project Path="src/Schedule/Schedule/Schedule.csproj" />
+  <Project Path="src/SharedUI/SharedUI.csproj" />
 </Solution>

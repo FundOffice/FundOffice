@@ -18,7 +18,7 @@ public static class DisclosureChannelManager
 
         Register<EmailChannelConfig>(new EmailDisclosureChannel(), () => new EmailChannelConfigViewModel(), (x) => new EmailChannelConfigViewModel(x));
         Register<PfidChannelConfig>(new PFIDDisclosureChannel(), () => new PfidChannelConfigViewModel(), (x) => new PfidChannelConfigViewModel(x));
-        Register<MeiShiChannelConfig>(new MeiShiDisclosureChannel(), () => new MeiShiChannelConfigViewModel(), (x) => new MeiShiChannelConfigViewModel(x));
+        //Register<MeiShiChannelConfig>(new MeiShiDisclosureChannel(), () => new MeiShiChannelConfigViewModel(), (x) => new MeiShiChannelConfigViewModel(x));
         
         // 创建季度更新通道
         //RegisterQuartlyUpdateChannel();

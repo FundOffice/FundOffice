@@ -9,8 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Disclosure\Disclosure.UI\Disclosure.UI.csproj" />
+    <ProjectReference Include="..\..\Disclosure\Disclosure\Disclosure.csproj" />
     <ProjectReference Include="..\ESigning\ESigning.csproj" />
     <PackageReference Include="Microsoft.Playwright" Version="1.54.0" />
+	  <ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer" />
   </ItemGroup>
 
 </Project>

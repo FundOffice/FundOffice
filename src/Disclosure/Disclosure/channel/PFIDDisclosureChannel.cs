@@ -25,7 +25,7 @@ public class PFIDDisclosureChannel : IDisclosureChannel
         switch (Notice)
         {
             case PeriodicalDisclosureNotice n:
-                return await AmacDirectReporter.DislosurePeriodical(n, new AmacReportAccount("", cc.UserName, cc.Password, cc.Secret, true));
+                return await AmacDirectReporter.DislosurePeriodical(n, new AmacDirectAccount(cc.UserName, cc.Password, cc.Secret));
             default:
                 return new(false, $"不支持的公告类型{Notice.Type}");
         }

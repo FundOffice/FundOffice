@@ -37,8 +37,17 @@ public class MeiShiConfig : ISigningConfig
 }
 
 
+//public static class MeiShiLoader
+//{
+//    [ModuleInitializer]
+//    public static void Load()
+//    {
+//        SigningGalley.Register(new MeiShiAssit(), new MeiShiViewModel());
+//    }
+//}
 
-public class MeiShiAssit : ISigning
+
+public partial class MeiShiAssit : ISigning
 {
 
     HttpClient client;
@@ -693,7 +702,14 @@ public class MeiShiAssit : ISigning
 
         var data = root.data.Deserialize<FundInfoJson[]>();
 
-        return data?.Select(x => new EsigningFundInfo { Id = x.ProductId.ToString(), Name = x.ProductFullName, Code = x.FundRecordNumber, Class = x.FundRecordNumber != x.PbInternalProductCode ? x.PbInternalProductCode : "" }).ToArray() ?? [];
+        return data?.Select(x => new EsigningFundInfo
+        {
+            Id = x.ProductId.ToString(),
+            Name = x.ProductFullName,
+            Code = x.FundRecordNumber,
+            SetupDate = x.SetDate,
+            Class = x.FundRecordNumber != x.PbInternalProductCode ? x.PbInternalProductCode : ""
+        }).ToArray() ?? [];
     }
 
 
@@ -736,105 +752,6 @@ public class MeiShiAssit : ISigning
         return cont;
     }
 
-    public async Task<bool> UploadDisclosureFile(string fundName, string fundCode, string shareClass, DateTime time, string announceName, string file)
-    {
-        if (!IsValid) return false;
-        if (!isLogin) isLogin = await Login();
-        if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return false; }
-
-
-        // 获取对应产品
-        var funds = await QueryFundInfo();
-        var fund = funds.FirstOrDefault(x => x.Name == fundName && x.Code == fundCode);
-        if (fund?.Id is null)
-            return false;
-
-
-        // 上传文件
-        var fileJson = await UploadFile(file, 131);
-
-        if (!fileJson.Contains("1008"))
-            return false;
-
-        // 创建公告
-       return await CreateDisclosure(fund.Id, fileJson, file, time, announceName);
-
-    }
-
-    private async Task<bool> CreateDisclosure(string fundId, string fileJson, string filePath, DateTime time, string announceName)
-    {
-        var root = JsonSerializer.Deserialize<RootJson>(fileJson);
-        if (root is null) return false;
-
-        var fileData = root.data.Deserialize<FileUploadDataDto>();
-        if (fileData is null) return false;
-
-        string uid = $"rc-upload-{DateTimeHelper.TimeStampByMilliseconds(DateTime.Now)}-1";
-
-        var fo = new UploadFileInfo
-        {
-            Uid = uid,
-            Name = fileData.FileName!,
-            Size = new FileInfo(filePath).Length,
-            Type = "application/pdf",
-            Status = "done",
-            OriginFileObj = new() { Uid = uid },
-            Percent = 100,
-            Response = root,
-            Xhr = new()
-        };
-
-
-        var obj = new FundReportUploadRequest
-        {
-            DocumentName = announceName,
-            DocumentType = 3,
-            FileAuthority = new List<int> { 3 },
-            DisclosureConditions = 0,
-            PublishStatus = 1,
-            SendEmail = 0,
-            NoticeStatus = 0,
-            ProductIdList = $"{fundId}",
-            StartStatus = 1,
-            AttachmentsId = fileData.AttachmentsId,
-            PublishTime = DateTimeHelper.TimeStampByMilliseconds(time),
-            FileName = "",
-            FileUrl = "",
-            MrpReportLibraryLogId = "",
-            SourceFile = 1,
-            ProductContactMap = new Dictionary<string, object>(),
-
-            // 文件信息（按你的JSON赋值）
-            File = new FileBag
-            {
-                File = fo,
-                FileList = [fo]
-            }
-        };
-
-
-        HttpRequestMessage request = new();
-        request.Method = HttpMethod.Post;
-        request.RequestUri = new Uri("https://vipfunds.simu800.com/vip-manager/productFile/create");
-        request.Headers.Add("tokenid", Token);
-        request.Content = new StringContent(JsonSerializer.Serialize(obj), Encoding.UTF8, "application/json");
-
-        var response = client.Send(request);
-
-        var cont = await response.Content.ReadAsStringAsync();
-
-        SigningLoger.LogRun(this, nameof(QueryFundInfo), "", cont);
-        if (Regex.IsMatch(cont, "token已失效|重新登录"))
-        {
-            isLogin = false;
-            return false;
-        }
-
-        root = JsonSerializer.Deserialize<RootJson>(cont);
-        if (root is null) return false;
-         
-        return root.code == 1008;
-    }
 
     private static string? GetFileExtentionFromUrl(string url)
     {

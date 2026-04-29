@@ -20,7 +20,7 @@ internal class FundInfoJson
     /// 创建日期/成立日期
     /// </summary>
     [JsonPropertyName("setDate")]
-    public DateTime? SetDate { get; set; }
+    public DateOnly? SetDate { get; set; }
 
     /// <summary>
     /// 基金备案编号

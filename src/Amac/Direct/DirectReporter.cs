@@ -99,7 +99,23 @@ public class AmacDirectReporter
 
     // 3秒限制
     private static readonly TimeSpan _interval = TimeSpan.FromSeconds(3);
- 
+
+
+
+
+    private static FileMeta? GetFile(IDisclosureNotice notice)
+    {
+        switch (notice)
+        {
+            case PeriodicalDisclosureNotice n:
+                return n.Excel?.File;
+            case QuarterlyUpdate qu:
+                return qu.Operation?.File;
+            default:
+                return null ;
+        }
+    }
+
     /// <summary>
     /// 上报信批
     /// </summary>
@@ -107,14 +123,14 @@ public class AmacDirectReporter
     /// <param name="acc"></param>
     /// <param name="ignoreWarning"></param>
     /// <returns></returns>
-    public static async Task<ErrorReturn> DislosurePeriodical(PeriodicalDisclosureNotice report, AmacReportAccount acc, bool ignoreWarning = false)
+    public static async Task<ErrorReturn> DislosurePeriodical(IFundPeriodicalDisclosure report, AmacDirectAccount acc, bool ignoreWarning = false)
     {
         using var db = DbHelper.Base();
         var result = db.GetCollection<DirectAmacResult>().FindById(report.Id) ?? new();
 
         // 检查是否已经上传过，如果已经上传过但未成功，且距离上次上传时间超过60分钟，则允许重新上传；
         if (DateTime.Now - result.UploadTime > TimeSpan.FromMinutes(60))
-            result = await UploadReport(report, x => x.Excel?.File, acc);
+            result = await UploadReport(report, x => GetFile(report), acc);
 
         if (result.UploadCode == 0)
             return new(true);
@@ -141,7 +157,7 @@ public class AmacDirectReporter
         return new(false, err.Error);
     }
 
-    public static async Task<ErrorReturn> DelaySummit(DirectAmacResult report, AmacReportAccount acc)
+    public static async Task<ErrorReturn> DelaySummit(DirectAmacResult report, AmacDirectAccount acc)
     {
         if (string.IsNullOrWhiteSpace(report.Handle)) return new(false, "无法提交：处理句柄为空");
 
@@ -160,7 +176,7 @@ public class AmacDirectReporter
         return new(false, "等待超时，未能自动提交，请手动提交");
     }
 
-    public static async Task<DirectAmacResult> UploadReport<T>(T report, Func<T, FileMeta?> file, AmacReportAccount acc) where T : IFundPeriodicalDisclosure
+    public static async Task<DirectAmacResult> UploadReport<T>(T report, Func<T, FileMeta?> file, AmacDirectAccount acc) where T : IFundPeriodicalDisclosure
     {
         var type = report.Type switch
         {
@@ -239,7 +255,7 @@ public class AmacDirectReporter
     /// <param name="managerName"></param>
     /// <param name="entityCode"></param>
     /// <returns></returns>
-    public static async Task<ProcessResponse?> UploadFile(DirectFileType fileType, string filePath, DateOnly reportEndDate, AmacReportAccount acc, string managerName, string entityCode)
+    public static async Task<ProcessResponse?> UploadFile(DirectFileType fileType, string filePath, DateOnly reportEndDate, AmacDirectAccount acc, string managerName, string entityCode)
     {
         try
         {
@@ -256,7 +272,7 @@ public class AmacDirectReporter
 
             string UserName = acc.Name;
             string DirectPwd = acc.Password;
-            string PublicKey = acc.Key;
+            string PublicKey = acc.Secret;
 
 
             using var httpClient = new HttpClient();
@@ -424,7 +440,7 @@ public class AmacDirectReporter
         }
     }
 
-    public static async Task<ErrorReturn> QueryResult(string handle, DirectFileType type, AmacReportAccount acc)
+    public static async Task<ErrorReturn> QueryResult(string handle, DirectFileType type, AmacDirectAccount acc)
     {
         try
         {
@@ -441,7 +457,7 @@ public class AmacDirectReporter
 
             string UserName = acc.Name;
             string DirectPwd = acc.Password;
-            string PublicKey = acc.Key;
+            string PublicKey = acc.Secret;
 
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("User-Agent", "imgfornote");
@@ -501,7 +517,7 @@ public class AmacDirectReporter
         }
     }
 
-    public static async Task<ErrorReturn> Submit(string handle, DirectFileType type, string company, AmacReportAccount acc)
+    public static async Task<ErrorReturn> Submit(string handle, DirectFileType type, string company, AmacDirectAccount acc)
     {
         try
         {
@@ -518,7 +534,7 @@ public class AmacDirectReporter
 
             string UserName = acc.Name;
             string DirectPwd = acc.Password;
-            string PublicKey = acc.Key;
+            string PublicKey = acc.Secret;
 
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("User-Agent", "imgfornote");
@@ -723,6 +739,7 @@ public class AmacDirectReporter
     {
         throw new NotImplementedException();
     }
+
 }
 
 public record AmacDirectHandle(int Id, DirectFileType FileType, string Handle, IList<ValidationInfo>? ResultInfo = null, bool Submit = false);

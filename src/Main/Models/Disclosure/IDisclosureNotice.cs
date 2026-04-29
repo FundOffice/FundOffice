@@ -7,20 +7,23 @@ namespace FMO.Disclosure;
 /// </summary>
 public interface IDisclosureNotice
 {
-    public long Id { get; }
+    long Id { get; }
 
-    public DisclosureType Type { get; }
+    DisclosureType Type { get; }
 
 
     /// <summary>
     /// 期望发布日期
     /// </summary>
-    public DateOnly PublishDate { get; }
+    DateOnly PublishDate { get; }
+
+    TimeOnly PublishTime { get; }
+
 
     /// <summary>
     /// 报告名称
     /// </summary>
-    public string Name { get; }
+    string Name { get; }
 
 }
 
@@ -42,10 +45,7 @@ public interface IDisclosureFile
     public SimpleFile? File { get; }
 }
 
-public interface IFundDisclosureNoticeWithFile : IFundDisclosureNotice
-{
-    public SimpleFile? File { get; }
-}
+ 
 
 
 public interface IFundPeriodicalDisclosure : IFundDisclosureNotice
@@ -71,6 +71,8 @@ public class PeriodicalDisclosureNotice : IFundPeriodicalDisclosure
     public required string FundCode { get; set; }
 
     public DateOnly PublishDate { get; set; }
+
+    public TimeOnly PublishTime { get; set; }
 
     public required string Name { get; set; }
 
@@ -107,6 +109,8 @@ public class QuarterlyUpdate : IFundPeriodicalDisclosure
 
 
     public DateOnly PublishDate { get; set; }
+
+    public TimeOnly PublishTime { get; set; }
 
     public required string Name { get; set; }
 
@@ -148,6 +152,8 @@ public class TemporaryDisclosureNotice : IFundDisclosureNotice, IDisclosureFile
 
     public DateOnly PublishDate { get; set; }
 
+    public TimeOnly PublishTime { get; set; }
+
     public required string Name { get; set; }
 
     public SimpleFile? File { get; set; }
@@ -174,6 +180,8 @@ public class TemporaryOpenNotice : IFundDisclosureNotice, IDisclosureFile
     public required string FundCode { get; set; }
 
     public DateOnly PublishDate { get; set; }
+
+    public TimeOnly PublishTime { get; set; }
 
     public string Name => $"{FundName} 临时开放公告";
 
@@ -204,6 +212,8 @@ public class HugeRedemptionNotice : IFundDisclosureNotice, IDisclosureFile
 
     public DateOnly PublishDate { get; set; }
 
+    public TimeOnly PublishTime { get; set; }
+
     public string Name => $"{FundName} 巨额赎回公告";
 
     public DateOnly OpenDay { get; set; }
@@ -211,7 +221,12 @@ public class HugeRedemptionNotice : IFundDisclosureNotice, IDisclosureFile
     /// <summary>
     /// 赎回比例
     /// </summary>
-    public decimal Ratio { get; set; }
+    public decimal RealRatio { get; set; }
+
+    /// <summary>
+    /// 合同约定的赎回比例
+    /// </summary>
+    public decimal DefinedRatio { get; set; }
 
     /// <summary>
     /// 是否全部兑付
@@ -238,6 +253,8 @@ public class FundSetupNotice : IFundDisclosureNotice, IDisclosureFile
 
     public DateOnly PublishDate { get; set; }
 
+    public TimeOnly PublishTime { get; set; }
+
     public string Name => $"{FundName} 产品成立公告";
 
     public DateOnly SetupDay { get; set; }
@@ -245,7 +262,58 @@ public class FundSetupNotice : IFundDisclosureNotice, IDisclosureFile
     public SimpleFile? File { get; set; }
 }
 
+/// <summary>
+/// 基金规模预警类型
+/// 最大32种，否则需要调整ID生成逻辑，增加预留位
+/// </summary>
+public enum ScaleWarningType
+{
+    None,
 
+    /// <summary>
+    /// 基金年度日均基金资产净值低于1000万元规模预警
+    /// </summary>
+    AnnualAverageNetAssetBelow1000W = 1,
+
+    /// <summary>
+    /// 基金日均资产规模低于500万元停止申购通知
+    /// </summary>
+    DailyAverageAssetBelow500W = 2,
+
+    /// <summary>
+    /// 基金连续60个交易日基金资产低于500万元停止申购通知
+    /// </summary>
+    Continuous60TradeDaysAssetBelow500W = 3,
+
+}
+
+public class FundSacleWarningNotice : IFundDisclosureNotice, IDisclosureFile
+{
+    public long Id => (long)WarningType << 58 | (long)TouchDate.DayNumber << 32 | (long)FundId << 10 | ((long)Type);
+
+    public DisclosureType Type => DisclosureType.FundScaleWarning;
+
+    public int FundId { get; set; }
+
+    public required string FundName { get; set; }
+
+    public required string FundCode { get; set; }
+
+    public ScaleWarningType WarningType { get; set; }
+
+    /// <summary>
+    /// 触发日期
+    /// </summary>
+    public DateOnly TouchDate { get; set; }
+
+    public DateOnly PublishDate { get; set; }
+
+    public TimeOnly PublishTime { get; set; }
+
+    public required string Name { get; set; }
+
+    public SimpleFile? File { get; set; }
+}
 
 
 
@@ -261,6 +329,8 @@ public class ManagerDisclosureNotice : IDisclosureNotice, IDisclosureFile
     public DisclosureType Type => DisclosureType.OtherManagerNotice;
 
     public DateOnly PublishDate { get; set; }
+
+    public TimeOnly PublishTime { get; set; }
 
     public required string Name { get; set; }
 

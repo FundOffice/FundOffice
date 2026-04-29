@@ -51,6 +51,10 @@ public enum DisclosureType
     [Description("基金成立")] FundSetup,
 
 
+    [Description("基金规模预警")] FundScaleWarning,
+
+
+
     [Description("其他基金公告")] OtherFundNotice,
 
     //以下是管理人层面的公告类型，ID从100开始，区分于基金层面的公告
@@ -69,5 +73,5 @@ public enum DisclosureType
 
 
     [Description("其他管理人公告")] OtherManagerNotice,
-    
+   
 }

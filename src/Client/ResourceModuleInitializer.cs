@@ -30,6 +30,7 @@ internal static class ResourceModuleInitializer
 
 
             var uri = new Uri($"pack://application:,,,/{name};component/dt.xaml", UriKind.Absolute);
+            
             var dict = new ResourceDictionary { Source = uri };
             Application.Current.Resources.MergedDictionaries.Add(dict);
 

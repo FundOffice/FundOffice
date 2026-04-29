@@ -17,4 +17,5 @@ public class EsigningFundInfo
     /// </summary>
     public string? Class { get; set; }
 
+    public DateOnly? SetupDate { get; internal set; }
 }

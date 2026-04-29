@@ -122,14 +122,10 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         using var db = DbHelper.Base();
 
-        //var reports = db.GetCollection<IDisclosureNotice>().Query().Where("_type LIKE @0", $"%{nameof(PeriodicalDisclosureNotice)}%").
-        //    Where($"{nameof(PeriodicalDisclosureNotice.ReportDate)}.DayNumber=@0", pe.DayNumber).ToList().Cast<PeriodicalDisclosureNotice>().ToList();
-        var reports = db.GetCollection<IDisclosureNotice>().Query().Where("ReportDate.DayNumber=@0", pe.DayNumber).ToList().OfType<PeriodicalDisclosureNotice>().ToList();
-
-
-
-        var updates = db.GetCollection<IDisclosureNotice>().Query().Where("_type LIKE @0", $"%{nameof(QuarterlyUpdate)}%").
-            Where($"{nameof(QuarterlyUpdate.ReportDate)}.DayNumber=@0", pe.DayNumber).ToList().Cast<QuarterlyUpdate>().ToList();
+        List<IDisclosureNotice> disclosureNotices = db.GetCollection<IDisclosureNotice>().Query().Where("ReportDate.DayNumber=@0", pe.DayNumber).ToList();
+        var reports = disclosureNotices.OfType<PeriodicalDisclosureNotice>().ToList();
+         
+        var updates = disclosureNotices.OfType<QuarterlyUpdate>().ToList();
 
 
         var noticeIds = reports.Select(x => x.Id).Concat(updates.Select(x => x.Id)).ToArray();

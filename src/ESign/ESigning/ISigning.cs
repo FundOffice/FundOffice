@@ -60,7 +60,7 @@ public interface ISigning
     //Task<bool> BatchUploadDisclosureFiles(string filePath, DateTime time, string type);
 
 
-    Task<bool> UploadDisclosureFile(string fundName, string fundCode, string shareClass, DateTime time, string announceName, string file);
+    //Task<bool> UploadDisclosureFile(string fundName, string fundCode, string shareClass, DateTime time, string announceName, string file);
 
 
 
