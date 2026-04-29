@@ -102,7 +102,7 @@
     <ProjectReference Include="..\Amac\RPA\Amac.RPA.csproj" />
     <ProjectReference Include="..\Disclosure\Disclosure.UI\Disclosure.UI.csproj" />
     <ProjectReference Include="..\Disclosure\Disclosure\Disclosure.csproj" />
-    <ProjectReference Include="..\ESign\MeiShi\MeiShi.csproj" />
+    <ProjectReference Include="..\ESign\ESigning\ESigning.csproj" />
     <ProjectReference Include="..\Schedule\Schedule\Schedule.csproj" />
     <ProjectReference Include="..\Main\Data\Data.csproj" />
     <ProjectReference Include="..\Utility\Logging\Logging.csproj" />

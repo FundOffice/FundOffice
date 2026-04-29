@@ -578,28 +578,10 @@
 
 
 
-        <DockPanel
-            xmlns:ms="clr-namespace:FMO.ESigning.MeiShi;assembly=MeiShi"
-            Margin="0,10"
-            DockPanel.Dock="Top">
+        <DockPanel Margin="0,10" DockPanel.Dock="Top">
             <DockPanel.Resources>
 
-                <DataTemplate DataType="{x:Type ms:MeiShiViewModel}">
-                    <hc:UniformSpacingPanel Orientation="Vertical">
-                        <BulletDecorator>
-                            <BulletDecorator.Bullet>
-                                <TextBlock Width="50" Text="用户名" />
-                            </BulletDecorator.Bullet>
-                            <TextBox HorizontalContentAlignment="Center" Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" />
-                        </BulletDecorator>
-                        <BulletDecorator>
-                            <BulletDecorator.Bullet>
-                                <TextBlock Width="50" Text="密码" />
-                            </BulletDecorator.Bullet>
-                            <TextBox HorizontalContentAlignment="Center" Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}" />
-                        </BulletDecorator>
-                    </hc:UniformSpacingPanel>
-                </DataTemplate>
+
 
                 <Style
                     x:Key="ESigning"
