@@ -4,7 +4,6 @@ using FMO.Logging;
 using FMO.Models;
 using LiteDB;
 using Serilog;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -41,6 +40,8 @@ public static partial class DataTracker
 
     public static ConcurrentDictionary<TipType, string?> UniformTips { get; } = new();
 
+
+    private static readonly ConcurrentDictionary<string, ConcurrentBag<Action>> _hookTable = new();
 
 
     static DataTracker()
@@ -1540,122 +1541,30 @@ public static partial class DataTracker
         WeakReferenceMessenger.Default.Send(data);
     }
 
+
+
+
     public static void OnNewNotice(IDisclosureNotice notice)
     {
-        DisclosureService.RegisterNotice(notice);
         WeakReferenceMessenger.Default.Send(notice);
+
+        Notify(notice);
     }
-}
 
 
-public class ThreadSafeList<T> : IEnumerable<T>
-{
-    protected readonly List<T> _innerList = new List<T>();
-    protected readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+    #region Hook
 
-    public delegate void CollectionChangedHandler();
+    private static ConcurrentBag<Action<IDisclosureNotice>> _hookNotice = [];
+    public static void Hook(Action<IDisclosureNotice> callback) => _hookNotice.Add(callback);
 
-    public CollectionChangedHandler? CollectionChanged;
-
-    public virtual void Add(T item)
+    private static void Notify(IDisclosureNotice notice)
     {
-        _lock.EnterWriteLock();
-        try
+        Parallel.ForEach(_hookNotice, item =>
         {
-            _innerList.Add(item);
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
-            CollectionChanged?.Invoke();
-        }
-    }
-    public void Remove(T item)
-    {
-        _lock.EnterWriteLock();
-        try
-        {
-            _innerList.Remove(item);
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
-            CollectionChanged?.Invoke();
-        }
-    }
-    public void Remove(Func<T, bool> cond)
-    {
-        _lock.EnterWriteLock();
-        try
-        {
-            foreach (var item in _innerList.Where(cond).ToArray())
-                _innerList.Remove(item);
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
-            CollectionChanged?.Invoke();
-        }
-    }
+            try { item(notice); } catch (Exception ex) { LogEx.Error(ex); }
+        });
+    } 
+    #endregion
 
-    public T Get(int index)
-    {
-        _lock.EnterReadLock();
-        try
-        {
-            return _innerList[index];
-        }
-        finally
-        {
-            _lock.ExitReadLock();
-        }
-    }
-
-    public IEnumerator<T> GetEnumerator() => _innerList.GetEnumerator();
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-
-    public int Count
-    {
-        get
-        {
-            _lock.EnterReadLock();
-            try
-            {
-                return _innerList.Count;
-            }
-            finally
-            {
-                _lock.ExitReadLock();
-            }
-        }
-    }
-}
-
-public class FundTipList : ThreadSafeList<FundTip>
-{
-    public override void Add(FundTip item)
-    {
-        _lock.EnterWriteLock();
-        bool add = false;
-        try
-        {
-            // 不重复添加
-            if (!_innerList.Any(x => x.FundId == item.FundId && x.Type == item.Type))
-            {
-                _innerList.Add(item);
-                add = true;
-            }
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
-            if (add)
-                CollectionChanged?.Invoke();
-        }
-    }
 }
 
