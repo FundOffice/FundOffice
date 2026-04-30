@@ -89,10 +89,13 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
                                       prop.Type.SpecialType == SpecialType.System_String ||
                                       prop.Type.IsReferenceType;
 
+                    bool isWritable = prop.SetMethod != null && !prop.SetMethod.IsInitOnly;
+
                     var propInfo = new PropertyInfo(
                         prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                         prop.Name,
-                        isNullable);
+                        isNullable,
+                        isWritable);
 
                     // ViewModel 继承链已有 → 只赋值；否则 → 生成 property + 赋值
                     if (existingInHierarchy.Contains(prop.Name))
@@ -121,120 +124,103 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
 
     private static string GenerateSource(GenerationModel model)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("#nullable enable");
-        sb.AppendLine("using System;");
-        sb.AppendLine("using System.ComponentModel;");
-        sb.AppendLine("using System.Runtime.CompilerServices;");
-        sb.AppendLine();
+        var inpcBlock = model.NeedsINPC ? """
+                public event PropertyChangedEventHandler? PropertyChanged;
+                protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-        if (!string.IsNullOrEmpty(model.Namespace))
-        {
-            sb.AppendLine($"namespace {model.Namespace}");
-            sb.AppendLine("{");
-        }
+        """ : "";
 
-        sb.AppendLine($"    public partial class {model.ClassName}" + (model.NeedsINPC ? " : INotifyPropertyChanged" : ""));
-        sb.AppendLine("    {");
+        // 🔹 构造函数中的赋值语句
+        var ctorAssignments = GenerateAssignments(model.PropertiesToGenerate, model.PropertiesToAssignOnly, "val");
+        var fillAssignments = GenerateAssignments(model.PropertiesToGenerate, model.PropertiesToAssignOnly, "val");
 
-        if (model.NeedsINPC)
-        {
-            sb.AppendLine("        public event PropertyChangedEventHandler? PropertyChanged;");
-            sb.AppendLine("        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>");
-            sb.AppendLine("            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));");
-            sb.AppendLine();
-        }
+        // 🔹 Build 方法中的初始化语句（仅可写属性）
+        var buildInitializers = string.Join("\n",
+            model.PropertiesToGenerate.Concat(model.PropertiesToAssignOnly)
+                .Where(p => p.IsWritable)
+                .Select(p => $"                {p.Name} = {p.Name}!,"));
 
-        // 🔹 无参构造函数
-        sb.AppendLine($"        public {model.ClassName}() {{ }}");
-        sb.AppendLine();
-
-        // 🔹 带源类型参数的构造函数
-        sb.AppendLine($"        public {model.ClassName}({model.SourceTypeName}? val)");
-        sb.AppendLine("        {");
-        sb.AppendLine($"             if(val is not null)");
-        sb.AppendLine("              {"); 
-
-        // 先处理需生成 property 的
-        foreach (var prop in model.PropertiesToGenerate)
-        {
-            sb.AppendLine($"                {prop.Name} = val.{prop.Name};");
-        }
-        // 再处理只需赋值的（父类已有 property）
-        foreach (var prop in model.PropertiesToAssignOnly)
-        {
-            sb.AppendLine($"                {prop.Name} = val.{prop.Name};");
-        }
-        sb.AppendLine("              }");
-        sb.AppendLine("        }");
-        sb.AppendLine();
-
-        // 🔹 带源类型参数的构造函数
-        sb.AppendLine($"        public void FillBy({model.SourceTypeName}? obj)");
-        sb.AppendLine("        {");
-        sb.AppendLine($"             if(obj is {model.SourceTypeName} val)");
-        sb.AppendLine("              {");
-
-        // 先处理需生成 property 的
-        foreach (var prop in model.PropertiesToGenerate)
-        {
-            sb.AppendLine($"                {prop.Name} = val.{prop.Name};");
-        }
-        // 再处理只需赋值的（父类已有 property）
-        foreach (var prop in model.PropertiesToAssignOnly)
-        {
-            sb.AppendLine($"                {prop.Name} = val.{prop.Name};");
-        }
-        sb.AppendLine("              }");
-        sb.AppendLine("        }");
-        sb.AppendLine();
-
-
-
-        // 🔹 Build() 方法
-        sb.AppendLine($"        public {model.SourceTypeName} Build()");
-        sb.AppendLine("        {");
-        sb.AppendLine($"            var result = new {model.SourceTypeName}");
-        sb.AppendLine("             {");
-        foreach (var prop in model.PropertiesToGenerate)
-        {
-            sb.AppendLine($"                {prop.Name} = {prop.Name}!,");
-        }
-        foreach (var prop in model.PropertiesToAssignOnly)
-        {
-            sb.AppendLine($"                {prop.Name} = {prop.Name}!,");
-        }
-        sb.AppendLine("             };");
-        sb.AppendLine("            return result;");
-        sb.AppendLine("        }");
-        sb.AppendLine();
-
-        // 🔹 生成新的 property（仅针对继承链中不存在的）
-        foreach (var prop in model.PropertiesToGenerate)
+        // 🔹 生成的 Property 代码块
+        var generatedProperties = string.Join("\n", model.PropertiesToGenerate.Select(prop =>
         {
             var typeName = prop.IsNullable ? $"{prop.TypeName}?" : prop.TypeName;
             var backingField = $"_{char.ToLowerInvariant(prop.Name[0])}{prop.Name.Substring(1)}";
+            return $$"""
+                private {{typeName}} {{backingField}};
+                public {{typeName}} {{prop.Name}}
+                {
+                    get => {{backingField}};
+                    set
+                    {
+                        if (!global::System.Collections.Generic.EqualityComparer<{{typeName}}>.Default.Equals({{backingField}}, value))
+                        {
+                            {{backingField}} = value;
+                            OnPropertyChanged();
+                        }
+                    }
+                }
 
-            sb.AppendLine($"        private {typeName} {backingField};");
-            sb.AppendLine($"        public {typeName} {prop.Name}");
-            sb.AppendLine("        {");
-            sb.AppendLine($"            get => {backingField};");
-            sb.AppendLine("            set");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                if (!global::System.Collections.Generic.EqualityComparer<{typeName}>.Default.Equals({backingField}, value))");
-            sb.AppendLine("                {");
-            sb.AppendLine($"                    {backingField} = value;");
-            sb.AppendLine("                    OnPropertyChanged();");
-            sb.AppendLine("                }");
-            sb.AppendLine("            }");
-            sb.AppendLine("        }");
-            sb.AppendLine();
+        """;
+        }));
+
+        var namespaceOpen = !string.IsNullOrEmpty(model.Namespace) ? $"namespace {model.Namespace}\n{{" : "";
+        var namespaceClose = !string.IsNullOrEmpty(model.Namespace) ? "}" : "";
+        var inpcInheritance = model.NeedsINPC ? " : INotifyPropertyChanged" : "";
+
+        return $$"""
+#nullable enable
+using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+{{namespaceOpen}}
+    public partial class {{model.ClassName}}{{inpcInheritance}}
+    {
+{{inpcBlock}}
+        public {{model.ClassName}}() { }
+
+        public {{model.ClassName}}({{model.SourceTypeName}}? val)
+        {
+             if(val is not null)
+                FillBy(val);
         }
 
-        sb.AppendLine("    }");
-        if (!string.IsNullOrEmpty(model.Namespace)) sb.AppendLine("}");
+        public void FillBy({{model.SourceTypeName}}? obj)
+        {
+             if(obj is {{model.SourceTypeName}} val)
+              {
+{{fillAssignments}}
+              }
+        }
 
-        return sb.ToString();
+        public {{model.SourceTypeName}} Build()
+        {
+            var result = new {{model.SourceTypeName}}
+             {
+{{buildInitializers}}
+             };
+            return result;
+        }
+
+{{generatedProperties}}
+    }
+{{namespaceClose}}
+""";
+    }
+
+    // 🔹 辅助方法：生成赋值语句块
+    private static string GenerateAssignments(
+        List<PropertyInfo> toGenerate,
+        List<PropertyInfo> toAssignOnly,
+        string sourceVar)
+    {
+        var lines = new List<string>();
+        foreach (var prop in toGenerate)
+            lines.Add($"                {prop.Name} = {sourceVar}.{prop.Name};");
+        foreach (var prop in toAssignOnly)
+            lines.Add($"                {prop.Name} = {sourceVar}.{prop.Name};");
+        return string.Join("\n", lines);
     }
 
     private class PropertyInfo
@@ -242,12 +228,14 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
         public string TypeName { get; }
         public string Name { get; }
         public bool IsNullable { get; }
+        public bool IsWritable { get; }
 
-        public PropertyInfo(string typeName, string name, bool isNullable)
+        public PropertyInfo(string typeName, string name, bool isNullable, bool isWritable)
         {
             TypeName = typeName;
             Name = name;
             IsNullable = isNullable;
+            IsWritable = isWritable;
         }
     }
 
