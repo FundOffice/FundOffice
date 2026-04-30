@@ -9,6 +9,8 @@
     Title=""
     Width="600"
     Height="360"
+    AllowsTransparency="True"
+    Background="Transparent"
     ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
     WindowStyle="None"
