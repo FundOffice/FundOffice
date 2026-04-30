@@ -97,8 +97,7 @@ public partial class ReadOnlyFileMetaViewModel : ObservableObject
         int a = cnt / 3, b = cnt * 2 / 3;
         return name switch { string s => s.Length > a + b ? s[..a] + " ...... " + s[^b..] : s, _ => name };
     }
-
-
+     
 
 
     [RelayCommand]
@@ -274,6 +273,8 @@ public partial class SimpleFileViewModel : FileMetaViewModel
         FileChanged?.Invoke(new SimpleFile { Label = Label, File = Meta });
     }
 
+
+    public SimpleFile? Build() => new SimpleFile(Meta);
 }
 
 
