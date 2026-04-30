@@ -42,11 +42,11 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<IDis
 
         Announcements = [.. data.Select(x => new AnnouncementViewModel(x))];
 
-       
+
         IEnumerable<PeriodicalDisclosureNotice> notices = db.GetCollection<IDisclosureNotice>().Query().
             Where(Query.EQ(nameof(PeriodicalDisclosureNotice.FundId), fid)).ToArray().OfType<PeriodicalDisclosureNotice>();
 
-        var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && !string.IsNullOrWhiteSpace(x.Channel)).ToArray().ToLookup(x=>x.Type);
+        var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && !string.IsNullOrWhiteSpace(x.Channel)).ToArray().ToLookup(x => x.Type);
 
         var run = db.GetCollection<DisclosureInstance>().Query().Where(Query.In(nameof(DisclosureInstance.NoticeId), notices.Select(x => new BsonValue(x.Id)))).ToArray().ToLookup(x => x.NoticeId);
 
@@ -316,6 +316,15 @@ public partial class DisclosureRunViewModel : ObservableObject, IRecipient<Discl
         Status = DisclosureStatus.Waiting;
     }
 
+
+    [RelayCommand]
+    public void StopRun()
+    {
+        if (!HasInstance) return;
+        DisclosureService.RemoveFromQueue(Channel, InstanceId!);
+        Status = DisclosureStatus.Stopped;
+    }
+
     public void Receive(DisclosureInstance message)
     {
         if (message.Id == InstanceId) Fill(message);
@@ -341,7 +350,7 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
         OperationResult = new(result);
 
         var data = from workflow in workflows
-                   // 左连接：以 workflow 为主体，匹配对应的实例
+                       // 左连接：以 workflow 为主体，匹配对应的实例
                    join instance in runs on workflow.Id equals instance.WorkflowId into instanceGroup
                    from instance in instanceGroup.DefaultIfEmpty()
                        // 构建 ViewModel

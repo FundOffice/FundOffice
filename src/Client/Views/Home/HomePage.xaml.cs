@@ -135,11 +135,12 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             //启动api
             TrusteeGallay.Initialize();
 
+            // 加载电签组件
+            InitializeSignings();
+
             // 加载信批组件
             InitializeDisclosureChannels();
 
-            // 加载电签组件
-            InitializeSignings();
 
             // 加载托管组件
             InitializeTrustees();
@@ -313,7 +314,6 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
     {
         DisclosureChannelManager.Initialize();
 
-
         // 1. 获取主程序目录 + disclosure 子文件夹
         string baseDir = AppDomain.CurrentDomain.BaseDirectory;
         string disDir = Path.Combine(baseDir, "disclosure");
@@ -321,8 +321,9 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
         if (!Directory.Exists(disDir))
         {
-            LogEx.Warning("disclosure 目录不存在，退出加载");
+            LogEx.Warning("disclosure 目录不存在，退出加载"); 
             WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
+
             return;
         }
 
@@ -347,6 +348,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
                 LogEx.Error($"注册信批组件失败，错误：{ex.Message}");
             }
         }
+
 
         WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
     }

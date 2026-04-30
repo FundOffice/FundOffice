@@ -54,4 +54,13 @@
             </BulletDecorator>
         </hc:UniformSpacingPanel>
     </DataTemplate>
+
+
+    <DataTemplate DataType="{x:Type local:MeiShiWorkConfig}">
+        <hc:UniformSpacingPanel Orientation="Vertical" VerticalSpacing="5">
+            <CheckBox Content="通知投资人（邮件+短信）" IsChecked="{Binding Notify}" />
+            <CheckBox Content="电子盖章" IsChecked="{Binding Seal}" />
+        </hc:UniformSpacingPanel>
+    </DataTemplate>
+
 </ResourceDictionary>

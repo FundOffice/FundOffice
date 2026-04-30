@@ -12,8 +12,9 @@ public static partial class DisclosureService
     /// <summary>
     /// 待执行实例队列（内存）
     /// </summary>
-    private static Dictionary<string, Queue<DisclosureInstance>> _instanceQueue = [];
+    private static Dictionary<string, List<DisclosureInstance>> _instanceQueue = [];
 
+    private static SemaphoreSlim _semaphore = new(1);
 
     internal static readonly Dictionary<string, IDisclosureChannel> _channels = new();
 
@@ -34,7 +35,7 @@ public static partial class DisclosureService
 
         DataTracker.Hook(RegisterNotice);
     }
-     
+
 
 
     /// <summary>
@@ -88,7 +89,7 @@ public static partial class DisclosureService
     #region 通道实例管理（原 Galley 功能）
     public static bool Unregister(string channel) => _channels.Remove(channel);
 
-    public static IEnumerable<IDisclosureChannel> GetRegisteredChannels() => _channels.Values;
+    public static IEnumerable<IDisclosureChannel> GetRegisteredChannels() => _channels.Values.OrderBy(x => x switch { QuarterlyUpdateChannel => 0, EmailDisclosureChannel => 1, PFIDDisclosureChannel => 2, _ => x.Code.GetHashCode() });
 
 
 
@@ -165,6 +166,7 @@ public static partial class DisclosureService
 
     public static ErrorReturn AddToQueue(DisclosureInstance instance)
     {
+        _semaphore.Wait();
         var channel = GetChannel(instance.Channel);
         if (channel is null)
             return new ErrorReturn(false, $"未找到通道：{instance.Channel}");
@@ -173,9 +175,28 @@ public static partial class DisclosureService
             return new ErrorReturn(false, $"未找到Workflow：{instance.WorkflowId}");
 
         if (!_instanceQueue.ContainsKey(instance.Channel))
-            _instanceQueue[instance.Channel] = new Queue<DisclosureInstance>();
-        _instanceQueue[instance.Channel].Enqueue(instance);
+            _instanceQueue[instance.Channel] = [];
+        _instanceQueue[instance.Channel].Add(instance);
+        _semaphore.Release();
         return new ErrorReturn(true);
+    }
+
+
+    public static ErrorReturn RemoveFromQueue(string channel, string instance)
+    {
+        _semaphore.Wait();
+        if (!_instanceQueue.ContainsKey(channel))
+            return new(true, "不在队列中");
+
+        List<DisclosureInstance> list = _instanceQueue[channel];
+        for (int i = list.Count - 1; i >= 0; i--)
+        {
+            if (list[i].Id == instance)
+                list.RemoveAt(i);
+        }
+
+        _semaphore.Release();
+        return new(true);
     }
 
     /// <summary>
@@ -327,14 +348,15 @@ public static partial class DisclosureService
 
 
 
-    private static async Task HandleRun(Queue<DisclosureInstance> disclosureInstances)
+    private static async Task HandleRun(List<DisclosureInstance> disclosureInstances)
     {
-
-        while (disclosureInstances.TryDequeue(out var instance))
+        while (disclosureInstances.Count > 0)
         {
             try
             {
+                var instance = disclosureInstances[0];
                 await ExecuteDisclosureAsync(instance);
+                disclosureInstances.RemoveAt(0);
             }
             catch (Exception ex)
             {

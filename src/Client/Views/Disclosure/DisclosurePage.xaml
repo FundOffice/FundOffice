@@ -146,6 +146,14 @@
                                         Foreground="Green"
                                         Style="{StaticResource ButtonIcon.Small}"
                                         Visibility="Collapsed" />
+                                    <Button
+                                        x:Name="stop"
+                                        hc:IconElement.Geometry="{StaticResource f.stop}"
+                                        Command="{Binding StopRunCommand}"
+                                        DockPanel.Dock="Right"
+                                        Foreground="Red"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="Collapsed" />
                                     <TextBlock Text="{Binding Status, Converter={StaticResource EnumDescriptionConverter}}" />
                                 </DockPanel>
                             </hc:SimplePanel>
@@ -159,6 +167,15 @@
                             <DataTrigger Binding="{Binding Status}" Value="Failed">
                                 <Setter TargetName="btn" Property="Visibility" Value="Visible" />
                             </DataTrigger>
+                            <DataTrigger Binding="{Binding Status}" Value="Stopped">
+                                <Setter TargetName="btn" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Status}" Value="Waiting">
+                                <Setter TargetName="stop" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <!--<DataTrigger Binding="{Binding Status}" Value="Processing">
+                                <Setter TargetName="stop" Property="Visibility" Value="Visible" />
+                            </DataTrigger>-->
                         </DataTemplate.Triggers>
                     </DataTemplate>
                 </Expander.HeaderTemplate>
@@ -616,7 +633,7 @@
                     </ListBox>
                 </Expander>
 
-                <Expander IsExpanded="True" >
+                <Expander IsExpanded="True">
                     <Expander.Header>
                         <DockPanel>
                             <TextBlock
