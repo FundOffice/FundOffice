@@ -170,7 +170,7 @@ public class TemporaryDisclosureNotice : IFundDisclosureNotice, IDisclosureFile
 /// </summary>
 public class TemporaryOpenNotice : IFundDisclosureNotice, IDisclosureFile
 {
-    public long Id => OpenDay.DayNumber << 32 | FundId << 10 | ((int)Type);
+    public long Id => ((long)OpenDay.DayNumber) << 32 | (long)FundId << 10 | ((long)Type);
 
     public DisclosureType Type => DisclosureType.TemporaryOpen;
 
@@ -200,7 +200,7 @@ public class TemporaryOpenNotice : IFundDisclosureNotice, IDisclosureFile
 /// </summary>
 public class HugeRedemptionNotice : IFundDisclosureNotice, IDisclosureFile
 {
-    public long Id => OpenDay.DayNumber << 32 | FundId << 10 | ((int)Type);
+    public long Id => ((long)OpenDay.DayNumber) << 32 | (long)FundId << 10 | ((long)Type);
 
     public DisclosureType Type => DisclosureType.HugeRedemption;
 
@@ -241,7 +241,7 @@ public class HugeRedemptionNotice : IFundDisclosureNotice, IDisclosureFile
 /// </summary>
 public class FundSetupNotice : IFundDisclosureNotice, IDisclosureFile
 {
-    public long Id => SetupDay.DayNumber << 32 | FundId << 10 | ((int)Type);
+    public long Id => ((long)SetupDay.DayNumber) << 32 | (long)FundId << 10 | ((long)Type);
 
     public DisclosureType Type => DisclosureType.FundSetup;
 

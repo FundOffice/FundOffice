@@ -5,6 +5,7 @@ using FMO.Disclosure;
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
+using HandyControl.Controls;
 using LiteDB;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
@@ -132,7 +133,6 @@ public partial class DisclosurePageViewModel : ObservableObject
         var otherNotice = db.GetCollection<IDisclosureNotice>().Query().Where(x => x.PublishDate.Year == SelectedYear.Value && x.PublishDate.Month == SelectedMonth.Value).
             ToList().Where(x => x is not PeriodicalDisclosureNotice && x is not QuarterlyUpdate).ToList();
 
-
         var noticeIds = reports.Select(x => x.Id).Concat(updates.Select(x => x.Id)).Concat(otherNotice.Select(x => x.Id)).ToArray();
 
         var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && !string.IsNullOrWhiteSpace(x.Channel)).ToArray().ToLookup(x => x.Type);
@@ -185,6 +185,8 @@ public partial class DisclosurePageViewModel : ObservableObject
         // 其它报告
         var otherNotice = db.GetCollection<IDisclosureNotice>().Query().Where(x => x.PublishDate.Year == SelectedYear.Value && x.PublishDate.Month == SelectedMonth.Value).
             ToList().Where(x => x is not PeriodicalDisclosureNotice && x is not QuarterlyUpdate).ToList();
+
+
 
 
         var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && !string.IsNullOrWhiteSpace(x.Channel)).ToArray().ToLookup(x => x.Type);
@@ -251,11 +253,38 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         UpdateTemporary();
     }
+
+    [RelayCommand]
+    public void Delete(object obj)
+    {
+        switch (obj)
+        {
+            case TemporaryNoticeViewModel v:
+                if (MessageBox.Show(new HandyControl.Data.MessageBoxInfo
+                {
+                    Caption = "是否删除临时报告",
+                    Message = $" {v.Name}",
+                    Button = System.Windows.MessageBoxButton.YesNo
+                }) == System.Windows.MessageBoxResult.No)
+                    return;
+
+                DisclosureService.RemoveNotice(v.Id);
+                UpdateTemporary();
+                break;
+
+            default:
+                break;
+        }
+    }
 }
 
 
 public class TemporaryNoticeViewModel
 {
+    public long Id { get; set; }
+
+    public string? Name { get; set; }
+
     public string? FundName { get; set; }
 
     public string? DisplayName => Fund.GetDefaultShortName(FundName);
@@ -274,7 +303,7 @@ public partial class TemporaryOpenNoticeViewModel : TemporaryNoticeViewModel
     public TemporaryOpenNoticeViewModel(TemporaryOpenNotice report, IEnumerable<DisclosureWorkflow> workflows, IEnumerable<DisclosureInstance> runs) : this(report)
     {
         var data = from workflow in workflows
-                   // 左连接：以 workflow 为主体，匹配对应的实例
+                       // 左连接：以 workflow 为主体，匹配对应的实例
                    join instance in runs on workflow.Id equals instance.WorkflowId into instanceGroup
                    from instance in instanceGroup.DefaultIfEmpty()
                        // 构建 ViewModel

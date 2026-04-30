@@ -54,7 +54,15 @@ public static partial class DatabaseAssist
         [118] = MiggreateToNewDisclosure,
         [120] = MoveDisclosureModels,
         [121] = MoveAmacDirectAcc,
+        [122] = RebuildNotice,
     };
+
+    private static void RebuildNotice(BaseDatabase db)
+    {
+        var n = db.GetCollection<IDisclosureNotice>().FindAll().ToArray();
+        db.DropCollection(nameof(IDisclosureNotice));
+        db.GetCollection<IDisclosureNotice>().InsertBulk(n);
+    }
 
     private static void MoveAmacDirectAcc(BaseDatabase db)
     {

@@ -268,6 +268,9 @@ public partial class DisclosureRunViewModel : ObservableObject, IRecipient<Discl
     [ObservableProperty]
     public partial string? Error { get; set; }
 
+    [ObservableProperty]
+    public partial bool AutoRun { get; set; }
+
     public required IDisclosureNotice Notice { get; init; }
 
     public required DisclosureWorkflow Workflow { get; init; }
@@ -303,6 +306,7 @@ public partial class DisclosureRunViewModel : ObservableObject, IRecipient<Discl
         CompletedTime = instance.CompletedTime;
         FailedTimes = instance.FailedTimes;
         Error = instance.Error;
+        AutoRun = instance.AutoRun;
     }
 
     [RelayCommand]
@@ -313,7 +317,6 @@ public partial class DisclosureRunViewModel : ObservableObject, IRecipient<Discl
         using var db = DbHelper.Base();
         var inst = db.GetCollection<DisclosureInstance>().FindById(InstanceId);
         DisclosureService.AddToQueue(inst);
-        Status = DisclosureStatus.Waiting;
     }
 
 
@@ -321,7 +324,7 @@ public partial class DisclosureRunViewModel : ObservableObject, IRecipient<Discl
     public void StopRun()
     {
         if (!HasInstance) return;
-        DisclosureService.RemoveFromQueue(Channel, InstanceId!);
+        DisclosureService.RemoveFromQueue(InstanceId!);
         Status = DisclosureStatus.Stopped;
     }
 

@@ -113,7 +113,7 @@
             <Expander Header="{Binding}" Style="{StaticResource NoArrowExpander}">
                 <Expander.HeaderTemplate>
                     <DataTemplate>
-                        <DockPanel MinHeight="22">
+                        <DockPanel MinHeight="22" LastChildFill="False">
                             <DockPanel.Resources>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="VerticalAlignment" Value="Center" />
@@ -158,7 +158,12 @@
                                 </DockPanel>
                             </hc:SimplePanel>
                             <TextBlock Foreground="DodgerBlue" Text="{Binding ChannelName}" />
-
+                            <hc:AnimationPath
+                                Height="12"
+                                Margin="5,0"
+                                Data="{StaticResource f.robot}"
+                                Stroke="Orange"
+                                Visibility="{Binding AutoRun, Converter={StaticResource Boolean2VisibilityConverter}}" />
                         </DockPanel>
                         <DataTemplate.Triggers>
                             <DataTrigger Binding="{Binding Status}" Value="Pending">
@@ -214,10 +219,20 @@
         </DataTemplate>
 
 
-        <DataTemplate x:Key="TemporaryItem">
+        <DataTemplate DataType="{x:Type local:TemporaryNoticeViewModel}">
             <Border MinWidth="240">
                 <StackPanel Margin="4">
                     <DockPanel DockPanel.Dock="Top">
+                        <Button
+                            x:Name="del"
+                            hc:IconElement.Geometry="{StaticResource f.trash}"
+                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=local:DisclosurePage}}"
+                            CommandParameter="{Binding .}"
+                            DockPanel.Dock="Right"
+                            Foreground="Red"
+                            Style="{StaticResource ButtonIcon.Small}"
+                            Visibility="Collapsed" />
+
                         <TextBlock
                             shared:MaskService.IsMask="True"
                             FontSize="15"
@@ -225,6 +240,21 @@
 
                     </DockPanel>
 
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding OpenDay, StringFormat=yyyy/MM/dd}" />
+                        <TextBlock Text="{Binding Type}" />
+                        <TextBlock
+                            Margin="4,0"
+                            FontWeight="Bold"
+                            Text="申购"
+                            Visibility="{Binding AllowPurchase, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                        <TextBlock
+                            Margin="4,0"
+                            FontWeight="Bold"
+                            Text="赎回"
+                            Visibility="{Binding AllowRedemption, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                    </DockPanel>
 
                     <shared:FileView
                         Content="{Binding File}"
@@ -241,6 +271,11 @@
 
                 </StackPanel>
             </Border>
+            <DataTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="del" Property="Visibility" Value="Visible" />
+                </Trigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
 
 
@@ -657,10 +692,7 @@
                         </DockPanel>
                     </Expander.Header>
 
-                    <ListBox
-                        ItemTemplate="{StaticResource TemporaryItem}"
-                        ItemsSource="{Binding TemporaryNoticeSource.View}"
-                        Style="{StaticResource ListBoxCustom}">
+                    <ListBox ItemsSource="{Binding TemporaryNoticeSource.View}" Style="{StaticResource ListBoxCustom}">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <hc:UniformSpacingPanel

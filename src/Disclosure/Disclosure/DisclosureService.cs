@@ -12,14 +12,16 @@ public static partial class DisclosureService
     /// <summary>
     /// 待执行实例队列（内存）
     /// </summary>
-    private static Dictionary<string, List<DisclosureInstance>> _instanceQueue = [];
+
+    private static List<DisclosureInstance> _instanceList = [];
+
 
     private static SemaphoreSlim _semaphore = new(1);
 
     internal static readonly Dictionary<string, IDisclosureChannel> _channels = new();
 
 
-
+    private static DateTime _lastFullRunTime = DateTime.MinValue;
 
     private static readonly Dictionary<string, DisclosureWorkflow> _workflows;
 
@@ -142,6 +144,7 @@ public static partial class DisclosureService
             Channel = workflow.Channel,
             FundId = report is IFundDisclosureNotice f ? f.FundId : 0,
             Type = report.Type,
+            AutoRun = true
         };
 
         db.GetCollection<DisclosureInstance>().Upsert(instance);
@@ -157,42 +160,52 @@ public static partial class DisclosureService
 
         var workflows = GetApplicableWorkflows(report);
         gen = workflows.ExceptBy(exist.Select(x => x.WorkflowId), x => x.Id).Select(w => CreateInstance(w, report)).ToArray();
-
-        db.GetCollection<DisclosureInstance>().InsertBulk(gen);
         return gen;
     }
 
 
 
-    public static ErrorReturn AddToQueue(DisclosureInstance instance)
+    //public static ErrorReturn AddToQueue(DisclosureInstance instance)
+    //{
+    //    _semaphore.Wait();
+    //    var channel = GetChannel(instance.Channel);
+    //    if (channel is null)
+    //        return new ErrorReturn(false, $"未找到通道：{instance.Channel}");
+
+    //    if (!_workflows.ContainsKey(instance.WorkflowId))
+    //        return new ErrorReturn(false, $"未找到Workflow：{instance.WorkflowId}");
+
+    //    if (!_instanceQueue.ContainsKey(instance.Channel))
+    //        _instanceQueue[instance.Channel] = [];
+    //    _instanceQueue[instance.Channel].Add(instance);
+    //    _semaphore.Release();
+    //    return new ErrorReturn(true);
+    //}
+
+    public static ErrorReturn AddToQueue(params DisclosureInstance[] list)
     {
         _semaphore.Wait();
-        var channel = GetChannel(instance.Channel);
-        if (channel is null)
-            return new ErrorReturn(false, $"未找到通道：{instance.Channel}");
 
-        if (!_workflows.ContainsKey(instance.WorkflowId))
-            return new ErrorReturn(false, $"未找到Workflow：{instance.WorkflowId}");
+        _instanceList.AddRange(list);
 
-        if (!_instanceQueue.ContainsKey(instance.Channel))
-            _instanceQueue[instance.Channel] = [];
-        _instanceQueue[instance.Channel].Add(instance);
         _semaphore.Release();
+
+        foreach (var item in list)
+        {
+            item.Status = DisclosureStatus.Waiting;
+            WeakReferenceMessenger.Default.Send(item);
+        }
         return new ErrorReturn(true);
     }
 
-
-    public static ErrorReturn RemoveFromQueue(string channel, string instance)
+    public static ErrorReturn RemoveFromQueue(string instance)
     {
         _semaphore.Wait();
-        if (!_instanceQueue.ContainsKey(channel))
-            return new(true, "不在队列中");
 
-        List<DisclosureInstance> list = _instanceQueue[channel];
-        for (int i = list.Count - 1; i >= 0; i--)
+        for (int i = _instanceList.Count - 1; i >= 0; i--)
         {
-            if (list[i].Id == instance)
-                list.RemoveAt(i);
+            if (_instanceList[i].Id == instance)
+                _instanceList.RemoveAt(i);
         }
 
         _semaphore.Release();
@@ -215,7 +228,7 @@ public static partial class DisclosureService
 
         try
         {
-            IDisclosureNotice notice;
+            IDisclosureNotice? notice;
             IWorkConfig? config;
             instance.LastRunTime = DateTime.Now;
 
@@ -223,6 +236,15 @@ public static partial class DisclosureService
             using (var db = DbHelper.Base())
             {
                 notice = db.GetCollection<IDisclosureNotice>().FindById(instance.NoticeId);
+                if (notice is null)
+                {
+                    instance.AutoRun = false;
+                    instance.Error = "信批报告不存在";
+                    instance.Status = DisclosureStatus.Failed;
+                    WeakReferenceMessenger.Default.Send(instance);
+                    return new(false, instance.Error);
+                }
+
                 config = _workflows[instance.WorkflowId]?.Config;
 
                 if (instance.StartedTime == default)
@@ -244,7 +266,7 @@ public static partial class DisclosureService
             if (!workResult.Successed)
                 instance.FailedTimes += 1;
             instance.CompletedTime = DateTime.Now;
-            instance.AutoRun = instance.FailedTimes < 5;
+            instance.AutoRun = instance.FailedTimes < 5 && !workResult.Successed;
 
             using (var db = DbHelper.Base())
                 db.GetCollection<DisclosureInstance>().Upsert(instance);
@@ -318,25 +340,49 @@ public static partial class DisclosureService
 
     public static void StartWorker()
     {
-        Task.Factory.StartNew(async () =>
+        Task.Run(async () =>
         {
-            var timer = new PeriodicTimer(TimeSpan.FromSeconds(60));
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(60));
 
             while (await timer.WaitForNextTickAsync())
                 LoopOnce();
 
-        }, default, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        });
+
+        // 每工作日的10点，15点，把所有instance加入队列
+        Task.Run(async () =>
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(600));
+
+            while (await timer.WaitForNextTickAsync())
+            {
+                if (!Days.IsTradingDay(DateTime.Now))
+                    continue;
+
+                if (DateTime.Now.Hour is 10 or 15 && DateTime.Now - _lastFullRunTime > TimeSpan.FromHours(1))
+                {
+                    _lastFullRunTime = DateTime.Now;
+
+                    try
+                    {
+                        using var db = DbHelper.Base();
+                        var list = db.GetCollection<DisclosureInstance>().Find(x => x.AutoRun).ToArray();
+                        AddToQueue(list);
+                    }
+                    catch (Exception ex) { LogEx.Error(ex); }
+                }
+            }
+        });
     }
+
 
     private static void LoopOnce()
     {
-        foreach (var dic in _instanceQueue)
+        foreach (var dic in _instanceList.GroupBy(x => x.Channel).ToArray())
         {
-            if (dic.Value.Count == 0) continue;
-
             try
             {
-                _ = Task.Run(() => HandleRun(dic.Value));
+                _ = Task.Run(() => HandleRun(dic.AsEnumerable()));
             }
             catch (Exception ex)
             {
@@ -348,15 +394,17 @@ public static partial class DisclosureService
 
 
 
-    private static async Task HandleRun(List<DisclosureInstance> disclosureInstances)
+    private static async Task HandleRun(IEnumerable<DisclosureInstance> disclosureInstances)
     {
-        while (disclosureInstances.Count > 0)
+        foreach (var instance in disclosureInstances)
         {
             try
             {
-                var instance = disclosureInstances[0];
                 await ExecuteDisclosureAsync(instance);
-                disclosureInstances.RemoveAt(0);
+
+                _semaphore.Wait();
+                _instanceList.Remove(instance);
+                _semaphore.Release();
             }
             catch (Exception ex)
             {
@@ -382,12 +430,16 @@ public static partial class DisclosureService
             LogEx.Warning($"报告已存在，ID={notice.Id}，仅更新，不再注册");
             return;
         }
-
-        var instances = CreateInstance(notice);
-        foreach (var instance in instances)
-            AddToQueue(instance);
         db.GetCollection<IDisclosureNotice>().Insert(notice);
-        db.GetCollection<DisclosureInstance>().InsertBulk(instances);
+
+        CreateInstance(notice);
+    }
+
+    public static void RemoveNotice(long id)
+    {
+        using var db = DbHelper.Base(); 
+        db.GetCollection<IDisclosureNotice>().Delete(id);
+        db.GetCollection<DisclosureInstance>().DeleteMany(x => x.NoticeId == id);
     }
 }
 
