@@ -32,9 +32,9 @@ public static partial class DisclosureService
         using var db = DbHelper.Base();
         _workflows = db.GetCollection<DisclosureWorkflow>().Find(x => !string.IsNullOrWhiteSpace(x.Channel)).DistinctBy(x => x.Id).ToDictionary(x => x.Id);
 
+        DataTracker.Hook(RegisterNotice);
     }
-
-
+     
 
 
     /// <summary>

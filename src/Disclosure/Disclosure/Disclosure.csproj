@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Amac\Direct\Amac.Direct.csproj" />
     <ProjectReference Include="..\..\Amac\RPA\Amac.RPA.csproj" />
+    <ProjectReference Include="..\..\Main\Data\Data.csproj" />
     <ProjectReference Include="..\..\Main\Models\Models.csproj" />
     <ProjectReference Include="..\..\Utility\FileTemplate\FileTemplate.csproj" />
     <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
