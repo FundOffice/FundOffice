@@ -9,16 +9,8 @@ namespace FMO.Utilities;
 
 public class BaseDatabase : LiteDatabase
 {
-#if Demo
-    private const string connectionString = @"FileName=data2\base.db;Password=891uiu89f41uf9dij432u89;Connection=Shared";
-#else
-    private const string connectionString = @"FileName=data\base.db;Password=891uiu89f41uf9dij432u89;Connection=Shared";
-#endif
-
-    public BaseDatabase() : base(connectionString, null)
-    {
-    }
-
+ 
+     
     public BaseDatabase(string con) : base(con, null) { }
 
     public Fund? FindFund(string? fundCode)
@@ -90,7 +82,7 @@ public static class DbHelper
     private static string _password;
 
 
-    private const string _dbfolder = "data2";
+    private const string _dbfolder = "data";
 
 
     static DbHelper()
