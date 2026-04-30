@@ -595,7 +595,7 @@ public static partial class DataTracker
         // 检验
         VerifyRules.OnEntityArrival(dailyValues);
 
-
+        Notify(dailyValues);
     }
 
     public static void UpdateManageSacle(IEnumerable<DateOnly> dates)
@@ -714,6 +714,7 @@ public static partial class DataTracker
 
         PostHandleTransferRecords(db, records);
 
+        Notify(records);
     }
 
     private static void SaveRequests(BaseDatabase db, IList<TransferRequest> data)
@@ -1563,7 +1564,27 @@ public static partial class DataTracker
         {
             try { item(notice); } catch (Exception ex) { LogEx.Error(ex); }
         });
-    } 
+    }
+
+    private static ConcurrentBag<Action<IEnumerable<DailyValue>>> _hookDaily = [];
+    public static void Hook(Action<IEnumerable<DailyValue>> callback) => _hookDaily.Add(callback);
+    private static void Notify(IEnumerable<DailyValue> dv)
+    {
+        Parallel.ForEach(_hookDaily, item =>
+        {
+            try { item(dv); } catch (Exception ex) { LogEx.Error(ex); }
+        });
+    }
+
+    private static ConcurrentBag<Action<IEnumerable<TransferRecord>>> _hookTr = [];
+    public static void Hook(Action<IEnumerable<TransferRecord>> callback) => _hookTr.Add(callback);
+    private static void Notify(IEnumerable<TransferRecord> dv)
+    {
+        Parallel.ForEach(_hookTr, item =>
+        {
+            try { item(dv); } catch (Exception ex) { LogEx.Error(ex); }
+        });
+    }
     #endregion
 
 }
