@@ -197,8 +197,226 @@
         </DataTemplate>
 
 
+        <DataTemplate x:Key="TemporaryItem">
+            <Border MinWidth="240">
+                <StackPanel Margin="4">
+                    <DockPanel DockPanel.Dock="Top">
+                        <TextBlock
+                            shared:MaskService.IsMask="True"
+                            FontSize="15"
+                            Text="{Binding DisplayName}" />
+
+                    </DockPanel>
 
 
+                    <shared:FileView
+                        Content="{Binding File}"
+                        Header="报告"
+                        Style="{StaticResource SimpleFileStyle}" />
+
+
+                    <ListBox
+                        Margin="-4,0"
+                        BorderThickness="0"
+                        ItemTemplate="{StaticResource RunDataTemplate}"
+                        ItemsSource="{Binding Runs}"
+                        Style="{StaticResource ListBoxCustom}" />
+
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+
+        <DataTemplate x:Key="ReportItem">
+            <Border MinWidth="240">
+                <StackPanel Margin="4">
+                    <DockPanel DockPanel.Dock="Top">
+                        <TextBlock
+                            shared:MaskService.IsMask="True"
+                            FontSize="15"
+                            Text="{Binding DisplayName}" />
+
+                    </DockPanel>
+
+                    <UniformGrid Columns="2">
+
+                        <shared:FileView
+                            Content="{Binding Word}"
+                            IsReadOnly="False"
+                            Style="{StaticResource IconViewFileStyle}">
+                            <shared:FileView.Header>
+                                <Viewbox Width="14" Height="14">
+                                    <Path Data="{StaticResource f.file-word}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                </Viewbox>
+                            </shared:FileView.Header>
+                        </shared:FileView>
+
+
+                        <shared:FileView
+                            Content="{Binding Excel}"
+                            HeaderTemplate="{x:Null}"
+                            Style="{StaticResource IconViewFileStyle}">
+                            <shared:FileView.Header>
+                                <Viewbox Width="14" Height="14">
+                                    <Path Data="{StaticResource f.file-excel}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                </Viewbox>
+                            </shared:FileView.Header>
+                        </shared:FileView>
+
+
+                        <shared:FileView Content="{Binding Pdf}" Style="{StaticResource IconViewFileStyle}">
+                            <shared:FileView.Header>
+                                <Viewbox Width="14" Height="14">
+                                    <Path Data="{StaticResource f.file-pdf}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                </Viewbox>
+                            </shared:FileView.Header>
+                        </shared:FileView>
+
+                        <shared:FileView Content="{Binding Xbrl}" Style="{StaticResource IconViewFileStyle}">
+                            <shared:FileView.Header>
+                                <Viewbox Width="14" Height="14">
+                                    <Path Data="{StaticResource f.file-code}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                </Viewbox>
+                            </shared:FileView.Header>
+                        </shared:FileView>
+
+
+                    </UniformGrid>
+
+                    <ListBox
+                        Margin="-4,0"
+                        BorderThickness="0"
+                        ItemTemplate="{StaticResource RunDataTemplate}"
+                        ItemsSource="{Binding Runs}"
+                        Style="{StaticResource ListBoxCustom}" />
+
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ReportItem2">
+            <Border MinWidth="240">
+                <StackPanel Margin="4">
+
+                    <DockPanel DockPanel.Dock="Top">
+                        <TextBlock
+                            shared:MaskService.IsMask="True"
+                            FontSize="15"
+                            Text="{Binding DisplayName}" />
+
+                    </DockPanel>
+
+
+                    <UniformGrid Columns="2">
+
+                        <shared:FileView
+                            Content="{Binding Word}"
+                            IsReadOnly="False"
+                            Style="{StaticResource IconViewFileStyle}">
+                            <shared:FileView.Header>
+                                <Viewbox Width="14" Height="14">
+                                    <Path Data="{StaticResource f.file-word}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                </Viewbox>
+                            </shared:FileView.Header>
+                        </shared:FileView>
+
+                        <shared:FileView
+                            Content="{Binding Excel}"
+                            HeaderTemplate="{x:Null}"
+                            Style="{StaticResource IconViewFileStyle}">
+                            <shared:FileView.Header>
+                                <Viewbox Width="14" Height="14">
+                                    <Path Data="{StaticResource f.file-excel}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                </Viewbox>
+                            </shared:FileView.Header>
+                        </shared:FileView>
+
+                        <shared:FileView Content="{Binding Pdf}" Style="{StaticResource IconViewFileStyle}">
+                            <shared:FileView.Header>
+                                <Viewbox Width="14" Height="14">
+                                    <Path Data="{StaticResource f.file-pdf}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                </Viewbox>
+                            </shared:FileView.Header>
+                        </shared:FileView>
+
+                        <shared:FileView Content="{Binding Xbrl}" Style="{StaticResource IconViewFileStyle}">
+                            <shared:FileView.Header>
+                                <Viewbox Width="14" Height="14">
+                                    <Path Data="{StaticResource f.file-code}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                </Viewbox>
+                            </shared:FileView.Header>
+                        </shared:FileView>
+
+                        <shared:FileView Content="{Binding Sealed}" Style="{StaticResource IconViewFileStyle}">
+                            <shared:FileView.Header>
+                                <Viewbox Width="14" Height="14">
+                                    <Path Data="{StaticResource f.file-shield}" Fill="Red" />
+                                </Viewbox>
+                            </shared:FileView.Header>
+                        </shared:FileView>
+                    </UniformGrid>
+
+
+                    <ListBox
+                        BorderThickness="0"
+                        ItemTemplate="{StaticResource RunDataTemplate}"
+                        ItemsSource="{Binding Runs}"
+                        Style="{StaticResource ListBoxCustom}" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+
+        <DataTemplate x:Key="QuarterlyUpdateItem">
+            <Border MinWidth="240">
+                <DockPanel Margin="4">
+                    <DockPanel DockPanel.Dock="Top">
+                        <TextBlock
+                            shared:MaskService.IsMask="True"
+                            FontSize="15"
+                            Text="{Binding DisplayName}" />
+
+                    </DockPanel>
+
+                    <StackPanel>
+                        <DockPanel>
+
+                            <shared:FileView Content="{Binding Operation}" Style="{StaticResource IconViewFileStyle}">
+                                <shared:FileView.Header>
+                                    <TextBlock VerticalAlignment="Center" Text="运行信息表" />
+                                </shared:FileView.Header>
+                            </shared:FileView>
+
+
+                        </DockPanel>
+
+                        <DockPanel>
+
+                            <Button
+                                Command="{Binding GenerateInvestorSheetCommand}"
+                                Content="生成"
+                                DockPanel.Dock="Right"
+                                Style="{StaticResource ButtonPrimary.Small}"
+                                Visibility="{Binding Investor.Exists, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                            <shared:FileView Content="{Binding Investor}" Style="{StaticResource IconViewFileStyle}">
+                                <shared:FileView.Header>
+                                    <TextBlock VerticalAlignment="Center" Text="投资人信息表" />
+                                </shared:FileView.Header>
+                            </shared:FileView>
+
+                        </DockPanel>
+
+                        <ListBox
+                            Margin="-4,0"
+                            BorderThickness="0"
+                            ItemTemplate="{StaticResource RunDataTemplate}"
+                            ItemsSource="{Binding Runs}"
+                            Style="{StaticResource ListBoxCustom}" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+        </DataTemplate>
 
 
     </UserControl.Resources>
@@ -260,197 +478,6 @@
             <hc:UniformSpacingPanel Orientation="Vertical" Spacing="8">
                 <hc:UniformSpacingPanel.Resources>
                     <Style BasedOn="{StaticResource GroupBoxTab}" TargetType="GroupBox" />
-
-                    <DataTemplate x:Key="ReportItem">
-                        <Border MinWidth="240">
-                            <StackPanel Margin="4">
-                                <DockPanel DockPanel.Dock="Top">
-                                    <TextBlock
-                                        shared:MaskService.IsMask="True"
-                                        FontSize="15"
-                                        Text="{Binding DisplayName}" />
-
-                                </DockPanel>
-
-                                <UniformGrid Columns="2">
-
-                                    <shared:FileView
-                                        Content="{Binding Word}"
-                                        IsReadOnly="False"
-                                        Style="{StaticResource IconViewFileStyle}">
-                                        <shared:FileView.Header>
-                                            <Viewbox Width="14" Height="14">
-                                                <Path Data="{StaticResource f.file-word}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
-                                            </Viewbox>
-                                        </shared:FileView.Header>
-                                    </shared:FileView>
-
-
-                                    <shared:FileView
-                                        Content="{Binding Excel}"
-                                        HeaderTemplate="{x:Null}"
-                                        Style="{StaticResource IconViewFileStyle}">
-                                        <shared:FileView.Header>
-                                            <Viewbox Width="14" Height="14">
-                                                <Path Data="{StaticResource f.file-excel}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
-                                            </Viewbox>
-                                        </shared:FileView.Header>
-                                    </shared:FileView>
-
-
-                                    <shared:FileView Content="{Binding Pdf}" Style="{StaticResource IconViewFileStyle}">
-                                        <shared:FileView.Header>
-                                            <Viewbox Width="14" Height="14">
-                                                <Path Data="{StaticResource f.file-pdf}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
-                                            </Viewbox>
-                                        </shared:FileView.Header>
-                                    </shared:FileView>
-
-                                    <shared:FileView Content="{Binding Xbrl}" Style="{StaticResource IconViewFileStyle}">
-                                        <shared:FileView.Header>
-                                            <Viewbox Width="14" Height="14">
-                                                <Path Data="{StaticResource f.file-code}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
-                                            </Viewbox>
-                                        </shared:FileView.Header>
-                                    </shared:FileView>
-
-
-                                </UniformGrid>
-
-                                <ListBox
-                                    Margin="-4,0"
-                                    BorderThickness="0"
-                                    ItemTemplate="{StaticResource RunDataTemplate}"
-                                    ItemsSource="{Binding Runs}"
-                                    Style="{StaticResource ListBoxCustom}" />
-
-                            </StackPanel>
-                        </Border>
-                    </DataTemplate>
-
-                    <DataTemplate x:Key="ReportItem2">
-                        <Border MinWidth="240">
-                            <StackPanel Margin="4">
-
-                                <DockPanel DockPanel.Dock="Top">
-                                    <TextBlock
-                                        shared:MaskService.IsMask="True"
-                                        FontSize="15"
-                                        Text="{Binding DisplayName}" />
-
-                                </DockPanel>
-
-
-                                <UniformGrid Columns="2">
-
-                                    <shared:FileView
-                                        Content="{Binding Word}"
-                                        IsReadOnly="False"
-                                        Style="{StaticResource IconViewFileStyle}">
-                                        <shared:FileView.Header>
-                                            <Viewbox Width="14" Height="14">
-                                                <Path Data="{StaticResource f.file-word}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
-                                            </Viewbox>
-                                        </shared:FileView.Header>
-                                    </shared:FileView>
-
-                                    <shared:FileView
-                                        Content="{Binding Excel}"
-                                        HeaderTemplate="{x:Null}"
-                                        Style="{StaticResource IconViewFileStyle}">
-                                        <shared:FileView.Header>
-                                            <Viewbox Width="14" Height="14">
-                                                <Path Data="{StaticResource f.file-excel}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
-                                            </Viewbox>
-                                        </shared:FileView.Header>
-                                    </shared:FileView>
-
-                                    <shared:FileView Content="{Binding Pdf}" Style="{StaticResource IconViewFileStyle}">
-                                        <shared:FileView.Header>
-                                            <Viewbox Width="14" Height="14">
-                                                <Path Data="{StaticResource f.file-pdf}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
-                                            </Viewbox>
-                                        </shared:FileView.Header>
-                                    </shared:FileView>
-
-                                    <shared:FileView Content="{Binding Xbrl}" Style="{StaticResource IconViewFileStyle}">
-                                        <shared:FileView.Header>
-                                            <Viewbox Width="14" Height="14">
-                                                <Path Data="{StaticResource f.file-code}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
-                                            </Viewbox>
-                                        </shared:FileView.Header>
-                                    </shared:FileView>
-
-                                    <shared:FileView Content="{Binding Sealed}" Style="{StaticResource IconViewFileStyle}">
-                                        <shared:FileView.Header>
-                                            <Viewbox Width="14" Height="14">
-                                                <Path Data="{StaticResource f.file-shield}" Fill="Red" />
-                                            </Viewbox>
-                                        </shared:FileView.Header>
-                                    </shared:FileView>
-                                </UniformGrid>
-
-
-                                <ListBox
-                                    BorderThickness="0"
-                                    ItemTemplate="{StaticResource RunDataTemplate}"
-                                    ItemsSource="{Binding Runs}"
-                                    Style="{StaticResource ListBoxCustom}" />
-                            </StackPanel>
-                        </Border>
-                    </DataTemplate>
-
-
-                    <DataTemplate x:Key="QuarterlyUpdateItem">
-                        <Border MinWidth="240">
-                            <DockPanel Margin="4">
-                                <DockPanel DockPanel.Dock="Top">
-                                    <TextBlock
-                                        shared:MaskService.IsMask="True"
-                                        FontSize="15"
-                                        Text="{Binding DisplayName}" />
-
-                                </DockPanel>
-
-                                <StackPanel>
-                                    <DockPanel>
-
-                                        <shared:FileView Content="{Binding Operation}" Style="{StaticResource IconViewFileStyle}">
-                                            <shared:FileView.Header>
-                                                <TextBlock VerticalAlignment="Center" Text="运行信息表" />
-                                            </shared:FileView.Header>
-                                        </shared:FileView>
-
-
-                                    </DockPanel>
-
-                                    <DockPanel>
-
-                                        <Button
-                                            Command="{Binding GenerateInvestorSheetCommand}"
-                                            Content="生成"
-                                            DockPanel.Dock="Right"
-                                            Style="{StaticResource ButtonPrimary.Small}"
-                                            Visibility="{Binding Investor.Exists, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                        <shared:FileView Content="{Binding Investor}" Style="{StaticResource IconViewFileStyle}">
-                                            <shared:FileView.Header>
-                                                <TextBlock VerticalAlignment="Center" Text="投资人信息表" />
-                                            </shared:FileView.Header>
-                                        </shared:FileView>
-
-                                    </DockPanel>
-
-                                    <ListBox
-                                        Margin="-4,0"
-                                        BorderThickness="0"
-                                        ItemTemplate="{StaticResource RunDataTemplate}"
-                                        ItemsSource="{Binding Runs}"
-                                        Style="{StaticResource ListBoxCustom}" />
-                                </StackPanel>
-                            </DockPanel>
-                        </Border>
-                    </DataTemplate>
 
                 </hc:UniformSpacingPanel.Resources>
 
@@ -576,6 +603,45 @@
                     <ListBox
                         ItemTemplate="{StaticResource ReportItem2}"
                         ItemsSource="{Binding AnnualSource.View}"
+                        Style="{StaticResource ListBoxCustom}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <hc:UniformSpacingPanel
+                                    ChildWrapping="Wrap"
+                                    HorizontalSpacing="20"
+                                    IsItemsHost="True"
+                                    VerticalSpacing="5" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </Expander>
+
+                <Expander IsExpanded="True" Visibility="{Binding TemporaryNoticeSource.View.IsEmpty, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                    <Expander.Header>
+                        <DockPanel>
+                            <TextBlock
+                                Margin="5,0"
+                                VerticalAlignment="Center"
+                                FontWeight="Bold"
+                                Text="临时公告" />
+
+                            <Button
+                                Margin="10,0,0,0"
+                                hc:IconElement.Geometry="{StaticResource f.plus}"
+                                Content="临时开放"
+                                Style="{StaticResource ButtonDefault.Small}" />
+
+
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.plus}"
+                                Content="巨额赎回"
+                                Style="{StaticResource ButtonDefault.Small}" />
+                        </DockPanel>
+                    </Expander.Header>
+
+                    <ListBox
+                        ItemTemplate="{StaticResource TemporaryItem}"
+                        ItemsSource="{Binding TemporaryNoticeSource.View}"
                         Style="{StaticResource ListBoxCustom}">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>

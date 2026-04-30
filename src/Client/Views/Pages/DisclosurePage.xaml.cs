@@ -1,14 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
+using DocumentFormat.OpenXml.Bibliography;
 using FMO.AMAC.Direct;
 using FMO.Disclosure;
-using FMO.Logging;
 using FMO.Models;
+using FMO.Shared;
 using FMO.Utilities;
 using LiteDB;
-using System.IO;
-using System.IO.Compression;
+using System.Collections.ObjectModel;
 using System.Windows.Controls;
 using System.Windows.Data;
 
@@ -86,6 +85,11 @@ public partial class DisclosurePageViewModel : ObservableObject
 
     public CollectionViewSource QuarterlyUpdateSource { get; } = new();
 
+
+    public CollectionViewSource TemporaryNoticeSource { get; } = new();
+
+
+
     private Debouncer debouncer;
 
     partial void OnSelectedYearChanged(int? value)
@@ -123,11 +127,27 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         List<IDisclosureNotice> disclosureNotices = db.GetCollection<IDisclosureNotice>().Query().Where("ReportDate.DayNumber=@0", pe.DayNumber).ToList();
         var reports = disclosureNotices.OfType<PeriodicalDisclosureNotice>().ToList();
-         
+
         var updates = disclosureNotices.OfType<QuarterlyUpdate>().ToList();
 
+        // 其它报告
+        var otherNotice = db.GetCollection<IDisclosureNotice>().Query().Where(x => x.PublishDate.Year == SelectedYear.Value && x.PublishDate.Month == SelectedMonth.Value).
+            ToList().Where(x => x is not PeriodicalDisclosureNotice && x is not QuarterlyUpdate).ToList();
 
-        var noticeIds = reports.Select(x => x.Id).Concat(updates.Select(x => x.Id)).ToArray();
+        if (otherNotice.Count == 0)
+            otherNotice.Add(new TemporaryOpenNotice
+            {
+                FundCode = "000000",
+                FundName = "基金",
+                FundId = 0,
+                PublishDate = pe,
+                PublishTime = TimeOnly.FromDateTime(DateTime.Now),
+                OpenDay = pe,
+                AllowPurchase = true,
+                AllowRedemption = true
+            });
+
+        var noticeIds = reports.Select(x => x.Id).Concat(updates.Select(x => x.Id)).Concat(otherNotice.Select(x => x.Id)).ToArray();
 
         var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && !string.IsNullOrWhiteSpace(x.Channel)).ToArray().ToLookup(x => x.Type);
 
@@ -161,41 +181,17 @@ public partial class DisclosurePageViewModel : ObservableObject
             SemiAnnualSource.Source = vm.Where(x => x.Type == DisclosureType.SemiAnnually);
             AnnualSource.Source = vm.Where(x => x.Type == DisclosureType.Annually);
             QuarterlyUpdateSource.Source = updates.Select(x => new QuarterlyUpdateViewModel(x, workflows[x.Type], run[x.Id], db.GetCollection<AmacProcessResult>().FindById(x.Id)));
+            TemporaryNoticeSource.Source = otherNotice.OfType<IFundDisclosureNotice>().Select<IFundDisclosureNotice, object>(x => x switch
+            {
+                TemporaryOpenNotice t => new TemporaryOpenNoticeViewModel(t, workflows[x.Type], run[x.Id]),
+                _ => x
+            });
+
         });
 
     }
 
 
-  
-
-
-    //[RelayCommand]
-    //public async Task UploadQuarterlyReportToMeiShi()
-    //{
-    //    MeiShiAssit assit = new();
-
-    //    foreach (var item in QuarterlySource.View)
-    //    {
-    //        if (item is FundPeriodicReportViewModel v)
-    //        {
-    //            string[] quarters = ["一", "二", "三", "四"];
-    //            string q = quarters[(v.PeriodEnd.Month - 1) / 3];
-    //            if (v.Pdf?.Meta is not null)
-    //            {
-    //                File.Copy(@$"files\hardlink\{v.Pdf.Meta.Id}", @$"temp\{v.FundName}-{SelectedYear}年{q}季度报告.pdf", true);
-    //                try
-    //                {
-    //                    bool r = await assit.UploadDisclosureFile(v.FundName!, v.Code!, "", DateTime.Now, $"{v.FundName}-{SelectedYear}年{q}季度报告", @$"temp\{v.FundName}-{SelectedYear}年{q}季度报告.pdf");
-    //                    if (!r) WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"Failed to upload {v.FundName} - {SelectedYear}年{q}季度报告"));
-    //                }
-    //                catch (Exception e)
-    //                {
-    //                    WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"Failed to upload {v.FundName} - {SelectedYear}年{q}季度报告"));
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
 
 
     [RelayCommand]
@@ -206,5 +202,36 @@ public partial class DisclosurePageViewModel : ObservableObject
         wnd.ShowDialog();
 
         debouncer.Invoke();
+    }
+}
+
+
+public class TemporaryNoticeViewModel
+{
+    public string? FundName { get; set; }
+
+    public string? DisplayName => Fund.GetDefaultShortName(FundName);
+
+    public SimpleFileViewModel? File { get; set; }
+
+    public ObservableCollection<DisclosureRunViewModel>? Runs { get; init; }
+
+    
+}
+
+[AutoViewModel(typeof(TemporaryOpenNotice))]
+public partial class TemporaryOpenNoticeViewModel : TemporaryNoticeViewModel
+{ 
+
+    public TemporaryOpenNoticeViewModel(TemporaryOpenNotice report, IEnumerable<DisclosureWorkflow> workflows, IEnumerable<DisclosureInstance> runs) : this(report)
+    {
+        var data = from workflow in workflows
+                       // 左连接：以 workflow 为主体，匹配对应的实例
+                   join instance in runs on workflow.Id equals instance.WorkflowId into instanceGroup
+                   from instance in instanceGroup.DefaultIfEmpty()
+                       // 构建 ViewModel
+                   select new DisclosureRunViewModel(report, workflow, instance);
+
+        Runs = new(data);
     }
 }
