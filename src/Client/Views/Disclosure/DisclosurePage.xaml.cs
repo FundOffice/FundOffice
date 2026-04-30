@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DocumentFormat.OpenXml.Bibliography;
 using FMO.AMAC.Direct;
 using FMO.Disclosure;
 using FMO.Models;
@@ -89,14 +88,13 @@ public partial class DisclosurePageViewModel : ObservableObject
     public CollectionViewSource TemporaryNoticeSource { get; } = new();
 
 
-
     private Debouncer debouncer;
 
     partial void OnSelectedYearChanged(int? value)
     {
         if (value is null) Months = [];
         else if (value == DateTime.Now.Year)
-            Months = Enumerable.Range(1, DateTime.Now.Month - 1).Reverse().ToArray();
+            Months = Enumerable.Range(1, DateTime.Now.Month).Reverse().ToArray();
         else
             Months = Enumerable.Range(1, 12).Reverse().ToArray();
 
@@ -134,18 +132,6 @@ public partial class DisclosurePageViewModel : ObservableObject
         var otherNotice = db.GetCollection<IDisclosureNotice>().Query().Where(x => x.PublishDate.Year == SelectedYear.Value && x.PublishDate.Month == SelectedMonth.Value).
             ToList().Where(x => x is not PeriodicalDisclosureNotice && x is not QuarterlyUpdate).ToList();
 
-        if (otherNotice.Count == 0)
-            otherNotice.Add(new TemporaryOpenNotice
-            {
-                FundCode = "000000",
-                FundName = "基金",
-                FundId = 0,
-                PublishDate = pe,
-                PublishTime = TimeOnly.FromDateTime(DateTime.Now),
-                OpenDay = pe,
-                AllowPurchase = true,
-                AllowRedemption = true
-            });
 
         var noticeIds = reports.Select(x => x.Id).Concat(updates.Select(x => x.Id)).Concat(otherNotice.Select(x => x.Id)).ToArray();
 
@@ -181,6 +167,33 @@ public partial class DisclosurePageViewModel : ObservableObject
             SemiAnnualSource.Source = vm.Where(x => x.Type == DisclosureType.SemiAnnually);
             AnnualSource.Source = vm.Where(x => x.Type == DisclosureType.Annually);
             QuarterlyUpdateSource.Source = updates.Select(x => new QuarterlyUpdateViewModel(x, workflows[x.Type], run[x.Id], db.GetCollection<AmacProcessResult>().FindById(x.Id)));
+
+            TemporaryNoticeSource.Source = otherNotice.OfType<IFundDisclosureNotice>().Select<IFundDisclosureNotice, object>(x => x switch
+            {
+                TemporaryOpenNotice t => new TemporaryOpenNoticeViewModel(t, workflows[x.Type], run[x.Id]),
+                _ => x
+            });
+
+        });
+
+    }
+
+    private void UpdateTemporary()
+    {
+        using var db = DbHelper.Base();
+
+        // 其它报告
+        var otherNotice = db.GetCollection<IDisclosureNotice>().Query().Where(x => x.PublishDate.Year == SelectedYear.Value && x.PublishDate.Month == SelectedMonth.Value).
+            ToList().Where(x => x is not PeriodicalDisclosureNotice && x is not QuarterlyUpdate).ToList();
+
+
+        var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && !string.IsNullOrWhiteSpace(x.Channel)).ToArray().ToLookup(x => x.Type);
+
+        var run = db.GetCollection<DisclosureInstance>().Query().Where(Query.In(nameof(DisclosureInstance.NoticeId), otherNotice.Select(x => new BsonValue(x.Id)))).ToArray().ToLookup(x => x.NoticeId);
+
+
+        App.Current.Dispatcher.InvokeAsync(() =>
+        {
             TemporaryNoticeSource.Source = otherNotice.OfType<IFundDisclosureNotice>().Select<IFundDisclosureNotice, object>(x => x switch
             {
                 TemporaryOpenNotice t => new TemporaryOpenNoticeViewModel(t, workflows[x.Type], run[x.Id]),
@@ -193,7 +206,6 @@ public partial class DisclosurePageViewModel : ObservableObject
 
 
 
-
     [RelayCommand]
     public void Configure()
     {
@@ -202,6 +214,42 @@ public partial class DisclosurePageViewModel : ObservableObject
         wnd.ShowDialog();
 
         debouncer.Invoke();
+    }
+
+
+    [RelayCommand]
+    public void GenerateTemporaryOpen()
+    {
+        var pe = new DateOnly(SelectedYear!.Value, SelectedMonth!.Value, 1);
+
+        using var db = DbHelper.Base();
+        var funds = db.GetCollection<Fund>().Query().Where(x => x.Status == FundStatus.Normal || x.ClearDate >= pe).ToArray();
+
+        var dc = new AddTemporaryOpenWindowViewModel(funds)
+        {
+            OpenDate = DateTime.Now,
+        };
+        var wnd = new AddTemporaryOpenWindow();
+        wnd.DataContext = dc;
+        wnd.Owner = App.Current.MainWindow;
+        if (wnd.ShowDialog() != true || dc.SelectedFund is null) return;
+
+        TemporaryOpenNotice notice = new()
+        {
+            FundId = dc.SelectedFund.Id,
+            FundCode = dc.SelectedFund.Code ?? "",
+            FundName = dc.SelectedFund.Name,
+            AllowPurchase = dc.AllowBuy,
+            AllowRedemption = dc.AllowSell,
+            OpenDay = DateOnly.FromDateTime(dc.OpenDate),
+
+            PublishDate = DateOnly.FromDateTime(dc.PublishTime),
+            PublishTime = TimeOnly.FromDateTime(dc.PublishTime)
+        };
+
+        DataTracker.OnNewNotice(notice);
+
+        UpdateTemporary();
     }
 }
 
@@ -216,17 +264,17 @@ public class TemporaryNoticeViewModel
 
     public ObservableCollection<DisclosureRunViewModel>? Runs { get; init; }
 
-    
+
 }
 
 [AutoViewModel(typeof(TemporaryOpenNotice))]
 public partial class TemporaryOpenNoticeViewModel : TemporaryNoticeViewModel
-{ 
+{
 
     public TemporaryOpenNoticeViewModel(TemporaryOpenNotice report, IEnumerable<DisclosureWorkflow> workflows, IEnumerable<DisclosureInstance> runs) : this(report)
     {
         var data = from workflow in workflows
-                       // 左连接：以 workflow 为主体，匹配对应的实例
+                   // 左连接：以 workflow 为主体，匹配对应的实例
                    join instance in runs on workflow.Id equals instance.WorkflowId into instanceGroup
                    from instance in instanceGroup.DefaultIfEmpty()
                        // 构建 ViewModel

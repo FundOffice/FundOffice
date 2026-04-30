@@ -616,7 +616,7 @@
                     </ListBox>
                 </Expander>
 
-                <Expander IsExpanded="True" Visibility="{Binding TemporaryNoticeSource.View.IsEmpty, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                <Expander IsExpanded="True" >
                     <Expander.Header>
                         <DockPanel>
                             <TextBlock
@@ -628,6 +628,7 @@
                             <Button
                                 Margin="10,0,0,0"
                                 hc:IconElement.Geometry="{StaticResource f.plus}"
+                                Command="{Binding GenerateTemporaryOpenCommand}"
                                 Content="临时开放"
                                 Style="{StaticResource ButtonDefault.Small}" />
 
