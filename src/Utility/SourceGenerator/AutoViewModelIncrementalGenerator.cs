@@ -90,7 +90,7 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
                     }
 
                     bool isNullable = prop.Type.IsReferenceType;
-                    bool isWritable = prop.SetMethod != null && !prop.SetMethod.IsInitOnly;
+                    bool isWritable = prop.SetMethod != null;//&& !prop.SetMethod.IsInitOnly;
 
                     // 🔍 检查嵌套模式
                     var (isNested, vmType) = CheckNestedViewModelPattern(targetClass, prop.Name, propNamedType);
@@ -163,15 +163,15 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
             var backingField = $"_{char.ToLowerInvariant(prop.Name[0])}{prop.Name.Substring(1)}";
 
             return $$"""
-        private {{typeName}} {{backingField}};
+        //private {{typeName}} {{backingField}};
         public {{typeName}} {{prop.Name}}
         {
-            get => {{backingField}};
+            get => field;
             set
             {
-                if (!global::System.Collections.Generic.EqualityComparer<{{typeName}}>.Default.Equals({{backingField}}, value))
+                if (!global::System.Collections.Generic.EqualityComparer<{{typeName}}>.Default.Equals(field, value))
                 {
-                    {{backingField}} = value;
+                    field = value;
                     OnPropertyChanged();
                 }
             }
@@ -180,7 +180,7 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
         }));
 
         // 🔹 Build 方法中的初始化语句（使用新的 GetBuildInitializer）
-        var buildInitializers = string.Join("\n",
+        var buildInitializers = string.Join("\n\t\t\t\t",
             model.PropertiesToGenerate.Concat(model.PropertiesToAssignOnly)
                 .Where(p => p.IsWritable)
                 .Select(p => p.GetBuildInitializer())
@@ -221,7 +221,7 @@ using System.Runtime.CompilerServices;
         {
             var result = new {{model.SourceTypeName}}
              {
-{{buildInitializers}}
+                {{buildInitializers}}
              };
             return result;
         }
