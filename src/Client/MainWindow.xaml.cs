@@ -1,7 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Logging;
 using FMO.Models;
+using FMO.Todo;
 using FMO.Utilities;
 using Serilog;
 using System.Collections.ObjectModel;
@@ -58,7 +60,10 @@ public partial class MainWindow : HandyControl.Controls.Window
             this.DragMove();
     }
 
+    private void TodoBorder_LostFocus(object sender, RoutedEventArgs e)
+    {
 
+    }
 }
 
 
@@ -80,7 +85,9 @@ public partial class TabItemInfo : ObservableObject
     public bool IsFund { get; set; }
 }
 
-public partial class MainWindowViewModel : ObservableRecipient, IRecipient<string>, IRecipient<OpenFundMessage>, IRecipient<OpenPageMessage>, IRecipient<ToastMessage>, IRecipient<VerifyMessage>, IRecipient<VerifyResultMessage>
+public partial class MainWindowViewModel : ObservableRecipient, IRecipient<string>, IRecipient<OpenFundMessage>,
+    IRecipient<OpenPageMessage>, IRecipient<ToastMessage>, IRecipient<VerifyMessage>, IRecipient<VerifyResultMessage>,
+    IRecipient<TodoStatusMessage>, IRecipient<Todo.Todo>
 {
 
     private PlatformPageViewModel? PlatformDataContext { get; set; }
@@ -103,6 +110,15 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
 
     public ObservableCollection<MainMenu> MenuItems { get; }
 
+
+    [ObservableProperty]
+    public partial ObservableCollection<TodoViewModel>? TodoCollection { get; private set; }
+
+
+
+
+    [ObservableProperty]
+    public partial bool ShowTodoList { get; set; }
 
     public Version? Version { get; set; }
 
@@ -150,7 +166,24 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
             {
             }
         }
+
+        TodoViewModelFactory.RegisterPredefined();
+
+        var all = TodoService.GetAll();
+        if (all is not null)
+            TodoCollection = [.. all.Select(x => TodoViewModelFactory.Create(x)).Where(x => x is not null).Select(x => x!)];
+
+
+#if DEBUG
+        EventManager.RegisterClassHandler(
+            typeof(Window),
+            Window.KeyDownEvent,
+            new KeyEventHandler(MakeDebugData)
+        );
+#endif
     }
+
+
 
     private string? CalcOrgId(string? input)
     {
@@ -423,6 +456,30 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
         Log.Warning(DateTime.Now.ToString());
     }
 
+
+    [RelayCommand]
+    public void OpenTodo()
+    {
+        ShowTodoList = !ShowTodoList;
+    }
+
+
+#if DEBUG
+    private void MakeDebugData(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.F3) return;
+
+        using var db = DbHelper.Base();
+        var fund = db.GetCollection<Fund>().FindOne(x => x.Name.Contains("5") && x.Status == FundStatus.Normal);
+        var req = db.GetCollection<TransferRequest>().FindOne(x => x.FundId == fund.Id && x.RequestType == TransferRequestType.Redemption);
+        req.RequestDate = new DateOnly(2026, 4, 1);
+        req.RequestAmount = 1000000;
+
+        TodoService.AutoHugeRedemption([req]);
+    }
+#endif
+
+
     public void Receive(ToastMessage message)
     {
         switch (message.Level)
@@ -465,7 +522,35 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
         return null;
     }
 
+    public void Receive(TodoStatusMessage message)
+    {
+        if (TodoCollection is null) return;
+        foreach (var t in TodoCollection.ToArray())
+        {
+            if (t.Id == message.Id && message.Status != TotoStatus.None)
+                TodoCollection.Remove(t);
+        }
+    }
 
+    public void Receive(Todo.Todo message)
+    {
+        var vm = TodoViewModelFactory.Create(message);
+        if (vm is null)
+        {
+            LogEx.Error($"{message.GetType()} 无法创建ViewModel");
+            return;
+        }
+
+
+        if (TodoCollection is null)
+            TodoCollection = [vm];
+        else
+        {
+            if (message.UniqueId is not null)
+                TodoCollection.Where(x => x.UniqueId == message.UniqueId).ToList().ForEach(x => TodoCollection.Remove(x));
+            TodoCollection.Add(vm);
+        }
+    }
 }
 
 

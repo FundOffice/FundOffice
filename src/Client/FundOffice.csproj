@@ -105,6 +105,7 @@
     <ProjectReference Include="..\ESign\ESigning\ESigning.csproj" />
     <ProjectReference Include="..\Schedule\Schedule\Schedule.csproj" />
     <ProjectReference Include="..\Main\Data\Data.csproj" />
+    <ProjectReference Include="..\Todo\Todo.UI\Todo.UI.csproj" />
     <ProjectReference Include="..\Utility\Logging\Logging.csproj" />
     <ProjectReference Include="..\Utility\Patch\Patch.csproj" />
     <ProjectReference Include="..\Utility\PDF\PdfExt.csproj" TargetFramework="net9.0-windows" />

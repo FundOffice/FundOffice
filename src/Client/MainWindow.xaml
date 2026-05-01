@@ -22,7 +22,10 @@
         <local:MainWindowViewModel />
     </Window.DataContext>
     <Window.Resources>
-
+        <BackEase
+            x:Key="BackEaseOut"
+            Amplitude="0.3"
+            EasingMode="EaseOut" />
 
         <DataTemplate x:Key="CloseableTabHeader" d:DataType="local:TabItemInfo">
             <Border Margin="-8,0,-6,0">
@@ -152,6 +155,62 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <Style x:Key="todoRegion" TargetType="Border">
+            <Setter Property="Opacity" Value="0" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ShowTodoList}" Value="True">
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation
+                                    Storyboard.TargetProperty="Opacity"
+                                    To="1"
+                                    Duration="0:0:0.25" />
+                                <DoubleAnimation
+                                    EasingFunction="{StaticResource BackEaseOut}"
+                                    Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)"
+                                    To="1"
+                                    Duration="0:0:0.3" />
+                                <DoubleAnimation
+                                    EasingFunction="{StaticResource BackEaseOut}"
+                                    Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)"
+                                    To="1"
+                                    Duration="0:0:0.3" />
+                                <DoubleAnimation
+                                    EasingFunction="{StaticResource BackEaseOut}"
+                                    Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[1].(TranslateTransform.Y)"
+                                    To="0"
+                                    Duration="0:0:0.3" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
+                    <DataTrigger.ExitActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation
+                                    Storyboard.TargetProperty="Opacity"
+                                    To="0"
+                                    Duration="0:0:0.2" />
+                                <DoubleAnimation
+                                    Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)"
+                                    To="0"
+                                    Duration="0:0:0.2" />
+                                <DoubleAnimation
+                                    Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)"
+                                    To="0"
+                                    Duration="0:0:0.2" />
+                                <DoubleAnimation
+                                    Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[1].(TranslateTransform.Y)"
+                                    To="10"
+                                    Duration="0:0:0.2" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.ExitActions>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
     </Window.Resources>
     <Grid Background="White">
         <Grid.RowDefinitions>
@@ -243,56 +302,175 @@
 
 
 
-        <TabControl
+        <hc:SimplePanel
             Grid.Row="1"
             Grid.RowSpan="2"
-            Grid.Column="1"
-            Margin="5,0"
-            BorderThickness="0"
-            ItemContainerStyle="{StaticResource TabItem.Home}"
-            ItemsSource="{Binding Pages}" />
+            Grid.Column="1">
+            <TabControl
+                Margin="5,0"
+                BorderThickness="0"
+                ItemContainerStyle="{StaticResource TabItem.Home}"
+                ItemsSource="{Binding Pages}" />
+
+            <Border
+                x:Name="PopupAnchor"
+                Width="0"
+                Height="0"
+                Margin="5,0,0,10"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Bottom" />
+
+            <Popup
+                AllowsTransparency="True"
+                IsOpen="{Binding ShowTodoList}"
+                Placement="Top"
+                PlacementTarget="{Binding ElementName=PopupAnchor}"
+                PopupAnimation="Slide"
+                StaysOpen="False">
+                <Border
+                    Width="300"
+                    Height="Auto"
+                    Margin="5,0,0,10"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Bottom"
+                    Panel.ZIndex="10"
+                    Background="WhiteSmoke"
+                    BorderThickness="0">
+
+                    <ListBox
+                        BorderThickness="0"
+                        ItemsSource="{Binding TodoCollection}"
+                        Style="{StaticResource ListBoxCustom}">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border
+                                                Margin="0,2"
+                                                Background="Transparent"
+                                                BorderBrush="Orange"
+                                                BorderThickness="2"
+                                                CornerRadius="3">
+                                                <hc:SimplePanel>
+                                                    <ContentPresenter MinHeight="30" Margin="5" />
+                                                    <DockPanel
+                                                        x:Name="ign"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Top"
+                                                        LastChildFill="False"
+                                                        Visibility="Collapsed">
+                                                        <ToggleButton
+                                                            x:Name="a"
+                                                            Content="忽略"
+                                                            Style="{StaticResource ToggleButtonDanger.Small}"
+                                                            Visibility="{Binding IsChecked, RelativeSource={RelativeSource Self}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                                                        <DockPanel x:Name="b" Visibility="{Binding ElementName=a, Path=IsChecked, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                                            <Button
+                                                                Width="18"
+                                                                Margin="0"
+                                                                Padding="0"
+                                                                hc:IconElement.Geometry="{StaticResource f.check}"
+                                                                Command="{Binding IgnoreCommand}"
+                                                                Foreground="Red"
+                                                                Style="{StaticResource ButtonIcon.Small}" />
+                                                            <ToggleButton
+                                                                x:Name="c"
+                                                                hc:IconElement.Geometry="{StaticResource f.x}"
+                                                                Background="Transparent"
+                                                                BorderThickness="0"
+                                                                Style="{StaticResource ToggleButtonIcon.Small}" />
+                                                        </DockPanel>
+                                                    </DockPanel>
+                                                </hc:SimplePanel>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ign" Property="Visibility" Value="Visible" />
+                                                </Trigger>
+                                                <Trigger SourceName="c" Property="IsChecked" Value="True">
+                                                    <Setter TargetName="a" Property="IsChecked" Value="False" />
+                                                    <Setter TargetName="c" Property="IsChecked" Value="False" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                </Border>
+            </Popup>
+        </hc:SimplePanel>
 
 
 
-        <ListBox
-            Grid.Row="2"
-            HorizontalAlignment="Stretch"
-            Panel.ZIndex="99"
-            BorderBrush="Transparent"
-            ItemsSource="{Binding MenuItems}"
-            Style="{StaticResource ListBoxCustom}">
-            <ListBox.ItemTemplate>
-                <DataTemplate DataType="local:MainMenu">
+        <DockPanel Grid.Row="2">
+            <Button
+                Margin="0,15"
+                Command="{Binding OpenTodoCommand}"
+                DockPanel.Dock="Bottom"
+                Style="{StaticResource ButtonCustom}">
+                <hc:Badge
+                    Background="Red"
+                    Foreground="White"
+                    ShowBadge="{Binding TodoCollection.Count, Converter={StaticResource ListIsNotEmpty2BooleanConverter}}"
+                    Status="Text"
+                    Text="{Binding TodoCollection.Count}">
+                    <DockPanel Margin="6,0">
+                        <TextBlock
+                            Margin="0,4,0,0"
+                            HorizontalAlignment="Center"
+                            DockPanel.Dock="Bottom"
+                            FontSize="11"
+                            Foreground="Black"
+                            Text="待办" />
+                        <Viewbox Width="26" Height="26">
+                            <Path Data="{StaticResource f.address-book}" Fill="Red" />
+                        </Viewbox>
+                    </DockPanel>
+                </hc:Badge>
+            </Button>
+            <ListBox
+                HorizontalAlignment="Stretch"
+                Panel.ZIndex="99"
+                BorderBrush="Transparent"
+                ItemsSource="{Binding MenuItems}"
+                Style="{StaticResource ListBoxCustom}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="local:MainMenu">
 
-                    <Button
-                        Margin="0,8"
-                        Background="Transparent"
-                        Command="{Binding Command}"
-                        CommandParameter="{Binding Parameter}"
-                        IsEnabled="{Binding IsEnabled}"
-                        Style="{StaticResource ButtonCustom}">
-                        <hc:Badge
-                            Background="Red"
-                            ShowBadge="{Binding HasTip}"
-                            Status="Dot"
-                            ToolTip="{Binding Tip}">
-                            <DockPanel Margin="6,0">
-                                <TextBlock
-                                    Margin="0,4,0,0"
-                                    HorizontalAlignment="Center"
-                                    DockPanel.Dock="Bottom"
-                                    FontSize="11"
-                                    Foreground="Black"
-                                    Text="{Binding Title}" />
-                                <Viewbox Width="26" Height="26">
-                                    <Path Data="{Binding Icon}" Fill="{Binding IconBrush}" />
-                                </Viewbox>
-                            </DockPanel>
-                        </hc:Badge>
-                    </Button>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+                        <Button
+                            Margin="0,8"
+                            Background="Transparent"
+                            Command="{Binding Command}"
+                            CommandParameter="{Binding Parameter}"
+                            IsEnabled="{Binding IsEnabled}"
+                            Style="{StaticResource ButtonCustom}">
+                            <hc:Badge
+                                Background="Red"
+                                ShowBadge="{Binding HasTip}"
+                                Status="Dot"
+                                ToolTip="{Binding Tip}">
+                                <DockPanel Margin="6,0">
+                                    <TextBlock
+                                        Margin="0,4,0,0"
+                                        HorizontalAlignment="Center"
+                                        DockPanel.Dock="Bottom"
+                                        FontSize="11"
+                                        Foreground="Black"
+                                        Text="{Binding Title}" />
+                                    <Viewbox Width="26" Height="26">
+                                        <Path Data="{Binding Icon}" Fill="{Binding IconBrush}" />
+                                    </Viewbox>
+                                </DockPanel>
+                            </hc:Badge>
+                        </Button>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
 
 
         <ScrollViewer

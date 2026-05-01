@@ -1,0 +1,30 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:FMO.Todo">
+
+    <DataTemplate DataType="{x:Type local:HugeRedemptionTodoViewModel}">
+        <StackPanel>
+            <TextBlock>
+                <Run Text="{Binding FundCode}" />
+                <Run Text="{Binding FundName}" />
+            </TextBlock>
+
+            <DockPanel Margin="0,4">
+                <TextBlock Text="{Binding OpenDay, StringFormat={}{0:yyyy-MM-dd}}" />
+                <TextBlock Margin="15,0,0,0" Text="{Binding RealRatio, StringFormat=巨额赎回: {0:P0}}" />
+                <TextBlock Text="{Binding DefinedRatio, StringFormat=/{0:P0}}" />
+            </DockPanel>
+
+
+            <DockPanel>
+                <CheckBox Content="已全部兑付" IsChecked="{Binding IsFullyPaied}" />
+                <Button
+                    Width="auto"
+                    Content="创建公告"
+                    Style="{StaticResource ButtonPrimary.Small}" />
+            </DockPanel>
+        </StackPanel>
+    </DataTemplate>
+
+</ResourceDictionary>

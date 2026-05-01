@@ -1585,6 +1585,17 @@ public static partial class DataTracker
             try { item(dv); } catch (Exception ex) { LogEx.Error(ex); }
         });
     }
+
+
+    private static ConcurrentBag<Action<IEnumerable<TransferRequest>>> _hookTr2 = [];
+    public static void Hook(Action<IEnumerable<TransferRequest>> callback) => _hookTr2.Add(callback);
+    private static void Notify(IEnumerable<TransferRequest> dv)
+    {
+        Parallel.ForEach(_hookTr2, item =>
+        {
+            try { item(dv); } catch (Exception ex) { LogEx.Error(ex); }
+        });
+    }
     #endregion
 
 }

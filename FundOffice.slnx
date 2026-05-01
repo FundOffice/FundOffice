@@ -18,6 +18,10 @@
     <Project Path="src/Main/Data/Data.csproj" />
     <Project Path="src/Main/Models/Models.csproj" />
   </Folder>
+  <Folder Name="/ToDo/">
+    <Project Path="src/ToDo/ToDo.UI/ToDo.UI.csproj" Id="edce5a6e-f904-43f5-9fec-11de95d89e3f" DisplayName="Todo.UI" />
+    <Project Path="src/ToDo/ToDo/ToDo.csproj" Id="2791fcfe-5bd5-486d-b162-08f80ad1129a" DisplayName="Todo" />
+  </Folder>
   <Folder Name="/Trustee/">
     <Project Path="src/Trustee/CITICS/CITICS.csproj" />
     <Project Path="src/Trustee/CMS/CMS.csproj" />

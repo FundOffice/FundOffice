@@ -10,11 +10,11 @@ namespace SourceGenerator;
 
 
 [Generator]
-public sealed class ToDoViewModelRegistrationGenerator : IIncrementalGenerator
+public sealed class TodoViewModelRegistrationGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // 筛选：类 + 分部类 + 有AutoViewModel特性 + 继承ToDoViewModel
+        // 筛选：类 + 分部类 + 有AutoViewModel特性 + 继承TodoViewModel
         var viewModelTypes = context.SyntaxProvider
             .CreateSyntaxProvider(
                 predicate: static (node, _) => IsTargetViewModel(node),
@@ -33,7 +33,7 @@ public sealed class ToDoViewModelRegistrationGenerator : IIncrementalGenerator
         return node is ClassDeclarationSyntax classDecl
                && classDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword))
                && classDecl.BaseList?.Types.Any(
-                   b => b.Type.ToString().Contains("ToDoViewModel")) == true;
+                   b => b.Type.ToString().Contains("TodoViewModel")) == true;
     }
 
     /// <summary>
@@ -75,7 +75,7 @@ public sealed class ToDoViewModelRegistrationGenerator : IIncrementalGenerator
         var code = GenerateRegisterCode(viewModels);
 
         // 添加到编译中
-        context.AddSource("ToDoViewModelFactory.AutoRegister.g.cs",
+        context.AddSource("TodoViewModelFactory.AutoRegister.g.cs",
             SourceText.From(code, Encoding.UTF8));
     }
 
@@ -87,15 +87,17 @@ public sealed class ToDoViewModelRegistrationGenerator : IIncrementalGenerator
         var registerLines = new StringBuilder();
         foreach (var vm in viewModels)
         {
-            // 生成：Register<HugeRedemptionToDo>(() => new HugeRedemptionToDoViewModel());
+            // 生成：Register<HugeRedemptionTodo>(() => new HugeRedemptionTodoViewModel());
             registerLines.AppendLine(
                 $"            Register<{vm.ModelFullName}>(() => new {vm.ViewModelFullName}());");
+            registerLines.AppendLine(
+                $"            Register<{vm.ModelFullName}>((x) => new {vm.ViewModelFullName}(x as {vm.ModelFullName}));");
         }
 
         return $@"// 自动生成代码，请勿手动修改
-namespace FMO.ToDo;
+namespace FMO.Todo;
 
-public static partial class ToDoViewModelFactory
+public static partial class TodoViewModelFactory
 {{
     /// <summary>
     /// 自动注册所有ViewModel（源代码生成器生成）

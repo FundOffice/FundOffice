@@ -197,7 +197,7 @@ public class ZeroToBlankConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return value switch { 0 or 0d or 0L or 0m => "",  _ => value };
+        return value switch { 0 or 0d or 0L or 0m => "", _ => value };
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -377,6 +377,19 @@ public class ListIsNotEmpty2VisibilityConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         return value switch { IEnumerable e => e.GetEnumerator().MoveNext(), _ => false } ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class ListIsNotEmpty2BooleanConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return value switch { IEnumerable e => e.GetEnumerator().MoveNext(), int d => d > 0, _ => false };
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

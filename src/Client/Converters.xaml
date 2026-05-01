@@ -16,4 +16,5 @@
     <local:BooleanToVisibility2Converter x:Key="BooleanToVisibility2Converter" />
     <local:StringSubstringConverter x:Key="StringSubstringConverter" />
     <local:ListIsNotEmpty2VisibilityConverter x:Key="ListIsNotEmpty2VisibilityConverter" />
+    <local:ListIsNotEmpty2BooleanConverter x:Key="ListIsNotEmpty2BooleanConverter"/>
 </ResourceDictionary>

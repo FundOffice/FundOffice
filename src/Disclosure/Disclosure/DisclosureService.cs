@@ -36,31 +36,9 @@ public static partial class DisclosureService
         _workflows = db.GetCollection<DisclosureWorkflow>().Find(x => !string.IsNullOrWhiteSpace(x.Channel)).DistinctBy(x => x.Id).ToDictionary(x => x.Id);
 
         DataTracker.Hook(RegisterNotice);
-        DataTracker.Hook(AutoHugeRedemption);
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="dv"></param>
-    /// <exception cref="NotImplementedException"></exception>
-    private static void AutoHugeRedemption(IEnumerable<TransferRecord> tr)
-    {
-        // 忽略子份额，按基金分组
-        foreach (var fv in tr.GroupBy(x => x.FundId))
-        {
-            foreach (var item in fv.GroupBy(x=>x.ConfirmedDate))
-            {
-                // 赎回份额
-                var redShare = item.Where(x => x.Type is TransferRecordType.Redemption or TransferRecordType.ForceRedemption).Sum(x => x.ShareChange());
-
-            }
-             
-        }
-
-         
-    }
-
+  
 
 
     /// <summary>
