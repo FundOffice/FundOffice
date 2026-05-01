@@ -21,8 +21,8 @@ public static class TodoService
 
         // 如果UniqueId不为null，说明这是一个具有唯一标识的Todo，需要先将之前的同类Todo标记为已忽略
         if (todo.UniqueId is not null)
-            db.GetCollection<Todo>().UpdateMany($"$.{nameof(Todo.Status)}={nameof(TotoStatus.Ignored)}", $"$.{nameof(Todo.UniqueId)}={todo.UniqueId}");
-
+            db.GetCollection<Todo>().UpdateMany($"{{ '{nameof(Todo.Status)}':'{nameof(TotoStatus.Ignored)}' }}", $"$.{nameof(Todo.UniqueId)}='{todo.UniqueId}'");
+        
         db.GetCollection<Todo>().Insert(todo);
         WeakReferenceMessenger.Default.Send((Todo)todo);
     }

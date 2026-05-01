@@ -5,10 +5,10 @@ using FMO.IO.AMAC;
 using FMO.Logging;
 using FMO.Models;
 using FMO.Shared;
+using FMO.Todo;
 using FMO.TPL;
 using FMO.Trustee;
 using FMO.Utilities;
-using HandyControl.Tools;
 using LiteDB;
 using Microsoft.Playwright;
 using Microsoft.Win32;
@@ -90,6 +90,9 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
             db.GetCollection<FundElements>().Insert(ele);
         }
 
+        CheckAndTodo(ele);
+
+
         CollectionAccount = ele.CollectionAccount.Value?.ToString();
         CustodyAccount = ele.CustodyAccount.Value?.ToString();
 
@@ -145,6 +148,167 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         IsActive = true;
         _initialized = true;
+    }
+
+    public void CheckAndTodo(FundElements ele)
+    {
+        var missingList = new List<string>();
+
+        if (ele.FullName?.Changes is null || ele.FullName.Changes.Count == 0)
+        {
+            missingList.Add("名称");
+        }
+        if (ele.ShortName?.Changes is null || ele.ShortName.Changes.Count == 0)
+        {
+            missingList.Add("简称");
+        }
+        if (ele.SecurityFundType?.Changes is null || ele.SecurityFundType.Changes.Count == 0)
+        {
+            missingList.Add("基金类型");
+        }
+        if (ele.FundModeInfo?.Changes is null || ele.FundModeInfo.Changes.Count == 0)
+        {
+            missingList.Add("运作方式");
+        }
+        if (ele.SealingRule?.Changes is null || ele.SealingRule.Changes.Count == 0)
+        {
+            missingList.Add("封闭期");
+        }
+        if (ele.RiskLevel?.Changes is null || ele.RiskLevel.Changes.Count == 0)
+        {
+            missingList.Add("风险等级");
+        }
+        if (ele.DurationInMonths?.Changes is null || ele.DurationInMonths.Changes.Count == 0)
+        {
+            missingList.Add("存续期");
+        }
+        if (ele.ExpirationDate?.Changes is null || ele.ExpirationDate.Changes.Count == 0)
+        {
+            missingList.Add("结束日期");
+        }
+        if (ele.CollectionAccount?.Changes is null || ele.CollectionAccount.Changes.Count == 0)
+        {
+            missingList.Add("主募集账户");
+        }
+        if (ele.CustodyAccount?.Changes is null || ele.CustodyAccount.Changes.Count == 0)
+        {
+            missingList.Add("主托管账户");
+        }
+        if (ele.ShareClasses?.Changes is null || ele.ShareClasses.Changes.Count == 0)
+        {
+            missingList.Add("份额类别");
+        }
+        if (ele.StopLine?.Changes is null || ele.StopLine.Changes.Count == 0)
+        {
+            missingList.Add("止损线");
+        }
+        if (ele.WarningLine?.Changes is null || ele.WarningLine.Changes.Count == 0)
+        {
+            missingList.Add("预警线");
+        }
+        if (ele.OpenDayInfo?.Changes is null || ele.OpenDayInfo.Changes.Count == 0)
+        {
+            missingList.Add("开放日规则");
+        }
+        if (ele.FundOpenRule?.Changes is null || ele.FundOpenRule.Changes.Count == 0)
+        {
+            missingList.Add("开放规则");
+        }
+        if (ele.TrusteeInfo?.Changes is null || ele.TrusteeInfo.Changes.Count == 0)
+        {
+            missingList.Add("托管机构");
+        }
+        if (ele.TrusteeFee?.Changes is null || ele.TrusteeFee.Changes.Count == 0)
+        {
+            missingList.Add("托管费");
+        }
+        if (ele.OutsourcingInfo?.Changes is null || ele.OutsourcingInfo.Changes.Count == 0)
+        {
+            missingList.Add("外包机构");
+        }
+        if (ele.OutsourcingFee?.Changes is null || ele.OutsourcingFee.Changes.Count == 0)
+        {
+            missingList.Add("外包费");
+        }
+        if (ele.InvestmentManagers?.Changes is null || ele.InvestmentManagers.Changes.Count == 0)
+        {
+            missingList.Add("投资管理人");
+        }
+        if (ele.InvestmentManager?.Changes is null || ele.InvestmentManager.Changes.Count == 0)
+        {
+            missingList.Add("投资管理人简称");
+        }
+        if (ele.PerformanceBenchmarks?.Changes is null || ele.PerformanceBenchmarks.Changes.Count == 0)
+        {
+            missingList.Add("业绩比较基准");
+        }
+        if (ele.InvestmentObjective?.Changes is null || ele.InvestmentObjective.Changes.Count == 0)
+        {
+            missingList.Add("投资目标");
+        }
+        if (ele.InvestmentScope?.Changes is null || ele.InvestmentScope.Changes.Count == 0)
+        {
+            missingList.Add("投资范围");
+        }
+        if (ele.InvestmentStrategy?.Changes is null || ele.InvestmentStrategy.Changes.Count == 0)
+        {
+            missingList.Add("投资策略");
+        }
+        if (ele.TemporarilyOpenInfo?.Changes is null || ele.TemporarilyOpenInfo.Changes.Count == 0)
+        {
+            missingList.Add("临时开放信息");
+        }
+        if (ele.HugeRedemptionRatio?.Changes is null || ele.HugeRedemptionRatio.Changes.Count == 0)
+        {
+            missingList.Add("巨额赎回比例");
+        }
+        if (ele.CoolingPeriod?.Changes is null || ele.CoolingPeriod.Changes.Count == 0)
+        {
+            missingList.Add("冷静期");
+        }
+        if (ele.Callback?.Changes is null || ele.Callback.Changes.Count == 0)
+        {
+            missingList.Add("回访");
+        }
+        if (ele.LockingRule?.Changes is null || ele.LockingRule.Changes.Count == 0)
+        {
+            missingList.Add("锁定期");
+        }
+        if (ele.ManageFee?.Changes is null || ele.ManageFee.Changes.Count == 0)
+        {
+            missingList.Add("管理费");
+        }
+        if (ele.ManageFeePay?.Changes is null || ele.ManageFeePay.Changes.Count == 0)
+        {
+            missingList.Add("管理费支付方式");
+        }
+        if (ele.SubscriptionRule?.Changes is null || ele.SubscriptionRule.Changes.Count == 0)
+        {
+            missingList.Add("认购规则");
+        }
+        if (ele.PurchasRule?.Changes is null || ele.PurchasRule.Changes.Count == 0)
+        {
+            missingList.Add("申购规则");
+        }
+        if (ele.RedemptionFee?.Changes is null || ele.RedemptionFee.Changes.Count == 0)
+        {
+            missingList.Add("赎回费");
+        }
+        if (ele.PerformanceFeeStatement?.Changes is null || ele.PerformanceFeeStatement.Changes.Count == 0)
+        {
+            missingList.Add("业绩报酬说明");
+        }
+
+        if (missingList.Count > 0)
+        {
+            TodoService.Register(new FundElementFillTodo
+            {
+                FundId = ele.Id,
+                FundName = ele.FullName?.Value ?? string.Empty,
+                FundCode = string.Empty,
+                Missing = missingList
+            });
+        }
     }
 
 #pragma warning restore CS9264 // 退出构造函数时，不可为 null 的属性必须包含非 null 值。请考虑添加 ‘required’ 修饰符，或将属性声明为可为 null，或添加 ‘[field: MaybeNull, AllowNull]’ 特性。
@@ -766,7 +930,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     [RelayCommand]
     public async Task<bool> SyncRegisterLeterFromAmac()
     {
-        if(string.IsNullOrWhiteSpace(FundCode))
+        if (string.IsNullOrWhiteSpace(FundCode))
         {
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "没有备案号，无法更新"));
             return false;

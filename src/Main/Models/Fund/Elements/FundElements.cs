@@ -90,10 +90,14 @@ public class FundElements
     /// </summary>
     public Mutable<string> OpenDayInfo { get; set; } = new(nameof(OpenDayInfo));
 
-
+    /// <summary>
+    /// 开放日
+    /// </summary>
     public Mutable<OpenRule> FundOpenRule { get; set; } = new(nameof(FundOpenRule));
 
-
+    /// <summary>
+    /// 托管机构
+    /// </summary>
     public Mutable<AgencyInfo> TrusteeInfo { get; set; } = new(nameof(TrusteeInfo));
 
     /// <summary>
@@ -101,6 +105,9 @@ public class FundElements
     /// </summary> 
     public Mutable<FundFeeInfo> TrusteeFee { get; set; } = new(nameof(TrusteeFee));
 
+    /// <summary>
+    /// 外包机构
+    /// </summary>
     public Mutable<AgencyInfo> OutsourcingInfo { get; set; } = new(nameof(OutsourcingInfo));
 
     /// <summary>
@@ -108,7 +115,9 @@ public class FundElements
     /// </summary>
     public Mutable<FundFeeInfo> OutsourcingFee { get; set; } = new(nameof(OutsourcingFee));
 
-
+    /// <summary>
+    /// 基金经理
+    /// </summary>
     public Mutable<FundInvestmentManager[]> InvestmentManagers { get; set; } = new(nameof(InvestmentManagers));
 
 
@@ -134,19 +143,29 @@ public class FundElements
     /// </summary>
     public Mutable<string> InvestmentStrategy { get; set; } = new(nameof(InvestmentStrategy));
 
-
+    /// <summary>
+    /// 临时开放
+    /// </summary>
     public Mutable<TemporarilyOpenInfo> TemporarilyOpenInfo { get; set; } = new(nameof(TemporarilyOpenInfo));
 
-
+    /// <summary>
+    /// 巨额赎回
+    /// </summary>
     public Mutable<decimal> HugeRedemptionRatio { get; set; } = new(nameof(HugeRedemptionRatio));
 
-
+    /// <summary>
+    /// 冷静期
+    /// </summary>
     public Mutable<CoolingPeriodInfo> CoolingPeriod { get; set; } = new(nameof(CoolingPeriod));
 
-
+    /// <summary>
+    /// 回访
+    /// </summary>
     public Mutable<CallbackInfo> Callback { get; set; } = new(nameof(Callback));
 
-
+    /// <summary>
+    /// 锁定期
+    /// </summary>
     public PortionMutable<ValueWithEnum<SealingType, int>> LockingRule { get; set; } = new(nameof(LockingRule));
 
 
@@ -159,20 +178,15 @@ public class FundElements
     public Mutable<FeePayInfo> ManageFeePay { get; set; } = new(nameof(ManageFeePay));
 
     /// <summary>
-    /// 认购费
-    /// </summary>
-    //public PortionMutable<FundFeeInfo> SubscriptionFee { get; set; } = new(nameof(SubscriptionFee));
-
-
+    /// 认购规则
+    /// </summary> 
     public PortionMutable<FundPurchaseRule> SubscriptionRule { get; set; } = new(nameof(SubscriptionRule));
 
 
 
     /// <summary>
-    /// 申购费
-    /// </summary>
-    //public PortionMutable<FundFeeInfo> PurchaseFee { get; set; } = new(nameof(PurchaseFee));
-
+    /// 申购规则
+    /// </summary> 
     public PortionMutable<FundPurchaseRule> PurchasRule { get; set; } = new(nameof(PurchasRule));
 
     /// <summary>

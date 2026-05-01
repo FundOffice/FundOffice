@@ -26,7 +26,7 @@ public class Mutable<T> where T : notnull
 
 
 
-    public SortedDictionary<int, T> Changes { get; set; } = new();
+    public SortedDictionary<int, T> Changes { get; internal set; } = new();
 
     public T Value => Changes.LastOrDefault().Value;
 

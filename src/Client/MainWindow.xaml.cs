@@ -171,7 +171,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
 
         var all = TodoService.GetAll();
         if (all is not null)
-            TodoCollection = [.. all.Select(x => TodoViewModelFactory.Create(x)).Where(x => x is not null).Select(x => x!)];
+            TodoCollection = [.. all.Union(Enumerable.Range(0,1).Select(x=>new HugeRedemptionTodo { FundCode = "f", FundName ="ff", OpenDay = new DateOnly(2,3,4)})).Select(x => TodoViewModelFactory.Create(x)).Where(x => x is not null).Select(x => x!)];
 
 
 #if DEBUG
@@ -469,13 +469,16 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
     {
         if (e.Key != Key.F3) return;
 
-        using var db = DbHelper.Base();
-        var fund = db.GetCollection<Fund>().FindOne(x => x.Name.Contains("5") && x.Status == FundStatus.Normal);
-        var req = db.GetCollection<TransferRequest>().FindOne(x => x.FundId == fund.Id && x.RequestType == TransferRequestType.Redemption);
-        req.RequestDate = new DateOnly(2026, 4, 1);
-        req.RequestAmount = 1000000;
+        //using var db = DbHelper.Base();
+        //var fund = db.GetCollection<Fund>().FindOne(x => x.Name.Contains("5") && x.Status == FundStatus.Normal);
+        //var req = db.GetCollection<TransferRequest>().FindOne(x => x.FundId == fund.Id && x.RequestType == TransferRequestType.Redemption);
+        //req.RequestDate = new DateOnly(2026, 4, 1);
+        //req.RequestAmount = 1000000;
 
-        TodoService.AutoHugeRedemption([req]);
+        //TodoService.AutoHugeRedemption([req]);
+
+        TodoCollection.Add(new HugeRedemptionTodoViewModel() );
+    
     }
 #endif
 

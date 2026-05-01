@@ -49,3 +49,11 @@ public partial class HugeRedemptionTodoViewModel : TodoViewModel
         // 生成赎回公告的逻辑
     }
 }
+
+
+
+[AutoViewModel(typeof(FundElementFillTodo))]
+public partial class FundElementFillTodoViewModel : TodoViewModel
+{
+    // 这里可以添加特定于 FundFundElementFillTodo 的属性和方法
+}

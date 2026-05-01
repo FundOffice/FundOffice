@@ -27,4 +27,37 @@
         </StackPanel>
     </DataTemplate>
 
+
+
+
+
+    <DataTemplate DataType="{x:Type local:FundElementFillTodoViewModel}">
+        <StackPanel>
+            <TextBlock>
+                <Run Text="{Binding FundCode}" />
+                <Run Text="{Binding FundName}" />
+                <Run Foreground="Red" Text="要素缺失" />
+            </TextBlock>
+
+            <Separator />
+
+            <ListBox
+                BorderThickness="0"
+                ItemsSource="{Binding Missing}"
+                Style="{StaticResource ListBoxCustom}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Margin="4,1" Text="{Binding}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+        </StackPanel>
+    </DataTemplate>
+
 </ResourceDictionary>

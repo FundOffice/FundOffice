@@ -328,8 +328,9 @@
                 PopupAnimation="Slide"
                 StaysOpen="False">
                 <Border
-                    Width="300"
+                    Width="Auto"
                     Height="Auto"
+                    MaxHeight="{Binding RelativeSource={RelativeSource AncestorType=hc:SimplePanel}, Path=ActualHeight}"
                     Margin="5,0,0,10"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Bottom"
@@ -340,7 +341,13 @@
                     <ListBox
                         BorderThickness="0"
                         ItemsSource="{Binding TodoCollection}"
+                        ScrollViewer.VerticalScrollBarVisibility="Disabled"
                         Style="{StaticResource ListBoxCustom}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <local:BottomUpPanel IsItemsHost="True" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="ListBoxItem">
                                 <Setter Property="Template">
