@@ -280,48 +280,50 @@ public class QuarterlyUpdateChannel : IDisclosureChannel
         await page.WaitForSelectorAsync("tbody tr.ng-scope", new() { Timeout = 5000 });
         var firstRow = page.Locator("tbody tr.ng-scope").Nth(0);
         var cells = await firstRow.Locator("td").AllAsync();
-        var report = new PrivateFundQuarterReport();
 
-        // 1. 序号
-        report.SerialNumber = int.TryParse(await cells[0].TextContentAsync(), out int sn) ? sn : 0;
-        // 2. 产品名称
-        report.ProductName = (await cells[1].TextContentAsync())?.Trim() ?? string.Empty;
-        // 3. 产品编码
-        report.ProductCode = (await cells[2].TextContentAsync())?.Trim() ?? string.Empty;
-
-        // 4. 投资者信息更新：状态(bool) + 链接
         var investorCell = cells[3];
         var investorLink = investorCell.Locator("a");
-        report.InvestorUpdateUrl = await investorLink.GetAttributeAsync("href") ?? string.Empty;
-        var investorText = await investorLink.TextContentAsync() ?? string.Empty;
-        report.IsInvestorFilled = investorText.Contains("已填报");
-
-        // 5. 运行信息更新：状态(bool) + 链接
-        var operationCell = cells[4];
-        var operationLink = operationCell.Locator("a");
-        report.OperationUpdateUrl = await operationLink.GetAttributeAsync("href") ?? string.Empty;
-        var operationText = await operationLink.TextContentAsync() ?? string.Empty;
-        report.IsOperationFilled = operationText.Contains("已填报");
-
-        // 6. 报告基准日
-        report.ReportBaseDate = (await cells[5].TextContentAsync())?.Trim() ?? string.Empty;
-        // 7. 报送截止日
-        report.ReportDeadline = DateTime.TryParse(await cells[6].TextContentAsync(), out DateTime deadline)
-            ? deadline
-            : DateTime.MinValue;
-        // 8. 提交次数
-        report.SubmitCount = int.TryParse(await cells[7].TextContentAsync(), out int count) ? count : 0;
-        // 9. 倒计时
-        report.CountdownDays = (await cells[8].TextContentAsync())?.Trim() ?? string.Empty;
-        // 10. 填报日期
-        report.FillDate = (await cells[9].TextContentAsync())?.Trim() ?? string.Empty;
-        // 11. 提交状态
-        report.IsSubmited = (await cells[10].TextContentAsync())?.Trim() switch { "已提交" => true, _ => false };
-        // 12. 操作按钮
         var operationBtn = cells[11].Locator("a");
-        report.OperationText = await operationBtn.CountAsync() > 0
+        var investorText = await investorLink.TextContentAsync() ?? string.Empty; var operationCell = cells[4];
+        var operationLink = operationCell.Locator("a");
+        var operationText = await operationLink.TextContentAsync() ?? string.Empty;
+        var report = new PrivateFundQuarterReport
+        {
+            // 1. 序号
+            SerialNumber = int.TryParse(await cells[0].TextContentAsync(), out int sn) ? sn : 0,
+            // 2. 产品名称
+            ProductName = (await cells[1].TextContentAsync())?.Trim() ?? string.Empty,
+            // 3. 产品编码
+            ProductCode = (await cells[2].TextContentAsync())?.Trim() ?? string.Empty,
+
+            // 4. 投资者信息更新：状态(bool) + 链接
+            InvestorUpdateUrl = await investorLink.GetAttributeAsync("href") ?? string.Empty,
+            IsInvestorFilled = investorText.Contains("已填报"),
+
+            // 5. 运行信息更新：状态(bool) + 链接
+
+            OperationUpdateUrl = await operationLink.GetAttributeAsync("href") ?? string.Empty,
+            IsOperationFilled = operationText.Contains("已填报"),
+
+            // 6. 报告基准日
+            ReportBaseDate = (await cells[5].TextContentAsync())?.Trim() ?? string.Empty,
+            // 7. 报送截止日
+            ReportDeadline = DateTime.TryParse(await cells[6].TextContentAsync(), out DateTime deadline)
+            ? deadline
+            : DateTime.MinValue,
+            // 8. 提交次数
+            SubmitCount = int.TryParse(await cells[7].TextContentAsync(), out int count) ? count : 0,
+            // 9. 倒计时
+            CountdownDays = (await cells[8].TextContentAsync())?.Trim() ?? string.Empty,
+            // 10. 填报日期
+            FillDate = (await cells[9].TextContentAsync())?.Trim() ?? string.Empty,
+            // 11. 提交状态
+            IsSubmited = (await cells[10].TextContentAsync())?.Trim() switch { "已提交" => true, _ => false },
+            // 12. 操作按钮
+            OperationText = await operationBtn.CountAsync() > 0
             ? (await operationBtn.TextContentAsync())?.Trim() ?? string.Empty
-            : string.Empty;
+            : string.Empty,
+        };
 
         return report;
     }
