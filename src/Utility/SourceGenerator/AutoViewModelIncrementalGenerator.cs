@@ -60,20 +60,59 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
 
         // 2️⃣ VM 继承链属性
         var existingInHierarchy = new HashSet<string>(StringComparer.Ordinal);
-        var currentType = targetClass;
-        while (currentType != null && currentType.SpecialType != SpecialType.System_Object)
+        INamedTypeSymbol? current = targetClass.BaseType;
+
+        while (current != null && current.SpecialType != SpecialType.System_Object)
         {
-            foreach (var member in currentType.GetMembers())
+            // 1. 收集当前 VM 类自身的公共属性
+            logs.Add($"🔍 遍历VM类型：{current.Name}");
+            foreach (var member in current.GetMembers())
+            {
                 if (member is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public)
+                {
                     existingInHierarchy.Add(p.Name);
-            currentType = currentType.BaseType;
+                    logs.Add($"✅ 已包含VM属性：{p.Name}");
+                }
+            }
+
+            // 2. 查找当前类是否是 AutoVM 并收集【源模型(Source)】的属性
+            var autoAttr = current.GetAttributes().FirstOrDefault(a =>
+                a.AttributeClass?.ToDisplayString() == AttributeMetadataName);
+
+            if (autoAttr != null)
+            {
+                logs.Add($"ℹ️ 类型 {current.Name} 是 AutoVM，开始收集源模型属性");
+                var srcType = autoAttr.ConstructorArguments.FirstOrDefault().Value as INamedTypeSymbol;
+
+                if (srcType != null)
+                {
+                    logs.Add($"🔍 遍历源模型：{srcType.Name}");
+                    foreach (var sourceMember in srcType.GetMembers())
+                    {
+                        if (sourceMember is IPropertySymbol sp && sp.DeclaredAccessibility == Accessibility.Public)
+                        {
+                            existingInHierarchy.Add(sp.Name);
+                            logs.Add($"✅ 已包含源模型属性：{sp.Name}");
+                        }
+                    }
+                }
+                else
+                {
+                    logs.Add($"❌ 源模型类型为 null");
+                }
+            }
+
+            // 继续往上遍历父类
+            current = current.BaseType;
         }
+
+        logs.Add($"📊 最终已存在属性总数：{existingInHierarchy.Count}\n");
 
         // 3️⃣ 收集源属性 + 嵌套检查
         var propertiesToGenerate = new List<PropertyInfo>();
         var propertiesToAssignOnly = new List<PropertyInfo>();
 
-        currentType = sourceType;
+        var currentType = sourceType;
         while (currentType != null && currentType.SpecialType != SpecialType.System_Object)
         {
             foreach (var member in currentType.GetMembers())
@@ -131,26 +170,63 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
             return null;
 
         //bool needsINPC = !targetClass.AllInterfaces.Any(i => i.Name == "INotifyPropertyChanged");
-        bool needsINPC = !targetClass.AllInterfaces.Any(i => i.ToDisplayString() == "System.ComponentModel.INotifyPropertyChanged");
+        bool needsINPC = true, hasAutoBase = false;
+        var baseType = targetClass.BaseType;
+
+        // 遍历基类链
+        while (baseType != null && baseType.SpecialType != SpecialType.System_Object)
+        {
+            // 检查基类是否标记了 AutoViewModelAttribute
+            if (baseType.GetAttributes().Any(attr =>
+                attr.AttributeClass?.ToDisplayString() == AttributeMetadataName))
+            {
+                // 父类已经是 AutoViewModel → 不需要生成 INPC
+                needsINPC = false;
+                hasAutoBase = true;
+                break;
+            }
+            else if(baseType.Name.Contains("ObservableObject"))
+            {
+                needsINPC = false;
+                hasAutoBase = false;
+                break;
+            }
+            baseType = baseType.BaseType;
+        }
+
+        logs.Add($"最终 needsINPC = {needsINPC} | 类名：{targetClass.Name}");
+
 
         return new GenerationModel(className, ns, sourceTypeName,
-            propertiesToGenerate, propertiesToAssignOnly, needsINPC, logs);
+            propertiesToGenerate, propertiesToAssignOnly, needsINPC, hasAutoBase, logs);
     }
 
     private static string GenerateSource(GenerationModel model)
     {
         // 🔹 生成调试注释头
+#if DEBUG
         var debugHeader = string.Join("\n",
-            new[] { "// 🔍 ===== AutoViewModel Debug Info =====" }
-            .Concat(model.DebugLogs.Select(l => $"// {l}"))
-            .Concat(new[] { "// =====================================\n" }));
+    new[] { "// 🔍 ===== AutoViewModel Debug Info =====" }
+    .Concat(model.DebugLogs.Select(l => $"// {l}"))
+    .Concat(new[] { "// =====================================\n" }));
+#else
+        var debugHeader = "";
+#endif
 
         var inpcBlock = model.NeedsINPC ? """
-                public event PropertyChangedEventHandler? PropertyChanged;
-                protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    public event PropertyChangedEventHandler? PropertyChanged;
+    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-        """ : "";
+    public void SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (!global::System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
+        {
+            field = value;
+            OnPropertyChanged(propertyName);
+        }
+    }
+""" : "";
 
         // 🔹 构造函数中的赋值语句
         var ctorAssignments = GenerateAssignments(model.PropertiesToGenerate, model.PropertiesToAssignOnly, "val");
@@ -165,7 +241,7 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
 
             return $$"""
         //private {{typeName}} {{backingField}};
-        public {{typeName}} {{prop.Name}} { get => field; set => SetPropertyValue(ref field, value); }
+        public {{typeName}} {{prop.Name}} { get => field; set => SetProperty(ref field, value); }
   
 """;
         }));
@@ -180,6 +256,7 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
         var namespaceOpen = !string.IsNullOrEmpty(model.Namespace) ? $"namespace {model.Namespace}\n{{" : "";
         var namespaceClose = !string.IsNullOrEmpty(model.Namespace) ? "}" : "";
         var inpcInheritance = model.NeedsINPC ? " : INotifyPropertyChanged" : "";
+        var overnew = model.HasAutoBase ? "new" : "";
 
         return $$"""
 #nullable enable
@@ -200,14 +277,6 @@ using System.Runtime.CompilerServices;
                 FillBy(val);
         }
 
-        public void SetPropertyValue<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (!global::System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
-            {
-                field = value;
-                OnPropertyChanged(propertyName);
-            }
-        }
 
         public {{model.ClassName}} FillBy({{model.SourceTypeName}}? obj)
         {
@@ -218,7 +287,7 @@ using System.Runtime.CompilerServices;
               return this;
         }
 
-        public {{model.SourceTypeName}} Build()
+        public {{overnew}} {{model.SourceTypeName}} Build()
         {
             var result = new {{model.SourceTypeName}}
              {
@@ -314,7 +383,7 @@ using System.Runtime.CompilerServices;
         public List<PropertyInfo> PropertiesToGenerate { get; }      // 需生成 property
         public List<PropertyInfo> PropertiesToAssignOnly { get; }    // 只需赋值
         public bool NeedsINPC { get; }
-
+        public bool HasAutoBase { get; }
         public List<string> DebugLogs { get; }
 
         public GenerationModel(
@@ -324,6 +393,7 @@ using System.Runtime.CompilerServices;
             List<PropertyInfo> propertiesToGenerate,
             List<PropertyInfo> propertiesToAssignOnly,
             bool needsINPC,
+            bool hasAutoBase,
             List<string> logs)
         {
             ClassName = className;
@@ -332,6 +402,7 @@ using System.Runtime.CompilerServices;
             PropertiesToGenerate = propertiesToGenerate;
             PropertiesToAssignOnly = propertiesToAssignOnly;
             NeedsINPC = needsINPC;
+            HasAutoBase = hasAutoBase;
             DebugLogs = logs;
         }
     }
