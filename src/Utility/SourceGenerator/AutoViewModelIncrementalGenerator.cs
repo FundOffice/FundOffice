@@ -164,18 +164,8 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
 
             return $$"""
         //private {{typeName}} {{backingField}};
-        public {{typeName}} {{prop.Name}}
-        {
-            get => field;
-            set
-            {
-                if (!global::System.Collections.Generic.EqualityComparer<{{typeName}}>.Default.Equals(field, value))
-                {
-                    field = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        public {{typeName}} {{prop.Name}} { get => field; set => SetPropertyValue(ref field, value); }
+  
 """;
         }));
 
@@ -207,6 +197,15 @@ using System.Runtime.CompilerServices;
         {
              if(val is not null)
                 FillBy(val);
+        }
+
+        public void SetPropertyValue<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (!global::System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
+            {
+                field = value;
+                OnPropertyChanged(propertyName);
+            }
         }
 
         public void FillBy({{model.SourceTypeName}}? obj)
