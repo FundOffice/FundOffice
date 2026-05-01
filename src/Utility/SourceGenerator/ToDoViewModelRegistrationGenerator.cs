@@ -8,21 +8,23 @@ using System.Text;
 
 namespace SourceGenerator;
 
-
 [Generator]
 public sealed class TodoViewModelRegistrationGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // 筛选：类 + 分部类 + 有AutoViewModel特性 + 继承TodoViewModel
+        // 1. 筛选目标 ViewModel
         var viewModelTypes = context.SyntaxProvider
             .CreateSyntaxProvider(
                 predicate: static (node, _) => IsTargetViewModel(node),
                 transform: static (ctx, _) => GetViewModelSymbol(ctx))
             .Where(static m => m is not null);
 
-        // 生成代码
-        context.RegisterSourceOutput(viewModelTypes, Execute);
+        // 2. 把所有结果收集成一个集合 ✅ 关键修复
+        var viewModelCollection = viewModelTypes.Collect();
+
+        // 3. 注册输出（只执行一次）✅ 关键修复
+        context.RegisterSourceOutput(viewModelCollection, (spc, vm) => Execute(spc, vm.ToArray()));
     }
 
     /// <summary>
@@ -36,7 +38,7 @@ public sealed class TodoViewModelRegistrationGenerator : IIncrementalGenerator
                    b => b.Type.ToString().Contains("TodoViewModel")) == true;
     }
 
-    /// <summary>
+    /// <summary
     /// 获取ViewModel符号和特性信息
     /// </summary>
     private static ViewModelInfo? GetViewModelSymbol(GeneratorSyntaxContext context)
@@ -61,22 +63,22 @@ public sealed class TodoViewModelRegistrationGenerator : IIncrementalGenerator
     }
 
     /// <summary>
-    /// 生成最终注册代码
+    /// 生成最终注册代码 ✅ 修复：参数变成数组
     /// </summary>
-    private void Execute(SourceProductionContext context, ViewModelInfo? viewModel)
+    private void Execute(SourceProductionContext context, ViewModelInfo?[] viewModels)
     {
-        if (viewModel == null) return;
+        // 过滤空值
+        var validViewModels = viewModels.Where(vm => vm != null).ToList()!;
+        if (validViewModels.Count == 0) return;
 
-        // 收集所有符合条件的ViewModel
-        var viewModels = new List<ViewModelInfo>();
-        if (viewModel != null) viewModels.Add(viewModel);
+        // 生成一次代码
+        var code = GenerateRegisterCode(validViewModels);
 
-        // 构建代码
-        var code = GenerateRegisterCode(viewModels);
-
-        // 添加到编译中
-        context.AddSource("TodoViewModelFactory.AutoRegister.g.cs",
-            SourceText.From(code, Encoding.UTF8));
+        // 唯一文件名，只添加一次 ✅ 修复
+        context.AddSource(
+            "TodoViewModelFactory.AutoRegister.g.cs",
+            SourceText.From(code, Encoding.UTF8)
+        );
     }
 
     /// <summary>
@@ -87,7 +89,6 @@ public sealed class TodoViewModelRegistrationGenerator : IIncrementalGenerator
         var registerLines = new StringBuilder();
         foreach (var vm in viewModels)
         {
-            // 生成：Register<HugeRedemptionTodo>(() => new HugeRedemptionTodoViewModel());
             registerLines.AppendLine(
                 $"            Register<{vm.ModelFullName}>(() => new {vm.ViewModelFullName}());");
             registerLines.AppendLine(
