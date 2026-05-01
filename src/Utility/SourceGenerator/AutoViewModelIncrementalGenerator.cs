@@ -130,14 +130,15 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
         if (propertiesToGenerate.Count == 0 && propertiesToAssignOnly.Count == 0)
             return null;
 
-        bool needsINPC = !targetClass.AllInterfaces.Any(i => i.Name == "INotifyPropertyChanged");
+        //bool needsINPC = !targetClass.AllInterfaces.Any(i => i.Name == "INotifyPropertyChanged");
+        bool needsINPC = !targetClass.AllInterfaces.Any(i => i.ToDisplayString() == "System.ComponentModel.INotifyPropertyChanged");
 
         return new GenerationModel(className, ns, sourceTypeName,
             propertiesToGenerate, propertiesToAssignOnly, needsINPC, logs);
     }
 
     private static string GenerateSource(GenerationModel model)
-    {    
+    {
         // 🔹 生成调试注释头
         var debugHeader = string.Join("\n",
             new[] { "// 🔍 ===== AutoViewModel Debug Info =====" }
@@ -208,12 +209,13 @@ using System.Runtime.CompilerServices;
             }
         }
 
-        public void FillBy({{model.SourceTypeName}}? obj)
+        public {{model.ClassName}} FillBy({{model.SourceTypeName}}? obj)
         {
              if(obj is {{model.SourceTypeName}} val)
               {
 {{fillAssignments}}
               }
+              return this;
         }
 
         public {{model.SourceTypeName}} Build()
@@ -313,7 +315,7 @@ using System.Runtime.CompilerServices;
         public List<PropertyInfo> PropertiesToAssignOnly { get; }    // 只需赋值
         public bool NeedsINPC { get; }
 
-        public List<string> DebugLogs { get; }  
+        public List<string> DebugLogs { get; }
 
         public GenerationModel(
             string className,
