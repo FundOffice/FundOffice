@@ -361,35 +361,44 @@
                                                 CornerRadius="3">
                                                 <hc:SimplePanel>
                                                     <ContentPresenter MinHeight="30" Margin="5" />
-                                                    <DockPanel
+                                                    <hc:SimplePanel
                                                         x:Name="ign"
+                                                        Margin="-2"
                                                         HorizontalAlignment="Right"
                                                         VerticalAlignment="Top"
-                                                        LastChildFill="False"
                                                         Visibility="Collapsed">
-                                                        <ToggleButton
-                                                            x:Name="a"
-                                                            Content="忽略"
-                                                            Style="{StaticResource ToggleButtonDanger.Small}"
-                                                            Visibility="{Binding IsChecked, RelativeSource={RelativeSource Self}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                                        <DockPanel x:Name="b" Visibility="{Binding ElementName=a, Path=IsChecked, Converter={StaticResource Boolean2VisibilityConverter}}">
-                                                            <Button
-                                                                Width="18"
-                                                                Margin="0"
-                                                                Padding="0"
-                                                                hc:IconElement.Geometry="{StaticResource f.check}"
-                                                                Command="{Binding IgnoreCommand}"
-                                                                Foreground="Red"
-                                                                Style="{StaticResource ButtonIcon.Small}" />
+                                                        <DockPanel LastChildFill="False" Visibility="{Binding JustNotify, Converter={StaticResource Boolean2VisibilityReConverter}}">
                                                             <ToggleButton
-                                                                x:Name="c"
-                                                                hc:IconElement.Geometry="{StaticResource f.x}"
-                                                                Background="Transparent"
-                                                                BorderThickness="0"
-                                                                Style="{StaticResource ToggleButtonIcon.Small}" />
+                                                                x:Name="a"
+                                                                Content="忽略"
+                                                                Style="{StaticResource ToggleButtonDanger.Small}"
+                                                                Visibility="{Binding IsChecked, RelativeSource={RelativeSource Self}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                                                            <DockPanel x:Name="b" Visibility="{Binding ElementName=a, Path=IsChecked, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                                                <Button
+                                                                    Width="18"
+                                                                    Margin="0"
+                                                                    Padding="0"
+                                                                    hc:IconElement.Geometry="{StaticResource f.check}"
+                                                                    Command="{Binding IgnoreCommand}"
+                                                                    Foreground="Red"
+                                                                    Style="{StaticResource ButtonIcon.Small}" />
+                                                                <ToggleButton
+                                                                    x:Name="c"
+                                                                    hc:IconElement.Geometry="{StaticResource f.x}"
+                                                                    Background="Transparent"
+                                                                    BorderThickness="0"
+                                                                    Style="{StaticResource ToggleButtonIcon.Small}" />
+                                                            </DockPanel>
                                                         </DockPanel>
-                                                    </DockPanel>
+                                                        <DockPanel LastChildFill="False" Visibility="{Binding JustNotify, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                                            <Button
+                                                                Command="{Binding FinishCommand}"
+                                                                Content="我已知晓"
+                                                                Style="{StaticResource ButtonPrimary.Small}" />
+                                                        </DockPanel>
+                                                    </hc:SimplePanel>
+
                                                 </hc:SimplePanel>
                                             </Border>
                                             <ControlTemplate.Triggers>

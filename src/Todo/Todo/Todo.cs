@@ -9,6 +9,8 @@ public class Todo
     /// </summary>
     public virtual string? UniqueId { get;  }
 
+    public virtual bool JustNotify => false;
+
 
     public DateTime CreateTime { get;  init; }
 

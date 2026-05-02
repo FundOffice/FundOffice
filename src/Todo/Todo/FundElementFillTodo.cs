@@ -6,11 +6,13 @@
 public class FundElementFillTodo : Todo
 {
     public int FundId { get; init; }
-    
+
     public override string? UniqueId => $"{nameof(FundElementFillTodo)}_{FundId}";
-    
+
+    public override bool JustNotify => true;
+
     public required string FundName { get; init; }
- 
+
     public required string FundCode { get; init; }
     public List<string>? Missing { get; set; }
 }
