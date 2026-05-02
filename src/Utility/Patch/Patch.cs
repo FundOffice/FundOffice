@@ -54,7 +54,15 @@ public static partial class DatabaseAssist
         [120] = MoveDisclosureModels,
         [121] = MoveAmacDirectAcc,
         [122] = RebuildNotice,
+        [124] = RemoveFillFundDailyMission
     };
+
+    private static void RemoveFillFundDailyMission(BaseDatabase db2)
+    {
+        using var db = DbHelper.Mission();
+        var al = db.GetCollection("Mission").FindAll().ToArray();
+        int deleted = db.GetCollection("Mission").DeleteMany("$._type LIKE '%FillFundDailyMission%'");
+    }
 
     private static void RebuildNotice(BaseDatabase db)
     {

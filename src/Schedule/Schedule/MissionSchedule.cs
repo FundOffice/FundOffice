@@ -33,6 +33,7 @@ public static class MissionSchedule
             try
             {
                 var mission = BsonMapper.Global.ToObject<Mission>(x);
+                //if(mission is FillFundDailyMission) return null;
                 mission.Init();
                 return mission;
             }
