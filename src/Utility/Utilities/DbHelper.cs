@@ -84,6 +84,8 @@ public static class DbHelper
 
     private const string _dbfolder = "data";
 
+    private readonly static string _exeFolder;
+
 
     static DbHelper()
     {
@@ -98,6 +100,8 @@ public static class DbHelper
             byte[] hashBytes = sha256.ComputeHash(bytes);
             _password = Convert.ToHexString(hashBytes).ToLowerInvariant();
         }
+
+        _exeFolder = AppDomain.CurrentDomain.BaseDirectory;
     }
 
 
@@ -112,6 +116,8 @@ public static class DbHelper
 
     public static LiteDatabase Mission() => new LiteDatabase(@$"FileName={_dbfolder}\mission.db;Password=891uiu89f41uf9dij432u89;Connection=Shared");
 
+
+    public static LiteDatabase Setting() => new LiteDatabase(@$"FileName={_exeFolder}\setting.db;Password={_password};Connection=Shared");
 
 
     public static string[] ListAllFileId()
@@ -185,3 +191,8 @@ public static class DbHelper
 
 }
  
+
+public static class Settings
+{
+
+}

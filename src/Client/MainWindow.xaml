@@ -422,7 +422,7 @@
 
 
 
-        <DockPanel Grid.Row="2">
+        <DockPanel Grid.Row="2" LastChildFill="False">
             <Button
                 Margin="0,15"
                 Command="{Binding OpenTodoCommand}"
@@ -452,6 +452,7 @@
                 HorizontalAlignment="Stretch"
                 Panel.ZIndex="99"
                 BorderBrush="Transparent"
+                DockPanel.Dock="Top"
                 ItemsSource="{Binding MenuItems}"
                 Style="{StaticResource ListBoxCustom}">
                 <ListBox.ItemTemplate>
@@ -486,6 +487,29 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+
+            <Button
+                Height="auto"
+                Margin="0,10"
+                HorizontalAlignment="Center"
+                Command="{Binding OpenSettingCommand}"
+                DockPanel.Dock="Top"
+                Style="{StaticResource ButtonCustom}"
+                Visibility="Collapsed">
+                <DockPanel Margin="6,0">
+                    <TextBlock
+                        Margin="0,4,0,0"
+                        HorizontalAlignment="Center"
+                        DockPanel.Dock="Bottom"
+                        FontSize="11"
+                        Foreground="Black"
+                        Text="设置" />
+                    <Viewbox Width="26" Height="26">
+                        <Path Data="{StaticResource f.gear}" Fill="Black" />
+                    </Viewbox>
+                </DockPanel>
+            </Button>
+
         </DockPanel>
 
 

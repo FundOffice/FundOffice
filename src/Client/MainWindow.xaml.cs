@@ -465,6 +465,14 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
     }
 
 
+    [RelayCommand]
+    public void OpenSetting()
+    {
+        var wnd = new SettingsWindow();
+        wnd.Owner = Application.Current.MainWindow;
+        wnd.ShowDialog();
+    }
+
 #if DEBUG
     private void MakeDebugData(object sender, KeyEventArgs e)
     {
@@ -478,7 +486,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
 
         //TodoService.AutoHugeRedemption([req]);
 
-        TodoCollection?.Add(new HugeRedemptionTodoViewModel() );
+        TodoCollection?.Add(new HugeRedemptionTodoViewModel { OpenDay = DateOnly.FromDayNumber(Environment.TickCount%454)});
     
     }
 #endif
