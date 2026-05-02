@@ -2,10 +2,12 @@
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
+using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.Loader;
 using System.Windows;
+using System.Windows.Controls;
 
 
 namespace DatabaseViewer;
@@ -99,13 +101,118 @@ public partial class MainWindowViewModel : ObservableObject
         }
 
 
-        var types = AssemblyLoadContext.Default.Assemblies.Where(x => x.FullName!.Contains("FMO")).SelectMany(x => x.GetTypes());
+        var types = AssemblyLoadContext.Default.Assemblies.SelectMany(x => x.GetTypes());
 
         if (types.FirstOrDefault(x => x.Name == value) is Type type)
             Data = doc.Select(x => BsonMapper.Global.ToObject(type, x));
-        else Data = doc;
+        else Data = ToTable( doc).DefaultView;
 
     }
+
+    private DataTable ToTable(List<BsonDocument> docs)
+    {
+        var table = new DataTable();
+        if (docs == null || docs.Count == 0) return table;
+
+        // 1. 收集所有不重复的键
+        var allKeys = docs.SelectMany(d => d.Keys).Distinct().ToList();
+        var columnTypes = new Dictionary<string, Type>();
+
+        // 2. 安全类型推断
+        foreach (var key in allKeys)
+        {
+            Type? colType = null;
+            foreach (var doc in docs)
+            {
+                if (doc.TryGetValue(key, out var val) && !val.IsNull)
+                {
+                    Type currentType;
+
+                    // 🔑 关键修复：数组、文档或 RawValue 为空时，列类型直接定为 string
+                    if (val.IsArray || val.IsDocument || val.RawValue == null)
+                    {
+                        currentType = typeof(string);
+                    }
+                    else
+                    {
+                        currentType = val.RawValue.GetType();
+                        var underlying = Nullable.GetUnderlyingType(currentType) ?? currentType;
+
+                        // 过滤 LiteDB 专有类型（如 ObjectId）或集合类型，统一转 string
+                        if (underlying.Namespace?.StartsWith("LiteDB") == true ||
+                            underlying.Namespace?.StartsWith("System.Collections") == true)
+                        {
+                            currentType = typeof(string);
+                        }
+                        else
+                        {
+                            currentType = underlying;
+                        }
+                    }
+
+                    if (colType == null)
+                        colType = currentType;
+                    else if (colType != currentType)
+                    {
+                        colType = typeof(string); // 类型冲突直接降级为 string
+                        break;
+                    }
+                }
+            }
+            columnTypes[key] = colType ?? typeof(string);
+        }
+
+        // 3. 创建 DataTable 列
+        foreach (var kvp in columnTypes)
+            table.Columns.Add(kvp.Key, kvp.Value);
+
+        // 4. 安全填充数据行
+        foreach (var doc in docs)
+        {
+            var row = table.NewRow();
+            foreach (DataColumn col in table.Columns)
+            {
+                var key = col.ColumnName;
+                if (doc.TryGetValue(key, out var bsonVal) && !bsonVal.IsNull)
+                {
+                    try
+                    {
+                        if (bsonVal.IsArray || bsonVal.IsDocument)
+                        {
+                            // 此时该列类型必定是 string，安全赋值
+                            row[col] = bsonVal.ToString();
+                        }
+                        else
+                        {
+                            var raw = bsonVal.RawValue;
+                            if (raw != null)
+                            {
+                                if (col.DataType == typeof(string))
+                                    row[col] = raw.ToString();
+                                else if (col.DataType.IsInstanceOfType(raw))
+                                    row[col] = raw; // 类型完全匹配，直接赋值
+                                else
+                                    row[col] = Convert.ChangeType(raw, col.DataType);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // 兜底处理：转换失败时，若列为 string 则降级，否则填 DBNull 防崩溃
+                        row[col] = col.DataType == typeof(string) ? bsonVal.ToString() : DBNull.Value;
+                    }
+                }
+                else
+                {
+                    row[col] = DBNull.Value; // 缺失字段填 DBNull
+                }
+            }
+            table.Rows.Add(row);
+        }
+
+        return table;
+    }
+
 }
 
 
