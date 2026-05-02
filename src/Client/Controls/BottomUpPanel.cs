@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows;
+using System.Linq;
 using System.Windows.Controls;
 
 namespace FMO;
@@ -91,54 +92,38 @@ public class BottomUpPanel : Panel
 
         var columns = new List<Column>();
         var currentColumnItems = new List<ItemPosition>();
-        double currentY = availableHeight;
-        double height = 0;
-        int colIndex = 0;
+        double currentY = 0;        // 🟢 所有列都从顶部(0)开始
+        double maxHeight = 0;       // 🟢 记录所有列的最大高度
 
-        foreach (UIElement child in InternalChildren)
+        foreach (UIElement child in InternalChildren.OfType<UIElement>().Reverse())
         {
             double h = Math.Min(child.DesiredSize.Height, availableHeight);
             if (h <= 0) continue;
 
-            if (colIndex == 0) // 🟢 第一列：从下向上
+            // 🟢 统一从上往下的换列逻辑
+            if (currentY + h > availableHeight)
             {
-                if (currentY - h < 0)
-                {
-                    columns.Add(new Column(currentColumnItems, 0));
-                    currentColumnItems = new List<ItemPosition>();
-                    colIndex++;
-                    currentY = h;
-                    currentColumnItems.Add(new ItemPosition(child, 0, h));
-                }
-                else
-                {
-                    height += h;
-                    currentY -= h;
-                    currentColumnItems.Add(new ItemPosition(child, currentY, h));
-                }
+                // 记录当前列的实际高度，更新最大值
+                maxHeight = Math.Max(maxHeight, currentY);
+
+                columns.Add(new Column(currentColumnItems, 0));
+                currentColumnItems = new List<ItemPosition>();
+                currentY = 0; // 🟢 新列从顶部重新开始
             }
-            else // 🔵 后续列：从上向下（保持原逻辑）
-            {
-                if (currentY + h > availableHeight)
-                {
-                    columns.Add(new Column(currentColumnItems, 0));
-                    currentColumnItems = new List<ItemPosition>();
-                    colIndex++;
-                    currentY = h;
-                    currentColumnItems.Add(new ItemPosition(child, 0, h));
-                }
-                else
-                {
-                    currentColumnItems.Add(new ItemPosition(child, currentY, h));
-                    currentY += h;
-                }
-            }
+
+            // 添加元素到当前列（位置为 currentY，高度为 h）
+            currentColumnItems.Add(new ItemPosition(child, currentY, h));
+            currentY += h; // 🟢 向下累加
         }
 
+        // 🟢 处理最后一列
         if (currentColumnItems.Count > 0)
+        {
+            maxHeight = Math.Max(maxHeight, currentY);
             columns.Add(new Column(currentColumnItems, 0));
+        }
 
-        // 计算 X 坐标时使用 spacing 变量
+        // 计算 X 坐标（列水平排列）
         double x = 0;
         for (int i = 0; i < columns.Count; i++)
         {
@@ -147,7 +132,7 @@ public class BottomUpPanel : Panel
             x += fixedWidth;
         }
 
-        return new LayoutData(columns, x, height);
+        return new LayoutData(columns, x, maxHeight);
     }
 
     #region 内部数据结构
