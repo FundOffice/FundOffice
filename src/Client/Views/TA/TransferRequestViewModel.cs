@@ -80,8 +80,16 @@ partial class TransferRequestViewModel : ITransferViewModel, IHasOrderViewModel
     [RelayCommand]
     public void ViewOrder()
     {
+        using var db = DbHelper.Base();
+        var order = db.GetCollection<TransferOrder>().FindById(OrderId ?? 0);
+        if (order is null)
+        {
+            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"订单【{Id}】不存在"));
+            return;
+        }
+
         var wnd = new ModifyOrderWindow();
-        wnd.DataContext = new ModifyOrderWindowViewModel(OrderId!.Value);
+        wnd.DataContext = new ModifyOrderWindowViewModel(order);
         wnd.Owner = App.Current.MainWindow;
         wnd.ShowDialog();
     }

@@ -300,7 +300,7 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
             workbook.SaveAs(path);
 
             // 上传
-            
+
 
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(new FileInfo(path).Directory!.FullName) { UseShellExecute = true });
         }
@@ -317,7 +317,7 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
     {
         using var db = DbHelper.Base();
         var acc = db.GetCollection<AmacAccount>().FindById("xinpi");
-        var (s,e) = await PfidAssist.UpdateInvestorAccounts(acc);
+        var (s, e) = await PfidAssist.UpdateInvestorAccounts(acc);
         if (s)
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"同步完成：{e}"));
         else WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"同步失败：{e}"));
@@ -496,6 +496,7 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
         }
         catch (Exception e)
         {
+            LogEx.Error(e);
             return null;
         }
     }
@@ -739,7 +740,8 @@ public partial class InvestorReadOnlyViewModel : ObservableObject
         Name = investor.Name;
         Type = investor.Type;
 
-        Identity = investor.Identity;
+        if (investor.Identity is not null)
+            Identity = investor.Identity;
         Efficient = investor.Efficient;
 
         RiskEvaluation = investor.RiskEvaluation;

@@ -1,6 +1,5 @@
 ﻿using FMO.Disclosure;
 using FMO.Models;
-using FMO.Schedule;
 using FMO.Trustee;
 using LiteDB;
 using System.Diagnostics;
@@ -96,7 +95,7 @@ public static partial class DatabaseAssist
         var old = database.GetCollection<FundPeriodicReport>().FindAll().ToArray();
         var n = old.Select(x => new PeriodicalDisclosureNotice
         {
-            FundCode = x.FundCode,
+            FundCode = x.FundCode ?? "Unset",
             FundId = x.FundId,
             FundName = dic[x.FundId],
             Name = $"{dic[x.FundId]} {EnumDescriptionTypeConverter.GetEnumDescription(x.Type)} {x.PeriodEnd}",
@@ -120,7 +119,7 @@ public static partial class DatabaseAssist
         var old2 = database.GetCollection<FundQuarterlyUpdate>().FindAll().ToArray();
         var n2 = old2.Select(x => new QuarterlyUpdate
         {
-            FundCode = x.FundCode,
+            FundCode = x.FundCode ?? "Unset",
             FundId = x.FundId,
             FundName = dic[x.FundId],
             Name = $"{dic[x.FundId]} {EnumDescriptionTypeConverter.GetEnumDescription(x.Type)} {x.PeriodEnd}",
@@ -581,7 +580,7 @@ public static partial class DatabaseAssist
         void movemul(BsonDocument item, string key, string name)
         {
             if (item is null || !item.ContainsKey(key)) return;
-            item[key] = BsonMapper.Global.ToDocument(new MultiFile { Label = name, Files = [.. item[key]["Files"].AsArray.Select(x => FromStorate(x.AsDocument))] });
+            item[key] = BsonMapper.Global.ToDocument(new MultiFile { Label = name, Files = [.. item[key]["Files"].AsArray.Select(x => FromStorate(x.AsDocument)).Where(x => x is not null).Select(x => x!)] });
         }
 
         if (!db.CollectionExists(nameof(FundFlow) + "_bak"))
@@ -591,13 +590,15 @@ public static partial class DatabaseAssist
 
         foreach (var item in list)
         {
+            if (item is null) continue;
+
             var type = Regex.Match(item["_type"].AsString, @"\.(\w+),").Groups[1].Value;
 
             switch (type)
             {
                 case nameof(InitiateFlow):
-                    item[nameof(InitiateFlow.ElementFiles)] = BsonMapper.Global.ToDocument(new MultiFile { Label = "基金要素", Files = [.. item[nameof(InitiateFlow.ElementFiles)]["Files"].AsArray.Select(x => FromStorate(x.AsDocument))] });
-                    item[nameof(InitiateFlow.ContractFiles)] = BsonMapper.Global.ToDocument(new MultiFile { Label = "基金合同", Files = [.. item[nameof(InitiateFlow.ContractFiles)]["Files"].AsArray.Select(x => FromStorate(x.AsDocument))] });
+                    item[nameof(InitiateFlow.ElementFiles)] = BsonMapper.Global.ToDocument(new MultiFile { Label = "基金要素", Files = [.. item[nameof(InitiateFlow.ElementFiles)]["Files"].AsArray.Select(x => FromStorate(x.AsDocument)).OfType<FileMeta>()] });
+                    item[nameof(InitiateFlow.ContractFiles)] = BsonMapper.Global.ToDocument(new MultiFile { Label = "基金合同", Files = [.. item[nameof(InitiateFlow.ContractFiles)]["Files"].AsArray.Select(x => FromStorate(x.AsDocument)).OfType<FileMeta>()] });
                     break;
 
 
@@ -619,7 +620,7 @@ public static partial class DatabaseAssist
                     single2dual(item, nameof(ContractModifyFlow.RegistrationLetter), "备案函");
                     single2dual(item, nameof(ContractModifyFlow.Announcement), "变更公告");
                     single2dual(item, nameof(ContractModifyFlow.CommitmentLetter), "变更承诺函");
-                    item[nameof(ContractModifyFlow.SignedSupplementary)] = BsonMapper.Global.ToDocument(new MultiFile { Label = "签署的协议", Files = [FromStorate(item[nameof(ContractModifyFlow.SignedSupplementary)].AsDocument)] });
+                    item[nameof(ContractModifyFlow.SignedSupplementary)] = BsonMapper.Global.ToDocument(new MultiFile { Label = "签署的协议", Files = [.. new[] { FromStorate(item[nameof(ContractModifyFlow.SignedSupplementary)].AsDocument) }.OfType<FileMeta>()] });
 
                     break;
 
@@ -689,7 +690,7 @@ public static partial class DatabaseAssist
                     {
                         var label = v.AsArray.Select(x => x.AsDocument.TryGetValue("Title", out var t) ? t : null).FirstOrDefault()?.AsString;
                         var meta = v.AsArray.Select(x => FromStorate(x.AsDocument)).Where(x => x is not null);
-                        item[k] = BsonMapper.Global.ToDocument(new MultiFile { Label = label, Files = [.. meta] });
+                        item[k] = BsonMapper.Global.ToDocument(new MultiFile { Label = label, Files = [.. meta.OfType<FileMeta>()] });
                     }
                 }
                 else if (v.Type == BsonType.Document && v.AsDocument.Keys.Intersect(["Path", "Time"]).Count() == 2)
@@ -730,7 +731,7 @@ public static partial class DatabaseAssist
                     {
                         var label = v.AsArray.Select(x => x.AsDocument.TryGetValue("Title", out var t) ? t : null).FirstOrDefault()?.AsString;
                         var meta = v.AsArray.Select(x => FromStorate(x.AsDocument)).Where(x => x is not null);
-                        item[k] = BsonMapper.Global.ToDocument(new MultiFile { Label = label, Files = [.. meta] });
+                        item[k] = BsonMapper.Global.ToDocument(new MultiFile { Label = label, Files = [.. meta.OfType<FileMeta>()] });
                     }
                 }
                 else if (v.Type == BsonType.Document && v.AsDocument.Keys.Intersect(["Path", "Time", "Hash"]).Count() == 3)

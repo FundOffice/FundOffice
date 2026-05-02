@@ -79,7 +79,7 @@ public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IEle
     /// <summary>
     /// 份额类型有变动
     /// </summary>
-    private bool _shareChanged;
+    //private bool _shareChanged;
 
 
     [SetsRequiredMembers]

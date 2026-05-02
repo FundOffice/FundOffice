@@ -166,7 +166,7 @@ public partial class DisclosurePageViewModel : ObservableObject
             QuarterlySource.Source = vm.Where(x => x.Type == DisclosureType.Quarterly);
             SemiAnnualSource.Source = vm.Where(x => x.Type == DisclosureType.SemiAnnually);
             AnnualSource.Source = vm.Where(x => x.Type == DisclosureType.Annually);
-            QuarterlyUpdateSource.Source = updates.Select(x => new QuarterlyUpdateViewModel(x, workflows[x.Type], run[x.Id], db.GetCollection<AmacProcessResult>().FindById(x.Id)));
+            QuarterlyUpdateSource.Source = updates.Select(x => new QuarterlyUpdateViewModel(x, workflows[x.Type], run[x.Id]));
 
             TemporaryNoticeSource.Source = otherNotice.OfType<IFundDisclosureNotice>().Select<IFundDisclosureNotice, object>(x => x switch
             {
@@ -180,6 +180,8 @@ public partial class DisclosurePageViewModel : ObservableObject
 
     private void UpdateTemporary()
     {
+        if (SelectedYear is null || SelectedMonth is null) return;
+
         using var db = DbHelper.Base();
 
         // 其它报告

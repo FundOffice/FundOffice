@@ -23,18 +23,16 @@ public partial class ModifyOrderWindow : Window
 
 public partial class ModifyOrderWindowViewModel : AddOrderWindowViewModelBase
 {
-    public ModifyOrderWindowViewModel(int orderId, bool isReadOnly = true)
+    public ModifyOrderWindowViewModel(TransferOrder order, bool isReadOnly = true)
     {
         IsReadOnly = isReadOnly;
-        using var db = DbHelper.Base();
-        var order = db.GetCollection<TransferOrder>().FindById(orderId);
         Order = order;
         SelectedType = order.Type;
 
         Types = order.Type switch
         {
             TransferOrderType.FirstTrade or TransferOrderType.Buy => [TransferOrderType.FirstTrade, TransferOrderType.Buy],
-            _ => [TransferOrderType.Share, TransferOrderType.Amount, TransferOrderType.RemainAmout ]
+            _ => [TransferOrderType.Share, TransferOrderType.Amount, TransferOrderType.RemainAmout]
         };
 
         Number = order.Number;
@@ -42,17 +40,15 @@ public partial class ModifyOrderWindowViewModel : AddOrderWindowViewModelBase
         IsSellTypeForzen = SelectedType == TransferOrderType.Share;
 
 
-        if (order is not null)
-        {
-            Id = order.Id;
-            Date = new DateTime(order.Date, default);
-            Contract.Meta = order.Contract?.File;
-            OrderFile.Meta = order.OrderSheet?.File;
-            RiskDisclosure.Meta = order.RiskDiscloure?.File;
-            RiskPair.Meta = order.RiskPair?.File;
-            Video.Meta = order.Videotape?.File;
-            Review.Meta = order.Review?.File;
-        }
+        Id = order.Id;
+        Date = new DateTime(order.Date, default);
+        Contract.Meta = order.Contract?.File;
+        OrderFile.Meta = order.OrderSheet?.File;
+        RiskDisclosure.Meta = order.RiskDiscloure?.File;
+        RiskPair.Meta = order.RiskPair?.File;
+        Video.Meta = order.Videotape?.File;
+        Review.Meta = order.Review?.File;
+
 
 
         if (order.Type == TransferOrderType.FirstTrade)
@@ -66,7 +62,7 @@ public partial class ModifyOrderWindowViewModel : AddOrderWindowViewModelBase
             OrderFile.IsRequired = true;
         }
 
-    
+
         Check();
     }
 
@@ -95,7 +91,6 @@ public partial class ModifyOrderWindowViewModel : AddOrderWindowViewModelBase
     protected override void ConfirmOverride()
     {
         using var db = DbHelper.Base();
-        db.BeginTrans();
         try
         {
 
@@ -103,20 +98,18 @@ public partial class ModifyOrderWindowViewModel : AddOrderWindowViewModelBase
             Order.Type = SelectedType!.Value;
             Order.Number = Number ?? 0;
             Order.Contract = new SimpleFile { File = Contract.Meta };
-            Order.RiskDiscloure =new SimpleFile { File = RiskDisclosure.Meta };
-            Order.OrderSheet =new SimpleFile { File = OrderFile.Meta };
-            Order.Videotape =new SimpleFile { File = Video.Meta };
-            Order.RiskPair =new SimpleFile { File = RiskPair.Meta };
-            Order.Review =new SimpleFile { File = Review.Meta };
+            Order.RiskDiscloure = new SimpleFile { File = RiskDisclosure.Meta };
+            Order.OrderSheet = new SimpleFile { File = OrderFile.Meta };
+            Order.Videotape = new SimpleFile { File = Video.Meta };
+            Order.RiskPair = new SimpleFile { File = RiskPair.Meta };
+            Order.Review = new SimpleFile { File = Review.Meta };
 
             db.GetCollection<TransferOrder>().Upsert(Order);
-            db.Commit();
 
             WeakReferenceMessenger.Default.Send(Order);
         }
         catch (Exception e)
         {
-            db.Rollback();
             Log.Error($"更新交易订单失败，{e}");
         }
     }
@@ -138,7 +131,35 @@ public partial class ModifyOrderWindowViewModel : AddOrderWindowViewModelBase
         var tip = "";
 
         // 判断是否是首次
+        bool need = false;
+        bool needvideo = false;
+        if (SelectedType == TransferOrderType.Buy || SelectedType == TransferOrderType.FirstTrade)
+        {
+            using var db = DbHelper.Base();
+            var early = db.GetCollection<TransferRecord>().Find(x => x.FundId == Order.FundId && x.InvestorId == Order.InvestorId).Min(x => x.RequestDate);
+            if (early == Order.OpenDate) need = true;
 
+            var q = db.GetCollection<InvestorQualification>().Find(x => x.InvestorId == Order.InvestorId).Where(x => x.Date <= Order.OpenDate).OrderBy(x => x.Date).LastOrDefault();
+            if (q is null || q.Result == QualifiedInvestorType.Normal) needvideo = true;
+        }
+
+        IsVideoNesscessary = needvideo;
+        Video.IsRequired = needvideo;
+
+        if (DateMayNotGood)
+            tip += "签约日期可能不合适";
+
+        if (need && !Contract.Exists)
+            tip += " 缺少合同";
+
+        if (need && !RiskDisclosure.Exists)
+            tip += " 缺少风险揭示书";
+
+        if (need && needvideo && !Video.Exists)
+            tip += " 缺少双录";
+
+
+        Tips = tip;
     }
 
     internal void OnBatchFile(string[]? v)

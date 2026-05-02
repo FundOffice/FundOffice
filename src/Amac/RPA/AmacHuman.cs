@@ -1,4 +1,5 @@
 ﻿using FMO.IO.AMAC.JsonModels;
+using FMO.Logging;
 using FMO.Models;
 using Microsoft.Playwright;
 using Serilog;
@@ -128,7 +129,7 @@ public static class AmacHuman
         }
         catch (Exception e)
         {
-
+            LogEx.Error(e);
         }
 
 

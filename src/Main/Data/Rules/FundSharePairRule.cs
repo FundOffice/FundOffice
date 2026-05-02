@@ -89,10 +89,10 @@ public class FundSharePairRule : VerifyRule<FundShareRecordByDaily, FundShareRec
                 }
 
 
-                if(Tips.ContainsKey(f.Id))
+                if (Tips.ContainsKey(f.Id))
                 {
-                    Tips.TryRemove(f.Id, out var t);
-                    Revoke(t.Id);
+                    if (Tips.TryRemove(f.Id, out var t))
+                        Revoke(t.Id);
                 }
 
                 DataTip<FundSharePairContext> tip = new() { Tags = ["Fund", $"Fund{f.Id}", nameof(FundSharePairRule)], _Context = new FundSharePairContext(f.Name, dy.Count, ta.Count, context) };

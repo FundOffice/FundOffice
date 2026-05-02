@@ -316,7 +316,7 @@ public partial class CSC : TrusteeApiBase
     /// <param name="func"></param>
     /// <param name="param">object »ò Dictionary<string, object></param>
     /// <returns></returns>
-    protected async Task<ReturnWrap<TEntity>> SyncWork<TEntity, TJSON>(string part, object? param, Func<TJSON, TEntity> transfer, [CallerMemberName] string? caller = null) where TJSON : JsonBase
+    protected async Task<ReturnWrap<TEntity>> SyncWork<TEntity, TJSON>(string part, object? param, Func<TJSON, TEntity> transfer, [CallerMemberName] string caller = "unsetCaller") where TJSON : JsonBase
     {
         // Ð£Ñé
         if (CheckBreforeSync() is ReturnCode rc && rc != ReturnCode.Success) return new(rc, null);

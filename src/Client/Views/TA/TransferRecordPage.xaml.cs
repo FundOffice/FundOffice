@@ -1,16 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using DocumentFormat.OpenXml.Bibliography;
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
 using Serilog;
-using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -139,7 +136,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
                 IsSelected = false
             }).ToArray();
 
-            InvestorNameFilter.Filters = tr.Select(x => x.InvestorName).Union(t3.Select(x => x.InvestorName)).Distinct().Where(x => x is not null).Select(x => new GridFilterItem
+            InvestorNameFilter.Filters = tr.Select(x => x.InvestorName).Union(t3.Select(x => x.InvestorName)).Distinct().OfType<string>().Select(x => new GridFilterItem
             {
                 Title = x,
                 FilterFunc = y => y switch { ITransferViewModel v => v.InvestorName == x, _ => true },
@@ -151,14 +148,14 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
                 new GridFilterItem{ Title = "缺少认申购订单", FilterFunc = y=>y switch{ IHasOrderViewModel x=> x.IsOrderRequired && !x.IsSameManager && x.LackOrder && x.IsBuy(),_=>true } },
                 new GridFilterItem{ Title = "缺少赎回订单", FilterFunc = y=>y switch{ IHasOrderViewModel x=> !x.IsLiquidating && x.IsOrderRequired && !x.IsSameManager && x.LackOrder && x.IsSell(),_=>true } },
                 new GridFilterItem{ Title = "本管理人产品缺少订单", FilterFunc = y=>y switch{ IHasOrderViewModel x=>!x.IsLiquidating && x.IsOrderRequired && x.IsSameManager ,_=>true } },
-                new GridFilterItem{ Title = "有订单", FilterFunc = y=> y switch{IHasOrderViewModel x=>x.OrderId != 0}}
+                new GridFilterItem{ Title = "有订单", FilterFunc = y => y switch{IHasOrderViewModel x=>x.OrderId != 0 ,_=>true }}
                 ];
 
 
             //var mapd = map.ToDictionary(x => x.OrderId, x => x);
 
             List<string?> list = [DataTracker.GetUniformTip(TipType.TANoOwner), DataTracker.GetUniformTip(TipType.TransferRequestMissing)];
-            ErrorMessage = [.. list.Where(x => x is not null)];
+            ErrorMessage = [.. list.OfType<string>()];
 
 
             var records = tr.Select(x => new TransferRecordViewModel(x)).ToArray();
@@ -335,7 +332,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
 
         List<string?> list = [DataTracker.GetUniformTip(TipType.TANoOwner), DataTracker.GetUniformTip(TipType.TransferRequestMissing)];
 
-        ErrorMessage = [.. list.Where(x => x is not null)];
+        ErrorMessage = [.. list.OfType<string>()];
     }
 
 
@@ -531,7 +528,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
             return;
         }
 
-        var order = r.Build(); 
+        var order = r.Build();
         if (!await signing.QueryOrderAsync(order))
         {
             HandyControl.Controls.Growl.Warning("未找到对应的订单");
@@ -744,7 +741,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
             // 需要添加的
             var add = Requests is null ? message.Select(x => new TransferRequestViewModel(x)).ToList() : message.ExceptBy(Requests.Select(x => x.Id), x => x.Id).Select(x => new TransferRequestViewModel(x)).ToList();
             if (add.Count == 0) return;
-            
+
             // 影响order
             if (Orders is not null)
                 foreach (var (o, q) in Orders.Join(add, x => x.Id, x => x.OrderId, (order, request) => (order, request)))
@@ -778,7 +775,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
             // 需要添加的
             var add = Orders is null ? message.Select(x => new TransferOrderViewModel(x)).ToList() : message.ExceptBy(Orders.Select(x => x.Id), x => x.Id).Select(x => new TransferOrderViewModel(x)).ToList();
             if (add.Count == 0) return;
- 
+
 
             // 入列
             if (Orders is null || Orders.Count == 0)

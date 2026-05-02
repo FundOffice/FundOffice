@@ -44,7 +44,7 @@ public abstract partial class AddOrderWindowViewModelBase : ObservableObject
 
         OrderFile = new();
         OrderFile.FileChanged += f => UpdateFile(new { OrderFile = f });
-        OrderFile.FileChanged += f => SetDate(f);
+        OrderFile.FileChanged += f => { if (f?.Exists ?? false) SetDate(f); };
 
 
         Video = new();
@@ -358,7 +358,7 @@ public partial class AddOrderWindowViewModel : AddOrderWindowViewModelBase
         if (value is null)
             Qualifications = null;
         else using (var db = DbHelper.Base())
-                Qualifications = db.GetCollection<InvestorQualification>().Find(x => x.InvestorId == value.Id).ToArray();
+            Qualifications = db.GetCollection<InvestorQualification>().Find(x => x.InvestorId == value.Id).ToArray();
 
         CheckFirstTrade();
     }
@@ -653,7 +653,7 @@ public partial class SupplementaryOrderWindowViewModel : AddOrderWindowViewModel
                 foreach (var item in same)
                 {
                     item.OrderId = Id;
-                    if(db.GetCollection<TransferRequest>().FindById(item.RequestId) is TransferRequest request)
+                    if (db.GetCollection<TransferRequest>().FindById(item.RequestId) is TransferRequest request)
                     {
                         request.OrderId = Id;
                         db.GetCollection<TransferRequest>().Upsert(request);

@@ -284,7 +284,7 @@ public static class PfidAssist
         }
         catch (Exception e)
         {
-
+            LogEx.Error(e);
         }
 
 
@@ -443,7 +443,7 @@ public static class PfidAssist
                 }
                 catch (Exception e)
                 {
-
+                    LogEx.Error(e);
                 }
             }
 
@@ -562,7 +562,7 @@ public static class PfidAssist
             }
 
             // 获取错误信息
-            var downloadLink = targetFrame.Locator("a", new FrameLocatorOptions { HasText = "下载错误" });
+            var downloadLink = targetFrame!.Locator("a", new FrameLocatorOptions { HasText = "下载错误" });
             if (await downloadLink.IsVisibleAsync())
             {
                 // ⭐ 开始监听下载事件
@@ -600,7 +600,7 @@ public static class PfidAssist
         return default;
     }
 
-     
+
 
     private static bool IsLike(string full, string star)
     {

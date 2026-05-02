@@ -164,6 +164,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
             }
             catch (Exception e)
             {
+                LogEx.Error($"Failed to load main icon: {e}");
             }
         }
 
@@ -477,7 +478,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
 
         //TodoService.AutoHugeRedemption([req]);
 
-        TodoCollection.Add(new HugeRedemptionTodoViewModel() );
+        TodoCollection?.Add(new HugeRedemptionTodoViewModel() );
     
     }
 #endif

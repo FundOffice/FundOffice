@@ -14,7 +14,7 @@ namespace FMO.SourceGenerator
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
             // 查找所有带有 AutoChangeableViewModelAttribute 的类
-            IncrementalValuesProvider<ClassDeclarationSyntax> classDeclarations = context.SyntaxProvider
+            IncrementalValuesProvider<ClassDeclarationSyntax?> classDeclarations = context.SyntaxProvider
                .CreateSyntaxProvider(
                     predicate: (s, _) => IsSyntaxTargetForGeneration(s),
                     transform: (ctx, _) => GetSemanticTargetForGeneration(ctx))
@@ -39,7 +39,7 @@ namespace FMO.SourceGenerator
                    classDeclaration.AttributeLists.Count > 0;
         }
 
-        private ClassDeclarationSyntax GetSemanticTargetForGeneration(GeneratorSyntaxContext context)
+        private ClassDeclarationSyntax? GetSemanticTargetForGeneration(GeneratorSyntaxContext context)
         {
             var classDeclaration = (ClassDeclarationSyntax)context.Node;
             foreach (var attributeList in classDeclaration.AttributeLists)
@@ -56,7 +56,7 @@ namespace FMO.SourceGenerator
             return null;
         }
 
-        private void Execute(Compilation compilation, ImmutableArray<ClassDeclarationSyntax> classes, SourceProductionContext context)
+        private void Execute(Compilation compilation, ImmutableArray<ClassDeclarationSyntax?> classes, SourceProductionContext context)
         {
             if (classes.IsDefaultOrEmpty)
             {
@@ -71,8 +71,11 @@ namespace FMO.SourceGenerator
 
             foreach (var classDeclaration in classes)
             {
+                if (classDeclaration is null) continue;
+
                 var model = compilation.GetSemanticModel(classDeclaration.SyntaxTree);
                 var classSymbol = model.GetDeclaredSymbol(classDeclaration) as INamedTypeSymbol;
+                if (classSymbol is null) continue;
 
                 foreach (var attributeList in classDeclaration.AttributeLists)
                 {
@@ -81,7 +84,7 @@ namespace FMO.SourceGenerator
                         if (model.GetSymbolInfo(attribute).Symbol is IMethodSymbol attributeMethodSymbol &&
                             attributeMethodSymbol.ContainingType.Equals(attributeSymbol, SymbolEqualityComparer.Default))
                         {
-                            var typeArgument = attribute.ArgumentList.Arguments[0].Expression;
+                            var typeArgument = attribute.ArgumentList?.Arguments[0]?.Expression;
                             if (typeArgument is TypeOfExpressionSyntax typeOfExpression)
                             {
                                 var targetTypeSyntax = typeOfExpression.Type;
@@ -136,7 +139,7 @@ namespace FMO.SourceGenerator
             source.AppendLine("        }");
 
             foreach (var property in properties)
-            { 
+            {
                 string pname = property.Name.ToCamelCase();
                 string type = property.Type.ToDisplayString();
                 if ((type != "bool" && pname != "id") && !type.EndsWith("?")) type += "?";
@@ -243,7 +246,7 @@ namespace FMO.SourceGenerator
                 return true;
 
             // 检查是否在系统命名空间下
-            return !systemNamespaces.Any(ns => type.ContainingNamespace.ToString().StartsWith(ns));
+            return !systemNamespaces.Any(ns => type.ContainingNamespace?.ToString()?.StartsWith(ns) ?? false);
         }
     }
 

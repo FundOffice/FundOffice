@@ -401,7 +401,7 @@ public partial class FundAccountsViewModel : ObservableObject
             }
             catch (Exception e)
             {
-
+                LogEx.Error(e);
             }
         }
 

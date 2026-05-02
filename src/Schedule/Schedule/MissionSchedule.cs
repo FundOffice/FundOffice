@@ -26,7 +26,7 @@ public static class MissionSchedule
     public static void Init()
     {
         using var db = DbHelper.Mission();
-        var ms = db.GetCollection<BsonDocument>("Mission").FindAll().ToList();// db.GetCollection<Mission>().FindAll().ToArray();
+        var ms = db.GetCollection("Mission").FindAll().ToList();// db.GetCollection<Mission>().FindAll().ToArray();
 
         missions = [.. ms.Select(x =>
         {
@@ -37,11 +37,8 @@ public static class MissionSchedule
                 return mission;
             }
             catch(Exception e) { LogEx.Error($"无法加载mission{x["_id"]}\n{x.ToString()}\n{e.Message}\n{e.StackTrace}"); return null; }
-        }).Where(x => x is not null && x is not FillFundDailyMission).OrderBy(x => x!.GetType().Name switch { nameof(MailCacheMission) => 0, _ => x.Id })];
-
-
-        // 不再使用
-        //missions.RemoveWhere(x => x is FillFundDailyMission);
+        }).OfType<Mission>().OrderBy(x => x!.GetType().Name switch { nameof(MailCacheMission) => 0, _ => x.Id })];
+         
 
         // 清理Log
         db.GetCollection<MissionRecord>().DeleteMany(x => x.Time < DateTime.Now.AddMonths(-2));

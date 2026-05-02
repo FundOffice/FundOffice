@@ -139,7 +139,7 @@ public class SplitZipStream : Stream
             int writeLength = (int)Math.Min(remaining, canWrite);
 
             // 修复：正确的偏移计算
-            _currentStream.Write(buffer, offset + (count - remaining), writeLength);
+            _currentStream!.Write(buffer, offset + (count - remaining), writeLength);
 
             _currentSize += writeLength;
             remaining -= writeLength;

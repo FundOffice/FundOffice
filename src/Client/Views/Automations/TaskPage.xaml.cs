@@ -50,7 +50,7 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
             if (vm is null)
             {
                 // 后台任务
-                if (m is FillFundDailyMission) continue;
+                //if (m is FillFundDailyMission) continue;
 
                 Log.Error($"无法加载任务{m.Id}，Type={m.GetType()}，找不到view model");
                 //WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "无法加载任务，请查看log"));

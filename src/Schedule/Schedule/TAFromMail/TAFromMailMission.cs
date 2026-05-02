@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using ExcelDataReader;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
 using MimeKit;
@@ -100,6 +101,12 @@ public class TAFromMailMission : MailMission
 
         foreach (MimePart item in mime.Attachments)
         {
+            if (item.FileName is null || item.Content is null)
+            {
+                LogEx.Error($"TA From Mail {mime.Subject} 附件异常");
+                continue;
+            }
+
             var filepath = item.FileName;
             if (filepath.ToLower().EndsWith(".zip"))
             {

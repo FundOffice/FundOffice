@@ -304,8 +304,8 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
         return;
 
         //只看3天内的
-        TrusteeWorkLogs = TrusteeApiBase.GetLogs();//?.OrderByDescending(x => x.Time).Take(100);//.Where(x => (DateTime.Today - x.Time).Days < 3);
-        TrusteeWorkLogSource.Source = TrusteeWorkLogs;
+        //TrusteeWorkLogs = TrusteeApiBase.GetLogs();//?.OrderByDescending(x => x.Time).Take(100);//.Where(x => (DateTime.Today - x.Time).Days < 3);
+        //TrusteeWorkLogSource.Source = TrusteeWorkLogs;
     }
 
 

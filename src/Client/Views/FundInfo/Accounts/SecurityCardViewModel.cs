@@ -151,7 +151,8 @@ public partial class SecurityCardViewModel : ObservableObject
     [RelayCommand]
     public void Copy()
     {
-        Clipboard.SetDataObject(new DataObject(CardNo));
+        if (CardNo is not null)
+            Clipboard.SetDataObject(new DataObject(CardNo));
     }
 
     [RelayCommand]

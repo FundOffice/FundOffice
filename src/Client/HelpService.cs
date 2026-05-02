@@ -246,7 +246,7 @@ public static class HelpService
     }
 
     // 查找子元素
-    private static T FindChild<T>(DependencyObject parent, string childName)
+    private static T? FindChild<T>(DependencyObject parent, string childName)
         where T : DependencyObject
     {
         if (parent == null) return null;

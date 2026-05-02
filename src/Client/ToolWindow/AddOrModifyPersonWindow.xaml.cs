@@ -54,7 +54,7 @@ public partial class PersonViewModel : EditableControlViewModelBase<Person>
         {
             Label = "姓名",
             InitFunc = x => x.Name,
-            UpdateFunc = (x, y) => x.Name = y,
+            UpdateFunc = (x, y) => x.Name = y ?? "",
             ClearFunc = x => x.Name = string.Empty
         };
         Name.Init(person);

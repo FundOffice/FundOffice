@@ -24,26 +24,26 @@ public class MailMission : Mission
         IgnoreHistory = false;
     }
 
-    public virtual MailCategory DetermineCategory(MimeMessage? message)
+    protected virtual MailCategory DetermineCategory(MimeMessage? message)
     {
         if (message is null) return MailCategory.Unk;
         MailCategory category = MailCategory.Unk;
 
 
-        if (message.Subject.Contains("估值表"))
+        if (message.Subject?.Contains("估值表") ?? false)
             category |= MailCategory.ValueSheet;
 
-        if (message.Subject.Contains("对账单") || (message.TextBody?.Contains("对账单") ?? false))
+        if (message.Subject?.Contains("对账单") ?? false || (message.TextBody?.Contains("对账单") ?? false))
             category |= MailCategory.Statement;
 
-        if (message.Subject.Contains("交易确认") || (message.TextBody?.Contains("交易确认") ?? false))
+        if (message.Subject?.Contains("交易确认") ?? false || (message.TextBody?.Contains("交易确认") ?? false))
             category |= MailCategory.TA;
 
         if (Regex.IsMatch($"{message.Subject} {message.TextBody}", "类季报|类月报|类年报|类半年报|季度更新"))
             category |= MailCategory.Disclosure;
 
         using var db = DbHelper.Mission();
-        db.GetCollection<MailCategoryInfo>().Upsert(new MailCategoryInfo(message.MessageId, message.Subject, MailCategory.ValueSheet));
+        db.GetCollection<MailCategoryInfo>().Upsert(new MailCategoryInfo(message.MessageId!, message.Subject ?? "", MailCategory.ValueSheet));
         return category;
     }
 
@@ -90,7 +90,7 @@ public class GarbledTextChecker
     }
 
     // 检查字符串是否乱码（非法字符超过15%）
-    public static bool IsGarbled(string input, double threshold = 0.15)
+    public static bool IsGarbled(string? input, double threshold = 0.15)
     {
         if (string.IsNullOrEmpty(input))
             return false;

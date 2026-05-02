@@ -42,7 +42,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
     public int FundId { get; private set; }
 
-    private bool _initialized;
+    //private bool _initialized;
 
     private ITrustee? _api;
 
@@ -147,7 +147,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         AnnouncementContext = new(FundId);
 
         IsActive = true;
-        _initialized = true;
+        //_initialized = true;
     }
 
     public void CheckAndTodo(FundElements ele)

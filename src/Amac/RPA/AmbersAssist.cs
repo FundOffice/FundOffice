@@ -758,13 +758,12 @@ public static class AmbersAssist
 
 
                     return await CheckSubmitSuccessAndCloseModalAsync(page, "提交成功");
-
-                    return true;
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
+            LogEx.Error(ex);
             return false;
         }
 
@@ -794,7 +793,7 @@ public static class AmbersAssist
         }
         catch (Exception ex)
         {
-            //throw new InvalidOperationException("搜索操作失败：" + ex.Message);
+            LogEx.Error(ex);
         }
     }
 

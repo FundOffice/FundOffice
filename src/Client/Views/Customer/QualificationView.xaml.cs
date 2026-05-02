@@ -194,7 +194,7 @@ public partial class QualificationViewModel : EditableControlViewModelBase<Inves
     public QualificationViewModel(int id)
     {
         Id = id;
-        if (id == -1) return;
+        if (id == -1) throw new Exception("Invalid ID");
 
         using var db = DbHelper.Base();
         var obj = db.GetCollection<InvestorQualification>().FindById(Id);

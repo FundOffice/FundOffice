@@ -9,6 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="GatherDailyFromMail\**" />
+    <EmbeddedResource Remove="GatherDailyFromMail\**" />
+    <None Remove="GatherDailyFromMail\**" />
+    <Page Remove="GatherDailyFromMail\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="MissionDatabase.cs" />
   </ItemGroup>
 

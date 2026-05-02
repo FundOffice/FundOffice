@@ -77,12 +77,12 @@ public partial class FutureAccountViewModel : ObservableObject
 
         private void UpdateFile<T>(T f)
         {
-            if (Id == 0) return; // 新建时不保存
+            if (Id == 0 || f is null) return; // 新建时不保存
+            
             using var db = DbHelper.Base();
-
             var acc = db.GetCollection<FutureAccount>().FindById(Id);
              
-            acc.Common!.UpdateFrom(f);
+            acc.Common?.UpdateFrom(f);
             db.GetCollection<FutureAccount>().Update(acc);
             //db.GetCollection<FutureAccount>().UpdateMany(BsonMapper.Global.ToDocument(new { Common = f }).ToString(), $"_id={Id}");
         }

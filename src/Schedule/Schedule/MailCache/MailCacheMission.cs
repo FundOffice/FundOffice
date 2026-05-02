@@ -42,6 +42,7 @@ public class MailCacheMission : MailMission
 
     public string? MailPop3 { get; set; }
 
+    public int MailPort { get; set; } = 995;
 
     public bool IsAccountVerified { get; set; }
 
@@ -76,7 +77,7 @@ public class MailCacheMission : MailMission
                 return false;
             }
             using var pop3Client = new MailKit.Net.Pop3.Pop3Client();
-            pop3Client.Connect(MailPop3, 995, true, new CancellationTokenSource(5000).Token);
+            pop3Client.Connect(MailPop3, MailPort, true, new CancellationTokenSource(5000).Token);
             log = "连接邮箱服务器..................";
 
 
@@ -108,7 +109,7 @@ public class MailCacheMission : MailMission
             if (!pop3Client.IsAuthenticated)
             {
                 IsAccountVerified = false;
-                WeakReferenceMessenger.Default.Send(new MissionMailCredentialMessage { Id = Id, IsSuccessed = false });
+                WeakReferenceMessenger.Default.Send(new MissionMailCredentialMessage(Id, false));
 
                 log += "\n账户名或密码错误，请检查配置";
                 var rec = new MissionRecord { MissionId = Id, Time = time, Record = log };
@@ -153,6 +154,10 @@ public class MailCacheMission : MailMission
             {
                 log += $"\n缓存邮件";
                 using MimeMessage msg = pop3Client.GetMessage(i);
+                // 确保有MessageId
+                if (msg.MessageId is null) 
+                    msg.MessageId = MimeKit.Utils.MimeUtils.GenerateMessageId();
+
 
                 try
                 {
@@ -190,3 +195,5 @@ public class MailCacheMission : MailMission
         return true;
     }
 }
+
+internal record MissionMailCredentialMessage(int Id, bool IsSuccessed);

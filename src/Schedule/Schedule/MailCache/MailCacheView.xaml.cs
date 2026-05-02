@@ -37,6 +37,11 @@ public partial class MailCacheViewModel : MissionViewModel<MailCacheMission>
     [NotifyPropertyChangedFor(nameof(IsAvailable))]
     public partial string? MailPop3 { get; set; }
 
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsAvailable))]
+    public partial int MailPort { get; set; } = 995;
+
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(VerifyAccountCommand))]
     public partial bool IsServerAvailable { get; set; }
@@ -62,6 +67,7 @@ public partial class MailCacheViewModel : MissionViewModel<MailCacheMission>
         MailName = m.MailName;
         MailPassword = m.MailPassword;
         MailPop3 = m.MailPop3;
+        MailPort = m.MailPort;
         Interval = m.Interval;
     }
 
@@ -144,12 +150,12 @@ public partial class MailCacheViewModel : MissionViewModel<MailCacheMission>
         try
         {
             var pop3Client = new MailKit.Net.Pop3.Pop3Client();
-            await pop3Client.ConnectAsync(MailPop3, 995, true);
+            await pop3Client.ConnectAsync(MailPop3!, MailPort, true);
 
             if (!pop3Client.IsConnected)
                 return false;
 
-            await pop3Client.AuthenticateAsync(MailName, MailPassword);
+            await pop3Client.AuthenticateAsync(MailName!, MailPassword!);
 
             return pop3Client.IsAuthenticated;
         }
@@ -171,7 +177,7 @@ public partial class MailCacheViewModel : MissionViewModel<MailCacheMission>
         });
     }
 
-    public void Receive(MissionMailCredentialMessage message)
+    internal void Receive(MissionMailCredentialMessage message)
     {
         if (message.Id != Id) return;
 

@@ -56,7 +56,7 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<IDis
         var qu = db.GetCollection<IDisclosureNotice>().Query().
             Where(Query.EQ(nameof(PeriodicalDisclosureNotice.FundId), fid)).ToArray().OfType<QuarterlyUpdate>();
         var dic = db.GetCollection<AmacProcessResult>().Query().Where(Query.In("_id", qu.Select(x => new BsonValue(x.Id)))).ToArray().ToDictionary(x => x.Id, x => x);
-        QuarterlyDisclosure = [.. qu.Select(x => new QuarterlyUpdateViewModel(x, workflows[x.Type], run[x.Id], null))];
+        QuarterlyDisclosure = [.. qu.Select(x => new QuarterlyUpdateViewModel(x, workflows[x.Type], run[x.Id]))];
 
 
         //if (PeriodicDisclosure.Count == 0) PeriodicDisclosure = [new FundPeriodicReport { FundId = FundId, Type = PeriodicReportType.MonthlyReport }, new FundQuarterlyUpdate { FundId = FundId }];
@@ -338,7 +338,7 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
 {
     private readonly QuarterlyUpdate report;
 
-    public QuarterlyUpdateViewModel(QuarterlyUpdate report, IEnumerable<DisclosureWorkflow> workflows, IEnumerable<DisclosureInstance> runs, AmacProcessResult result)
+    public QuarterlyUpdateViewModel(QuarterlyUpdate report, IEnumerable<DisclosureWorkflow> workflows, IEnumerable<DisclosureInstance> runs)
     {
         Id = report.Id;
         FundId = report.FundId;
@@ -350,7 +350,6 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
         Operation = new(report.Operation);
         this.report = report;
 
-        OperationResult = new(result);
 
         var data = from workflow in workflows
                        // 左连接：以 workflow 为主体，匹配对应的实例
@@ -400,7 +399,6 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
 
     public SimpleFileViewModel Operation { get; }
 
-    public AmacDirectResultViewModel OperationResult { get; }
 
 
     public ObservableCollection<DisclosureRunViewModel> Runs { get; }
@@ -412,120 +410,122 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
     [RelayCommand]
     public async Task UploadOperation()
     {
+        throw new NotImplementedException();
         // 获取 账号
-        using var db = DbHelper.Base();
-        var acc = db.GetCollection<AmacReportAccount>().FindOne(x => x.Id == "pmg");
+        //using var db = DbHelper.Base();
+        //var acc = db.GetCollection<AmacReportAccount>().FindOne(x => x.Id == "pmg");
 
-        if (acc is null || string.IsNullOrWhiteSpace(acc.Name) || string.IsNullOrWhiteSpace(acc.Password) || string.IsNullOrWhiteSpace(acc.Key))
-        {
-            HandyControl.Controls.Growl.Info("请先在[平台]中设置信批账号");
-            return;
-        }
+        //if (acc is null || string.IsNullOrWhiteSpace(acc.Name) || string.IsNullOrWhiteSpace(acc.Password) || string.IsNullOrWhiteSpace(acc.Key))
+        //{
+        //    HandyControl.Controls.Growl.Info("请先在[平台]中设置信批账号");
+        //    return;
+        //}
 
-        var manager = db.GetCollection<Manager>().Query().First();
+        //var manager = db.GetCollection<Manager>().Query().First();
 
-        // 检查是否有上传记录
-        var result = db.GetCollection<AmacProcessResult>().FindById(Id);
-        if (result is null)
-        {
-            result = await AmacDirectReporter.UploadReport(report, acc);
-            if (result.UploadCode != 0)
-            {
-                HandyControl.Controls.Growl.Info($"上传文件失败:{result.UploadError}");
-                return;
-            }
+        //// 检查是否有上传记录
+        //var result = db.GetCollection<AmacProcessResult>().FindById(Id);
+        //if (result is null)
+        //{
+        //    result = await AmacDirectReporter.UploadReport(report, acc);
+        //    if (result?.UploadCode != 0)
+        //    {
+        //        HandyControl.Controls.Growl.Info($"上传文件失败:{result?.UploadError}");
+        //        return;
+        //    }
 
-            HandyControl.Controls.Growl.Info($"上传报告成功，请等待校验结果");
-            //await Task.Delay(20 * 1000);
-        }
-        else HandyControl.Controls.Growl.Info("存在上传记录，继续查询结果");
+        //    HandyControl.Controls.Growl.Info($"上传报告成功，请等待校验结果");
+        //    //await Task.Delay(20 * 1000);
+        //}
+        //else HandyControl.Controls.Growl.Info("存在上传记录，继续查询结果");
 
-        OperationResult.Status = AmacDirectResultViewModel.State.Upload;
-        OperationResult.IsSuccess = result.UploadCode == 0;
+        //OperationResult.Status = AmacDirectResultViewModel.State.Upload;
+        //OperationResult.IsSuccess = result.UploadCode == 0;
 
-        await AmacDirectReporter.QueryResult(result, acc);
-        OperationResult.Status = AmacDirectResultViewModel.State.Verify;
-        OperationResult.IsSuccess = result.ValidateCode == 0;
+        //await AmacDirectReporter.QueryResult(result, acc);
+        //OperationResult.Status = AmacDirectResultViewModel.State.Verify;
+        //OperationResult.IsSuccess = result.ValidateCode == 0;
 
-        // 重新上传
-        if (result.ValidateCode == 99)
-        {
-            result = await AmacDirectReporter.UploadReport(report, acc);
-            if (result.UploadCode != 0)
-            {
-                HandyControl.Controls.Growl.Info($"上传文件失败:{result.UploadError}");
-                return;
-            }
+        //// 重新上传
+        //if (result.ValidateCode == 99)
+        //{
+        //    result = await AmacDirectReporter.UploadReport(report, acc);
+        //    if (result?.UploadCode != 0)
+        //    {
+        //        HandyControl.Controls.Growl.Info($"上传文件失败:{result?.UploadError}");
+        //        return;
+        //    }
 
-            HandyControl.Controls.Growl.Info($"上传报告成功，请等待校验结果");
-            //await Task.Delay(20 * 1000);
+        //    HandyControl.Controls.Growl.Info($"上传报告成功，请等待校验结果");
+        //    //await Task.Delay(20 * 1000);
 
-            OperationResult.Status = AmacDirectResultViewModel.State.Upload;
-            OperationResult.IsSuccess = result.UploadCode == 0;
+        //    OperationResult.Status = AmacDirectResultViewModel.State.Upload;
+        //    OperationResult.IsSuccess = result.UploadCode == 0;
 
-            await AmacDirectReporter.QueryResult(result, acc);
-            OperationResult.Status = AmacDirectResultViewModel.State.Verify;
-            OperationResult.IsSuccess = result.ValidateCode == 0;
-        }
+        //    await AmacDirectReporter.QueryResult(result, acc);
+        //    OperationResult.Status = AmacDirectResultViewModel.State.Verify;
+        //    OperationResult.IsSuccess = result.ValidateCode == 0;
+        //}
 
-        if (result.ValidateCode == 0 || result.ValidateCode == 10) // 已完成
-        {
-            result.SubmitCode = 0;
-            OperationResult.Status = AmacDirectResultViewModel.State.Submit;
-            OperationResult.IsSuccess = true;
-            db.GetCollection<AmacProcessResult>().Update(result);
-            return;
-        }
+        //if (result.ValidateCode == 0 || result.ValidateCode == 10) // 已完成
+        //{
+        //    result.SubmitCode = 0;
+        //    OperationResult.Status = AmacDirectResultViewModel.State.Submit;
+        //    OperationResult.IsSuccess = true;
+        //    db.GetCollection<AmacProcessResult>().Update(result);
+        //    return;
+        //}
 
-        if (result.ResultInfo?.Count > 0)
-            HandyControl.Controls.Growl.Info($"{result.ResultInfo[0].Message}");
-        else
-            HandyControl.Controls.Growl.Info($"校验异常");
+        //if (result.ResultInfo?.Count > 0)
+        //    HandyControl.Controls.Growl.Info($"{result.ResultInfo[0].Message}");
+        //else
+        //    HandyControl.Controls.Growl.Info($"校验异常");
 
-        if (result.ValidateCode != 0)
-        {
-            Growl.Warning($"{FundName} 季度更新存在警告或错误，请手动检查后提交");
-            return;
-        }
+        //if (result.ValidateCode != 0)
+        //{
+        //    Growl.Warning($"{FundName} 季度更新存在警告或错误，请手动检查后提交");
+        //    return;
+        //}
 
-        await AmacDirectReporter.Submit(result, manager.Name, acc);
+        //await AmacDirectReporter.Submit(result, manager.Name, acc);
 
-        if (result.SubmitError?.Contains("handle参数错误或已失效") ?? false)
-        {
-            db.GetCollection<AmacProcessResult>().Delete(Id);
-            OperationResult.Status = AmacDirectResultViewModel.State.None;
-        }
+        //if (result.SubmitError?.Contains("handle参数错误或已失效") ?? false)
+        //{
+        //    db.GetCollection<AmacProcessResult>().Delete(Id);
+        //    OperationResult.Status = AmacDirectResultViewModel.State.None;
+        //}
 
-        HandyControl.Controls.Growl.Info($"报告提交, Code:{result.SubmitCode},{result.SubmitError}");
+        //HandyControl.Controls.Growl.Info($"报告提交, Code:{result.SubmitCode},{result.SubmitError}");
     }
 
     [RelayCommand]
     public async Task SubmitOperation()
     {
-        using var db = DbHelper.Base();
-        var acc = db.GetCollection<AmacReportAccount>().FindOne(x => x.Id == "pmg");
+        throw new NotImplementedException();
+        //using var db = DbHelper.Base();
+        //var acc = db.GetCollection<AmacReportAccount>().FindOne(x => x.Id == "pmg");
 
-        if (acc is null || string.IsNullOrWhiteSpace(acc.Name) || string.IsNullOrWhiteSpace(acc.Password) || string.IsNullOrWhiteSpace(acc.Key))
-        {
-            HandyControl.Controls.Growl.Info("请先在[平台]中设置信批账号");
-            return;
-        }
+        //if (acc is null || string.IsNullOrWhiteSpace(acc.Name) || string.IsNullOrWhiteSpace(acc.Password) || string.IsNullOrWhiteSpace(acc.Key))
+        //{
+        //    HandyControl.Controls.Growl.Info("请先在[平台]中设置信批账号");
+        //    return;
+        //}
 
-        var result = db.GetCollection<AmacProcessResult>().FindById(Id);
-        var manager = db.GetCollection<Manager>().Query().First();
+        //var result = db.GetCollection<AmacProcessResult>().FindById(Id);
+        //var manager = db.GetCollection<Manager>().Query().First();
 
-        if (MessageBox.Show($"季度更新存在警告或错误", "是否强制提交", button: System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.Yes)
-        {
-            //await Task.Delay(5000);
-            await AmacDirectReporter.Submit(result, manager.Name, acc);
-            HandyControl.Controls.Growl.Info($"报告提交, Code:{result.SubmitCode},{result.SubmitError}");
+        //if (MessageBox.Show($"季度更新存在警告或错误", "是否强制提交", button: System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.Yes)
+        //{
+        //    //await Task.Delay(5000);
+        //    await AmacDirectReporter.Submit(result, manager.Name, acc);
+        //    HandyControl.Controls.Growl.Info($"报告提交, Code:{result.SubmitCode},{result.SubmitError}");
 
-            if (result.SubmitCode == 0)
-            {
-                OperationResult.Status = AmacDirectResultViewModel.State.Submit;
-                OperationResult.IsSuccess = true;
-            }
-        }
+        //    if (result.SubmitCode == 0)
+        //    {
+        //        OperationResult.Status = AmacDirectResultViewModel.State.Submit;
+        //        OperationResult.IsSuccess = true;
+        //    }
+        //}
     }
 
 

@@ -55,7 +55,7 @@ public partial class ManagerMemberViewModel : EditableControlViewModelBase<Parti
 
     public ManagerMemberViewModel(Participant person)
     {
-        Id = person?.Id ?? 0;
+        Id = person.Id;
 
         Name = new()
         {

@@ -1,7 +1,5 @@
-﻿using ClosedXML;
-using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using DocumentFormat.OpenXml.Wordprocessing;
 using FMO.Logging;
 using FMO.Models;
 using FMO.Shared;
@@ -19,11 +17,11 @@ partial class TransferOrderViewModel : ITransferViewModel
     /// <summary>
     /// 是否已申请
     /// </summary>
-    public bool IsApplyed { get =>field; set { field = value; OnPropertyChanged(nameof(IsApplyed)); } }
+    public bool IsApplyed { get => field; set { field = value; OnPropertyChanged(nameof(IsApplyed)); } }
 
 
     public bool IsEditable => string.IsNullOrWhiteSpace(Source) || Source == "manual";
-     
+
 
 
     [RelayCommand]
@@ -46,8 +44,16 @@ partial class TransferOrderViewModel : ITransferViewModel
     [RelayCommand]
     public void ModifyOrder()
     {
+        using var db = DbHelper.Base();
+        var order = db.GetCollection<TransferOrder>().FindById(Id);
+        if (order is null)
+        {
+            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"订单【{Id}】不存在"));
+            return;
+        }
+
         var wnd = new ModifyOrderWindow();
-        wnd.DataContext = new ModifyOrderWindowViewModel(Id, false);
+        wnd.DataContext = new ModifyOrderWindowViewModel(order, false);
         wnd.Owner = App.Current.MainWindow;
         wnd.ShowDialog();
     }

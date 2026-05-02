@@ -1,4 +1,5 @@
-﻿using Org.BouncyCastle.Asn1.GM;
+﻿using FMO.Logging;
+using Org.BouncyCastle.Asn1.GM;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -38,10 +39,10 @@ public static class Sm3Utils
         return ByteArrayToHexString(resultHash);
     }
 
-    public static byte[] Hash(byte[] srcData)
+    private static byte[] Hash(byte[] srcData)
     {
         if (srcData == null)
-            return null;
+            return [];
 
         SM3Digest digest = new SM3Digest();
         digest.BlockUpdate(srcData, 0, srcData.Length);
@@ -101,8 +102,8 @@ public static class Sm2Utils
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SM2加密失败: {ex.Message}");
-            return null;
+            LogEx.Error($"SM2加密失败: {ex.Message}");
+            return "";
         }
     }
 }

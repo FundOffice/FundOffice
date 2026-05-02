@@ -88,7 +88,7 @@ public class DailyFromMailMission : MailMission
         {
             var dy = Extract(msg, funds, ref haserror, ref log);
             if (msg.Attachments.Count() == 1 && dy?.Count > 0)
-                db.GetCollection<MailCategoryInfo>().Upsert(new MailCategoryInfo(msg.MessageId, msg.Subject, MailCategory.ValueSheet, true));
+                db.GetCollection<MailCategoryInfo>().Upsert(new MailCategoryInfo(msg.MessageId!, msg.Subject ?? "", MailCategory.ValueSheet, true));
         }
         return haserror;
     }
@@ -110,10 +110,10 @@ public class DailyFromMailMission : MailMission
                 try
                 {
                     //zip
-                    if (filepath.ToLower().EndsWith(".zip"))
+                    if (filepath?.ToLower().EndsWith(".zip") ?? false)
                     {
                         using var ms = new MemoryStream();
-                        item.Content.DecodeTo(ms);
+                        item.Content!.DecodeTo(ms);
                         ZipArchive zip = new ZipArchive(ms);
 
                         foreach (var ent in zip.Entries)
@@ -127,10 +127,10 @@ public class DailyFromMailMission : MailMission
                             ds.Add((fn, funds.FirstOrDefault(x => x.Name == fn || x.Code == co), ent.Name, dy, mss));
                         }
                     }
-                    else if (filepath.Contains(".xls"))
+                    else if (filepath?.Contains(".xls") ?? false)
                     {
                         var ms = new MemoryStream();
-                        item.Content.DecodeTo(ms);
+                        item.Content!.DecodeTo(ms);
 
                         var (fn, co, dy) = ValuationSheetHelper.ParseExcel(ms);
                         log += $"\n         ↳{fn} {dy?.Date}";
@@ -150,7 +150,6 @@ public class DailyFromMailMission : MailMission
             List<DailyValue> days = new();
             foreach (var x in ds)
             {
-                var info = new GzMailAttachInfo { Name = x.File };
                 if (x.Daily is null)
                     continue;
 
@@ -174,8 +173,6 @@ public class DailyFromMailMission : MailMission
 
 
                 x.Daily.FundId = fund.Id;
-                info.DailyId = x.Daily.Id;
-                info.FundId = fund.Id;
 
                 ///保存
                 var folder = FundHelper.GetFolder(fund.Id, "Sheet");

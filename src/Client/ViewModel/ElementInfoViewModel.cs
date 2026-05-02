@@ -181,7 +181,7 @@ public partial class RedemptionFeeInfoViewMdoel : ObservableObject, IDataValidat
         Parts = new();
     }
 
-    public RedemptionFeeInfoViewMdoel(RedemptionFeeInfo fee)
+    public RedemptionFeeInfoViewMdoel(RedemptionFeeInfo? fee)
     {
         Type = fee?.Type;
         HasFee = fee?.HasFee ?? false;

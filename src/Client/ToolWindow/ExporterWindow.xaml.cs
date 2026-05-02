@@ -227,7 +227,7 @@ public partial class ExporterWindowViewModel : ObservableObject
                 ChooseFundMode = meta!.Multiple ? SelectionMode.Multiple : SelectionMode.Single;
             }
         }
-        catch (DirectoryNotFoundException e)
+        catch (DirectoryNotFoundException)
         {
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "模板丢失，请重新导入模板"));
         }

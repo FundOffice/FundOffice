@@ -68,7 +68,7 @@ public class CloneFromGenerator : IIncrementalGenerator
 
     private static void Execute(
         SourceProductionContext context,
-        (Compilation, ImmutableArray<CallSite>) source)
+        (Compilation, ImmutableArray<CallSite?>) source)
     {
         var (compilation, calls) = source;
         if (calls.IsDefaultOrEmpty) return;
@@ -77,8 +77,8 @@ public class CloneFromGenerator : IIncrementalGenerator
 
         foreach (var call in calls)
         {
-            if (call.ThisType is not INamedTypeSymbol toType ||
-                call.SourceType is not INamedTypeSymbol fromType)
+            if (call?.ThisType is not INamedTypeSymbol toType ||
+                call?.SourceType is not INamedTypeSymbol fromType)
                 continue;
 
             if (!IsValidCandidate(toType) || !IsValidCandidate(fromType))

@@ -79,10 +79,18 @@ partial class TransferRecordViewModel : ITransferViewModel, IHasOrderViewModel
     public void ViewOrder()
     {
         if (!HasOrder) TryLink();
-        if (!HasOrder) return;
+        if (!HasOrder || OrderId is null) return;
+
+        using var db = DbHelper.Base();
+        var order = db.GetCollection<TransferOrder>().FindById(OrderId.Value);
+        if (order is null)
+        {
+            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"订单【{OrderId.Value}】不存在"));
+            return;
+        }
 
         var wnd = new ModifyOrderWindow();
-        wnd.DataContext = new ModifyOrderWindowViewModel(OrderId.Value);
+        wnd.DataContext = new ModifyOrderWindowViewModel(order);
         wnd.Owner = App.Current.MainWindow;
         wnd.ShowDialog();
     }

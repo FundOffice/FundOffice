@@ -69,6 +69,7 @@
     <Compile Remove="PageView.cs" />
     <Compile Remove="ViewModel\FileViewModel.cs" />
     <Compile Remove="ViewModel\UnitViewModel.cs" />
+    <Compile Remove="Views\Manager\OwnershipMapView.xaml.cs" />
     <Compile Remove="Views\TransferRequestPage.xaml.cs" />
   </ItemGroup>
 
@@ -82,6 +83,7 @@
   <ItemGroup>
     <Page Remove="Controls\CopyableControl.xaml" />
     <Page Remove="Controls\EquityStructureDiagram.xaml" />
+    <Page Remove="Views\Manager\OwnershipMapView.xaml" />
     <Page Remove="Views\TransferRequestPage.xaml" />
   </ItemGroup>
 

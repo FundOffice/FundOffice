@@ -16,7 +16,6 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using static FMO.OwnershipMapViewModel;
 
 namespace FMO;
 
@@ -763,26 +762,7 @@ public partial class ManagerPageViewModel : EditableControlViewModelBase<Manager
         IsAddingNewPolicy = false;
     }
 
-    private OwnershipItem Parse(int institutionId, IList<IEntity> per, IEnumerable<Ownership> os, OwnershipItem oi)
-    {
-        foreach (var item in os.Where(x => x.InstitutionId == institutionId))
-        {
-            var ins = per.FirstOrDefault(x => x.Id == item.InstitutionId);
-            var holder = per.FirstOrDefault(x => x.Id == item.HolderId);
 
-            if (holder is Person p)
-            {
-                oi.Childs.Add(new OwnershipItem { Name = p.Name, Ratio = item.Ratio });
-                continue;
-            }
-            else if (holder is Institution)
-                oi.Childs.Add(Parse(holder.Id, per, os, new OwnershipItem { Name = holder.Name, Ratio = item.Ratio }));
-
-
-        }
-
-        return oi;
-    }
 
 
     #region MyRegion
@@ -1149,7 +1129,7 @@ public partial class ParticipantViewModel : ObservableObject
             Id = obj.Id;
             Name = obj.Name;
             Role = obj.Role;
-            Identity = obj.Identity;
+            Identity = obj.Identity ?? new();
             Title = obj.Title;
             Phone = obj.Phone;
             Address = obj.Address;
@@ -1167,7 +1147,7 @@ public partial class ParticipantViewModel : ObservableObject
     public int Id { get; set; }
 
     [ObservableProperty]
-    public partial Identity Identity { get; set; }
+    public partial Identity Identity { get; set; } = new();
 
     [ObservableProperty]
     public partial PersonRole Role { get; set; }

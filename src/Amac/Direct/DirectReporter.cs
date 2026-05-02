@@ -359,6 +359,7 @@ public class AmacDirectReporter
     //    return results;
     //}
 
+    [Obsolete]
     public static async Task QueryResult(AmacProcessResult handle, AmacReportAccount acc)
     {
         try

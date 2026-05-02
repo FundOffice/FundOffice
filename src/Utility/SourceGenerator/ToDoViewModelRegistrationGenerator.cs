@@ -24,7 +24,7 @@ public sealed class TodoViewModelRegistrationGenerator : IIncrementalGenerator
         var viewModelCollection = viewModelTypes.Collect();
 
         // 3. 注册输出（只执行一次）✅ 关键修复
-        context.RegisterSourceOutput(viewModelCollection, (spc, vm) => Execute(spc, vm.ToArray()));
+        context.RegisterSourceOutput(viewModelCollection, (spc, vm) => Execute(spc, vm.OfType<ViewModelInfo>().ToArray()));
     }
 
     /// <summary>
@@ -65,7 +65,7 @@ public sealed class TodoViewModelRegistrationGenerator : IIncrementalGenerator
     /// <summary>
     /// 生成最终注册代码 ✅ 修复：参数变成数组
     /// </summary>
-    private void Execute(SourceProductionContext context, ViewModelInfo?[] viewModels)
+    private void Execute(SourceProductionContext context, ViewModelInfo[] viewModels)
     {
         // 过滤空值
         var validViewModels = viewModels.Where(vm => vm != null).ToList()!;

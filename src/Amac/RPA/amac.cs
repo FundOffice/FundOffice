@@ -93,7 +93,7 @@ public static class AmacAssist
 
                 var root = System.Text.Json.JsonSerializer.Deserialize<QueryManagers>(s);// await resp.Content.ReadFromJsonAsync<AmacQuery.QueryManagers>();
 
-                return root?.Content.ToArray();
+                return root?.Content?.ToArray();
             }
 
             Log.Error($"GetInstitutionInfoFromAmac Net Error {resp.StatusCode}");
