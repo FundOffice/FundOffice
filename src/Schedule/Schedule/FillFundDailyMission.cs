@@ -23,7 +23,7 @@ public class FillFundDailyMission : Mission
         NextRun = LastRun switch { null => DateTime.Today, DateTime d => d < DateTime.Today ? DateTime.Today : d.AddDays(1) };
     }
 
-    protected override bool WorkOverride()
+    protected override async Task<ErrorReturn> WorkOverride()
     {
         try
         {
@@ -45,18 +45,9 @@ public class FillFundDailyMission : Mission
             }
 
             Serilog.Log.Information("FillFundDailyMission Done");
-            return true;
+            return new(true, "填充基金每日数据成功");
         }
-        catch { return false; }
+        catch { return new(false, "填充基金每日数据失败"); }
     }
 }
 
-
-public struct MissionRecord
-{
-    public int MissionId { get; set; }
-
-    public DateTime Time { get; set; }
-
-    public string Record { get; set; }
-}

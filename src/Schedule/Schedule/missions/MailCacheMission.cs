@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
+using FMO.Models;
 using FMO.Utilities;
 using MimeKit;
 using Serilog;
@@ -59,7 +60,7 @@ public class MailCacheMission : MailMission
         if (NextRun < DateTime.Now) NextRun = DateTime.Now.AddMinutes(Interval);
     }
 
-    protected override bool WorkOverride()
+    protected override async Task<ErrorReturn> WorkOverride()
     {
         // 验证是否有未同步的fund
 
@@ -71,11 +72,9 @@ public class MailCacheMission : MailMission
 
         try
         {
-            if (string.IsNullOrWhiteSpace(MailName) || string.IsNullOrWhiteSpace(MailPassword) || string.IsNullOrWhiteSpace(MailPop3))
-            {
-                Log.Error($"{log} 邮箱配置错误");
-                return false;
-            }
+            if (string.IsNullOrWhiteSpace(MailName) || string.IsNullOrWhiteSpace(MailPassword) || string.IsNullOrWhiteSpace(MailPop3)) 
+                return new ErrorReturn(false, "邮箱配置错误");
+            
             using var pop3Client = new MailKit.Net.Pop3.Pop3Client();
             pop3Client.Connect(MailPop3, MailPort, true, new CancellationTokenSource(5000).Token);
             log = "连接邮箱服务器..................";
@@ -100,7 +99,7 @@ public class MailCacheMission : MailMission
                 }
 
                 //不再执行
-                return true;
+                return new ErrorReturn(false, "无法连接邮箱服务器，请检查配置");
             }
 
             // 登录
@@ -122,7 +121,7 @@ public class MailCacheMission : MailMission
                 }
 
                 //不再执行
-                return true;
+                return new ErrorReturn(false, "账户名或密码错误，请检查配置");
             }
 
 
@@ -192,7 +191,7 @@ public class MailCacheMission : MailMission
             var c = db.GetCollection<MissionRecord>();
             c.Insert(new MissionRecord { MissionId = Id, Time = time, Record = log });
         }
-        return true;
+        return new ErrorReturn(true, log);
     }
 }
 

@@ -7,7 +7,6 @@ using FMO.Utilities;
 using Serilog;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
-using System.Windows.Documents;
 
 namespace FMO;
 
@@ -34,7 +33,7 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
 {
 
     // public ObservableCollection<AutomationViewModelBase> Tasks { get; } = new();
-    public ObservableCollection<AutomationViewModelBase> Tasks { get; } = new();
+    public ObservableCollection<MissionViewModel> Tasks { get; } = new();
 
     public MissionTemplate[]? Templates { get; set; }
 
@@ -46,7 +45,7 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
 
         foreach (var m in ms)
         {
-            var vm = MissionTemplateManager.MakeViewModel(m);
+            var vm = MissionManager.GetViewModel(m);
             if (vm is null)
             {
                 // 后台任务
@@ -54,7 +53,7 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
 
                 Log.Error($"无法加载任务{m.Id}，Type={m.GetType()}，找不到view model");
                 //WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "无法加载任务，请查看log"));
-                vm = new AutomationViewModelBase(m);
+                vm = new MissionViewModel(m);
             }
 
 
@@ -67,7 +66,7 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
 
     public void InitTaskTpl()
     {
-        Templates = MissionTemplateManager.Templates.Select(x => x.Value).ToArray();
+        //Templates = MissionTemplateManager.Templates.Select(x => x.Value).ToArray();
 
         //var mvm = AssemblyLoadContext.Default.Assemblies.SelectMany(x => x.DefinedTypes).Where(x => x.BaseType is not null && x.BaseType.IsGenericType && x.BaseType.GetGenericTypeDefinition() == typeof(MissionViewModel<>));
 
@@ -87,25 +86,25 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
 
     [RelayCommand]
     public void AddTask(MissionTemplate template)
-    { 
-        var m = template.CreateMission();
-        using var db = DbHelper.Mission();
-        db.GetCollection<Mission>().Insert(m);
+    {
+        //var m = template.CreateMission();
+        //using var db = DbHelper.Mission();
+        //db.GetCollection<Mission>().Insert(m);
 
-        if (m is DailyFromMailMission || m is TAFromMailMission)
-            if (!Tasks.Any(x => x.MissionType == typeof(MailCacheMission)))
-                AddTask(MissionTemplateManager.CacheMailMissionTemplate);
+        //if (m is DailyFromMailMission || m is TAFromMailMission)
+        //    if (!Tasks.Any(x => x.MissionType == typeof(MailCacheMission)))
+        //        AddTask(MissionTemplateManager.CacheMailMissionTemplate);
 
 
-        var vm = template.CreateViewModel(m);
-        if (vm is null)
-        {
-            Log.Error($"无法加载任务{m.Id}，Type={m.GetType()}，找不到view model");
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "无法加载任务，请查看log"));
-            return;
-        }
+        //var vm = template.CreateViewModel(m);
+        //if (vm is null)
+        //{
+        //    Log.Error($"无法加载任务{m.Id}，Type={m.GetType()}，找不到view model");
+        //    WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "无法加载任务，请查看log"));
+        //    return;
+        //}
 
-        Tasks.Add(vm);
+        //Tasks.Add(vm);
         //if (template.ViewModel.BaseType?.GetGenericArguments() is Type[] types)
         //  try { Tasks.Add((Activator.CreateInstance(template.ViewModel, Activator.CreateInstance(types[0])) as AutomationViewModelBase)!); } catch { }
     }

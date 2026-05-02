@@ -1,18 +1,18 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
 using FMO.Utilities;
 using Serilog;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Reflection;
 
 namespace FMO.Schedule;
 
 
-public record RemoveMissionMessage(AutomationViewModelBase ViewModel);
+public record RemoveMissionMessage(MissionViewModel ViewModel);
 
-public partial class AutomationViewModelBase : ObservableObject, IRecipient<MissionMessage>, IRecipient<MissionProgressMessage>, IRecipient<MissionWorkMessage>
+public partial class MissionViewModel : ObservableObject, IRecipient<MissionMessage>, IRecipient<MissionProgressMessage>, IRecipient<MissionWorkMessage>
 {
     public Type MissionType { get; }
 
@@ -29,10 +29,6 @@ public partial class AutomationViewModelBase : ObservableObject, IRecipient<Miss
 
     [ObservableProperty]
     public partial DateTime? LastRunTime { get; set; }
-
-
-    [ObservableProperty]
-    public partial DateTime? NextRunDate { get; set; }
 
 
     [ObservableProperty]
@@ -57,9 +53,11 @@ public partial class AutomationViewModelBase : ObservableObject, IRecipient<Miss
     [ObservableProperty]
     public partial string? WorkLog { get; set; }
 
+    public ObservableCollection<string> Logs { get; }
+
     public int Id { get; }
 
-    public AutomationViewModelBase(Mission mission)
+    public MissionViewModel(Mission mission)
     {
         WeakReferenceMessenger.Default.RegisterAll(this);
         MissionType = mission.GetType();
@@ -67,13 +65,17 @@ public partial class AutomationViewModelBase : ObservableObject, IRecipient<Miss
         try
         {
             LastRunTime = mission.LastRun;
-            NextRunDate = mission.NextRun;
             NextRunTime = mission.NextRun;
             IsActivated = mission.IsEnabled;
         }
         catch (Exception ex) { Log.Error($"无法初始化任务ViewModel{ex.Message}"); }
 
         Id = mission.Id;
+
+        using var db = DbHelper.Mission();
+        Logs = [.. db.GetCollection<MissionRecord>().Find(x => x.MissionId == Id).
+            OrderByDescending(x => x.Time).Take(10).Select(x => $"{x.Time}\n{x.Record}")];
+
     }
 
 
@@ -81,7 +83,7 @@ public partial class AutomationViewModelBase : ObservableObject, IRecipient<Miss
     [RelayCommand]
     public void DoManualSetNextRunTime(bool set)
     {
-        if (set && NextRunDate is not null && NextRunTime is not null && NextRunDate.Value.Date.Add(NextRunTime.Value.TimeOfDay) is DateTime t && t > DateTime.Now)
+        if (set && NextRunTime is not null && NextRunTime.Value.Date.Add(NextRunTime.Value.TimeOfDay) is DateTime t && t > DateTime.Now)
         {
             MissionSchedule.ManualSetNextRun(Id, t);
         }
@@ -89,7 +91,6 @@ public partial class AutomationViewModelBase : ObservableObject, IRecipient<Miss
         {
             using var db = DbHelper.Mission();
             var mission = db.GetCollection<Mission>().FindById(Id);
-            NextRunDate = mission?.NextRun;
             NextRunTime = mission?.NextRun;
         }
 
@@ -97,7 +98,7 @@ public partial class AutomationViewModelBase : ObservableObject, IRecipient<Miss
     }
 
     [RelayCommand]
-    public void DeleteMission(AutomationViewModelBase mission)
+    public void DeleteMission(MissionViewModel mission)
     {
         WeakReferenceMessenger.Default.Send(new RemoveMissionMessage(mission));
     }
@@ -110,7 +111,7 @@ public partial class AutomationViewModelBase : ObservableObject, IRecipient<Miss
         WorkLog = string.Join("\n\n", db.GetCollection<MissionRecord>().Find(x => x.MissionId == Id).
             OrderByDescending(x => x.Time).Take(10).Select(x => $"{x.Time}\n{x.Record}"));
 
-        IsLogVisible = WorkLog?.Length > 0; 
+        IsLogVisible = WorkLog?.Length > 0;
     }
     partial void OnNextRunTimeChanged(DateTime? value)
     {
@@ -129,7 +130,6 @@ public partial class AutomationViewModelBase : ObservableObject, IRecipient<Miss
 
         if (message.NextRun is not null)
         {
-            NextRunDate = message.NextRun;
             NextRunTime = message.NextRun;
         }
     }
@@ -141,12 +141,17 @@ public partial class AutomationViewModelBase : ObservableObject, IRecipient<Miss
 
     public void Receive(MissionWorkMessage message)
     {
-        if (Id == message.Id) WorkLog = message.Log;
+        if (Id != message.Id)
+            return;
+
+        Logs.Add(message.Log);
+        if (Logs.Count > 10) Logs.RemoveAt(0);
+        WorkLog = message.Log;
     }
 }
 
 
-public partial class MissionViewModel<T> : AutomationViewModelBase where T : Mission
+public partial class MissionViewModel<T> : MissionViewModel where T : Mission
 {
     protected T Mission { get; set; }
 
@@ -191,7 +196,6 @@ public partial class MissionViewModel<T> : AutomationViewModelBase where T : Mis
                     if (IsActivated != Mission.IsEnabled)
                     {
                         Mission.IsEnabled = IsActivated;
-                        NextRunDate = Mission.NextRun;
                         NextRunTime = Mission.NextRun;
                         using var db = DbHelper.Mission();
                         db.GetCollection<Mission>().Upsert(Mission);

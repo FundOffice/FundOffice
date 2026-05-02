@@ -12,6 +12,8 @@ public static class MissionSchedule
     /// </summary>
     private static System.Timers.Timer _taskTimer { get; } = new System.Timers.Timer(60000);
 
+    private static PeriodicTimer _timer { get; } = new PeriodicTimer(TimeSpan.FromMinutes(1));
+
     /// <summary>
     /// 用于倒计时
     /// </summary>
@@ -38,8 +40,8 @@ public static class MissionSchedule
                 return mission;
             }
             catch(Exception e) { LogEx.Error($"无法加载mission{x["_id"]}\n{x.ToString()}\n{e.Message}\n{e.StackTrace}"); return null; }
-        }).OfType<Mission>().OrderBy(x => x!.GetType().Name switch { nameof(MailCacheMission) => 0, _ => x.Id })];
-         
+        }).OfType<Mission>().OrderBy(x => x!.GetType().Name switch { "MailCacheMission" => 0, _ => x.Id })];
+
 
         // 清理Log
         db.GetCollection<MissionRecord>().DeleteMany(x => x.Time < DateTime.Now.AddMonths(-2));
@@ -49,12 +51,23 @@ public static class MissionSchedule
             m.IsEnabled = false;
 #endif
 
-        _taskTimer.Elapsed += _taskTimer_Elapsed;
-        _taskTimer.Start();
+
+        Task.Run(async () =>
+        {
+            // 等待10秒，等其他模块加载完成
+            await Task.Delay(10000);
+
+            while (await _timer.WaitForNextTickAsync())
+            {
+                DoWork(DateTime.Now);
+            }
+        });
+        //_taskTimer.Elapsed += _taskTimer_Elapsed;
+        //_taskTimer.Start();
 
 
         //延时执行一次
-        Task.Run(async () => { await Task.Delay(8000); DoWork(DateTime.Now); });
+        //Task.Run(async () => { await Task.Delay(8000); DoWork(DateTime.Now); });
     }
 
     private static void _taskTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
@@ -64,8 +77,7 @@ public static class MissionSchedule
 
     private static void DoWork(DateTime t)
     {
-        foreach (var item in missions)
-            item.OnTime(t);
+        Parallel.ForEach(missions, async item => await item.OnTime(t));
     }
 
 

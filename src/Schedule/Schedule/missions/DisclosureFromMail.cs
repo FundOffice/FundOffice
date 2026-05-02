@@ -28,16 +28,12 @@ public class DisclosureFromMailMission : MailMission
 
     //public void Test() => WorkOverride();
 
-    protected override bool WorkOverride()
+    protected override async Task<ErrorReturn> WorkOverride()
     {
         // 获取所有缓存  
         var di = new DirectoryInfo(@$"files\mailcache\{MailName}");
         if (!di.Exists)
-        {
-            WeakReferenceMessenger.Default.Send(new MissionWorkMessage(Id, "邮件缓存文件夹不存在"));
-            Log.Error($"Mission[{Id}] 邮件缓存文件夹不存在");
-            return false;
-        }
+            return new ErrorReturn(false, $"邮件缓存文件夹不存在：{di.FullName}");
 
         // 获取所有文件
         var files = di.GetFiles();
@@ -86,12 +82,11 @@ public class DisclosureFromMailMission : MailMission
         );
 
         log += "\n" + string.Join("\n", logBag);
-        //log += $"完成";
 
         using (var mdb = DbHelper.Mission())
             mdb.GetCollection<MissionRecord>().Insert(new MissionRecord { MissionId = Id, Time = DateTime.Now, Record = log });
 
-        return true;
+        return new ErrorReturn(true, log);
     }
 
     public void WorkOne(FileInfo f, Dictionary<string, int> fundmap, FundIdf[] fundCodeMap, ref string log)
@@ -175,7 +170,7 @@ public class DisclosureFromMailMission : MailMission
 
                                 case ".pdf":
                                     if (ext.Count(x => !Regex.IsMatch(x.FileName, "复核函")) == 1)// 避免把复核函当成报告正文
-                                        fp.Pdf = new SimpleFile { File = FileMeta.Create(ext.First().Stream, ext.First().FileName) }; 
+                                        fp.Pdf = new SimpleFile { File = FileMeta.Create(ext.First().Stream, ext.First().FileName) };
                                     else if (PdfHelper.Merge(ext.Select(x => x.Stream).ToArray()) is Stream nes) // 有些托管会发多个Pdf，把它们合并成一个
                                         fp.Pdf = new SimpleFile { File = FileMeta.Create(nes, $"{fundName}_{EnumDescriptionTypeConverter.GetEnumDescription(type.Key)}_{r.Key:yyyyMMdd}.pdf") };
                                     break;
@@ -184,7 +179,7 @@ public class DisclosureFromMailMission : MailMission
                                 ff.Stream.Dispose();
                         }
 
-                        DataTracker.OnNewNotice(fp); 
+                        DataTracker.OnNewNotice(fp);
 
                         log += $"\n{fund.Key}: {type.Key} {r.Key}";
                     }

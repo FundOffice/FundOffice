@@ -12,7 +12,7 @@ public class MissionMessage
 }
 
 
-public record MissionWorkMessage(int Id, string Log);
+public record MissionWorkMessage(int Id, string Log, DateTime Time);
     
 
 

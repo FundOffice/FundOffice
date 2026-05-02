@@ -25,7 +25,7 @@ public class MailMissionRecord
 public class TAFromMailMission : MailMission
 {
 
-    public int Interval { get; set; } = 15; 
+    public int Interval { get; set; } = 15;
 
 
     protected override void SetNextRun()
@@ -34,16 +34,13 @@ public class TAFromMailMission : MailMission
         if (NextRun < DateTime.Now) NextRun = DateTime.Now.AddMinutes(Interval);
     }
 
-    protected override bool WorkOverride()
+    protected override async Task<ErrorReturn> WorkOverride()
     {
         // 获取所有缓存  
         var di = new DirectoryInfo(@$"files\mailcache\{MailName}");
         if (!di.Exists)
-        {
-            WeakReferenceMessenger.Default.Send(new MissionWorkMessage(Id, "邮件缓存文件夹不存在"));
-            Log.Error($"Mission[{Id}] 邮件缓存文件夹不存在");
-            return false;
-        }
+            return new(false, $"邮件缓存文件夹不存在：{di.FullName}");
+
 
         // 获取所有文件
         var files = di.GetFiles();
@@ -64,7 +61,7 @@ public class TAFromMailMission : MailMission
         {
             try
             {
-                WorkOne(f,ref log);
+                WorkOne(f, ref log);
                 coll.Upsert(new MailMissionRecord { Id = f.Name, Time = DateTime.Now });
             }
             catch (Exception ex)
@@ -82,7 +79,7 @@ public class TAFromMailMission : MailMission
         using (var mdb = DbHelper.Mission())
             mdb.GetCollection<MissionRecord>().Insert(new MissionRecord { MissionId = Id, Time = DateTime.Now, Record = log });
 
-        return true;
+        return new(true, log);
     }
 
     private void WorkOne(FileInfo f, ref string log)
@@ -147,7 +144,7 @@ public class TAFromMailMission : MailMission
                 var ms = new MemoryStream();
                 item.Content.DecodeTo(ms);
 
-                WorkOnSheet(ms, sender,log);
+                WorkOnSheet(ms, sender, log);
             }
             else if (Regex.IsMatch(filepath, ".pdf", RegexOptions.IgnoreCase))
             {

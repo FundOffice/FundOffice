@@ -22,20 +22,18 @@ public class DailyFromMailMission : MailMission
         if (NextRun < DateTime.Now) NextRun = DateTime.Now.AddMinutes(Interval);
     }
 
-    protected override bool WorkOverride()
+    protected override async Task<ErrorReturn> WorkOverride()
     {
         if (MailName is null)
         {
             IsEnabled = false;
-            return false;
+            return new(false, "邮箱配置错误");
         }
         // 获取所有缓存 
         var di = new DirectoryInfo(@$"files\mailcache\{MailName}");
-        if (!di.Exists)
-        {
-            Log.Error($"Mission[{Id}] 邮件缓存文件夹不存在");
-            return false;
-        }
+        if (!di.Exists) 
+            return new(false, "邮件缓存文件夹不存在");
+        
 
         string log = "";
         // 获取所有文件
@@ -70,7 +68,7 @@ public class DailyFromMailMission : MailMission
             mdb.GetCollection<MissionRecord>().Insert(new MissionRecord { MissionId = Id, Time = DateTime.Now, Record = log });
 
         WeakReferenceMessenger.Default.Send(new MissionProgressMessage { Id = Id, Progress = 100 });
-        return true;
+        return new(true, "处理完成");
     }
 
     private bool WorkOne(FileInfo file, string log)

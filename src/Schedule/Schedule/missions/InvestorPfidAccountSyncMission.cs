@@ -21,7 +21,7 @@ public class InvestorPfidAccountSyncMission : Mission
 
 
 
-    protected override bool WorkOverride()
+    protected override async Task<ErrorReturn> WorkOverride()
     {
         // 检查是否首次
         using var db = DbHelper.Base();
@@ -39,7 +39,7 @@ public class InvestorPfidAccountSyncMission : Mission
         }
 
 
-        return true;
+        return new(true, "同步成功");
     }
 
     internal void Wed()

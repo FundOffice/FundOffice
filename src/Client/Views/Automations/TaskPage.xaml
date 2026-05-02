@@ -14,7 +14,7 @@
         <local:TaskPageViewModel />
     </UserControl.DataContext>
     <DockPanel>
-        <StackPanel Width="500" Margin="0,20,0,0">
+        <!--<StackPanel Width="500" Margin="0,20,0,0">
             <ListBox
                 BorderThickness="0"
                 ItemsSource="{Binding Templates}"
@@ -39,7 +39,7 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-        </StackPanel>
+        </StackPanel>-->
 
         <ListBox
             Margin="0"
@@ -47,16 +47,25 @@
             BorderThickness="0"
             ItemsSource="{Binding Tasks}"
             Style="{StaticResource ListBoxCustom}">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <mi:MissionShellView />
-                    <!--<ContentControl
-                        Content="{Binding}"
-                        ContentTemplateSelector="{StaticResource MissionTemplateSelector}"
-                        DataContext="{Binding .}"
-                        Template="{StaticResource AutomationViewTemplate}" />-->
-                </DataTemplate>
-            </ListBox.ItemTemplate>
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <hc:UniformSpacingPanel
+                        ChildWrapping="Wrap"
+                        IsItemsHost="True"
+                        Spacing="5" />
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <mi:MissionShellView Content="{Binding}" DataContext="{Binding}" />
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
         </ListBox>
     </DockPanel>
 </UserControl>

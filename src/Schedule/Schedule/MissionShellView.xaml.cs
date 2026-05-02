@@ -13,9 +13,6 @@ namespace FMO.Schedule
             InitializeComponent();
         }
 
-        private void UserControl_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            Content = DataContext is AutomationViewModelBase vm ? MissionTemplateManager.MakeView(vm.MissionType) ?? new TextBlock { Text = $"无法显示此任务 {vm.MissionType.Name}", VerticalAlignment = VerticalAlignment.Center } : "无法显示此任务";
-        }
+     
     }
 }

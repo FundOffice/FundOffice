@@ -9,10 +9,30 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="DailyFromMail\**" />
     <Compile Remove="GatherDailyFromMail\**" />
+    <Compile Remove="MailCache\**" />
+    <Compile Remove="ReportsFromMail\**" />
+    <Compile Remove="SendDailyReportToWebhook\**" />
+    <Compile Remove="TAFromMail\**" />
+    <EmbeddedResource Remove="DailyFromMail\**" />
     <EmbeddedResource Remove="GatherDailyFromMail\**" />
+    <EmbeddedResource Remove="MailCache\**" />
+    <EmbeddedResource Remove="ReportsFromMail\**" />
+    <EmbeddedResource Remove="SendDailyReportToWebhook\**" />
+    <EmbeddedResource Remove="TAFromMail\**" />
+    <None Remove="DailyFromMail\**" />
     <None Remove="GatherDailyFromMail\**" />
+    <None Remove="MailCache\**" />
+    <None Remove="ReportsFromMail\**" />
+    <None Remove="SendDailyReportToWebhook\**" />
+    <None Remove="TAFromMail\**" />
+    <Page Remove="DailyFromMail\**" />
     <Page Remove="GatherDailyFromMail\**" />
+    <Page Remove="MailCache\**" />
+    <Page Remove="ReportsFromMail\**" />
+    <Page Remove="SendDailyReportToWebhook\**" />
+    <Page Remove="TAFromMail\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -38,6 +58,8 @@
     <ProjectReference Include="..\..\SharedUI\SharedUI.csproj" />
     <ProjectReference Include="..\..\Utility\PDF\PdfExt.csproj" />
     <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
+    <ProjectReference Include="..\MissionRegisterGenerator\MissionRegisterGenerator.csproj"  OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\Mission\Mission.csproj" />
   </ItemGroup>
 
 </Project>
