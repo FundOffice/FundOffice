@@ -189,6 +189,15 @@
 
 
                                     <Button
+                                        hc:IconElement.Geometry="{StaticResource f.trash}"
+                                        Command="{Binding DeleteMissionCommand}"
+                                        CommandParameter="{Binding .}"
+                                        DockPanel.Dock="Right"
+                                        Foreground="Red"
+                                        Style="{StaticResource ButtonIcon}"
+                                        Visibility="{Binding IsActivated, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                                    <Button
                                         x:Name="runonce"
                                         Height="24"
                                         Margin="10,0"

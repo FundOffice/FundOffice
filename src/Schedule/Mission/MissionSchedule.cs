@@ -35,6 +35,7 @@ public static class MissionSchedule
             try
             {
                 var mission = BsonMapper.Global.ToObject<Mission>(x);
+                if (mission.IsAborted) return null;
                 //if(mission is FillFundDailyMission) return null;
                 mission.Init();
                 return mission;
@@ -85,6 +86,9 @@ public static class MissionSchedule
     {
         mission.Init();
         missions[mission.Id] = mission;
+
+        using var db = DbHelper.Mission();
+        db.GetCollection<Mission>().Upsert(mission);
     }
 
     public static void SaveChanges(Mission m)
