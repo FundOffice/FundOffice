@@ -35,7 +35,7 @@ public enum MailCategory
 public record MailCategoryInfo(string Id, string Subject, MailCategory Category, bool IsSealed = false);
 
 
-
+[MissionInfo("缓存邮件", "缓存邮件")]
 public class MailCacheMission : MailMission
 {
 

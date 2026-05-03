@@ -22,6 +22,8 @@ public class MailMissionRecord
     public bool HasError { get; internal set; }
 }
 
+
+[MissionInfo("更新TA", "解析邮箱中TA文件，仅当托管不支持API时，使用此方式")]
 public class TAFromMailMission : MailMission
 {
 

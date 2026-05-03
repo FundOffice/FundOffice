@@ -9,7 +9,7 @@ using System.IO.Compression;
 namespace FMO.Schedule;
 
 
-
+[MissionInfo("净值更新", "解析邮箱中估值表，更新净值")]
 public class DailyFromMailMission : MailMission
 {
     public int Interval { get; set; } = 15;

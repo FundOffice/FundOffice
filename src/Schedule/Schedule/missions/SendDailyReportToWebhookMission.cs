@@ -10,6 +10,7 @@ using System.Windows.Media.Imaging;
 
 namespace FMO.Schedule;
 
+[MissionInfo("发送日报", "发送每日基金净值到信息通道")]
 public class SendDailyReportToWebhookMission : Mission
 {
 
