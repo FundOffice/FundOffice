@@ -3,7 +3,6 @@ using FMO.Models;
 using FMO.Todo;
 using FMO.Utilities;
 using Serilog;
-using System.Diagnostics.CodeAnalysis;
 
 namespace FMO.Schedule;
 
@@ -24,6 +23,10 @@ public abstract class Mission
 
     public bool IsWorking { get; private set; }
 
+    /// <summary>
+    /// 废弃
+    /// </summary>
+    public bool IsAborted { get; set; }
 
     //private string? _log;
 
@@ -60,12 +63,15 @@ public abstract class Mission
         var log = "";
         DateTime now = DateTime.Now;
 
-
         try
         {
             r = await WorkOverride();
             LastRun = now;
-            if (r.Successed) SetNextRun();
+
+            // 一次性任务，完成就释放
+            if (this is OnceMission mm && mm.IsFinished)
+                MissionSchedule.Unregister(Id);
+            else if (r.Successed) SetNextRun();
         }
         catch (Exception e)
         {
@@ -116,31 +122,12 @@ public abstract class Mission
 
 }
 
-public class MissionInfoAttribute : Attribute
+/// <summary>
+/// 一次性
+/// </summary>
+public class OnceMission:Mission
 {
-    [SetsRequiredMembers]
-    public MissionInfoAttribute(string name, string description = "")
-    {
-        Title = name;
-        Description = description;
-    }
-
-    public required string Title { get; set; }
-
-    public string Description { get; }
-}
+    public bool IsFinished { get; protected set; }
 
 
-
-
-
-
-
-public struct MissionRecord
-{
-    public int MissionId { get; set; }
-
-    public DateTime Time { get; set; }
-
-    public string Record { get; set; }
 }

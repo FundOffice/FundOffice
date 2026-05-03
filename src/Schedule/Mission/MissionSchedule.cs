@@ -20,9 +20,9 @@ public static class MissionSchedule
     private static System.Timers.Timer _secondTimer { get; } = new System.Timers.Timer(1000);
 
 
-    static HashSet<Mission> missions = [];// new HashSet<Mission>();
+    static Dictionary<int, Mission> missions = [];// new HashSet<Mission>();
 
-    public static Mission[] Missions => missions.ToArray();
+    public static Mission[] Missions => missions.Values.ToArray();
 
 
     public static void Init()
@@ -30,7 +30,7 @@ public static class MissionSchedule
         using var db = DbHelper.Mission();
         var ms = db.GetCollection("Mission").FindAll().ToList();// db.GetCollection<Mission>().FindAll().ToArray();
 
-        missions = [.. ms.Select(x =>
+        missions = ms.Select(x =>
         {
             try
             {
@@ -39,8 +39,8 @@ public static class MissionSchedule
                 mission.Init();
                 return mission;
             }
-            catch(Exception e) { LogEx.Error($"无法加载mission{x["_id"]}\n{x.ToString()}\n{e.Message}\n{e.StackTrace}"); return null; }
-        }).OfType<Mission>().OrderBy(x => x!.GetType().Name switch { "MailCacheMission" => 0, _ => x.Id })];
+            catch (Exception e) { LogEx.Error($"无法加载mission{x["_id"]}\n{x.ToString()}\n{e.Message}\n{e.StackTrace}"); return null; }
+        }).OfType<Mission>().OrderBy(x => x!.GetType().Name switch { "MailCacheMission" => 0, _ => x.Id }).ToDictionary(x => x.Id);
 
 
         // 清理Log
@@ -48,7 +48,7 @@ public static class MissionSchedule
 
 #if DEBUG
         foreach (var m in missions)
-            m.IsEnabled = false;
+            m.Value.IsEnabled = false;
 #endif
 
 
@@ -77,39 +77,37 @@ public static class MissionSchedule
 
     private static void DoWork(DateTime t)
     {
-        Parallel.ForEach(missions, async item => await item.OnTime(t));
+        Parallel.ForEach(missions, async item => await item.Value.OnTime(t));
     }
 
 
     public static void Register(Mission mission)
     {
         mission.Init();
-        missions.Add(mission);
+        missions[mission.Id] = mission;
     }
 
     public static void SaveChanges(Mission m)
     {
         using var db = DbHelper.Mission();
         db.GetCollection<Mission>().Upsert(m);
-        if (!missions.Contains(m)) missions.Add(m);
+
+        missions[m.Id] = m;
     }
 
     public static void Unregister(int id)
     {
-        var m = missions.FirstOrDefault(x => x.Id == id);
-        if (m is not null)
-        {
-            missions.Remove(m);
-            using var db = DbHelper.Mission();
-            db.GetCollection<Mission>().Delete(id);
-        }
+        missions.Remove(id);
+        using var db = DbHelper.Mission();
+        db.GetCollection<Mission>().UpdateMany($"{{ IsAborted : true }}", $"_id={id}");
     }
 
     internal static void ManualSetNextRun(int id, DateTime time)
     {
-        var m = missions.FirstOrDefault(x => x.Id == id);
-        if (m is null) return;
-        m.NextRun = time;
-        SaveChanges(m);
+        if (missions.TryGetValue(id, out var m))
+        {
+            m.NextRun = time;
+            SaveChanges(m);
+        }
     }
 }
