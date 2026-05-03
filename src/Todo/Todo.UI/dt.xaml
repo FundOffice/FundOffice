@@ -60,4 +60,13 @@
         </StackPanel>
     </DataTemplate>
 
+
+
+    <DataTemplate DataType="{x:Type local:JustNotifyTodoViewModel}">
+        <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+    </DataTemplate>
+
+
+
+
 </ResourceDictionary>

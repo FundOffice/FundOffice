@@ -2,11 +2,12 @@
 
 public interface ITodo
 {
+    int Id { get; init; }
+
     DateTime CreateTime { get; }
     
     DateTime FinishTime { get; set; }
     
-    int Id { get; }
 
     bool JustNotify { get; }
     

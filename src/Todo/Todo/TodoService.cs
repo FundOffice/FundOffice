@@ -29,8 +29,8 @@ public static class TodoService
 
     public static void Initialize()
     {
-        using var db = DbHelper.Base();
-        var col = db.GetCollection<BsonDocument>("Todo");
+        using var db = DbHelper.Base(); 
+        var col = db.GetCollection<BsonDocument>("ITodo");
         foreach (var doc in col.Find($"$.{nameof(ITodo.Status)}='{nameof(TotoStatus.None)}'"))
         {
             try
