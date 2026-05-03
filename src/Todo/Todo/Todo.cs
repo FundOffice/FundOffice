@@ -31,3 +31,4 @@ public enum TotoStatus
 }
 
 public record TodoStatusMessage(int Id, TotoStatus Status);
+public record TodoGroupStatusMessage(string UniqueId, TotoStatus Status);

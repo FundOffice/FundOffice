@@ -27,6 +27,27 @@ public static class TodoService
         WeakReferenceMessenger.Default.Send((ITodo)todo);
     }
 
+    public static void Unregister(int id)
+    {
+        using var db = DbHelper.Base();
+
+        // 如果UniqueId不为null，说明这是一个具有唯一标识的Todo，需要先将之前的同类Todo标记为已忽略
+         db.GetCollection<ITodo>().UpdateMany($"{{ '{nameof(ITodo.Status)}':'{nameof(TotoStatus.Ignored)}' }}", $"$.{nameof(ITodo.Id)}={id}");
+         
+        WeakReferenceMessenger.Default.Send(new TodoStatusMessage( id, TotoStatus.Ignored ));
+    }
+
+    public static void Unregister(string uid)
+    {
+        using var db = DbHelper.Base();
+
+        // 如果UniqueId不为null，说明这是一个具有唯一标识的Todo，需要先将之前的同类Todo标记为已忽略
+        db.GetCollection<ITodo>().UpdateMany($"{{ '{nameof(ITodo.Status)}':'{nameof(TotoStatus.Ignored)}' }}", $"$.{nameof(ITodo.UniqueId)}='{uid}'");
+
+        WeakReferenceMessenger.Default.Send(new TodoGroupStatusMessage(uid, TotoStatus.Ignored));
+    }
+
+
     public static void Initialize()
     {
         using var db = DbHelper.Base(); 
