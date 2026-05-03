@@ -13,8 +13,11 @@
     <UserControl.DataContext>
         <local:TaskPageViewModel />
     </UserControl.DataContext>
-    <DockPanel>
-        <!--<StackPanel Width="500" Margin="0,20,0,0">
+    <DockPanel Margin="5">
+        <DockPanel DockPanel.Dock="Top">
+
+            <Label Content="添加任务" Style="{StaticResource LabelPrimary}" />
+
             <ListBox
                 BorderThickness="0"
                 ItemsSource="{Binding Templates}"
@@ -39,7 +42,8 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-        </StackPanel>-->
+        </DockPanel>
+
 
         <ListBox
             Margin="0"

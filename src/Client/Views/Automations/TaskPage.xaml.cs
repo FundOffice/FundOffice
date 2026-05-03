@@ -66,7 +66,7 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
 
     public void InitTaskTpl()
     {
-        //Templates = MissionTemplateManager.Templates.Select(x => x.Value).ToArray();
+        Templates = MissionManager.Templates;
 
         //var mvm = AssemblyLoadContext.Default.Assemblies.SelectMany(x => x.DefinedTypes).Where(x => x.BaseType is not null && x.BaseType.IsGenericType && x.BaseType.GetGenericTypeDefinition() == typeof(MissionViewModel<>));
 
