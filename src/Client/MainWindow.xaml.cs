@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.Logging;
 using FMO.Models;
+using FMO.Schedule;
 using FMO.Todo;
 using FMO.Utilities;
 using Serilog;
@@ -484,8 +485,9 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
 
         //TodoService.AutoHugeRedemption([req]);
 
-        TodoCollection?.Add(new HugeRedemptionTodoViewModel { OpenDay = DateOnly.FromDayNumber(Environment.TickCount%454)});
-    
+        // TodoCollection?.Add(new HugeRedemptionTodoViewModel { OpenDay = DateOnly.FromDayNumber(Environment.TickCount%454)});
+
+        MissionSchedule.Register(new OnceMission { });
     }
 #endif
 

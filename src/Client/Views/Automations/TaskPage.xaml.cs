@@ -1,9 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Models;
 using FMO.Schedule;
-using FMO.Utilities;
 using Serilog;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
@@ -29,7 +27,7 @@ public class MissionViewAndViewModel
     public required object ViewModel { get; set; }
 }
 
-public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMissionMessage>
+public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMissionMessage>, IRecipient<Mission>
 {
 
     // public ObservableCollection<AutomationViewModelBase> Tasks { get; } = new();
@@ -46,17 +44,9 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
         foreach (var m in ms)
         {
             var vm = MissionManager.GetViewModel(m);
-            if (vm is null)
-            {
-                // 后台任务
-                //if (m is FillFundDailyMission) continue;
-
-                Log.Error($"无法加载任务{m.Id}，Type={m.GetType()}，找不到view model");
-                //WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "无法加载任务，请查看log"));
+            if (vm is null) 
                 vm = new MissionViewModel(m);
-            }
-
-
+            
             Tasks.Add(vm);
         }
 
@@ -86,21 +76,12 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
 
     [RelayCommand]
     public void AddTask(MissionTemplate template)
-    { 
+    {
         var m = template.CreateMission();
         MissionSchedule.Register(m);
-         
-        var vm = MissionManager.GetViewModel(m);
 
-        if (vm is null)
-        {
-            Log.Error($"无法加载任务{m.Id}，Type={m.GetType()}，找不到view model");
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "无法加载任务，请查看log"));
-            return;
-        }
 
-        Tasks.Add(vm);
-         
+
     }
 
 
@@ -110,7 +91,12 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
         MissionSchedule.Unregister(message.ViewModel.Id);
     }
 
+    public void Receive(Mission m)
+    {
+        var vm = MissionManager.GetViewModel(m);
+        if (vm is null) vm = new MissionViewModel(m);
 
-
+        Tasks.Add(vm);
+    }
 }
 

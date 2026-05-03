@@ -13,6 +13,7 @@ public abstract class Mission
 {
     public int Id { get; set; }
 
+
     public DateTime? LastRun { get; set; }
 
     public DateTime? NextRun { get; set; }
@@ -79,7 +80,7 @@ public abstract class Mission
             r = new(false, $"Mission Error {Id} {e}");
             Log.Error($"Mission Error {Id} {e}");
 
-            TodoService.Register(new JustNotifyTodo { CreateTime = now , Message = $"Mission Error {Id} {e}" });
+            TodoService.Register(new JustNotifyTodo { CreateTime = now, Message = $"Mission Error {Id} {e}" });
             //WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"[{Id}]任务执行出错，请查看log"));
         }
 
@@ -125,7 +126,7 @@ public abstract class Mission
 /// <summary>
 /// 一次性
 /// </summary>
-public class OnceMission:Mission
+public class OnceMission : Mission
 {
     public bool IsFinished { get; protected set; }
 

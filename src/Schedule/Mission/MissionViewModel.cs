@@ -72,6 +72,8 @@ public partial class MissionViewModel : ObservableObject, IRecipient<MissionMess
 
         Id = mission.Id;
 
+        Title = $"Mission:{Id}";
+
         using var db = DbHelper.Mission();
         Logs = [.. db.GetCollection<MissionRecord>().Find(x => x.MissionId == Id).
             OrderByDescending(x => x.Time).Take(10).Select(x => $"{x.Time}\n{x.Record}")];

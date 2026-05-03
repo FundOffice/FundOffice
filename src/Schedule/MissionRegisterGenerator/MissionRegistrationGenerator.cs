@@ -23,7 +23,7 @@ public class MissionRegistrationGenerator : IIncrementalGenerator
         // 2. 过滤并配对 Mission 与 ViewModel
         var matchedPairsProvider = allTypesProvider.Select((types, _) =>
         {
-            var missions = types.Where(t => InheritsFrom(t, "Mission")).ToList();
+            var missions = types.Where(t => HasAttribute(t, "MissionInfoAttribute") && InheritsFrom(t, "Mission")).ToList();
             var vmMap = new Dictionary<INamedTypeSymbol, INamedTypeSymbol>(SymbolEqualityComparer.Default);
 
             foreach (var t in types)
@@ -83,6 +83,33 @@ public class MissionRegistrationGenerator : IIncrementalGenerator
                 list.Add(type);
         }
     }
+    /// <summary>
+    /// 检查类型是否带有指定名称的特性（支持省略 "Attribute" 后缀）
+    /// </summary>
+    private static bool HasAttribute(INamedTypeSymbol type, string attributeName)
+    {
+        foreach (var attr in type.GetAttributes())
+        {
+            if (attr.AttributeClass == null) continue;
+
+            var attrName = attr.AttributeClass.Name;
+            var attrFullName = attr.AttributeClass.ToDisplayString();
+
+            // 精确匹配完整名称
+            if (attrName == attributeName || attrFullName == attributeName)
+                return true;
+
+            // 支持 [MissionInfo] 简写形式（自动匹配 MissionInfoAttribute）
+            if (attributeName.EndsWith("Attribute"))
+            {
+                var shortName = attributeName.Substring(0, attributeName.Length - "Attribute".Length);
+                if (attrName == shortName || attrFullName.EndsWith($".{shortName}"))
+                    return true;
+            }
+        }
+        return false;
+    }
+
 
     private static bool InheritsFrom(INamedTypeSymbol type, string baseName)
     {

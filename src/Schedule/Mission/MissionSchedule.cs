@@ -1,4 +1,5 @@
-﻿using FMO.Logging;
+﻿using CommunityToolkit.Mvvm.Messaging;
+using FMO.Logging;
 using FMO.Utilities;
 using LiteDB;
 
@@ -89,6 +90,8 @@ public static class MissionSchedule
 
         using var db = DbHelper.Mission();
         db.GetCollection<Mission>().Upsert(mission);
+
+        WeakReferenceMessenger.Default.Send(mission);
     }
 
     public static void SaveChanges(Mission m)
