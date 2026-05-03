@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Main\Models\Models.csproj" />
+    <ProjectReference Include="..\..\ToDo\ToDo\ToDo.csproj" />
     <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
   </ItemGroup>
 
