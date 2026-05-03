@@ -9,11 +9,11 @@ namespace FMO.Todo;
 
 public static class TodoService
 {
-    private static ConcurrentBag<Todo> _Todos = [];
+    private static ConcurrentBag<ITodo> _Todos = [];
 
-    public static Todo[]? GetAll() => _Todos.Where(x => x.Status == TotoStatus.None).ToArray();
+    public static ITodo[]? GetAll() => _Todos.Where(x => x.Status == TotoStatus.None).ToArray();
 
-    public static void Register<T>(T todo) where T : Todo
+    public static void Register<T>(T todo) where T : ITodo
     {
         _Todos.Add(todo);
 
@@ -21,21 +21,21 @@ public static class TodoService
 
         // 如果UniqueId不为null，说明这是一个具有唯一标识的Todo，需要先将之前的同类Todo标记为已忽略
         if (todo.UniqueId is not null)
-            db.GetCollection<Todo>().UpdateMany($"{{ '{nameof(Todo.Status)}':'{nameof(TotoStatus.Ignored)}' }}", $"$.{nameof(Todo.UniqueId)}='{todo.UniqueId}'");
+            db.GetCollection<ITodo>().UpdateMany($"{{ '{nameof(ITodo.Status)}':'{nameof(TotoStatus.Ignored)}' }}", $"$.{nameof(ITodo.UniqueId)}='{todo.UniqueId}'");
         
-        db.GetCollection<Todo>().Insert(todo);
-        WeakReferenceMessenger.Default.Send((Todo)todo);
+        db.GetCollection<ITodo>().Insert(todo);
+        WeakReferenceMessenger.Default.Send((ITodo)todo);
     }
 
     public static void Initialize()
     {
         using var db = DbHelper.Base();
         var col = db.GetCollection<BsonDocument>("Todo");
-        foreach (var doc in col.Find($"$.{nameof(Todo.Status)}='{nameof(TotoStatus.None)}'"))
+        foreach (var doc in col.Find($"$.{nameof(ITodo.Status)}='{nameof(TotoStatus.None)}'"))
         {
             try
             {
-                Todo todo = BsonMapper.Global.Deserialize<Todo>(doc);
+                ITodo todo = BsonMapper.Global.Deserialize<ITodo>(doc);
 
                 _Todos.Add(todo);
             }

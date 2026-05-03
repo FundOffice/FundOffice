@@ -32,6 +32,6 @@ public partial class TodoViewModel
     {
         using var db = DbHelper.Base();
         var obj = Build();
-        db.GetCollection<Todo>().Upsert(obj); 
+        db.GetCollection<ITodo>().Upsert(obj); 
     }
 }
