@@ -168,8 +168,6 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
             }
         }
 
-        TodoViewModelFactory.RegisterPredefined();
-
         var all = TodoService.GetAll();
         if (all is not null)
             TodoCollection = [.. all.Union(Enumerable.Range(0,1).Select(x=>new HugeRedemptionTodo { FundCode = "f", FundName ="ff", OpenDay = new DateOnly(2,3,4)})).Select(x => TodoViewModelFactory.Create(x)).Where(x => x is not null).Select(x => x!)];
