@@ -34,3 +34,10 @@ public partial class FundElementFillTodoViewModel : TodoViewModel
 {
     // 这里可以添加特定于 FundFundElementFillTodo 的属性和方法
 }
+
+
+[AutoViewModel(typeof(JustNotifyTodo))]
+public partial class JustNotifyTodoViewModel:TodoViewModel
+{
+
+}
