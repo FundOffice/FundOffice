@@ -62,6 +62,22 @@
 
 
 
+    <DataTemplate DataType="{x:Type local:FundElementMissingTodoViewModel}">
+        <StackPanel>
+            <TextBlock>
+                <Run Text="{Binding FundCode}" />
+                <Run Text="{Binding FundName}" />
+                <Run Foreground="Red" Text="要素缺失" />
+            </TextBlock>
+
+            <Separator />
+
+            <TextBlock Text="{Binding Missing}" />
+
+        </StackPanel>
+    </DataTemplate>
+
+
     <DataTemplate DataType="{x:Type local:JustNotifyTodoViewModel}">
         <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
     </DataTemplate>

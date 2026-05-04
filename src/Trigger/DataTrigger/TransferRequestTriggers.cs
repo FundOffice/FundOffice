@@ -46,6 +46,8 @@ internal static partial class TransferRequestTriggers
                 var defRatio = db.GetCollection<FundElements>().FindById(fv.Key).HugeRedemptionRatio.Value;
                 if (defRatio == 0)
                 {
+                    
+                    TodoService.Register(new FundElementMissingTodo { FundCode = code, FundName =  fundName, Missing = "巨额赎回" });
                     LogEx.Warning($"基金巨额赎回监控未设置阈值，无法进行监控，基金：{fundName}");
                     continue;
                 }
