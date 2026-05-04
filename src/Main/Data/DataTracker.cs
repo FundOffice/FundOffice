@@ -1590,7 +1590,7 @@ public static partial class DataTracker
 
     private static ConcurrentBag<Action<IEnumerable<TransferRequest>>> _hookTr2 = [];
     public static void Hook(Action<IEnumerable<TransferRequest>> callback) => _hookTr2.Add(callback);
-    public static void Notify(IEnumerable<TransferRequest> dv)
+    private static void Notify(IEnumerable<TransferRequest> dv)
     {
         Parallel.ForEach(_hookTr2, item =>
         {

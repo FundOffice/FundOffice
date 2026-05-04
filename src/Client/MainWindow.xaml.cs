@@ -489,7 +489,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
         //MissionSchedule.Register(new OnceMission { });
         //TodoService.Register(new JustNotifyTodo { CreateTime = DateTime.Now, UniqueId = $"Settlement_{1}_{2}", Message = "msg" });
 
-        DataTracker.Notify([new TransferRequest { FundName = "fd", InvestorIdentity = "ff", InvestorName = "fdsf" }]);
+        //DataTracker.Notify([new TransferRequest { FundName = "fd", InvestorIdentity = "ff", InvestorName = "fdsf" }]);
     }
 #endif
 
