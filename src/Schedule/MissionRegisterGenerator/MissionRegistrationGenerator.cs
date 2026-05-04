@@ -28,7 +28,7 @@ public class MissionRegistrationGenerator : IIncrementalGenerator
 
             foreach (var t in types)
             {
-                if (TryGetMissionFromViewModel(t, out var missionType))
+                if (TryGetMissionFromViewModel(t, out var missionType) && missionType is not null)
                 {
                     vmMap[missionType] = t;
                 }
@@ -122,7 +122,7 @@ public class MissionRegistrationGenerator : IIncrementalGenerator
         return false;
     }
 
-    private static bool TryGetMissionFromViewModel(INamedTypeSymbol type, out INamedTypeSymbol mission)
+    private static bool TryGetMissionFromViewModel(INamedTypeSymbol type, out INamedTypeSymbol? mission)
     {
         mission = null;
         var current = type.BaseType;

@@ -66,7 +66,7 @@ public class BankTransaction
 
 
 /// <summary>
-/// 本方账号关联基金
+/// 募集账户流水
 /// </summary>
 public class RaisingBankTransaction : BankTransaction
 {

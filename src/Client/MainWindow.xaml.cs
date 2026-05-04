@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.Logging;
 using FMO.Models;
-using FMO.Schedule;
 using FMO.Todo;
 using FMO.Utilities;
 using Serilog;
@@ -88,7 +87,7 @@ public partial class TabItemInfo : ObservableObject
 
 public partial class MainWindowViewModel : ObservableRecipient, IRecipient<string>, IRecipient<OpenFundMessage>,
     IRecipient<OpenPageMessage>, IRecipient<ToastMessage>, IRecipient<VerifyMessage>, IRecipient<VerifyResultMessage>,
-    IRecipient<TodoStatusMessage>, IRecipient<Todo.Todo>
+    IRecipient<TodoGroupStatusMessage>, IRecipient<TodoStatusMessage>, IRecipient<ITodo>
 {
 
     private PlatformPageViewModel? PlatformDataContext { get; set; }
@@ -171,7 +170,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
 
         var all = TodoService.GetAll();
         if (all is not null)
-            TodoCollection = [.. all.Union(Enumerable.Range(0,1).Select(x=>new HugeRedemptionTodo { FundCode = "f", FundName ="ff", OpenDay = new DateOnly(2,3,4)})).Select(x => TodoViewModelFactory.Create(x)).Where(x => x is not null).Select(x => x!)];
+            TodoCollection = [.. all.Select(x => TodoViewModelFactory.Create(x)).Where(x => x is not null).Select(x => x!)];
 
 
 #if DEBUG
@@ -487,7 +486,8 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
 
         // TodoCollection?.Add(new HugeRedemptionTodoViewModel { OpenDay = DateOnly.FromDayNumber(Environment.TickCount%454)});
 
-        MissionSchedule.Register(new OnceMission { });
+        //MissionSchedule.Register(new OnceMission { });
+        TodoService.Register(new JustNotifyTodo { CreateTime = DateTime.Now, UniqueId = $"Settlement_{1}_{2}", Message = "msg" });
     }
 #endif
 
@@ -544,7 +544,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
         }
     }
 
-    public void Receive(Todo.Todo message)
+    public void Receive(ITodo message)
     {
         var vm = TodoViewModelFactory.Create(message);
         if (vm is null)
@@ -561,6 +561,16 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
             if (message.UniqueId is not null)
                 TodoCollection.Where(x => x.UniqueId == message.UniqueId).ToList().ForEach(x => TodoCollection.Remove(x));
             TodoCollection.Add(vm);
+        }
+    }
+
+    public void Receive(TodoGroupStatusMessage message)
+    {
+        if (TodoCollection is null) return;
+        foreach (var t in TodoCollection.ToArray())
+        {
+            if (t.UniqueId == message.UniqueId && message.Status != TotoStatus.None)
+                TodoCollection.Remove(t);
         }
     }
 }

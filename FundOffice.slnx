@@ -28,6 +28,10 @@
     <Project Path="src/Todo/Todo/Todo.csproj" Id="2791fcfe-5bd5-486d-b162-08f80ad1129a" />
     <Project Path="src/Todo/TodoViewModelAutoRegister/TodoViewModelAutoRegister.csproj" Id="0ed011c7-9755-49d5-bcfa-547e6cae1208" />
   </Folder>
+  <Folder Name="/Trigger/">
+    <Project Path="src/Trigger/DataTrigger/DataTrigger.csproj" Id="abc98ea1-a5ef-49a3-ac61-353129d66bdf" />
+    <Project Path="src/Trigger/HookRegister/HookGenerator.csproj" Id="40fed79b-aaaa-4c83-be26-e1a0a78dcf9a" />
+  </Folder>
   <Folder Name="/Trustee/">
     <Project Path="src/Trustee/CITICS/CITICS.csproj" />
     <Project Path="src/Trustee/CMS/CMS.csproj" />

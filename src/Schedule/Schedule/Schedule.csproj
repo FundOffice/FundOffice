@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
@@ -36,6 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="FillFundDailyMission.cs" />
     <Compile Remove="MissionDatabase.cs" />
   </ItemGroup>
 
@@ -58,7 +59,7 @@
     <ProjectReference Include="..\..\SharedUI\SharedUI.csproj" />
     <ProjectReference Include="..\..\Utility\PDF\PdfExt.csproj" />
     <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
-    <ProjectReference Include="..\MissionRegisterGenerator\MissionRegisterGenerator.csproj"  OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\MissionRegisterGenerator\MissionRegisterGenerator.csproj" OutputItemType="Analyzer" />
     <ProjectReference Include="..\Mission\Mission.csproj" />
   </ItemGroup>
 
