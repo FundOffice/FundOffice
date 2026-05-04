@@ -7,9 +7,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
 	  <LangVersion>preview</LangVersion>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>logo.ico</ApplicationIcon>
+    <ApplicationIcon>table.ico</ApplicationIcon>
 	  <RuntimeIdentifiers>win-x64;win-x86</RuntimeIdentifiers>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="table.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <Resource Include="logo.ico" />

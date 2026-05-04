@@ -13,15 +13,19 @@ using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using Serilog;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace FMO;
 
@@ -155,11 +159,12 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         // 每小时运行一次，判断是不是新的一天
         _dailyTimer = new Timer(x => OnNewDate(), null, 60000, 1000 * 60 * 60);
 
+        Tools = [new("DatabaseViewer", ""),new Tool("FeeCalc", "费用计算器"), new("LearnAssist", "学习助手"), new("TemplateManager", "模板管理器")];
 
-        Tools = [new Tool { ExeName = "FeeCalc", Icon = GetGeometry("f.sack-dollar"), Foreground = Brushes.MediumPurple },
-                 new Tool { ExeName = "LearnAssist", Icon = GetGeometry("f.youtube"), Foreground = Brushes.Red },
-                 new Tool { ExeName = "TemplateManager", Icon = GetGeometry("f.table-columns"), Foreground = new SolidColorBrush(Color.FromRgb(42,145,223)) },
-                ];
+        //Tools = [new Tool { ExeName = "FeeCalc", Icon = GetGeometry("f.sack-dollar"), Foreground = Brushes.MediumPurple },
+        //         new Tool { ExeName = "LearnAssist", Icon = GetGeometry("f.youtube"), Foreground = Brushes.Red },
+        //         new Tool { ExeName = "TemplateManager", Icon = GetGeometry("f.table-columns"), Foreground = new SolidColorBrush(Color.FromRgb(42,145,223)) },
+        //        ];
 
     }
 
@@ -735,21 +740,6 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
 
 
-    [RelayCommand]
-    public void CalcFee()
-    {
-        try
-        {
-            var di = new DirectoryInfo(System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName).Parent!;
-
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = Path.Combine(di.FullName, "FMO.FeeCalc.exe"), WorkingDirectory = Directory.GetCurrentDirectory() });
-        }
-        catch (Exception e)
-        {
-
-            HandyControl.Controls.Growl.Warning($"无法启动计算器，{e.Message}");
-        }
-    }
 
     [RelayCommand]
     public void OpenDbViewer()
@@ -1029,12 +1019,67 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
     public class Tool
     {
-        public Geometry? Icon { get; set; }
+        [SetsRequiredMembers]
+        public Tool(string exe, string? toolTip)
+        {
+            ExeName = exe;
+            ToolTip = toolTip;
+            var di = new FileInfo(Path.Combine(System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName, @$"..\{exe}.exe"));
+            if (di.Exists)
+                Icon = ExtractIcon(di.FullName);
+
+        }
+
 
         public required string ExeName { get; set; }
 
-        public Brush Foreground { get; set; } = Brushes.Black;
+        public ImageSource? Icon { get; set; }
 
         public string? ToolTip { get; set; }
+
+
+    }
+
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern uint PrivateExtractIcons(
+            string lpszFile, int nIconIndex, int cxIcon, int cyIcon,
+            IntPtr[] phicon, uint[] piconid, uint nIcons, uint flags);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool DestroyIcon(IntPtr hIcon);
+
+    /// <summary>
+    /// 从 EXE/DLL 文件中提取指定尺寸的图标，并转为 WPF ImageSource
+    /// </summary>
+    /// <param name="filePath">目标文件路径</param>
+    /// <param name="size">期望提取的宽高（如 32, 48, 256）</param>
+    public static BitmapSource ExtractIcon(string filePath, int size = 32)
+    {
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+            throw new FileNotFoundException("找不到指定文件", filePath);
+
+        IntPtr[] hIcons = new IntPtr[1];
+        uint[] pIconIds = new uint[1];
+
+        // 请求提取 1 个指定尺寸的图标
+        uint extractedCount = PrivateExtractIcons(filePath, 0, size, size, hIcons, pIconIds, 1, 0);
+
+        if (extractedCount == 0 || hIcons[0] == IntPtr.Zero)
+            return null; // 文件无图标资源或提取失败
+
+        try
+        {
+            // WPF 会深拷贝像素数据，之后可安全释放原生句柄
+            return Imaging.CreateBitmapSourceFromHIcon(
+                hIcons[0],
+                new Int32Rect(0, 0, size, size),
+                BitmapSizeOptions.FromEmptyOptions());
+        }
+        finally
+        {
+            // ⚠️ 必须释放 Win32 HICON，否则句柄泄漏
+            DestroyIcon(hIcons[0]);
+        }
     }
 }

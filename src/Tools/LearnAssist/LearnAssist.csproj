@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
 	  <LangVersion>preview</LangVersion>
-	  <ApplicationIcon>learn.ico</ApplicationIcon>
+	  <ApplicationIcon>youtube.ico</ApplicationIcon>
 	  <BaseOutputPath></BaseOutputPath>
 	  <RuntimeIdentifiers>win-x64;win-x86</RuntimeIdentifiers>
   </PropertyGroup>
@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="learn.ico" />
+    <Content Include="youtube.ico" />
   </ItemGroup>
 
   <ItemGroup>

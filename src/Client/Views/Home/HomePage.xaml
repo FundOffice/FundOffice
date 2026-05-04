@@ -237,11 +237,7 @@
                             Value="{Binding BackupProcess}" />
                     </hc:SimplePanel>
 
-
-                    <Button
-                        hc:IconElement.Geometry="{StaticResource f.database}"
-                        Command="{Binding OpenDbViewerCommand}"
-                        Style="{StaticResource ButtonIcon}" />
+ 
 
 
                     <ListBox
@@ -253,12 +249,14 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Button
-                                    hc:IconElement.Geometry="{Binding Icon}"
+                                    Margin="5,0"
                                     Command="{Binding DataContext.OpenExeCommand, RelativeSource={RelativeSource AncestorType=local:HomePage}}"
                                     CommandParameter="{Binding ExeName}"
                                     Foreground="{Binding Foreground}"
-                                    Style="{StaticResource ButtonIcon}"
-                                    ToolTip="{Binding ToolTip}" />
+                                    Style="{StaticResource ButtonCustom}"
+                                    ToolTip="{Binding ToolTip}">
+                                    <Image Height="18" Source="{Binding Icon}" />
+                                </Button>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
