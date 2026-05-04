@@ -148,8 +148,6 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             // 加载触发器
             InitializeTriggers();
 
-            WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Trustee", true));
-
             IsInitializing = false;
         });
 
@@ -252,6 +250,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         if (!Directory.Exists(trusteeDir))
         {
             LogEx.Warning("trustee 目录不存在，退出加载");
+            WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Trustee", true));
             return;
         }
 
@@ -277,6 +276,8 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             }
         }
 
+
+        WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Trustee", true));
     }
 
     private static bool LoadTrustee(Type type)
