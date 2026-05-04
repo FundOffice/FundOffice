@@ -75,8 +75,8 @@ public class HookDataGenerator : IIncrementalGenerator
 
             foreach (var cls in classes)
             {
-                var hookCalls = string.Join("\n                ",
-                    cls.MethodNames.Select(m => $"DataTracker.Hook({m});"));
+                var hookCalls = string.Join("\n",
+                    cls.MethodNames.Select(m => $"\t\t\tDataTracker.Hook({m});"));
 
                 var nsOpen = string.IsNullOrEmpty(cls.Namespace) ? string.Empty : $"namespace {cls.Namespace}\n{{\n";
                 var nsClose = string.IsNullOrEmpty(cls.Namespace) ? string.Empty : "}\n";
@@ -90,10 +90,10 @@ public class HookDataGenerator : IIncrementalGenerator
 
                     {{nsOpen}}    {{cls.Modifiers}} class {{cls.ClassName}}
                         {
-                            [ModuleInitializer]
-                            public static void Init()
+                            
+                            public static void InitHooks()
                             {
-                                {{hookCalls}}
+                    {{hookCalls}}
                             }
                         }
                     {{nsClose}}

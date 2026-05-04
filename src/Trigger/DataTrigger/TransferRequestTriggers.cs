@@ -2,10 +2,12 @@
 using FMO.Models;
 using FMO.Todo;
 using FMO.Utilities;
+using FMO.Schedule;
+using Schedule;
 
 namespace FMO.Trigger;
 
-public static partial class Class1
+internal static partial class TransferRequestTriggers
 {
 
     /// <summary>
@@ -66,7 +68,33 @@ public static partial class Class1
             }
 
         }
+    }
 
+
+
+
+    [HookData]
+    public static void OnTransferRequest(IEnumerable<TransferRequest> tr)
+    {
+        foreach (var fv in tr.GroupBy(x => x.FundId))
+        {
+            var fid = fv.Key;
+            foreach (var day in fv.GroupBy(x => x.RequestDate))
+            {
+                var openDay = day.Key;
+
+                var gos = Days.TradingDaysBetween(openDay, DateOnly.FromDateTime(DateTime.Now));
+
+                if (gos.Count > 5) continue;
+
+                MissionSchedule.Register(new SettlementMonitorMission
+                {
+                    FundId = fid,
+                    OpenDay = openDay,
+                });
+            }
+        }
 
     }
+
 }

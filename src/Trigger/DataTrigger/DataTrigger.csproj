@@ -9,8 +9,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Main\Data\Data.csproj" />
+    <ProjectReference Include="..\..\Schedule\Mission.Background\Mission.Background.csproj" />
+    <ProjectReference Include="..\..\Schedule\Mission\Mission.csproj" />
     <ProjectReference Include="..\..\Todo\Todo\Todo.csproj" />
-    <ProjectReference Include="..\HookRegister\HookGenerator.csproj" OutputItemType="Analyzer"/>
+    <ProjectReference Include="..\HookRegister\HookGenerator.csproj" OutputItemType="Analyzer" />
   </ItemGroup>
 
 </Project>

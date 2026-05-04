@@ -145,6 +145,9 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             // 加载托管组件
             InitializeTrustees();
 
+            // 加载触发器
+            InitializeTriggers();
+
             WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Trustee", true));
 
             IsInitializing = false;
@@ -321,7 +324,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
         if (!Directory.Exists(disDir))
         {
-            LogEx.Warning("disclosure 目录不存在，退出加载"); 
+            LogEx.Warning("disclosure 目录不存在，退出加载");
             WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
 
             return;
@@ -387,7 +390,51 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         }
 
         return true;
-    } 
+    }
+
+
+    private static void InitializeTriggers()
+    {
+        // 1. 获取主程序目录 + disclosure 子文件夹
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string disDir = Path.Combine(baseDir, "trigger");
+
+
+        if (!Directory.Exists(disDir))
+        {
+            LogEx.Warning("trigger 目录不存在，退出加载");
+            //WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
+
+            return;
+        }
+
+        // 2. 获取所有 dll 文件
+        string[] dllFiles = Directory.GetFiles(disDir, "*.dll", SearchOption.TopDirectoryOnly);
+
+        foreach (var dllPath in dllFiles)
+        {
+            try
+            {
+                // 3. 加载程序集
+                Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dllPath);
+                foreach (Type type in assembly.GetTypes())
+                {
+                    if (type.IsClass && type.IsAbstract && type.IsSealed)
+                    {
+                        var method = type.GetMethod("InitHooks", BindingFlags.Public | BindingFlags.Static, null, Type.EmptyTypes, null);
+                        if (method is not null) method.Invoke(null, null);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogEx.Error($"加载Trigger组件失败，错误：{ex.Message}");
+            }
+        }
+
+
+        //WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
+    }
     #endregion
 
     private void LoadTrusteeMessages()

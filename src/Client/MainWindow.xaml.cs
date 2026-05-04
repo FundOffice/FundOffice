@@ -487,7 +487,9 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
         // TodoCollection?.Add(new HugeRedemptionTodoViewModel { OpenDay = DateOnly.FromDayNumber(Environment.TickCount%454)});
 
         //MissionSchedule.Register(new OnceMission { });
-        TodoService.Register(new JustNotifyTodo { CreateTime = DateTime.Now, UniqueId = $"Settlement_{1}_{2}", Message = "msg" });
+        //TodoService.Register(new JustNotifyTodo { CreateTime = DateTime.Now, UniqueId = $"Settlement_{1}_{2}", Message = "msg" });
+
+        DataTracker.Notify([new TransferRequest { FundName = "fd", InvestorIdentity = "ff", InvestorName = "fdsf" }]);
     }
 #endif
 

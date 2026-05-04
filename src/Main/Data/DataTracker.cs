@@ -693,6 +693,7 @@ public static partial class DataTracker
         catch (Exception ex) { Log.Error($"{ex}"); }
 
 
+        Notify(data);
         WeakReferenceMessenger.Default.Send(data);
 
     }
@@ -1589,7 +1590,7 @@ public static partial class DataTracker
 
     private static ConcurrentBag<Action<IEnumerable<TransferRequest>>> _hookTr2 = [];
     public static void Hook(Action<IEnumerable<TransferRequest>> callback) => _hookTr2.Add(callback);
-    private static void Notify(IEnumerable<TransferRequest> dv)
+    public static void Notify(IEnumerable<TransferRequest> dv)
     {
         Parallel.ForEach(_hookTr2, item =>
         {
