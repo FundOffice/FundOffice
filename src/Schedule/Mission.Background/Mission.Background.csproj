@@ -4,12 +4,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>FMO.Schedule</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Main\Models\Models.csproj" />
-    <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
+    <ProjectReference Include="..\..\Todo\Todo\Todo.csproj" />
+    <ProjectReference Include="..\Mission\Mission.csproj" />
   </ItemGroup>
 
 </Project>

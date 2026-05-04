@@ -84,3 +84,7 @@ public record NewDay(DateOnly Date);
 /// <param name="Key"></param>
 /// <param name="IsEnabled"></param>
 public record MainMenuEnableMessage(string Key, bool IsEnabled);
+
+
+
+public record MissionFailedMessage(int Id, Exception e);

@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Models;
-using FMO.Todo;
+using FMO.Models; 
 using FMO.Utilities;
 using Serilog;
 
@@ -80,7 +79,8 @@ public abstract class Mission
             r = new(false, $"Mission Error {Id} {e}");
             Log.Error($"Mission Error {Id} {e}");
 
-            TodoService.Register(new JustNotifyTodo { CreateTime = now, Message = $"Mission Error {Id} {e}" });
+            WeakReferenceMessenger.Default.Send(new MissionFailedMessage(Id, e));
+            //TodoService.Register(new JustNotifyTodo { CreateTime = now, Message = $"Mission Error {Id} {e}" });
             //WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"[{Id}]任务执行出错，请查看log"));
         }
 

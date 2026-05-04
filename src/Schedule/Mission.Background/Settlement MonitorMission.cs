@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
-using FMO.Models;
+﻿using FMO.Models;
 using FMO.Schedule;
 using FMO.Todo;
 using FMO.Utilities;
@@ -7,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Schedule.missions;
+namespace Schedule;
 
 
 /// <summary>
@@ -87,31 +86,3 @@ public class SettlementMonitorMission : OnceMission
 }
 
 
-public static class Monitor
-{
-
-
-    [HookData]
-    public static void OnTransferRequest(IEnumerable<TransferRequest> tr)
-    {
-        foreach (var fv in tr.GroupBy(x=>x.FundId))
-        {
-            var fid = fv.Key;
-            foreach (var day in fv.GroupBy(x=>x.RequestDate))
-            {
-                var openDay = day.Key;
-
-                var gos =  Days.TradingDaysBetween(openDay, DateOnly.FromDateTime(DateTime.Now));
-
-                if (gos.Count > 5) continue;
-
-                MissionSchedule.Register(new SettlementMonitorMission
-                {
-                    FundId = fid,
-                    OpenDay = openDay,
-                });
-            }
-        }
-
-    }
-}
