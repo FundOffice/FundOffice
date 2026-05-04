@@ -130,5 +130,12 @@ public class OnceMission : Mission
 {
     public bool IsFinished { get; protected set; }
 
+    public required string Name { get; set; } 
 
+    public string? Description { get; set; }
+
+    public OnceMission()
+    {
+        IsEnabled = true;
+    }
 }

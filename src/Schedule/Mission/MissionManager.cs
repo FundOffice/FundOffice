@@ -21,8 +21,16 @@ public static class MissionManager
     }
 
 
-    public static MissionViewModel? GetViewModel(Mission m) => _tpl.TryGetValue(m.GetType(), out var factory) ? factory.CreateViewModel(m) : null;
+    public static MissionViewModel GetViewModel(Mission m)
+    {
+        if(_tpl.TryGetValue(m.GetType(), out var factory))
+            return factory.CreateViewModel(m);
 
+        if (m is OnceMission mm)
+            return new OnceMissionViewModel(mm);
+
+        return new MissionViewModel(m);
+    }
 
     public static MissionTemplate[] Templates => _tpl.Values.ToArray();
 }

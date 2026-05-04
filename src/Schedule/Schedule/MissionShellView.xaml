@@ -167,47 +167,11 @@
                                         Visibility="{Binding IsWorking, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
 
-                                    <ToggleButton
-                                        Margin="0"
-                                        Padding="0,-4,0,0"
-                                        VerticalContentAlignment="Center"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        DockPanel.Dock="Right"
-                                        IsChecked="{Binding IsActivated}"
-                                        IsEnabled="{Binding IsAvailable}"
-                                        Style="{StaticResource ToggleButtonFlip}">
-                                        <hc:StatusSwitchElement.CheckedElement>
-                                            <Viewbox Width="20" Height="20">
-                                                <Path Data="{StaticResource f.play}" Fill="Green" />
-                                            </Viewbox>
-                                        </hc:StatusSwitchElement.CheckedElement>
-                                        <Viewbox Width="20" Height="20">
-                                            <Path Data="{StaticResource f.pause}" Fill="Red" />
-                                        </Viewbox>
-                                    </ToggleButton>
-
-
-                                    <Button
-                                        hc:IconElement.Geometry="{StaticResource f.trash}"
-                                        Command="{Binding DeleteMissionCommand}"
-                                        CommandParameter="{Binding .}"
-                                        DockPanel.Dock="Right"
-                                        Foreground="Red"
-                                        Style="{StaticResource ButtonIcon}"
-                                        Visibility="{Binding IsActivated, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                    <Button
-                                        x:Name="runonce"
-                                        Height="24"
-                                        Margin="10,0"
-                                        hc:IconElement.Geometry="{StaticResource f.check-double}"
-                                        Background="AliceBlue"
-                                        BorderThickness="0"
-                                        Command="{Binding RunOnceCommand}"
-                                        Content="运行一次"
-                                        DockPanel.Dock="Right"
-                                        IsEnabled="{Binding IsAvailable}" />
+                                    <ContentControl
+                                        x:Name="btns"
+                                        Content="{Binding}"
+                                        ContentTemplate="{x:Null}"
+                                        DockPanel.Dock="Right" />
 
 
                                     <TextBlock
@@ -334,6 +298,57 @@
                     </BeginStoryboard>
                 </EventTrigger>
 
+                <DataTrigger Binding="{Binding IsBackground}" Value="False">
+                    <Setter TargetName="btns" Property="ContentTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <DockPanel DockPanel.Dock="Right">
+                                    <ToggleButton
+                                        Margin="0"
+                                        Padding="0,-4,0,0"
+                                        VerticalContentAlignment="Center"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        DockPanel.Dock="Right"
+                                        IsChecked="{Binding IsActivated}"
+                                        IsEnabled="{Binding IsAvailable}"
+                                        Style="{StaticResource ToggleButtonFlip}">
+                                        <hc:StatusSwitchElement.CheckedElement>
+                                            <Viewbox Width="20" Height="20">
+                                                <Path Data="{StaticResource f.play}" Fill="Green" />
+                                            </Viewbox>
+                                        </hc:StatusSwitchElement.CheckedElement>
+                                        <Viewbox Width="20" Height="20">
+                                            <Path Data="{StaticResource f.pause}" Fill="Red" />
+                                        </Viewbox>
+                                    </ToggleButton>
+
+
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.trash}"
+                                        Command="{Binding DeleteMissionCommand}"
+                                        CommandParameter="{Binding .}"
+                                        DockPanel.Dock="Right"
+                                        Foreground="Red"
+                                        Style="{StaticResource ButtonIcon}"
+                                        Visibility="{Binding IsActivated, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                                    <Button
+                                        x:Name="runonce"
+                                        Height="24"
+                                        Margin="10,0"
+                                        hc:IconElement.Geometry="{StaticResource f.check-double}"
+                                        Background="AliceBlue"
+                                        BorderThickness="0"
+                                        Command="{Binding RunOnceCommand}"
+                                        Content="运行一次"
+                                        DockPanel.Dock="Right"
+                                        IsEnabled="{Binding IsAvailable}" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
 
 
                 <DataTrigger Binding="{Binding IsActivated}" Value="False">

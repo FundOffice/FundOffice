@@ -55,6 +55,12 @@ public partial class MissionViewModel : ObservableObject, IRecipient<MissionMess
 
     public ObservableCollection<string> Logs { get; }
 
+    /// <summary>
+    /// 后台创建，不可取消，删除
+    /// </summary>
+    public virtual bool IsBackground => false;
+
+
     public int Id { get; }
 
     public MissionViewModel(Mission mission)
@@ -231,4 +237,18 @@ public partial class MissionViewModel<T> : MissionViewModel where T : Mission
 
         }
     }
+}
+
+
+
+public partial class OnceMissionViewModel : MissionViewModel
+{
+
+    public OnceMissionViewModel(OnceMission mission) : base(mission)
+    {
+        Title = mission.Name;
+        Description = mission.Description ?? "后台任务";
+    }
+
+    public override bool IsBackground => true;
 }

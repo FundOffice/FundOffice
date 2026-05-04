@@ -237,7 +237,7 @@
                             Value="{Binding BackupProcess}" />
                     </hc:SimplePanel>
 
- 
+
 
 
                     <ListBox
@@ -249,10 +249,9 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Button
-                                    Margin="5,0"
+                                    Margin="8,0"
                                     Command="{Binding DataContext.OpenExeCommand, RelativeSource={RelativeSource AncestorType=local:HomePage}}"
                                     CommandParameter="{Binding ExeName}"
-                                    Foreground="{Binding Foreground}"
                                     Style="{StaticResource ButtonCustom}"
                                     ToolTip="{Binding ToolTip}">
                                     <Image Height="18" Source="{Binding Icon}" />

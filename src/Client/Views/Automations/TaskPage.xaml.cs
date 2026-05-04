@@ -44,8 +44,6 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
         foreach (var m in ms)
         {
             var vm = MissionManager.GetViewModel(m);
-            if (vm is null) 
-                vm = new MissionViewModel(m);
             
             Tasks.Add(vm);
         }
@@ -94,8 +92,6 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
     public void Receive(Mission m)
     {
         var vm = MissionManager.GetViewModel(m);
-        if (vm is null) vm = new MissionViewModel(m);
-
         Tasks.Add(vm);
     }
 }

@@ -11,6 +11,9 @@
         <TextBlock Text="后台任务" />
     </DataTemplate>
 
+    <DataTemplate DataType="{x:Type m:OnceMissionViewModel}">
+        <TextBlock Text="{Binding Description}" />
+    </DataTemplate>
 
     <DataTemplate DataType="{x:Type local:DailyFromMailViewModel}">
         <DataTemplate.Resources>

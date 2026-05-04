@@ -72,9 +72,12 @@ internal static partial class TransferRequestTriggers
 
 
 
-
+    /// <summary>
+    /// 监控基金交收情况
+    /// </summary>
+    /// <param name="tr"></param>
     [HookData]
-    public static void OnTransferRequest(IEnumerable<TransferRequest> tr)
+    public static void SettlementMonitor(IEnumerable<TransferRequest> tr)
     {
         foreach (var fv in tr.GroupBy(x => x.FundId))
         {
@@ -89,6 +92,8 @@ internal static partial class TransferRequestTriggers
 
                 MissionSchedule.Register(new SettlementMonitorMission
                 {
+                    Name = "交收监控",
+                    Description = $"监控{fv.First().FundName}-{openDay}的交收情况",
                     FundId = fid,
                     OpenDay = openDay,
                 });
