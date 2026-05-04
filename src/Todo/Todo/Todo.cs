@@ -12,7 +12,7 @@ public class Todo : ITodo
     public virtual bool JustNotify => false;
 
 
-    public DateTime CreateTime { get; init; }
+    public DateTime CreateTime { get; init; } = DateTime.Now;
 
     public DateTime FinishTime { get; set; }
 

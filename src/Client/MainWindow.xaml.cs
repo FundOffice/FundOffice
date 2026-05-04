@@ -489,7 +489,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
         //Schedule.MissionSchedule.Register(new Schedule. { Name="abc", Description = "ccd" });
         //TodoService.Register(new JustNotifyTodo { CreateTime = DateTime.Now, UniqueId = $"Settlement_{1}_{2}", Message = "msg" });
 
-        //DataTracker.Notify([new TransferRequest { FundName = "fd", InvestorIdentity = "ff", InvestorName = "fdsf" }]);
+        DataTracker.Notify([new TransferOrder { FundId = 9, FundName = "fd", InvestorIdentity = "ff", InvestorName = "fdsf", Type = TransferOrderType.Buy, Number = 100 }]);
     }
 #endif
 
@@ -555,15 +555,18 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
             return;
         }
 
-
-        if (TodoCollection is null)
-            TodoCollection = [vm];
-        else
+        Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            if (message.UniqueId is not null)
-                TodoCollection.Where(x => x.UniqueId == message.UniqueId).ToList().ForEach(x => TodoCollection.Remove(x));
-            TodoCollection.Add(vm);
-        }
+            if (TodoCollection is null)
+                TodoCollection = [vm];
+            else
+            {
+                if (message.UniqueId is not null)
+                    TodoCollection.Where(x => x.UniqueId == message.UniqueId).ToList().ForEach(x => TodoCollection.Remove(x));
+                TodoCollection.Add(vm);
+            }
+        });
+
     }
 
     public void Receive(TodoGroupStatusMessage message)

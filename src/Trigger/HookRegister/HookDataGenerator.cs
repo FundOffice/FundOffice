@@ -1,38 +1,44 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text; 
+using Microsoft.CodeAnalysis.Text;
 
 namespace TriggerGenerators;
- 
+
 [Generator]
 public class HookDataGenerator : IIncrementalGenerator
 {
-    // 使用 record 明确类型契约，避免 tuple 的 null 歧义
-    private sealed record CandidateData(MethodDeclarationSyntax Method, ClassDeclarationSyntax Class);
+    // 使用 record 明确类型契约
+    private sealed record CandidateData(
+        MethodDeclarationSyntax Method,
+        ClassDeclarationSyntax Class,
+        string Namespace);
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var methodCandidates = context.SyntaxProvider
             .CreateSyntaxProvider(
-                predicate: (node, _) => node is MethodDeclarationSyntax { AttributeLists.Count: > 0, Parent: ClassDeclarationSyntax },
+                predicate: (node, _) =>
+                    node is MethodDeclarationSyntax { AttributeLists.Count: > 0, Parent: ClassDeclarationSyntax },
                 transform: (ctx, _) =>
                 {
                     var method = (MethodDeclarationSyntax)ctx.Node;
                     var classDecl = (ClassDeclarationSyntax)method.Parent!;
+                    var namespaceName = GetNamespaceName(classDecl);
 
-                    // 1. 必须是 static
+                    // 1. 方法必须是 static
                     if (!method.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
                         return (CandidateData?)null;
 
-                    // 2. class 必须是 partial
-                    if (!classDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)))
-                        return (CandidateData?)null;
+                    // 2. 类必须是 partial
+                    //if (!classDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)))
+                    //    return (CandidateData?)null;
 
-                    // 3. 检查 [HookData] 或 [HookDataAttribute]（兼容限定名如 MyNs.HookData）
+                    // 3. 检查 [HookData] 或 [HookDataAttribute]（兼容限定名）
                     bool hasHookData = method.AttributeLists.Any(al =>
                         al.Attributes.Any(a =>
                         {
@@ -45,71 +51,53 @@ public class HookDataGenerator : IIncrementalGenerator
                             return attrName is "HookData" or "HookDataAttribute";
                         }));
 
-                    return hasHookData ? new CandidateData(method, classDecl) : (CandidateData?)null;
+                    return hasHookData
+                        ? new CandidateData(method, classDecl, namespaceName)
+                        : (CandidateData?)null;
                 })
-            .Where(c => c is not null);
-            //.Select(c => c!); // 经 Where 过滤，此处安全断言
+            .Where(c => c is not null)
+            .Select((c, _) => c!); // 过滤后安全断言
 
-        // 按所属 class 分组聚合
-        var classGroups = methodCandidates.Collect()
-            .Select((collected, _) =>
-            {
-                if (collected.IsDefaultOrEmpty)
-                    return ImmutableArray<GeneratedClassInfo>.Empty;
+        // 🔥 关键修改：收集所有候选方法，不再按类分组
+        var allMethods = methodCandidates.Collect();
 
-                return collected
-                    .GroupBy(c => GetClassIdentity(c!.Class))
-                    .Select(g => new GeneratedClassInfo
-                    {
-                        Namespace = GetNamespaceName(g.First()!.Class),
-                        ClassName = g.First()!.Class.Identifier.Text,
-                        Modifiers = GetClassModifiers(g.First()!.Class),
-                        MethodNames = g.Select(c => c!.Method.Identifier.Text).ToImmutableArray()
-                    })
-                    .ToImmutableArray();
-            });
-
-        context.RegisterSourceOutput(classGroups, (ctx, classes) =>
+        context.RegisterSourceOutput(allMethods, (ctx, methods) =>
         {
-            if (classes.IsDefaultOrEmpty) return;
+            if (methods.IsDefaultOrEmpty) return;
 
-            foreach (var cls in classes)
-            {
-                var hookCalls = string.Join("\n",
-                    cls.MethodNames.Select(m => $"\t\t\tDataTracker.Hook({m});"));
+            // 生成统一的调用代码：使用完全限定名避免命名空间冲突
+            var hookCalls = string.Join("\n",
+                methods.Select(m =>
+                {
+                    var fullClassName = string.IsNullOrEmpty(m.Namespace)
+                        ? m.Class.Identifier.Text
+                        : $"{m.Namespace}.{m.Class.Identifier.Text}";
+                    var methodName = m.Method.Identifier.Text;
+                    // 生成: DataTracker.Hook(Namespace.ClassName.MethodName);
+                    return $"\t\t\tDataTracker.Hook({fullClassName}.{methodName});";
+                }));
 
-                var nsOpen = string.IsNullOrEmpty(cls.Namespace) ? string.Empty : $"namespace {cls.Namespace}\n{{\n";
-                var nsClose = string.IsNullOrEmpty(cls.Namespace) ? string.Empty : "}\n";
+            // 使用时间戳确保类名唯一，避免增量编译冲突
+            var uniqueSuffix = DateTime.UtcNow.Ticks.ToString("x");
 
-                var source = $$"""
-                    // <auto-generated/>
-                    #pragma warning disable CS8618, CS1591
-                    using System;
-                    using FMO.Utilities;
-                    using System.Runtime.CompilerServices;
+            var source = $$"""
+                // <auto-generated/>
+                #pragma warning disable CS8618, CS1591, CS0618
+                using System;
+                using System.Runtime.CompilerServices;
+                using FMO.Utilities;
 
-                    {{nsOpen}}    {{cls.Modifiers}} class {{cls.ClassName}}
-                        {
-                            
-                            public static void InitHooks()
-                            {
-                    {{hookCalls}}
-                            }
-                        }
-                    {{nsClose}}
-                    """;
+                internal static class HookInit_{{uniqueSuffix}}
+                {
+                    public static void InitHooks()
+                    {
+                {{hookCalls}}
+                    }
+                }
+                """;
 
-                ctx.AddSource($"{cls.ClassName}.HookData.g.cs", SourceText.From(source, Encoding.UTF8));
-            }
+            ctx.AddSource($"HookDataAll.g.cs", SourceText.From(source, Encoding.UTF8));
         });
-    }
-
-    private static string GetClassIdentity(ClassDeclarationSyntax classDecl)
-    {
-        // 使用 命名空间.类名_文件路径 作为分组唯一标识，防御 FilePath 为 null 的边缘情况
-        var ns = GetNamespaceName(classDecl);
-        var filePath = classDecl.SyntaxTree.FilePath ?? classDecl.GetLocation().SourceTree?.FilePath ?? string.Empty;
-        return $"{ns}.{classDecl.Identifier.Text}_{filePath}";
     }
 
     private static string GetNamespaceName(ClassDeclarationSyntax classDecl)
@@ -117,26 +105,4 @@ public class HookDataGenerator : IIncrementalGenerator
         var ns = classDecl.Parent as BaseNamespaceDeclarationSyntax;
         return ns?.Name.ToString() ?? string.Empty;
     }
-
-    private static string GetClassModifiers(ClassDeclarationSyntax classDecl)
-    {
-        // 移除已有的 partial，避免重复生成，最后统一追加
-        var otherMods = classDecl.Modifiers
-            .Where(m => !m.IsKind(SyntaxKind.PartialKeyword))
-            .Select(m => m.Text);
-
-        var modsStr = string.Join(" ", otherMods);
-        return string.IsNullOrEmpty(modsStr) ? "partial" : $"{modsStr} partial";
-    }
-
-    // 内部数据传输对象，明确可空性
-
-}
-
-file struct GeneratedClassInfo
-{
-    public  string Namespace { get; set; }
-    public  string ClassName { get; set; }
-    public  string Modifiers { get; set; }
-    public  ImmutableArray<string> MethodNames { get; set; }
 }

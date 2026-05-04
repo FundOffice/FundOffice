@@ -8,7 +8,7 @@ public class JustNotifyTodo : ITodo
 
     public string? Message { get; set; }
 
-    public DateTime CreateTime { get; set; }
+    public DateTime CreateTime { get; set; } = DateTime.Now;
 
     public DateTime FinishTime { get; set; }
 

@@ -7,7 +7,7 @@ using Schedule;
 
 namespace FMO.Trigger;
 
-internal static partial class TransferRequestTriggers
+internal static class TransferRequestTriggers
 {
 
     /// <summary>
