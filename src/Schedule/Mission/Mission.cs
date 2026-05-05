@@ -1,5 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Models; 
+using FMO.Models;
 using FMO.Utilities;
 using Serilog;
 
@@ -68,10 +68,11 @@ public abstract class Mission
             r = await WorkOverride();
             LastRun = now;
 
-            // 一次性任务，完成就释放
-            if (this is OnceMission mm && mm.IsFinished)
+            // 已废弃 或 一次性任务，完成就释放
+            if (IsAborted || (this is OnceMission mm && mm.IsFinished))
                 MissionSchedule.Unregister(Id);
-            else if (r.Successed) SetNextRun();
+            else if (r.Successed) 
+                SetNextRun();
         }
         catch (Exception e)
         {
@@ -103,10 +104,8 @@ public abstract class Mission
     /// true可以继续执行下一次
     /// </summary>
     /// <returns></returns>
-    protected virtual async Task<ErrorReturn> WorkOverride()
-    {
-        return await Task.FromResult(new ErrorReturn(true));
-    }
+    protected abstract Task<ErrorReturn> WorkOverride();
+
 
     protected virtual void SetNextRun()
     {
@@ -126,11 +125,11 @@ public abstract class Mission
 /// <summary>
 /// 一次性
 /// </summary>
-public class OnceMission : Mission
+public abstract class OnceMission : Mission
 {
     public bool IsFinished { get; protected set; }
 
-    public required string Name { get; set; } 
+    public required string Name { get; set; }
 
     public string? Description { get; set; }
 
@@ -138,4 +137,5 @@ public class OnceMission : Mission
     {
         IsEnabled = true;
     }
+
 }
