@@ -6,7 +6,6 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:FMO"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:mi="clr-namespace:FMO.Schedule;assembly=Schedule"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -64,7 +63,7 @@
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ListBoxItem">
-                                <mi:MissionShellView Content="{Binding}" DataContext="{Binding}" />
+                                <local:MissionShellView Content="{Binding}" DataContext="{Binding}" />
                             </ControlTemplate>
                         </Setter.Value>
                     </Setter>

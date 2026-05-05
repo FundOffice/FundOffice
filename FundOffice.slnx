@@ -22,7 +22,7 @@
     <Project Path="src/Schedule/Mission.Background/Mission.Background.csproj" Id="42cb0fb2-ee87-4337-bb37-e076bfb4ee4a" />
     <Project Path="src/Schedule/Mission/Mission.csproj" Id="deba239c-48bd-41c2-9b85-2fa16066b692" />
     <Project Path="src/Schedule/MissionRegisterGenerator/MissionRegisterGenerator.csproj" Id="03ae77d0-b7fa-43a0-8704-c7b10cf7cbad" />
-    <Project Path="src/Schedule/Schedule/Schedule.csproj" />
+    <Project Path="src/Schedule/Schedule/Mission.Predefined.csproj" />
   </Folder>
   <Folder Name="/Todo/">
     <Project Path="src/Todo/Todo.UI/Todo.UI.csproj" Id="edce5a6e-f904-43f5-9fec-11de95d89e3f" />

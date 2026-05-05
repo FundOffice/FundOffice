@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Remove="FillFundDailyMission.cs" />
     <Compile Remove="MissionDatabase.cs" />
+    <Compile Remove="MissionTemplateManager.cs" />
   </ItemGroup>
 
   <ItemGroup>

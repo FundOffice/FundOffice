@@ -105,8 +105,8 @@
     <ProjectReference Include="..\Disclosure\Disclosure.UI\Disclosure.UI.csproj" />
     <ProjectReference Include="..\Disclosure\Disclosure\Disclosure.csproj" />
     <ProjectReference Include="..\ESign\ESigning\ESigning.csproj" />
-    <ProjectReference Include="..\Schedule\Schedule\Schedule.csproj" />
     <ProjectReference Include="..\Main\Data\Data.csproj" />
+    <ProjectReference Include="..\Schedule\Mission\Mission.csproj" />
     <ProjectReference Include="..\Todo\Todo.UI\Todo.UI.csproj" />
     <ProjectReference Include="..\Utility\Logging\Logging.csproj" />
     <ProjectReference Include="..\Utility\Patch\Patch.csproj" />

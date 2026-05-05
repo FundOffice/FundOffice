@@ -119,7 +119,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             DataSelfTest();
 
             InitializeMesage = "初始化任务";
-            MissionSchedule.Init();
+            InitMission();
             WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Task", true));
 
 
@@ -166,6 +166,48 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         //         new Tool { ExeName = "TemplateManager", Icon = GetGeometry("f.table-columns"), Foreground = new SolidColorBrush(Color.FromRgb(42,145,223)) },
         //        ];
 
+    }
+
+    private void InitMission()
+    {
+        // 1. 获取主程序目录 +   子文件夹
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string disDir = Path.Combine(baseDir, "mission");
+
+
+        if (!Directory.Exists(disDir))
+        {
+            LogEx.Warning("mission 目录不存在，退出加载"); 
+
+            return;
+        }
+
+        // 2. 获取所有 dll 文件
+        string[] dllFiles = Directory.GetFiles(disDir, "*.dll", SearchOption.TopDirectoryOnly);
+
+        foreach (var dllPath in dllFiles)
+        {
+            try
+            {
+                // 3. 加载程序集
+                Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dllPath);
+                foreach (Type type in assembly.GetTypes())
+                {
+                    if (type.IsClass && type.IsAbstract && type.IsSealed)
+                    {
+                        var method = type.GetMethod("RegisterMissionTemplate", BindingFlags.Public | BindingFlags.Static, null, Type.EmptyTypes, null);
+                        if (method is not null) method.Invoke(null, null);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogEx.Error($"加载mission组件失败，错误：{ex.Message}");
+            }
+        }
+
+
+        MissionSchedule.Init();
     }
 
     #region 组件
@@ -401,15 +443,14 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
     private static void InitializeTriggers()
     {
-        // 1. 获取主程序目录 + disclosure 子文件夹
+        // 1. 获取主程序目录 +   子文件夹
         string baseDir = AppDomain.CurrentDomain.BaseDirectory;
         string disDir = Path.Combine(baseDir, "trigger");
 
 
         if (!Directory.Exists(disDir))
         {
-            LogEx.Warning("trigger 目录不存在，退出加载");
-            //WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
+            LogEx.Warning("trigger 目录不存在，退出加载"); 
 
             return;
         }

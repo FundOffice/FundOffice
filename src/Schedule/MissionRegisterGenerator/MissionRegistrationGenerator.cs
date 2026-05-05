@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
@@ -50,10 +51,10 @@ public class MissionRegistrationGenerator : IIncrementalGenerator
             sb.AppendLine("using System.Runtime.CompilerServices;");
             sb.AppendLine("using FMO.Schedule;");
             sb.AppendLine();
-            sb.AppendLine("public static class MissionTemplateManager");
+            sb.AppendLine($"public static class MissionTemplate_{DateTime.Now.GetHashCode():x}");
             sb.AppendLine("{");
-            sb.AppendLine("    [ModuleInitializer]");
-            sb.AppendLine("    public static void RegisterPredefined()");
+            //sb.AppendLine("    [ModuleInitializer]");
+            sb.AppendLine("    public static void RegisterMissionTemplate()");
             sb.AppendLine("    {");
 
             foreach (var pair in pairs)

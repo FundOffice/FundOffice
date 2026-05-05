@@ -1,10 +1,10 @@
 ﻿<UserControl
-    x:Class="FMO.Schedule.MissionShellView"
+    x:Class="FMO.MissionShellView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hc="https://handyorg.github.io/handycontrol"
-    xmlns:local="clr-namespace:FMO.Schedule"
+    xmlns:local="clr-namespace:FMO"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:sys="clr-namespace:System;assembly=System.Runtime"
     d:DesignHeight="450"
@@ -15,7 +15,6 @@
 
 
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-        <local:BooleanToBrushConverter x:Key="BooleanToBrushConverter" />
 
         <sys:Boolean x:Key="Bool.True">True</sys:Boolean>
         <sys:Boolean x:Key="Bool.False">False</sys:Boolean>
