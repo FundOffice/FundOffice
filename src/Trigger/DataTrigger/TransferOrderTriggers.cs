@@ -1,7 +1,9 @@
 ﻿using FMO.Logging;
 using FMO.Models;
+using FMO.Schedule;
 using FMO.Todo;
 using FMO.Utilities;
+using Schedule;
 using System.Data;
 
 namespace FMO.Trigger;
@@ -65,23 +67,23 @@ internal static class TransferOrderTriggers
                         if (cid == 0) break;
 
                         var rule = ele.PurchasRule.Value[cid];
-                        if(rule is null)
+                        if (rule is null)
                         {
                             LogEx.Error($"{nameof(TransferOrderTriggers)} {nameof(OrderValueNotWell)} 异常，ShareClass检验过，但是申购规则是null");
                             break;
                         }
-                        
+
                         // 追加金额<限制
-                        if (item.Number <rule.AdditionalDeposit)
+                        if (item.Number < rule.AdditionalDeposit)
                         {
-                            TodoService.Register(new JustNotifyTodo { Message = $"申购订单{item.OpenDate}【{item.InvestorName}】购买【{item.FundName}】 {item.Number}可能不正确，【要素】中追加金额{rule.AdditionalDeposit}"});
+                            TodoService.Register(new JustNotifyTodo { Message = $"申购订单{item.OpenDate}【{item.InvestorName}】购买【{item.FundName}】 {item.Number}可能不正确，【要素】中追加金额{rule.AdditionalDeposit}" });
                         }
                     }
                     break;
-                case TransferOrderType.Share: 
-                case TransferOrderType.Amount: 
+                case TransferOrderType.Share:
+                case TransferOrderType.Amount:
                 case TransferOrderType.RemainAmout:
-                    if(item.Number < 10000)
+                    if (item.Number < 10000)
                         TodoService.Register(new JustNotifyTodo { Message = $"赎回订单{item.OpenDate}【{item.InvestorName}】赎回【{item.FundName}】 {EnumDescriptionTypeConverter.GetEnumDescription(item.Type)} {item.Number}可能不正确，金额过小" });
 
                     break;
@@ -89,5 +91,60 @@ internal static class TransferOrderTriggers
                     break;
             }
         }
+    }
+
+    /// <summary>
+    /// 监控订单是否忘了录
+    /// </summary>
+    /// <param name="orders"></param>
+    [HookData]
+    public static void RequestIsForget(IEnumerable<TransferOrder> orders)
+    {
+        if (!orders.Any()) return;
+
+        // 获取成立日期
+        using var db = DbHelper.Base();
+        var dicSetup = db.GetCollection<Fund>().Query().Select(x => new { x.Id, x.SetupDate }).ToList().ToDictionary(x => x.Id, x => x.SetupDate);
+
+
+
+        var today = DateOnly.FromDateTime(DateTime.Now);
+
+        foreach (var order in orders)
+        {
+            // 认购订单
+            if (dicSetup == default)
+            {
+                Check(order, db);
+                continue;
+            }
+
+            // 如果是历史订单，今天已过开放日，跳过
+            if (order.OpenDate.Year > 2000 && today > order.OpenDate)
+                continue;
+
+            Check(order, db);
+        }
+    }
+
+    private static void Check(TransferOrder order, BaseDatabase db)
+    {
+        // 检查有没有对应的request
+
+        var req = db.GetCollection<TransferRequest>().FindOne(x => x.OrderId == order.Id);
+        if (req is not null)
+            return;
+
+        // 建立监控mission
+        var ms = new OrderEntryMonitorMission
+        {
+            FundId = order.FundId,
+            FundName = order.FundName,
+            OpenDay = order.OpenDate,
+            Name = $"追踪订单是否录单",
+            Description = $"{order.FundName} {order.InvestorName} {EnumDescriptionTypeConverter.GetEnumDescription(order.Type)} {order.Number}",
+        };
+
+        MissionSchedule.Register(ms);
     }
 }

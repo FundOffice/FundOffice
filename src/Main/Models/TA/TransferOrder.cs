@@ -38,7 +38,7 @@ public class TransferOrder
     public string? FundName { get; set; }
 
     /// <summary>
-    /// sign 
+    /// sign date
     /// </summary>
     public DateOnly Date { get; set; }
 
