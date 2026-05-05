@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace FMO.Schedule;
 
-public class MailMission : Mission
+public abstract class MailMission : Mission
 {
 
     static MailMission() { Encoding.RegisterProvider(CodePagesEncodingProvider.Instance); }
