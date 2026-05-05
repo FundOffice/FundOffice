@@ -43,6 +43,12 @@ public class SettlementMonitorMission : OnceMission
 
     protected override async Task<ErrorReturn> WorkOverride()
     {
+        if(2 < Days.TradingDayCountFrom(OpenDay))
+        {
+            IsAborted = true;
+            return new(false, "2日内没有交收，不再监控");
+        }
+
         using var db = DbHelper.Base();
         var requests = db.GetCollection<TransferRequest>().Find(x => x.FundId == FundId && x.RequestDate == OpenDay).ToArray();
 
