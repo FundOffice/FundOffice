@@ -172,23 +172,21 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
             var transaction = db.GetCollection<RaisingBankTransaction>().Query().OrderByDescending(x => x.Time).Limit(50).ToArray().
                                 Select(x => new RaisingBankTranscationViewModel(x, dic.TryGetValue(x.FundId, out var tt) ? tt : null)).ToArray();
 
-
-
-            foreach (var item in orders.Join(requests.Where(x => x.OrderId != 0).Select(x => x.OrderId), x => x.Id, x => x, (o, _) => o))
+            var orderEntry = db.GetCollection<TransferRequest>().Query().Where(x => x.OrderId != 0).Select(x => x.OrderId).ToArray();
+            foreach (var item in orders.IntersectBy(orderEntry, x => x.Id))
                 item.IsApplyed = true;
 
-            foreach (var item in orders.Join(records.Where(x => x.OrderId != 0).Select(x => x.OrderId), x => x.Id, x => x, (o, _) => o))
+            var orderConfirm = db.GetCollection<TransferRecord>().Query().Where(x => x.OrderId != 0).Select(x => x.OrderId).ToArray();
+            foreach (var item in orders.IntersectBy(orderConfirm, x => x.Id))
                 item.IsConfirmed = true;
 
 
-            //foreach (var item in orders.Join(map, x => x.Id, x => x.OrderId, (o, m) => new { o, m }))
-            //{
-            //    if (item.m.RequestId != 0)
-            //        item.o.IsApplyed = true;
-            //    if (item.m.RecordId != 0)
-            //        item.o.IsConfirmed = true;
-            //}
+            //foreach (var item in orders.Join(requests.Where(x => x.OrderId != 0).Select(x => x.OrderId), x => x.Id, x => x, (o, _) => o))
+            //    item.IsApplyed = true;
 
+            //foreach (var item in orders.Join(records.Where(x => x.OrderId != 0).Select(x => x.OrderId), x => x.Id, x => x, (o, _) => o))
+            //    item.IsConfirmed = true;
+             
 
 
             //foreach (var item in requests.Join(map, x => x.Id, x => x.RequestId, (o, m) => new { o, m }))
@@ -197,62 +195,27 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
             //        item.o.OrderId = item.m.OrderId;
             //}
 
-            var codes = funds.Select(x => x.Code).Order().ToList();
-            foreach (var item in requests.Where(x => codes.Contains(x.InvestorIdentity)))
+            // 本基金管理人互投 
+            var cert = db.GetCollection<Fund>().Query().Select(x => x.Code).ToList();
+            if (db.GetCollection<Manager>().Query().First().Identity?.Id is string s)
+                cert.Add(s);
+
+            foreach (var item in requests.Where(x => cert.BinarySearch(x.InvestorIdentity) >= 0))
             {
                 item.IsSameManager = true;
             }
-            foreach (var item in records.Where(x => codes.Contains(x.InvestorIdentity)))
+            foreach (var item in records.Where(x => cert.BinarySearch(x.InvestorIdentity) >= 0))
             {
                 item.IsSameManager = true;
             }
 
+            LackOrderBuyCount = db.GetCollection<TransferRequest>().Count(x => x.IsOrderRequired && x.OrderId == 0 && (x.RequestType == TransferRequestType.Purchase || x.RequestType == TransferRequestType.Subscription));
+            LackOrderSellCount = db.GetCollection<TransferRequest>().Count(x => x.IsOrderRequired && x.OrderId == 0 && (x.RequestType == TransferRequestType.Redemption || x.RequestType == TransferRequestType.ForceRedemption));
 
-            LackOrderBuyCount = requests.Count(x => x.IsOrderRequired && !x.IsSameManager && x.LackOrder && x.RequestType!.Value.IsBuy());
-            LackOrderSellCount = requests.Count(x => !x.IsLiquidating && x.IsOrderRequired && !x.IsSameManager && x.LackOrder && x.RequestType!.Value.IsSell());
-            LackOrderCount2 = requests.Count(x => !x.IsLiquidating && x.IsOrderRequired && x.LackOrder && x.IsSameManager);
-            //int lo1 = 0, lo2 = 0, lo3 = 0;
-            //foreach (var item in requests.ExceptBy(map.Where(x => x.OrderId != 0 && x.RequestId != 0).Select(x => x.RequestId), x => x.Id))
-            //{
-            //    if (item.IsOrderRequired)
-            //    {
-            //        item.LackOrder = true;
-
-            //        // 投资人是管理人自己的产品
-            //        item.IsSameManager = codes.BinarySearch(item.InvestorIdentity) >= 0;
-
-            //        if (item.IsSameManager) ++lo3;
-            //        else if (item.RequestType!.Value.IsBuy()) ++lo1;
-            //        else ++lo2;
-            //    }
-            //}
-            //LackOrderBuyCount = lo1;
-            //LackOrderSellCount = lo2;
-            //LackOrderCount2 = lo3;
-
-
-
-            //foreach (var o in orders)
-            //{
-            //    if (mapd.TryGetValue(o.Id!.Value, out var m))
-            //        o.IsComfirmed = m.RequestId != 0;
-            //    //if (tr.Any(x => x.OrderId == o.Id))
-            //    //    o.IsComfirmed = true;
-            //}
-
-
-            //foreach (var ft in records.OrderBy(x => x.ConfirmedDate).GroupBy(x => x.FundId))
-            //{
-            //    var last = ft.Last().ConfirmedDate;
-            //    var may = ft.Where(x => x.ConfirmedDate == last && (x.Type == TransferRecordType.Redemption || x.Type == TransferRecordType.ForceRedemption)).ToArray();
-            //    if (may.Length == 0) continue;
-
-            //    if (funds.FirstOrDefault(x => x.Id == ft.Key) is var ff && ff.ClearDate != default && last > ff.ClearDate)
-            //        foreach (var item in may)
-            //            item.IsLiquidating = true;
-            //}
-
-
+            //LackOrderBuyCount = requests.Count(x => x.IsOrderRequired && !x.IsSameManager && x.LackOrder && x.RequestType!.Value.IsBuy());
+            //LackOrderSellCount = requests.Count(x => !x.IsLiquidating && x.IsOrderRequired && !x.IsSameManager && x.LackOrder && x.RequestType!.Value.IsSell());
+            LackOrderCount2 = LackOrderBuyCount + LackOrderSellCount;// requests.Count(x => x.IsOrderRequired && x.LackOrder && x.IsSameManager);
+            
 
             App.Current.Dispatcher.BeginInvoke(() =>
             {

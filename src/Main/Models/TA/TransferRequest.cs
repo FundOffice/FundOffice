@@ -110,8 +110,9 @@ public class TransferRequest
 
     /// <summary>
     /// 清盘时的申请，托管自动生成
+    /// 不在使用
     /// </summary>
-    public bool IsLiquidating { get; set; }
+    //public bool IsLiquidating { get; set; }
 
     /// <summary>
     /// 需要order

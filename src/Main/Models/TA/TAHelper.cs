@@ -76,6 +76,6 @@ public static class TAHelper
     {
         if (r.Id == 0) r.Id = old.Id;
         if (r.OrderId == 0) r.OrderId = old.OrderId;
-        if (!r.IsLiquidating) r.IsLiquidating = old.IsLiquidating;
+        //if (!r.IsLiquidating) r.IsLiquidating = old.IsLiquidating;
     }
 }
