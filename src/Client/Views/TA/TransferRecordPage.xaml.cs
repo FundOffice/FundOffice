@@ -159,9 +159,11 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
             ErrorMessage = [.. list.OfType<string>()];
 
 
-            var tr = db.GetCollection<TransferRecord>().FindAll().ToList();
-            var tr2 = db.GetCollection<TransferRequest>().FindAll().OrderByDescending(x => x.RequestDate).ToList();
-            var t3 = db.GetCollection<TransferOrder>().FindAll().ToList();
+            var tr = db.GetCollection<TransferRecord>().Query().OrderByDescending(x => x.RequestDate).Limit(100).ToList();//FindAll().ToList();
+            var tr2 = db.GetCollection<TransferRequest>().Query().OrderByDescending(x => x.RequestDate).Limit(50).ToList();//.FindAll().OrderByDescending(x => x.RequestDate).ToList();
+
+            //var t3 = db.GetCollection<TransferOrder>().FindAll().ToList();
+            var t3 = db.GetCollection<TransferOrder>().Query().OrderByDescending(x => x.Date).Limit(50).ToList();
 
             var records = tr.Select(x => new TransferRecordViewModel(x)).ToArray();
             var orders = t3.Select(x => new TransferOrderViewModel(x)).ToArray();
@@ -186,7 +188,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
 
             //foreach (var item in orders.Join(records.Where(x => x.OrderId != 0).Select(x => x.OrderId), x => x.Id, x => x, (o, _) => o))
             //    item.IsConfirmed = true;
-             
+
 
 
             //foreach (var item in requests.Join(map, x => x.Id, x => x.RequestId, (o, m) => new { o, m }))
@@ -215,7 +217,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
             //LackOrderBuyCount = requests.Count(x => x.IsOrderRequired && !x.IsSameManager && x.LackOrder && x.RequestType!.Value.IsBuy());
             //LackOrderSellCount = requests.Count(x => !x.IsLiquidating && x.IsOrderRequired && !x.IsSameManager && x.LackOrder && x.RequestType!.Value.IsSell());
             LackOrderCount2 = LackOrderBuyCount + LackOrderSellCount;// requests.Count(x => x.IsOrderRequired && x.LackOrder && x.IsSameManager);
-            
+
 
             App.Current.Dispatcher.BeginInvoke(() =>
             {
@@ -627,6 +629,8 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
     {
         using var db = DbHelper.Base();
         var data = db.GetCollection<RaisingBankTransaction>().Query().OrderByDescending(x => x.Time).Skip(BankTransactions?.Count ?? 0).Limit(50).ToArray();
+        if (data?.Length is null or 0) return;
+
         var dic = db.GetCollection<Fund>().Query().Select(x => new { x.Id, x.Name }).ToArray().ToDictionary(x => x.Id, x => x.Name);
 
 
@@ -634,14 +638,88 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
         {
             foreach (var item in data)
                 BankTransactions!.Add(new(item, dic.TryGetValue(item.FundId, out var fn) ? fn : null));
-
-            TranscationSource.Source = BankTransactions;
         });
 
     }
 
 
+    [RelayCommand]
+    public async Task LoadOrder()
+    {
+        using var db = DbHelper.Base();
 
+
+        var data = db.GetCollection<TransferOrder>().Query().OrderByDescending(x => x.Date).Skip(Orders?.Count ?? 0).Limit(50).ToList();
+        if (data?.Count is null or 0) return;
+
+        await App.Current.Dispatcher.InvokeAsync(() =>
+        {
+            var vms = data.Select(x => new TransferOrderViewModel(x)).ToArray();
+
+            var orderEntry = db.GetCollection<TransferRequest>().Query().Where(x => x.OrderId != 0).Select(x => x.OrderId).ToArray();
+            foreach (var item in vms.IntersectBy(orderEntry, x => x.Id))
+                item.IsApplyed = true;
+
+            var orderConfirm = db.GetCollection<TransferRecord>().Query().Where(x => x.OrderId != 0).Select(x => x.OrderId).ToArray();
+            foreach (var item in vms.IntersectBy(orderConfirm, x => x.Id))
+                item.IsConfirmed = true;
+
+            foreach (var item in vms)
+                Orders?.Add(item);
+
+        });
+    }
+
+
+    [RelayCommand]
+    public async Task LoadRequest()
+    {
+        using var db = DbHelper.Base();
+
+        var tr2 = db.GetCollection<TransferRequest>().Query().OrderByDescending(x => x.RequestDate).Skip(Requests?.Count ?? 0).Limit(50).ToList();
+
+        var requests = tr2.Select(x => new TransferRequestViewModel(x)).ToArray();
+        var cert = db.GetCollection<Fund>().Query().Select(x => x.Code).ToList();
+        if (db.GetCollection<Manager>().Query().First().Identity?.Id is string s)
+            cert.Add(s);
+
+        foreach (var item in requests.Where(x => cert.BinarySearch(x.InvestorIdentity) >= 0))
+        {
+            item.IsSameManager = true;
+        }
+
+        await App.Current.Dispatcher.InvokeAsync(() =>
+        {
+            foreach (var item in requests)
+                Requests?.Add(item);
+        });
+    }
+
+
+    [RelayCommand]
+    public async Task LoadRecord()
+    {
+        using var db = DbHelper.Base();
+
+        var tr = db.GetCollection<TransferRecord>().Query().OrderByDescending(x => x.RequestDate).Skip(Records?.Count ?? 0).Limit(50).ToList();
+
+        var records = tr.Select(x => new TransferRecordViewModel(x)).ToArray();
+        var cert = db.GetCollection<Fund>().Query().Select(x => x.Code).ToList();
+        if (db.GetCollection<Manager>().Query().First().Identity?.Id is string s)
+            cert.Add(s);
+
+        foreach (var item in records.Where(x => cert.BinarySearch(x.InvestorIdentity) >= 0))
+        {
+            item.IsSameManager = true;
+        }
+
+        await App.Current.Dispatcher.InvokeAsync(() =>
+        {
+            foreach (var item in records)
+                Records?.Add(item);
+        });
+    }
+    
 
 
     public void Receive(TransferRecord message)

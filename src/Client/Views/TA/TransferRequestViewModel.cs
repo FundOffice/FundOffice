@@ -35,6 +35,8 @@ partial class TransferRequestViewModel : ITransferViewModel, IHasOrderViewModel
 
     public bool IsSameManager { get; set; }
 
+    public bool IsLiquidating => false;
+
     [RelayCommand]
     public void OpenInvestorView()
     {

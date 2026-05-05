@@ -340,6 +340,7 @@
                     </DockPanel>
                 </TabItem.Header>
                 <DataGrid
+                    local:InfiniteScrollExtension.Command="{Binding LoadOrderCommand}"
                     AutoGenerateColumns="False"
                     EnableRowVirtualization="True"
                     IsReadOnly="True"
@@ -675,6 +676,7 @@
 
                 <DataGrid
                     hc:DataGridAttach.ShowRowNumber="True"
+                    local:InfiniteScrollExtension.Command="{Binding LoadRequestCommand}"
                     AutoGenerateColumns="False"
                     BorderThickness="0"
                     EnableRowVirtualization="True"
@@ -911,9 +913,8 @@
                     </DockPanel>
                 </TabItem.Header>
                 <DataGrid
-                    d:DataContext="{d:DesignInstance CreateList=True,
-                                                     Type=local:TransferRecordViewModel}"
                     hc:DataGridAttach.ShowRowNumber="True"
+                    local:InfiniteScrollExtension.Command="{Binding LoadRecordCommand}"
                     AutoGenerateColumns="False"
                     BorderThickness="0"
                     EnableRowVirtualization="True"
