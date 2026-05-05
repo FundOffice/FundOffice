@@ -161,7 +161,7 @@ public partial class InstitutionWindowViewModel : EditableControlViewModelBase<I
 
         InstitutionName = new ChangeableViewModel<Institution, string>
         {
-            Label = "管理人",
+            Label = "机构名",
             InitFunc = x => x.Name,
             UpdateFunc = (x, y) => x.Name = y ?? "",
             ClearFunc = x => x.Name = string.Empty,
