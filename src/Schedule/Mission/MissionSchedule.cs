@@ -29,15 +29,14 @@ public static class MissionSchedule
     public static void Init()
     {
         using var db = DbHelper.Mission();
-        var ms = db.GetCollection("Mission").FindAll().ToList();// db.GetCollection<Mission>().FindAll().ToArray();
+        var ms = db.GetCollection("Mission").Find(Query.EQ(nameof(Mission.IsAborted),false)).ToList();
 
         missions = ms.Select(x =>
         {
             try
             {
                 var mission = BsonMapper.Global.ToObject<Mission>(x);
-                if (mission.IsAborted) return null;
-                //if(mission is FillFundDailyMission) return null;
+
                 mission.Init();
                 return mission;
             }
