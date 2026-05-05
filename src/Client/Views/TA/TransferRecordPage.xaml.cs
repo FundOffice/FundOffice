@@ -162,7 +162,10 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
             var orders = t3.Select(x => new TransferOrderViewModel(x)).ToArray();
             var requests = tr2.Select(x => new TransferRequestViewModel(x)).ToArray();
 
-            var transaction = db.GetCollection<RaisingBankTransaction>().FindAll().Select(x => new RaisingBankTranscationViewModel(x, funds!)).ToArray();
+            var dic = funds.ToDictionary(x => x.Id, x => x.Name);
+
+            var transaction = db.GetCollection<RaisingBankTransaction>().Query().OrderByDescending(x => x.Time).Limit(50).ToArray().
+                                Select(x => new RaisingBankTranscationViewModel(x, dic.TryGetValue(x.FundId, out var tt) ? tt : null)).ToArray();
 
             //foreach (var item in records.IntersectBy<TransferRecordViewModel, int>(map.Where(x => x.RequestId == 0).Select(x => x.RecordId), x => x.Id))
             //    item.LackRequest = true;
@@ -655,6 +658,30 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
         //    }
 
     }
+
+
+
+    [RelayCommand]
+    public async Task LoadRaising()
+    {
+        using var db = DbHelper.Base();
+        var data = db.GetCollection<RaisingBankTransaction>().Query().OrderByDescending(x => x.Time).Skip(BankTransactions?.Count ?? 0).Limit(50).ToArray();
+        var dic = db.GetCollection<Fund>().Query().Select(x => new { x.Id, x.Name }).ToArray().ToDictionary(x => x.Id, x => x.Name);
+
+
+        await App.Current.Dispatcher.InvokeAsync(() =>
+        {
+            foreach (var item in data)
+                BankTransactions!.Add(new(item, dic.TryGetValue(item.FundId, out var fn) ? fn : null));
+
+            TranscationSource.Source = BankTransactions;
+        });
+
+    }
+
+
+
+
 
     public void Receive(TransferRecord message)
     {

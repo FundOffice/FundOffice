@@ -6,13 +6,20 @@ namespace FMO;
 [AutoChangeableViewModel(typeof(RaisingBankTransaction))]
 partial class RaisingBankTranscationViewModel
 {
-    public RaisingBankTranscationViewModel(RaisingBankTransaction? instance, (int Id, string Name, string Code, DateOnly ClearDate)[] funds) : this(instance)
+    public RaisingBankTranscationViewModel(RaisingBankTransaction? instance, (int Id, string Name, string? Code, DateOnly ClearDate) fund) : this(instance)
     {
         if (instance is null) return;
-        var fund = funds.FirstOrDefault(x => x.Id == instance.FundId);
-        FundName = fund.Name;
+        FundName = fund.Name ?? "未知基金";
 
-        This = string.IsNullOrWhiteSpace(FundName) ? instance.AccountName : FundName;
+        This = fund.Name?? instance.AccountName;
+    }
+
+    public RaisingBankTranscationViewModel(RaisingBankTransaction? instance, string? fundName) : this(instance)
+    {
+        if (instance is null) return;
+        FundName = fundName ?? "未知基金";
+
+        This = fundName ?? instance.AccountName;
     }
 
     public string FundName { get; }
