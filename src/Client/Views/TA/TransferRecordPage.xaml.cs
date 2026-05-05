@@ -22,11 +22,15 @@ public partial class TransferRecordPage : UserControl
     public TransferRecordPage()
     {
         InitializeComponent();
+
+        Unloaded += (s, e) => { if (DataContext is IDisposable ob) ob.Dispose(); };
     }
+
+
 }
 
 
-public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<IList<TransferRequest>>, IRecipient<TransferRecord>,
+public partial class TransferRecordPageViewModel : ObservableObject, IDisposable, IRecipient<IList<TransferRequest>>, IRecipient<TransferRecord>,
     IRecipient<PageTAMessage>, IRecipient<TransferOrder>, IRecipient<TipChangeMessage>, IRecipient<List<ManualLinkOrder>>, IRecipient<IList<TransferOrder>>
 {
     [ObservableProperty]
@@ -86,8 +90,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
     public ObservableCollection<RaisingBankTranscationViewModel>? BankTransactions { get; set; }
 
     FileSystemWatcher? watcher;
-
-
+    private bool disposedValue;
 
     public GridFilter FundNameFilter { get; }
 
@@ -123,10 +126,8 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
         {
             using var db = DbHelper.Base();
             var funds = db.GetCollection<Fund>().FindAll().Select(x => (x.Id, x.Name, x.Code, x.ClearDate)).ToArray();
+            var investors = db.GetCollection<Investor>().Query().Select(x => x.Name).ToArray();
 
-            var tr = db.GetCollection<TransferRecord>().FindAll().ToList();
-            var tr2 = db.GetCollection<TransferRequest>().FindAll().OrderByDescending(x => x.RequestDate).ToList();
-            var t3 = db.GetCollection<TransferOrder>().FindAll().ToList();
             //var map = db.GetCollection<TransferMapping>().FindAll().ToList();
 
             FundNameFilter.Filters = funds.Select(x => new GridFilterItem
@@ -136,7 +137,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
                 IsSelected = false
             }).ToArray();
 
-            InvestorNameFilter.Filters = tr.Select(x => x.InvestorName).Union(t3.Select(x => x.InvestorName)).Distinct().OfType<string>().Select(x => new GridFilterItem
+            InvestorNameFilter.Filters = investors.Distinct().OfType<string>().Select(x => new GridFilterItem
             {
                 Title = x,
                 FilterFunc = y => y switch { ITransferViewModel v => v.InvestorName == x, _ => true },
@@ -158,6 +159,10 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
             ErrorMessage = [.. list.OfType<string>()];
 
 
+            var tr = db.GetCollection<TransferRecord>().FindAll().ToList();
+            var tr2 = db.GetCollection<TransferRequest>().FindAll().OrderByDescending(x => x.RequestDate).ToList();
+            var t3 = db.GetCollection<TransferOrder>().FindAll().ToList();
+
             var records = tr.Select(x => new TransferRecordViewModel(x)).ToArray();
             var orders = t3.Select(x => new TransferOrderViewModel(x)).ToArray();
             var requests = tr2.Select(x => new TransferRequestViewModel(x)).ToArray();
@@ -167,14 +172,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
             var transaction = db.GetCollection<RaisingBankTransaction>().Query().OrderByDescending(x => x.Time).Limit(50).ToArray().
                                 Select(x => new RaisingBankTranscationViewModel(x, dic.TryGetValue(x.FundId, out var tt) ? tt : null)).ToArray();
 
-            //foreach (var item in records.IntersectBy<TransferRecordViewModel, int>(map.Where(x => x.RequestId == 0).Select(x => x.RecordId), x => x.Id))
-            //    item.LackRequest = true;
 
-
-            //foreach (var item in records.Join(map, x => x.Id, x => x.RecordId, (o, m) => new { o, m }))
-            //{
-            //    item.o.OrderId = item.m.OrderId; 
-            //}
 
             foreach (var item in orders.Join(requests.Where(x => x.OrderId != 0).Select(x => x.OrderId), x => x.Id, x => x, (o, _) => o))
                 item.IsApplyed = true;
@@ -812,5 +810,35 @@ public partial class TransferRecordPageViewModel : ObservableObject, IRecipient<
 
             OrderSource.Source = Orders;
         });
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                // TODO: 释放托管状态(托管对象)
+                watcher?.Dispose();
+            }
+
+            // TODO: 释放未托管的资源(未托管的对象)并重写终结器
+            // TODO: 将大型字段设置为 null
+            disposedValue = true;
+        }
+    }
+
+    // // TODO: 仅当“Dispose(bool disposing)”拥有用于释放未托管资源的代码时才替代终结器
+    // ~TransferRecordPageViewModel()
+    // {
+    //     // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+    //     Dispose(disposing: false);
+    // }
+
+    public void Dispose()
+    {
+        // 不要更改此代码。请将清理代码放入“Dispose(bool disposing)”方法中
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }

@@ -10,32 +10,6 @@ using System.Windows.Controls;
 namespace FMO;
 
 
-public interface ITransferViewModel
-{
-    string FundName { get; }
-
-    string InvestorName { get; }
-}
-
-public interface IHasOrderViewModel
-{
-    int OrderId { get; }
-
-    bool HasOrder { get; }
-
-    bool LackOrder { get; }
-
-    bool IsSameManager { get; }
-
-    bool IsOrderRequired { get; }
-
-    bool IsLiquidating { get; }
-
-    public bool IsBuy();
-
-    public bool IsSell();
-}
-
 
 
 [AutoChangeableViewModel(typeof(TransferRequest))]
