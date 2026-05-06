@@ -3,6 +3,7 @@ using FMO.Models;
 using FMO.Utilities;
 using MimeKit;
 using Serilog;
+using System.Linq;
 using System.IO;
 using System.IO.Compression;
 
@@ -31,9 +32,9 @@ public class DailyFromMailMission : MailMission
         }
         // 获取所有缓存 
         var di = new DirectoryInfo(@$"files\mailcache\{MailName}");
-        if (!di.Exists) 
+        if (!di.Exists)
             return new(false, "邮件缓存文件夹不存在");
-        
+
 
         string log = "";
         // 获取所有文件
@@ -43,8 +44,7 @@ public class DailyFromMailMission : MailMission
         var cat = db.GetCollection<MailCategoryInfo>().FindAll().Where(x => x.Category != MailCategory.Unk && x.Category.HasFlag(MailCategory.ValueSheet)).Select(x => x.Id).ToArray();
 
         var worked = coll.FindAll().ExceptBy(cat, x => x.Id).ToArray();
-
-        var work = IgnoreHistory ? files : files.ExceptBy(worked.Select(x => x.Id), x => x.Name).ToArray();
+        var work = FilterWork(files, worked, db);
 
         double unit = 100.0 / work.Length;
         double progress = 0;
@@ -70,6 +70,8 @@ public class DailyFromMailMission : MailMission
         WeakReferenceMessenger.Default.Send(new MissionProgressMessage { Id = Id, Progress = 100 });
         return new(true, "处理完成");
     }
+
+
 
     private bool WorkOne(FileInfo file, string log)
     {

@@ -14,6 +14,41 @@
     <DataTemplate DataType="{x:Type m:OnceMissionViewModel}">
         <TextBlock Text="{Binding Description}" />
     </DataTemplate>
+    
+    
+  <DataTemplate x:Key="MailShared">
+        <DataTemplate.Resources>
+            <Style BasedOn="{StaticResource TextBlockDefault}" TargetType="TextBlock">
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="FontSize" Value="14" />
+            </Style>
+        </DataTemplate.Resources>
+        <DockPanel Margin="0,2">
+            <ToggleButton x:Name="reb"  Margin="10,0"
+            Content="重建" DockPanel.Dock="Right"
+            IsEnabled="{Binding IsAvailable}" />
+
+
+            <hc:SimplePanel>
+                <DockPanel Visibility="{Binding ElementName=reb,Path=IsChecked,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                    <TextBlock Margin="10,0,0,0" Text="运行时间间隔" />
+                    <hc:NumericUpDown Margin="4,0" Value="{Binding Interval, UpdateSourceTrigger=PropertyChanged,Delay=200}" />
+                    <TextBlock Text="分" />
+                </DockPanel>
+
+                <DockPanel Visibility="{Binding ElementName=reb,Path=IsChecked,Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <RadioButton Content="最近"  IsChecked="{Binding RedoAll,Converter={StaticResource Boolean2BooleanReConverter}}"/>
+                    <TextBox Text="{Binding RedoCount,UpdateSourceTrigger=PropertyChanged,Delay=200}" Width="40" Margin="0,2"/>
+                    <TextBlock Text="个邮件" VerticalAlignment="Center"/>
+                    <RadioButton Content="全部" Margin="5,0"/>
+
+                    <Button Content="确认" 
+                                Command="{Binding RebuildDataCommand}"/>
+                </DockPanel>
+            </hc:SimplePanel>
+        </DockPanel>
+
+    </DataTemplate>
 
     <DataTemplate DataType="{x:Type local:DailyFromMailViewModel}">
         <DataTemplate.Resources>
@@ -22,8 +57,7 @@
                 <Setter Property="FontSize" Value="14" />
             </Style>
         </DataTemplate.Resources>
-        <StackPanel
-            Margin="8,0"
+        <StackPanel 
             VerticalAlignment="Center"
             DockPanel.Dock="Top"
             IsEnabled="{Binding IsWorking, Converter={StaticResource Boolean2BooleanReConverter}}">
@@ -35,17 +69,9 @@
                 Text="{Binding MailName, UpdateSourceTrigger=PropertyChanged, Delay=300}"
                 TextAlignment="Center" />
 
-            <DockPanel>
-                <TextBlock Margin="10,0,0,0" Text="运行时间间隔" />
-                <hc:NumericUpDown Margin="4,0" Value="{Binding Interval}" />
-                <TextBlock Text="分" />
 
-                <Button
-                    Margin="10,0"
-                    Command="{Binding RebuildDataCommand}"
-                    Content="重建"
-                    IsEnabled="{Binding IsAvailable}" />
-            </DockPanel>
+
+            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource MailShared}"/>
 
             <ProgressBar
                 Margin="0,6,0,0"
@@ -135,35 +161,16 @@
                 </hc:SimplePanel>
             </DockPanel>
 
-            <DockPanel
-                Margin="8,0"
-                VerticalAlignment="Center"
-                DockPanel.Dock="Top"
-                IsEnabled="{Binding IsWorking, Converter={StaticResource Boolean2VisibilityReConverter}}"
-                LastChildFill="False">
-                <TextBlock Text="运行时间间隔" />
-                <TextBox
-                    Width="40"
-                    Margin="4,0"
-                    HorizontalContentAlignment="Center"
-                    VerticalContentAlignment="Center"
-                    Text="{Binding Interval, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                <TextBlock Text="分" />
 
-                <Button
-                    Margin="10,0"
-                    Command="{Binding RebuildDataCommand}"
-                    Content="重建"
-                    IsEnabled="{Binding IsAccountVerified}" />
-            </DockPanel>
+
+            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource MailShared}"/>
 
             <ProgressBar Visibility="{Binding IsWorking, Converter={StaticResource Boolean2VisibilityConverter}}" Value="{Binding ProgressValue}" />
         </StackPanel>
     </DataTemplate>
 
 
-
-
+  
 
     <DataTemplate DataType="{x:Type local:DisclosureFromMailViewModel}">
         <DataTemplate.Resources>
@@ -173,7 +180,6 @@
             </Style>
         </DataTemplate.Resources>
         <StackPanel
-            Margin="8,0"
             VerticalAlignment="Center"
             DockPanel.Dock="Top"
             IsEnabled="{Binding IsWorking, Converter={StaticResource Boolean2BooleanReConverter}}">
@@ -185,18 +191,9 @@
                 Text="{Binding MailName, UpdateSourceTrigger=PropertyChanged, Delay=300}"
                 TextAlignment="Center" />
 
-            <DockPanel>
-                <TextBlock Margin="10,0,0,0" Text="运行时间间隔" />
-                <hc:NumericUpDown Margin="4,0" Value="{Binding Interval}" />
-                <TextBlock Text="小时" />
 
-                <Button
-                    Margin="10,0"
-                    Command="{Binding RebuildDataCommand}"
-                    Content="重建"
-                    IsEnabled="{Binding IsAvailable}" />
-            </DockPanel>
 
+            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource MailShared}"/>
 
 
             <ProgressBar
@@ -263,8 +260,7 @@
                 <Setter Property="FontSize" Value="14" />
             </Style>
         </DataTemplate.Resources>
-        <StackPanel
-            Margin="8,0"
+        <StackPanel 
             VerticalAlignment="Center"
             DockPanel.Dock="Top"
             IsEnabled="{Binding IsWorking, Converter={StaticResource Boolean2BooleanReConverter}}">
@@ -276,17 +272,8 @@
                 Text="{Binding MailName, UpdateSourceTrigger=PropertyChanged, Delay=300}"
                 TextAlignment="Center" />
 
-            <DockPanel>
-                <TextBlock Margin="10,0,0,0" Text="运行时间间隔" />
-                <hc:NumericUpDown Margin="4,0" Value="{Binding Interval}" />
-                <TextBlock Text="分" />
+            <ContentControl Content="{Binding}" ContentTemplate="{StaticResource MailShared}"/>
 
-                <Button
-                    Margin="10,0"
-                    Command="{Binding RebuildDataCommand}"
-                    Content="重建"
-                    IsEnabled="{Binding IsAvailable}" />
-            </DockPanel>
 
 
 

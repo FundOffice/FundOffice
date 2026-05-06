@@ -6,7 +6,7 @@ namespace FMO.Schedule;
 [MissionInfo("信披更新")]
 public partial class DisclosureFromMailViewModel : MissionViewModel<DisclosureFromMailMission>
 {
-    [ObservableProperty] 
+    [ObservableProperty]
     public partial string? MailName { get; set; }
 
 
@@ -17,6 +17,15 @@ public partial class DisclosureFromMailViewModel : MissionViewModel<DisclosureFr
     [ObservableProperty]
     public partial DateTime StartDate { get; set; }
 
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RebuildDataCommand))]
+    public partial bool RedoAll { get; set; }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RebuildDataCommand))]
+    public partial int? RedoCount { get; set; }
+
+    public bool CanRedo => RedoAll || RedoCount is > 0;
 
     public DisclosureFromMailViewModel(DisclosureFromMailMission m) : base(m)
     {
@@ -28,11 +37,11 @@ public partial class DisclosureFromMailViewModel : MissionViewModel<DisclosureFr
 
 
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRedo))]
     public async Task RebuildData()
     {
-        Mission.IgnoreHistory = true;
+        Mission.Param = new(true, RedoAll, RedoCount ?? 0);
         await Task.Run(() => Mission.Work());
-        Mission.IgnoreHistory = false;
+        Mission.Param = null;
     }
 }

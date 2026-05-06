@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
@@ -55,7 +56,8 @@ public class MissionViewModelSyncGenerator : IIncrementalGenerator
                         SymbolEqualityComparer.Default.Equals(p.ContainingType, symbol))
             .Select(vmProp =>
             {
-                var missionProp = missionType.GetMembers()
+                var missionProp = GetBaseTypesAndThis(missionType)
+                     .SelectMany(t => t.GetMembers(vmProp.Name))
                     .OfType<IPropertySymbol>()
                     .FirstOrDefault(p => p.Name == vmProp.Name && !p.IsReadOnly);
                 return (vmProp, missionProp);
@@ -64,6 +66,16 @@ public class MissionViewModelSyncGenerator : IIncrementalGenerator
             .ToImmutableArray();
 
         return (symbol, matches);
+    }
+
+    private static IEnumerable<ITypeSymbol> GetBaseTypesAndThis(ITypeSymbol? type)
+    {
+        var current = type;
+        while (current is not null && current.SpecialType != SpecialType.System_Object)
+        {
+            yield return current;
+            current = current.BaseType;
+        }
     }
 
     private static void EmitSource(SourceProductionContext spc,

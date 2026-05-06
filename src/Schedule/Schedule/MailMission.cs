@@ -1,10 +1,14 @@
 ﻿using FMO.Utilities;
+using LiteDB;
 using MimeKit;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace FMO.Schedule;
+
+public record ManualParam(bool IgnoreHistory, bool RedoAll, int RedoCount);
 
 public abstract class MailMission : Mission
 {
@@ -13,7 +17,10 @@ public abstract class MailMission : Mission
 
     public string? MailName { get => field; set { field = value; _collection = value is null ? null : BitConverter.ToString(SHA256.HashData(Encoding.Default.GetBytes(value))).Replace("-", "").ToLowerInvariant(); } }
 
-    public bool IgnoreHistory { get; set; }
+
+    [BsonIgnore]
+    public ManualParam? Param { get; set; }
+
 
 
     protected string? _collection { get; set; }
@@ -21,7 +28,6 @@ public abstract class MailMission : Mission
     public override void Init()
     {
         base.Init();
-        IgnoreHistory = false;
     }
 
     protected virtual MailCategory DetermineCategory(MimeMessage? message)
@@ -65,6 +71,16 @@ public abstract class MailMission : Mission
         }
 
         return msg;
+    }
+
+
+    protected FileInfo[] FilterWork(FileInfo[] files, MailMissionRecord[] worked, LiteDB.LiteDatabase db)
+    {
+        if (Param is null || !Param.IgnoreHistory)
+            return files.ExceptBy(worked.Select(x => x.Id), x => x.Name).ToArray();
+        else if (Param.RedoAll)
+            return files;
+        else return files.OrderByDescending(x => x.LastWriteTime).Take(Param.RedoCount).ToArray();
     }
 
 }

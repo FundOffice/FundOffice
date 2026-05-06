@@ -39,6 +39,9 @@ public class DisclosureFromMailMission : MailMission
 
         // 获取所有文件
         var files = di.GetFiles();
+        if (files.Length == 0)
+            return new ErrorReturn(false, "没有邮件缓存");
+
         using var db = DbHelper.Mission();
         // 排除估值表，加快效率
         var cat = db.GetCollection<MailCategoryInfo>().Find(x => x.Category == MailCategory.ValueSheet).Select(x => x.Id).ToList();//.FindAll().Where(x => x.Category.HasFlag(MailCategory.Disclosure)).Select(x => x.Id).ToArray();
@@ -47,9 +50,9 @@ public class DisclosureFromMailMission : MailMission
         var worked = coll.FindAll().ExceptBy(cat, x => x.Id).ToArray();
 
         // 这里有问题， file 是uid， MailCategoryInfo是message id，不一样，无法排除
-        var work = IgnoreHistory ? files.ExceptBy(cat, x => x.Name).ToArray() : files.ExceptBy(worked.Select(x => x.Id), x => x.Name).ToArray();
+        var work = FilterWork(files, worked, db);
 
-        var log = $"{(IgnoreHistory ? "全部重解析" : $"已解析{worked.Length}个")}\n待处理邮件 {work.Length} 个";
+        var log = $"已解析{worked.Length}个  待处理邮件 {work.Length} 个";
 
         double unit = 100.0 / work.Length;
         double progress = 0;
@@ -355,8 +358,7 @@ public class DisclosureFromMailMission : MailMission
     }
 
 
-
-
+    
     enum ParseType
     {
         InvestorInfo,

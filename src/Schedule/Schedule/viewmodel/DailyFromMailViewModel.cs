@@ -16,7 +16,17 @@ public partial class DailyFromMailViewModel : MissionViewModel<DailyFromMailMiss
     public partial int? Interval { get; set; }
 
 
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RebuildDataCommand))]
+    public partial bool RedoAll { get; set; }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RebuildDataCommand))]
+    public partial int? RedoCount { get; set; }
+
     public override bool IsAvailable => MailName?.Length > 5 && MailName.IsMail();
+
+
 
     public DailyFromMailViewModel(DailyFromMailMission m) : base(m)
     {
@@ -25,12 +35,13 @@ public partial class DailyFromMailViewModel : MissionViewModel<DailyFromMailMiss
         MailName = m.MailName;
         Interval = m.Interval == 0 ? null : m.Interval;
     }
+    public bool CanRedo => RedoAll || RedoCount is > 0;
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRedo))]
     public async Task RebuildData()
     {
-        Mission.IgnoreHistory = true;
+        Mission.Param = new(true, RedoAll, RedoCount ?? 0);
         await Task.Run(() => Mission.Work());
-        Mission.IgnoreHistory = false;
+        Mission.Param = null;
     }
 }

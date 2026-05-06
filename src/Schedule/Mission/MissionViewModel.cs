@@ -173,15 +173,15 @@ public partial class MissionViewModel : ObservableObject, IRecipient<MissionMess
     {
         if (Id != message.Id)
             return;
+        WorkLog = message.Log;
+        //RunOnUIThread(() =>
+        //{
+        //    Logs.Add(message.Log);
+        //    if (Logs.Count > 10)
+        //        Logs.RemoveAt(0);
 
-        RunOnUIThread(() =>
-        {
-            Logs.Add(message.Log);
-            if (Logs.Count > 10)
-                Logs.RemoveAt(0);
-
-            WorkLog = message.Log;
-        });
+            
+        //});
 
     }
 

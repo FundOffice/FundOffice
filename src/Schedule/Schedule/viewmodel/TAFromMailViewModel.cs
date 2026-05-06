@@ -13,6 +13,14 @@ public partial class TAFromMailViewModel : MissionViewModel<TAFromMailMission>
     [ObservableProperty]
     public partial int? Interval { get; set; }
 
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RebuildDataCommand))]
+    public partial bool RedoAll { get; set; }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RebuildDataCommand))]
+    public partial int? RedoCount { get; set; }
+
     public TAFromMailViewModel(TAFromMailMission m) : base(m)
     {
         Title = "TA更新";
@@ -22,12 +30,13 @@ public partial class TAFromMailViewModel : MissionViewModel<TAFromMailMission>
     }
 
 
+    public bool CanRedo => RedoAll || RedoCount is > 0;
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanRedo))]
     public async Task RebuildData()
     {
-        Mission.IgnoreHistory = true;
+        Mission.Param = new(true, RedoAll, RedoCount ?? 0);
         await Task.Run(() => Mission.Work());
-        Mission.IgnoreHistory = false;
+        Mission.Param = null;
     }
 }
