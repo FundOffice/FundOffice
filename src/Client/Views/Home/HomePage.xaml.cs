@@ -105,6 +105,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
     {
         WeakReferenceMessenger.Default.RegisterAll(this);
 
+        AssemblyLoadContext.Default.Resolving += Default_Resolving;
 
         Task.Run(() =>
         {
@@ -166,6 +167,13 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         //         new Tool { ExeName = "TemplateManager", Icon = GetGeometry("f.table-columns"), Foreground = new SolidColorBrush(Color.FromRgb(42,145,223)) },
         //        ];
 
+    }
+
+    private Assembly? Default_Resolving(AssemblyLoadContext ctx, AssemblyName name)
+    {
+        var file = name.Name + ".dll";
+        var path = Directory.EnumerateFiles(AppContext.BaseDirectory, file, SearchOption.AllDirectories).FirstOrDefault();
+        return string.IsNullOrWhiteSpace(path) ? null : ctx.LoadFromAssemblyPath(path);
     }
 
     private void InitMission()
