@@ -124,6 +124,7 @@ public class MissionViewModelSyncGenerator : IIncrementalGenerator
             #nullable enable
             using System;
             using System.ComponentModel;
+            using FMO.Schedule;
 
             {{ns}}
                 public partial class {{className}}
