@@ -217,46 +217,26 @@ public partial class MissionViewModel<T> : MissionViewModel where T : Mission
     {
         base.OnPropertyChanged(e);
 
-        if (Mission is not null)
+        if (Mission is not null && e.PropertyName == nameof(IsActivated) && IsActivated != Mission.IsEnabled)
         {
-            switch (e.PropertyName)
-            {
-                case nameof(IsActivated):
-                    if (IsActivated != Mission.IsEnabled)
-                    {
-                        Mission.IsEnabled = IsActivated;
-                        NextRunTime = Mission.NextRun;
-                        using var db = DbHelper.Mission();
-                        db.GetCollection<Mission>().Upsert(Mission);
-                    }
-                    break;
-
-                default:
-                    break;
-            }
-
-
-            try
-            {
-                if (e.PropertyName is not null && Mission.GetType().GetProperty(e.PropertyName) is PropertyInfo p && p.CanWrite)
-                {
-                    var v = p.GetValue(Mission);
-                    PropertyInfo vmp = GetType().GetProperty(e.PropertyName)!;
-                    var vm = vmp.GetValue(this);
-                    if (v != vm && vmp.PropertyType.IsAssignableTo(p.PropertyType))
-                    {
-                        p.SetValue(Mission, vm);
-                        MissionSchedule.SaveChanges(Mission);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"Save Mission {ex}");
-            }
-
-
+            Mission.IsEnabled = IsActivated;
+            NextRunTime = Mission.NextRun;
+            MissionSchedule.SaveChanges(Mission);
         }
+
+    }
+
+    public static bool CanValueAssignToProperty(object? value, PropertyInfo targetProp)
+    {
+        if (targetProp.PropertyType.IsValueType && Nullable.GetUnderlyingType(targetProp.PropertyType) == null)
+        {
+            // 目标是【不可空值类型】（如 int）
+            // 来源不能是 null，且类型能匹配
+            return value is not null && targetProp.PropertyType.IsAssignableFrom(value.GetType());
+        }
+
+        // 其他情况（引用类型、可空类型）
+        return targetProp.PropertyType.IsAssignableFrom(value?.GetType());
     }
 }
 

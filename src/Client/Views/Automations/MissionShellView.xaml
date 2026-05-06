@@ -166,17 +166,16 @@
                                         Visibility="{Binding IsWorking, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
 
-                                    <ContentControl
-                                        x:Name="btns"
-                                        Content="{Binding}"
-                                        ContentTemplate="{x:Null}"
-                                        DockPanel.Dock="Right" />
-
 
                                     <TextBlock
                                         VerticalAlignment="Center"
                                         FontWeight="Black"
                                         Text="{Binding Title}" />
+
+                                    <ContentControl
+                                        x:Name="btns"
+                                        Content="{Binding}"
+                                        ContentTemplate="{x:Null}" />
 
 
 
@@ -301,29 +300,11 @@
                     <Setter TargetName="btns" Property="ContentTemplate">
                         <Setter.Value>
                             <DataTemplate>
-                                <DockPanel DockPanel.Dock="Right">
-                                    <ToggleButton
-                                        Margin="0"
-                                        Padding="0,-4,0,0"
-                                        VerticalContentAlignment="Center"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        DockPanel.Dock="Right"
-                                        IsChecked="{Binding IsActivated}"
-                                        IsEnabled="{Binding IsAvailable}"
-                                        Style="{StaticResource ToggleButtonFlip}">
-                                        <hc:StatusSwitchElement.CheckedElement>
-                                            <Viewbox Width="20" Height="20">
-                                                <Path Data="{StaticResource f.play}" Fill="Green" />
-                                            </Viewbox>
-                                        </hc:StatusSwitchElement.CheckedElement>
-                                        <Viewbox Width="20" Height="20">
-                                            <Path Data="{StaticResource f.pause}" Fill="Red" />
-                                        </Viewbox>
-                                    </ToggleButton>
+                                <DockPanel LastChildFill="False">
 
+                                    <!--  删除  -->
                                     <DockPanel
-                                        DockPanel.Dock="Right"
+                                        Margin="5,0,0,0"
                                         LastChildFill="False"
                                         Visibility="{Binding IsActivated, Converter={StaticResource Boolean2VisibilityReConverter}}">
                                         <ToggleButton
@@ -357,6 +338,27 @@
                                             </DockPanel>
                                         </Border>
                                     </DockPanel>
+
+                                    <ToggleButton
+                                        Margin="0"
+                                        Padding="0,-4,0,0"
+                                        VerticalContentAlignment="Center"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        DockPanel.Dock="Right"
+                                        IsChecked="{Binding IsActivated}"
+                                        IsEnabled="{Binding IsAvailable}"
+                                        Style="{StaticResource ToggleButtonFlip}">
+                                        <hc:StatusSwitchElement.CheckedElement>
+                                            <Viewbox Width="20" Height="20">
+                                                <Path Data="{StaticResource f.play}" Fill="Green" />
+                                            </Viewbox>
+                                        </hc:StatusSwitchElement.CheckedElement>
+                                        <Viewbox Width="20" Height="20">
+                                            <Path Data="{StaticResource f.pause}" Fill="Red" />
+                                        </Viewbox>
+                                    </ToggleButton>
+
 
                                     <Button
                                         x:Name="runonce"
