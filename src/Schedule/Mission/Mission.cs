@@ -16,10 +16,8 @@ public abstract class Mission
     public DateTime? LastRun { get; set; }
 
     public DateTime? NextRun { get; set; }
-
-
-    bool _isEnabled;
-    public bool IsEnabled { get => _isEnabled; set { _isEnabled = value; if (value) SetNextRun(); } }
+     
+    public bool IsEnabled { get => field; set { field = value; if (value) SetNextRun(); } }
 
     public bool IsWorking { get; private set; }
 
@@ -27,6 +25,8 @@ public abstract class Mission
     /// 废弃
     /// </summary>
     public bool IsAborted { get; set; }
+
+ 
 
     //private string? _log;
 
@@ -71,7 +71,7 @@ public abstract class Mission
             // 已废弃 或 一次性任务，完成就释放
             if (IsAborted || (this is OnceMission mm && mm.IsFinished))
                 MissionSchedule.Unregister(Id);
-            else if (r.Successed) 
+            else //if (r.Successed) 
                 SetNextRun();
         }
         catch (Exception e)
@@ -117,6 +117,14 @@ public abstract class Mission
         SetNextRun();
     }
 
+    /// <summary>
+    /// 因为缺少配置，设为不再运行
+    /// </summary>
+    protected void SetUnavaliable()
+    {
+        IsEnabled = false;
+        WeakReferenceMessenger.Default.Send(this);
+    }
 
     //protected void SendLog(string log) { Debug.WriteLine(log); WeakReferenceMessenger.Default.Send(new MissionWorkMessage(Id, log)); }
 

@@ -29,7 +29,7 @@ public static class MissionSchedule
     public static void Init()
     {
         using var db = DbHelper.Mission();
-        var ms = db.GetCollection("Mission").Find(Query.EQ(nameof(Mission.IsAborted),false)).ToList();
+        var ms = db.GetCollection("Mission").Find(Query.Not(nameof(Mission.IsAborted),true)).ToList();
 
         missions = ms.Select(x =>
         {
