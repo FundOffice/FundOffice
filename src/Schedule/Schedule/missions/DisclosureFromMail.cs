@@ -52,7 +52,7 @@ public class DisclosureFromMailMission : MailMission
         // 这里有问题， file 是uid， MailCategoryInfo是message id，不一样，无法排除
         var work = FilterWork(files, worked, db);
 
-        var log = $"已解析{worked.Length}个  待处理邮件 {work.Length} 个";
+        var log = $"已处理{worked.Length}个邮件  待处理 {work.Length} 个";
 
         double unit = 100.0 / work.Length;
         double progress = 0;
