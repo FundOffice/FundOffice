@@ -322,15 +322,41 @@
                                         </Viewbox>
                                     </ToggleButton>
 
-
-                                    <Button
-                                        hc:IconElement.Geometry="{StaticResource f.trash}"
-                                        Command="{Binding DeleteMissionCommand}"
-                                        CommandParameter="{Binding .}"
+                                    <DockPanel
                                         DockPanel.Dock="Right"
-                                        Foreground="Red"
-                                        Style="{StaticResource ButtonIcon}"
-                                        Visibility="{Binding IsActivated, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                                        LastChildFill="False"
+                                        Visibility="{Binding IsActivated, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                        <ToggleButton
+                                            x:Name="a"
+                                            hc:IconElement.Geometry="{StaticResource f.trash}"
+                                            Style="{StaticResource ToggleButtonDanger.Small}"
+                                            Visibility="{Binding IsChecked, RelativeSource={RelativeSource Self}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                                        <Border
+                                            VerticalAlignment="Center"
+                                            BorderBrush="Red"
+                                            BorderThickness="0,0,0,1"
+                                            Visibility="{Binding ElementName=a, Path=IsChecked, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                            <DockPanel x:Name="b" Margin="4,0">
+                                                <Button
+                                                    Width="18"
+                                                    Margin="0"
+                                                    Padding="0"
+                                                    hc:IconElement.Geometry="{StaticResource f.check}"
+                                                    Command="{Binding DeleteMissionCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Foreground="Red"
+                                                    Style="{StaticResource ButtonIcon.Small}" />
+                                                <ToggleButton
+                                                    x:Name="c"
+                                                    Margin="0,0,-5,0"
+                                                    hc:IconElement.Geometry="{StaticResource f.x}"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Style="{StaticResource ToggleButtonIcon.Small}" />
+                                            </DockPanel>
+                                        </Border>
+                                    </DockPanel>
 
                                     <Button
                                         x:Name="runonce"
@@ -344,6 +370,13 @@
                                         DockPanel.Dock="Right"
                                         IsEnabled="{Binding IsAvailable}" />
                                 </DockPanel>
+
+                                <DataTemplate.Triggers>
+                                    <Trigger SourceName="c" Property="IsChecked" Value="True">
+                                        <Setter TargetName="a" Property="IsChecked" Value="False" />
+                                        <Setter TargetName="c" Property="IsChecked" Value="False" />
+                                    </Trigger>
+                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </Setter.Value>
                     </Setter>
