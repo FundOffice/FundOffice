@@ -207,35 +207,40 @@
                         Style="{StaticResource ButtonIcon}" />
 
 
-                    <hc:SimplePanel>
-                        <Button
-                            hc:IconElement.Geometry="{StaticResource f.hard-drive}"
-                            Command="{Binding BackupCommand}"
-                            Content="备份"
-                            Style="{StaticResource ButtonIcon}"
-                            Visibility="{Binding BackupCommand.IsRunning, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                    <ContentControl Content="{Binding}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate>
+                                <hc:SimplePanel>
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.hard-drive}"
+                                        Command="{Binding BackupCommand}"
+                                        Content="备份"
+                                        Style="{StaticResource ButtonIcon}"
+                                        Visibility="{Binding BackupCommand.IsRunning, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
-                        <!--<DockPanel HorizontalAlignment="Center">
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            DockPanel.Dock="Right"
-                            Text="%" />
-                        <TextBlock
-                            HorizontalAlignment="Right"
-                            DockPanel.Dock="Bottom"
-                            FontSize="9"
-                            Text="{Binding BackupProcess2, StringFormat=N0}" />
-                        <TextBlock Text="{Binding BackupProcess, StringFormat={}{0:N0}.}" />
-                    </DockPanel>-->
+                                    <hc:SimplePanel Visibility="{Binding BackupCommand.IsRunning, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                        <hc:CircleProgressBar
+                                            Width="30"
+                                            Height="30"
+                                            Text="{Binding Value, RelativeSource={RelativeSource Self}, StringFormat=N0}"
+                                            Value="{Binding BackupProcess}" />
 
-                        <hc:CircleProgressBar
-                            Width="36"
-                            Height="36"
-                            Margin="-8"
-                            Text="{Binding Value, RelativeSource={RelativeSource Self}, StringFormat=N0}"
-                            Visibility="{Binding BackupCommand.IsRunning, Converter={StaticResource Boolean2VisibilityConverter}}"
-                            Value="{Binding BackupProcess}" />
-                    </hc:SimplePanel>
+                                        <Button
+                                            x:Name="stop"
+                                            hc:IconElement.Geometry="{StaticResource f.stop}"
+                                            Command="{Binding StopBackupCommand}"
+                                            Style="{StaticResource ButtonIcon}"
+                                            Visibility="Collapsed" />
+                                    </hc:SimplePanel>
+                                </hc:SimplePanel>
+                                <DataTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="stop" Property="Visibility" Value="Visible" />
+                                    </Trigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
 
 
 

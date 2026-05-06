@@ -9,6 +9,7 @@ using FMO.Models;
 using FMO.Schedule;
 using FMO.Trustee;
 using FMO.Utilities;
+using Microsoft.Win32;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
@@ -101,6 +102,8 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
     private Timer _dailyTimer;
 
+    private CancellationTokenSource _backupToken = new();
+
     public HomePageViewModel()
     {
         WeakReferenceMessenger.Default.RegisterAll(this);
@@ -160,7 +163,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         // 每小时运行一次，判断是不是新的一天
         _dailyTimer = new Timer(x => OnNewDate(), null, 60000, 1000 * 60 * 60);
 
-        Tools = [new("DatabaseViewer", ""),new Tool("FeeCalc", "费用计算器"), new("LearnAssist", "学习助手"), new("TemplateManager", "模板管理器")];
+        Tools = [new("DatabaseViewer", ""), new Tool("FeeCalc", "费用计算器"), new("LearnAssist", "学习助手"), new("TemplateManager", "模板管理器")];
 
         //Tools = [new Tool { ExeName = "FeeCalc", Icon = GetGeometry("f.sack-dollar"), Foreground = Brushes.MediumPurple },
         //         new Tool { ExeName = "LearnAssist", Icon = GetGeometry("f.youtube"), Foreground = Brushes.Red },
@@ -185,7 +188,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
         if (!Directory.Exists(disDir))
         {
-            LogEx.Warning("mission 目录不存在，退出加载"); 
+            LogEx.Warning("mission 目录不存在，退出加载");
 
             return;
         }
@@ -458,7 +461,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
         if (!Directory.Exists(disDir))
         {
-            LogEx.Warning("trigger 目录不存在，退出加载"); 
+            LogEx.Warning("trigger 目录不存在，退出加载");
 
             return;
         }
@@ -833,33 +836,60 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
     [RelayCommand]
     public async Task Backup()
     {
-        Task task = new Task(() =>
+        if (_backupToken.IsCancellationRequested)
         {
-            try
-            {
-                BackupProcess = 0;
-                // 检测备份大小
-                long bytes = GetFolderSize("data") + GetFolderSize("files") + GetFolderSize("config") + GetFolderSize("manager");
-                int fcnt = GetFileCount("data") + GetFileCount("config") + GetFileCount("files") + GetFileCount("manager");
-                int c = 0;
-                using var fs = new FileStream($"backup-{DateTime.Today:yyyy.MM.dd}.zip", FileMode.Create);
+            _backupToken.Dispose();
+            _backupToken = new();
+        }
+        await Task.Factory.StartNew(() =>
+          {
+              try
+              {
+                  // 检测备份大小
+                  double bytes = GetFolderSize("data") + GetFolderSize("files") + GetFolderSize("config") + GetFolderSize("manager");
+                  int fcnt = GetFileCount("data") + GetFileCount("config") + GetFileCount("files") + GetFileCount("manager");
 
-                using ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Create);
-                AddDirectoryToZip(archive, "data", "data", ref c, fcnt);
-                AddDirectoryToZip(archive, "config", "config", ref c, fcnt);
-                AddDirectoryToZip(archive, "files", "files", ref c, fcnt);
-                AddDirectoryToZip(archive, "manager", "manager", ref c, fcnt);
-            }
-            catch (Exception e)
-            {
-                Log.Error($"备份失败 {e}");
-                HandyControl.Controls.Growl.Error("备份失败");
-            }
-        }, TaskCreationOptions.LongRunning);
+                  // 选择保存位置
+                  var fd = new OpenFolderDialog();
+                  fd.Title = $"请选择全量备份存在文件夹，大约{bytes switch { > 1073741824 => $"{bytes / 1073741824:N2}G", > 1048576 => $"{bytes / 1048576:N2}G", _ => $"{bytes / 1024:N2}G" }}";
+                  if (fd.ShowDialog() is not true)
+                      return;
 
-        task.Start();
-        await task.WaitAsync(Timeout.InfiniteTimeSpan);
+                  string path = Path.Combine(fd.FolderName, $"backup-{DateTime.Today:yyyy.MM.dd}.zip");
+                  using var fs = new FileStream(path, FileMode.Create);
+                  try
+                  {
+                      BackupProcess = 0;
+                      int c = 0;
+
+                      using ZipArchive archive = new ZipArchive(fs, ZipArchiveMode.Create);
+                      AddDirectoryToZip(_backupToken.Token, archive, "data", "data", ref c, fcnt);
+                      AddDirectoryToZip(_backupToken.Token, archive, "config", "config", ref c, fcnt);
+                      AddDirectoryToZip(_backupToken.Token, archive, "files", "files", ref c, fcnt);
+                      AddDirectoryToZip(_backupToken.Token, archive, "manager", "manager", ref c, fcnt);
+                  }
+                  catch (OperationCanceledException)
+                  {
+                      fs.Close();
+                      File.Delete(path);
+                      BackupProcess = 0;
+                      HandyControl.Controls.Growl.Info("备份取消"); 
+                  }
+              }
+              catch (Exception e)
+              {
+                  Log.Error($"备份失败 {e}");
+                  HandyControl.Controls.Growl.Error("备份失败");
+              }
+          }, TaskCreationOptions.LongRunning);
     }
+
+    [RelayCommand]
+    public void StopBackup()
+    {
+        _backupToken.Cancel();
+    }
+
 
     private long GetFolderSize(string dir)
     {
@@ -870,7 +900,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
     private int GetFileCount(string dir) => Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories).Length;
 
     // 将文件夹及其内容添加到压缩包
-    private void AddDirectoryToZip(ZipArchive archive, string sourceDir, string entryBase, ref int c, int size)
+    private void AddDirectoryToZip(CancellationToken backupToken, ZipArchive archive, string sourceDir, string entryBase, ref int c, int size)
     {
         // 添加文件夹条目
         archive.CreateEntry($"{entryBase}/");
@@ -878,6 +908,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         // 添加文件
         foreach (string filePath in Directory.GetFiles(sourceDir))
         {
+            backupToken.ThrowIfCancellationRequested();
             string entryName = Path.Combine(entryBase, Path.GetFileName(filePath));
             archive.CreateEntryFromFile(filePath, entryName);
 
@@ -888,9 +919,10 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         // 递归添加子文件夹
         foreach (string subDir in Directory.GetDirectories(sourceDir))
         {
+            backupToken.ThrowIfCancellationRequested();
             string subDirName = Path.GetFileName(subDir);
             string newEntryBase = Path.Combine(entryBase, subDirName);
-            AddDirectoryToZip(archive, subDir, newEntryBase, ref c, size);
+            AddDirectoryToZip(backupToken, archive, subDir, newEntryBase, ref c, size);
         }
     }
 
@@ -1015,9 +1047,9 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
     {
         try
         {
-            Directory.CreateDirectory("data\\bak");
+            Directory.CreateDirectory("backup");
             var ca = CultureInfo.CurrentCulture.Calendar;
-            var path = @$"data\bak\bak_{DateTime.Now:yy}{ca.GetWeekOfYear(DateTime.Now, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday):D2}.zip";
+            var path = @$"backup\bakdb_{DateTime.Now:yy}{ca.GetWeekOfYear(DateTime.Now, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday):D2}.zip";
 
             if (!File.Exists(path))
             {
