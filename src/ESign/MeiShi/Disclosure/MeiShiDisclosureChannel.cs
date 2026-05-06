@@ -271,8 +271,11 @@ public partial class MeiShiAssit : IDisclosureChannel
     public async Task<ErrorReturn> UploadDisclosureFile(string fundName, string fundCode, string shareClass, DateTime time, string announceName, string file)
     {
         if (!IsValid) return new ErrorReturn(false, "Invalid");
-        if (!isLogin) isLogin = await Login();
-        if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return new ErrorReturn(false, "Login Failed"); }
+        if (!isLogin && await LoginFromDisclosure() is ErrorReturn er && !er.Successed)
+        {
+            LogEx.Error("MeiShi Login Failed");
+            return er;
+        }
 
         // 获取对应产品
         var funds = await QueryFundInfo();

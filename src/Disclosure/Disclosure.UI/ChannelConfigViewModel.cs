@@ -20,11 +20,11 @@ public abstract partial class ChannelConfigViewModel : ObservableObject
     public partial string? Error { get; set; }
 
     [RelayCommand]
-    public void Save(Window window)
+    public async Task Save(Window window)
     {
         Error = "";
 
-        IsAvailable = VerifyOverride();
+        IsAvailable = await VerifyOverride();
 
         using var db = DbHelper.Base();
         db.GetCollection<DisclosureChannelConfig>().Upsert(BuildOverride());
@@ -35,5 +35,5 @@ public abstract partial class ChannelConfigViewModel : ObservableObject
 
     protected abstract DisclosureChannelConfig BuildOverride();
 
-    protected abstract bool VerifyOverride();
+    protected abstract Task<bool> VerifyOverride();
 }

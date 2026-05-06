@@ -1,4 +1,5 @@
-﻿using FMO.Logging;
+﻿using FMO.Disclosure;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
 using System.IO;
@@ -71,7 +72,7 @@ public partial class MeiShiAssit : ISigning
         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0");
     }
 
-    public async Task<bool> Login()
+    public async Task<bool> LoginFromEsign()
     {
         // 校验
         using var db = DbHelper.Platform();
@@ -83,6 +84,42 @@ public partial class MeiShiAssit : ISigning
             this.SetStatus(false);
             LogEx.Error("登录MeiShi错误：用户名或密码为空");
             return false;
+        }
+
+        var re = await Login(config.UserName, config.Password);
+        if(!re.Successed)
+        {
+            IsValid = false;
+            this.SetStatus(false);
+        }
+        return re.Successed;
+    }
+
+    public async Task<ErrorReturn> LoginFromDisclosure()
+    {
+        // 校验
+        using var db = DbHelper.Base();
+        var config = db.GetCollection<DisclosureChannelConfig>().FindById(Code) as MeiShiChannelConfig;
+
+        if (config is null || string.IsNullOrWhiteSpace(config.UserName) || string.IsNullOrWhiteSpace(config.Password))
+        {
+            IsValid = false; 
+            return new(false, "登录MeiShi错误：用户名或密码为空");
+        }
+
+        var re = await Login(config.UserName, config.Password);
+        if (!re.Successed)
+            IsValid = false;
+        return re;
+    }
+
+
+    public async Task<ErrorReturn> Login(string user, string pwd)
+    {
+        // 校验 
+        if (string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(pwd))
+        {
+            return new(false, "登录MeiShi错误：用户名或密码为空");
         }
 
 
@@ -106,7 +143,7 @@ public partial class MeiShiAssit : ISigning
 
 
         // 构造 POST 请求体
-        var jsonContent = @$"{{""encryptData"":""{LoginEncryptor.EncryptLogin(config.UserName, config.Password)}""}}";
+        var jsonContent = @$"{{""encryptData"":""{LoginEncryptor.EncryptLogin(user, pwd)}""}}";
 
         request1.Content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
         request1.Content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
@@ -118,18 +155,13 @@ public partial class MeiShiAssit : ISigning
 
         if (loginjson.Contains("密码错误"))
         {
-            IsValid = false;
-            this.SetStatus(false);
-            LogEx.Warning("登录MeiShi错误：用户名或密码错误");
-            return false;
+            return new(false, "用户名或密码错误");
         }
 
         var result = JsonSerializer.Deserialize<LoginResultJson>(loginjson);
         if (!result!.success)
         {
-            IsValid = false;
-            LogEx.Error($"登录MeiShi错误：{result.message}");
-            return false;
+            return new(false, "{result.message}");
         }
 
         // ===== 从 response1 提取 Set-Cookie =====
@@ -194,7 +226,7 @@ public partial class MeiShiAssit : ISigning
         var m = Regex.Match(json, "\"token\"\\s*:\\s*\"([^\"]+)\"");
 
         Token = m.Success ? m.Groups[1].Value : null;
-        return m.Success;
+        return new(m.Success);
     }
 
 
@@ -216,7 +248,7 @@ public partial class MeiShiAssit : ISigning
     public async Task<Investor[]> QueryCustomerAsync(DateTime from = default, DateTime end = default)
     {
         if (!IsValid) return [];
-        if (!isLogin) isLogin = await Login();
+        if (!isLogin) isLogin = await LoginFromEsign();
         if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return []; }
 
 
@@ -229,7 +261,7 @@ public partial class MeiShiAssit : ISigning
         if (Regex.IsMatch(cont, "token已失效|重新登录"))
         {
             isLogin = false;
-            isLogin = await Login();
+            isLogin = await LoginFromEsign();
             if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return []; }
 
             cont = await Query(from, end);
@@ -251,7 +283,7 @@ public partial class MeiShiAssit : ISigning
     public async Task<InvestorQualification[]> QueryQualificationAsync(DateTime from, DateTime end)
     {
         if (!IsValid) return [];
-        if (!isLogin) isLogin = await Login();
+        if (!isLogin) isLogin = await LoginFromEsign();
         if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return []; }
 
         if (end == default) end = DateTime.Now;
@@ -500,7 +532,7 @@ public partial class MeiShiAssit : ISigning
         //if (end == default) end = DateTime.Now.AddDays(1);
 
         if (!IsValid) return [];
-        if (!isLogin) isLogin = await Login();
+        if (!isLogin) isLogin = await LoginFromEsign();
         if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return []; }
 
 
@@ -550,7 +582,7 @@ public partial class MeiShiAssit : ISigning
         try
         {
             if (!IsValid) return false;
-            if (!isLogin) isLogin = await Login();
+            if (!isLogin) isLogin = await LoginFromEsign();
             if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return false; }
 
             // 获取详细数据
@@ -612,7 +644,7 @@ public partial class MeiShiAssit : ISigning
         try
         {
             if (!IsValid) return false;
-            if (!isLogin) isLogin = await Login();
+            if (!isLogin) isLogin = await LoginFromEsign();
             if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return false; }
 
             // 获取详细数据
@@ -676,7 +708,7 @@ public partial class MeiShiAssit : ISigning
     public async Task<EsigningFundInfo[]> QueryFundInfo()
     {
         if (!IsValid) return [];
-        if (!isLogin) isLogin = await Login();
+        if (!isLogin) isLogin = await LoginFromEsign();
         if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return []; }
 
 

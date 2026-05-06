@@ -15,7 +15,7 @@ public partial class AMACChannelConfigViewModel : ChannelConfigViewModel
         return Build();
     }
 
-    protected override bool VerifyOverride()
+    protected override Task<bool> VerifyOverride()
     {
         throw new NotImplementedException();
     }

@@ -20,7 +20,7 @@ public partial class EmailChannelConfigViewModel : ChannelConfigViewModel
 
     protected override DisclosureChannelConfig BuildOverride() => Build();
 
-    protected override bool VerifyOverride()
+    protected override async Task<bool> VerifyOverride()
     {
         bool failed = false;
         Error = string.Empty; // 初始化错误信息

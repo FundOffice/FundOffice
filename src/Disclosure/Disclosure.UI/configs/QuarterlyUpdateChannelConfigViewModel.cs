@@ -9,7 +9,7 @@ public partial class QuarterlyUpdateChannelConfigViewModel : ChannelConfigViewMo
 
     protected override DisclosureChannelConfig BuildOverride() => Build();
 
-    protected override bool VerifyOverride()
+    protected override async Task<bool> VerifyOverride()
     {
         bool failed = false;
         if (UserName?.Length < 4)

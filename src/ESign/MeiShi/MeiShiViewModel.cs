@@ -54,7 +54,7 @@ public partial class MeiShiViewModel : ESignViewModelBase
 
     public override async Task<bool> VerifyOverride()
     {
-        return await Assit.Login();
+        return await Assit.LoginFromEsign();
     }
 
     protected override ISigningConfig BuildConfig()
