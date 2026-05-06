@@ -581,7 +581,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
 
     public void Receive(MissionFailedMessage message)
     {
-        TodoService.Register(new JustNotifyTodo { CreateTime = DateTime.Now, UniqueId = $"MissionError_{message.Id}", Message = $"{message.e}" });
+        TodoService.Register(new JustNotifyTodo { CreateTime = DateTime.Now, UniqueId = $"MissionError_{message.Id}", Message = $"任务【{message.Id}】执行失败，请查看log" });
     }
 
     public void Receive(AddNotifyTodoMessage todo) => TodoService.Register(new JustNotifyTodo { CreateTime = DateTime.Now, UniqueId = todo.Unique, Message = todo.Message });
