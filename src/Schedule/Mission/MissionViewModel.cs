@@ -6,7 +6,6 @@ using Serilog;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Reflection;
-
 namespace FMO.Schedule;
 
 
@@ -60,6 +59,7 @@ public partial class MissionViewModel : ObservableObject, IRecipient<MissionMess
     /// </summary>
     public virtual bool IsBackground => false;
 
+    private readonly SynchronizationContext? _syncContext;
 
     public int Id { get; }
 
@@ -84,6 +84,7 @@ public partial class MissionViewModel : ObservableObject, IRecipient<MissionMess
         Logs = [.. db.GetCollection<MissionRecord>().Find(x => x.MissionId == Id).
             OrderByDescending(x => x.Time).Take(10).Select(x => $"{x.Time}\n{x.Record}")];
 
+        _syncContext = SynchronizationContext.Current;
     }
 
 
@@ -152,10 +153,30 @@ public partial class MissionViewModel : ObservableObject, IRecipient<MissionMess
         if (Id != message.Id)
             return;
 
-        Logs.Add(message.Log);
-        if (Logs.Count > 10) Logs.RemoveAt(0);
+        RunOnUIThread(() =>
+        {
+            Logs.Add(message.Log);
+            if (Logs.Count > 10)
+                Logs.RemoveAt(0);
+        });
+
         WorkLog = message.Log;
     }
+
+    private void RunOnUIThread(Action action)
+    {
+        // 如果已经在正确线程 → 直接执行
+        if (SynchronizationContext.Current == _syncContext)
+        {
+            action();
+        }
+        else
+        {
+            // 否则 → 自动切回创建线程
+            _syncContext?.Post(_ => action(), null);
+        }
+    }
+
 }
 
 
