@@ -17,13 +17,31 @@ Write-Host "开始发布 FundOffice 项目" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
+# 需要保留的文件夹列表
+$foldersToKeep = @("esign", "mission", "runtimes", "trigger", "trustee")
+
 # 清理并发布目录
 if (Test-Path $publishDir) {
     Write-Host "清理现有发布目录..." -ForegroundColor Yellow
-    Remove-Item $publishDir -Recurse -Force
+    
+    # 获取所有子项
+    $allItems = Get-ChildItem -Path $publishDir -Force
+    
+    foreach ($item in $allItems) {
+        # 如果是不需要保留的文件夹或文件，则删除
+        if ($foldersToKeep -notcontains $item.Name) {
+            Remove-Item $item.FullName -Recurse -Force
+            Write-Host "  已删除: $($item.Name)" -ForegroundColor Gray
+        } else {
+            Write-Host "  保留: $($item.Name)" -ForegroundColor Cyan
+        }
+    }
+} else {
+    # 如果目录不存在，创建它
+    New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
 }
-New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
-Write-Host "发布目录已创建: $publishDir" -ForegroundColor Green
+
+Write-Host "发布目录已准备: $publishDir" -ForegroundColor Green
 Write-Host ""
 
 # 1. 发布解决方案
