@@ -66,22 +66,17 @@
 
             <hc:SimplePanel
                 MinWidth="300"
-                Margin="0,8"
+                Margin="2,4"
                 Background="Transparent">
-                <Border
-                    x:Name="tar"
-                    Width="0"
-                    Height="0"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top" />
+                <Border x:Name="tar" Height="0" />
                 <Border
                     x:Name="border"
                     Background="Transparent"
                     BorderBrush="Green"
                     BorderThickness="2"
                     CornerRadius="5">
-                    <StackPanel>
-                        <DockPanel Height="28" Margin="5">
+                    <DockPanel Margin="5">
+                        <DockPanel Height="28" DockPanel.Dock="Top">
 
                             <hc:CircleProgressBar
                                 Width="20"
@@ -93,225 +88,204 @@
                                 Visibility="{Binding IsWorking, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
 
-                            <TextBlock
-                                Margin="5,0"
+                            <Border
                                 VerticalAlignment="Center"
-                                DockPanel.Dock="Right"
-                                Foreground="Red"
-                                Text="未启动"
-                                Visibility="{Binding IsActivated, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                                Background="Orange"
+                                CornerRadius="3">
+                                <TextBlock Margin="3,1" Text="{Binding Id}" />
+                            </Border>
+
+
+                            <TextBlock
+                                Margin="8,0"
+                                VerticalAlignment="Center"
+                                FontWeight="Black"
+                                Text="{Binding Title}" />
 
                             <!--  Title  -->
-                            <DockPanel LastChildFill="False">
-                                <TextBlock
-                                    Margin="8,0"
-                                    VerticalAlignment="Center"
-                                    FontWeight="Black"
-                                    Text="{Binding Title}" />
-
-
-
-
-                                <Border
-                                    VerticalAlignment="Center"
-                                    Background="LightGray"
-                                    Visibility="{Binding IsActivated, Converter={StaticResource Boolean2VisibilityConverter}}">
-                                    <DockPanel Margin="5,2">
-                                        <Viewbox Height="14">
-                                            <Path Data="{StaticResource f.angles-right}" Fill="Green" />
-                                        </Viewbox>
-
-                                        <TextBlock
-                                            Margin="4,0,0,0"
-                                            VerticalAlignment="Center"
-                                            Text="{Binding NextRunTime, StringFormat=M/d HH:mm}" />
-                                    </DockPanel>
-                                </Border>
-
-                            </DockPanel>
-                            <!--  Title  -->
-                        </DockPanel>
-
-                    </StackPanel>
-                </Border>
-
-                <Popup
-                    x:Name="pop"
-                    Width="{Binding ActualWidth, ElementName=border}"
-                    AllowsTransparency="True"
-                    IsHitTestVisible="False"
-                    Placement="Right"
-                    PlacementTarget="{Binding ElementName=tar}"
-                    StaysOpen="True">
-                    <Border Background="White">
-                        <Border
-                            x:Name="extra"
-                            Background="{Binding Background, ElementName=border}"
-                            BorderBrush="{Binding BorderBrush, ElementName=border}"
-                            BorderThickness="{Binding BorderThickness, ElementName=border}"
-                            CornerRadius="{Binding CornerRadius, ElementName=border}"
-                            IsHitTestVisible="True">
-                            <StackPanel Margin="5">
-
-                                <!--  head  -->
-                                <DockPanel Height="28" Margin="5,0">
-
-                                    <hc:CircleProgressBar
-                                        Width="20"
-                                        Height="20"
-                                        DockPanel.Dock="Right"
-                                        IsIndeterminate="True"
-                                        ShowText="False"
-                                        Style="{StaticResource ProgressBarSuccessCircle}"
-                                        Visibility="{Binding IsWorking, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-
+                            <hc:SimplePanel>
+                                <DockPanel x:Name="status" LastChildFill="False">
 
                                     <TextBlock
+                                        Margin="5,0"
                                         VerticalAlignment="Center"
-                                        FontWeight="Black"
-                                        Text="{Binding Title}" />
+                                        DockPanel.Dock="Right"
+                                        Foreground="Red"
+                                        Text="未启动"
+                                        Visibility="{Binding IsActivated, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
-                                    <ContentControl
-                                        x:Name="btns"
-                                        Content="{Binding}"
-                                        ContentTemplate="{x:Null}" />
+                                    <Border
+                                        VerticalAlignment="Center"
+                                        Background="LightGray"
+                                        Visibility="{Binding IsActivated, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                        <DockPanel Margin="5,2">
+                                            <Viewbox Height="14">
+                                                <Path Data="{StaticResource f.angles-right}" Fill="Green" />
+                                            </Viewbox>
 
-
+                                            <TextBlock
+                                                Margin="4,0,0,0"
+                                                VerticalAlignment="Center"
+                                                Text="{Binding NextRunTime, StringFormat=M/d HH:mm}" />
+                                        </DockPanel>
+                                    </Border>
 
                                 </DockPanel>
 
-                                <Border
-                                    x:Name="borderTime"
-                                    Background="LightGray"
-                                    IsEnabled="{Binding IsActivated}"
-                                    TextElement.Foreground="#666666">
-                                    <Border.Resources>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="HorizontalAlignment" Value="Center" />
-                                        </Style>
-                                        <Style
-                                            x:Key="Style.Calendar"
-                                            BasedOn="{StaticResource CalendarBaseStyle}"
-                                            TargetType="Calendar">
-                                            <Setter Property="Background" Value="Gray" />
-                                        </Style>
-                                    </Border.Resources>
-                                    <UniformGrid
-                                        Height="28"
-                                        Margin="5,0"
-                                        VerticalAlignment="Center"
-                                        Rows="1">
-                                        <DockPanel Margin="0,2" Visibility="{Binding ManualSetNextRun, Converter={StaticResource Boolean2VisibilityReConverter}}">
-                                            <Viewbox Width="{StaticResource TaskButtonSize}" Height="{StaticResource TaskButtonSize}">
-                                                <Path Data="{StaticResource f.clock-rotate-left}" Fill="White" />
-                                            </Viewbox>
-                                            <TextBlock Text="{Binding LastRunTime, StringFormat=M/d HH:mm}" />
-                                        </DockPanel>
 
 
-                                        <DockPanel>
-                                            <hc:SimplePanel x:Name="ng">
-                                                <ContentControl Background="{Binding Background, RelativeSource={RelativeSource AncestorType=Border}}" Template="{StaticResource TaskRunTime}" />
+                                <ContentControl
+                                    x:Name="btns"
+                                    Content="{Binding}"
+                                    ContentTemplate="{x:Null}"
+                                    Visibility="Collapsed" />
+                            </hc:SimplePanel>
 
-                                                <UniformGrid
-                                                    x:Name="btn"
-                                                    Width="50"
-                                                    Rows="1">
-                                                    <Button
-                                                        Width="{StaticResource TaskButtonSize2}"
-                                                        Height="{StaticResource TaskButtonSize2}"
-                                                        Padding="0"
-                                                        hc:IconElement.Geometry="{DynamicResource f.circle-check}"
-                                                        Command="{Binding DoManualSetNextRunTimeCommand}"
-                                                        CommandParameter="{StaticResource Bool.True}"
-                                                        Foreground="White"
-                                                        Style="{StaticResource ButtonIcon}"
-                                                        Visibility="{Binding ManualSetNextRun, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                                    <Button
-                                                        Width="{StaticResource TaskButtonSize2}"
-                                                        Height="{StaticResource TaskButtonSize2}"
-                                                        Padding="0"
-                                                        hc:IconElement.Geometry="{DynamicResource f.ban}"
-                                                        Command="{Binding DoManualSetNextRunTimeCommand}"
-                                                        CommandParameter="{StaticResource Bool.False}"
-                                                        Foreground="White"
-                                                        Style="{StaticResource ButtonIcon}"
-                                                        Visibility="{Binding ManualSetNextRun, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                                </UniformGrid>
-                                            </hc:SimplePanel>
-                                            <Grid>
-                                                <UniformGrid
-                                                    Margin="5,0,0,0"
-                                                    Columns="1"
-                                                    Visibility="{Binding ManualSetNextRun, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                    <hc:DateTimePicker HorizontalContentAlignment="Center" SelectedDateTime="{Binding NextRunTime}" />
-                                                </UniformGrid>
+                            <!--  Title  -->
+                        </DockPanel>
 
-                                                <TextBlock
-                                                    HorizontalAlignment="Center"
-                                                    Text="{Binding NextRunTime, StringFormat=M/d HH:mm}"
-                                                    Visibility="{Binding ManualSetNextRun, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                            </Grid>
-                                        </DockPanel>
-                                    </UniformGrid>
-                                </Border>
+                        <StackPanel x:Name="cont" Visibility="Collapsed">
+                            <Border
+                                x:Name="borderTime"
+                                Background="LightGray"
+                                IsEnabled="{Binding IsActivated}"
+                                TextElement.Foreground="#666666">
+                                <Border.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+                                    </Style>
+                                    <Style
+                                        x:Key="Style.Calendar"
+                                        BasedOn="{StaticResource CalendarBaseStyle}"
+                                        TargetType="Calendar">
+                                        <Setter Property="Background" Value="Gray" />
+                                    </Style>
+                                </Border.Resources>
+                                <UniformGrid
+                                    Height="28"
+                                    Margin="5,0"
+                                    VerticalAlignment="Center"
+                                    Rows="1">
+                                    <DockPanel Margin="0,2" Visibility="{Binding ManualSetNextRun, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                        <Viewbox Width="{StaticResource TaskButtonSize}" Height="{StaticResource TaskButtonSize}">
+                                            <Path Data="{StaticResource f.clock-rotate-left}" Fill="White" />
+                                        </Viewbox>
+                                        <TextBlock Text="{Binding LastRunTime, StringFormat=M/d HH:mm}" />
+                                    </DockPanel>
 
 
-                                <Separator />
+                                    <DockPanel>
+                                        <hc:SimplePanel x:Name="ng">
+                                            <ContentControl Background="{Binding Background, RelativeSource={RelativeSource AncestorType=Border}}" Template="{StaticResource TaskRunTime}" />
 
-                                <ContentPresenter
-                                    x:Name="content"
-                                    Content="{TemplateBinding Content}"
-                                    IsEnabled="{Binding IsActivated, Converter={StaticResource Boolean2BooleanReConverter}}" />
+                                            <UniformGrid
+                                                x:Name="btn"
+                                                Width="50"
+                                                Rows="1">
+                                                <Button
+                                                    Width="{StaticResource TaskButtonSize2}"
+                                                    Height="{StaticResource TaskButtonSize2}"
+                                                    Padding="0"
+                                                    hc:IconElement.Geometry="{DynamicResource f.circle-check}"
+                                                    Command="{Binding DoManualSetNextRunTimeCommand}"
+                                                    CommandParameter="{StaticResource Bool.True}"
+                                                    Foreground="White"
+                                                    Style="{StaticResource ButtonIcon}"
+                                                    Visibility="{Binding ManualSetNextRun, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                <Button
+                                                    Width="{StaticResource TaskButtonSize2}"
+                                                    Height="{StaticResource TaskButtonSize2}"
+                                                    Padding="0"
+                                                    hc:IconElement.Geometry="{DynamicResource f.ban}"
+                                                    Command="{Binding DoManualSetNextRunTimeCommand}"
+                                                    CommandParameter="{StaticResource Bool.False}"
+                                                    Foreground="White"
+                                                    Style="{StaticResource ButtonIcon}"
+                                                    Visibility="{Binding ManualSetNextRun, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            </UniformGrid>
+                                        </hc:SimplePanel>
+                                        <Grid>
+                                            <UniformGrid
+                                                Margin="5,0,0,0"
+                                                Columns="1"
+                                                Visibility="{Binding ManualSetNextRun, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <hc:DateTimePicker HorizontalContentAlignment="Center" SelectedDateTime="{Binding NextRunTime}" />
+                                            </UniformGrid>
 
-                                <Separator />
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                Text="{Binding NextRunTime, StringFormat=M/d HH:mm}"
+                                                Visibility="{Binding ManualSetNextRun, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
-                                <ListBox
-                                    BorderThickness="0"
-                                    ItemsSource="{Binding Logs}"
-                                    Style="{StaticResource ListBoxCustom}" />
-                            </StackPanel>
-                        </Border>
-                    </Border>
-                </Popup>
+                                        </Grid>
+                                    </DockPanel>
+                                </UniformGrid>
+                            </Border>
+
+
+                            <Separator />
+
+                            <ContentPresenter
+                                x:Name="content"
+                                HorizontalAlignment="Stretch"
+                                Content="{TemplateBinding Content}"
+                                IsEnabled="{Binding IsActivated, Converter={StaticResource Boolean2BooleanReConverter}}" />
+
+                            <Separator />
+
+                            <ScrollViewer MaxHeight="200">
+                                <TextBlock Text="{Binding WorkLog}" TextWrapping="Wrap" />
+                            </ScrollViewer>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
             </hc:SimplePanel>
 
             <ControlTemplate.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <!--<Setter TargetName="pop" Property="IsOpen" Value="True" />-->
+                <!--<Trigger Property="IsMouseOver" Value="True">
+                -->
+                <!--<Setter TargetName="pop" Property="IsOpen" Value="True" />-->
+                <!--
                     <Trigger.EnterActions>
-                        <!--  鼠标进入时，启动一个延迟 0.5 秒的动画  -->
+                -->
+                <!--  鼠标进入时，启动一个延迟 0.5 秒的动画  -->
+                <!--
                         <BeginStoryboard x:Name="DelayOpenStoryboard">
                             <Storyboard>
                                 <BooleanAnimationUsingKeyFrames Storyboard.TargetName="pop" Storyboard.TargetProperty="IsOpen">
-                                    <!--  在 0.5 秒时将 IsOpen 设为 True  -->
+                -->
+                <!--  在 0.5 秒时将 IsOpen 设为 True  -->
+                <!--
                                     <DiscreteBooleanKeyFrame KeyTime="0:0:0.2" Value="True" />
                                 </BooleanAnimationUsingKeyFrames>
                             </Storyboard>
                         </BeginStoryboard>
                     </Trigger.EnterActions>
                     <Trigger.ExitActions>
-                        <!--  鼠标离开时，立即取消未完成的延迟动画  -->
+                -->
+                <!--  鼠标离开时，立即取消未完成的延迟动画  -->
+                <!--
                         <StopStoryboard BeginStoryboardName="DelayOpenStoryboard" />
 
 
                     </Trigger.ExitActions>
-                </Trigger>
+                </Trigger>-->
 
                 <!--  1. 鼠标离开 Popup 内容(extra)时，启动延迟关闭  -->
-                <EventTrigger RoutedEvent="MouseLeave" SourceName="extra">
+                <!--<EventTrigger RoutedEvent="MouseLeave" SourceName="extra">
                     <BeginStoryboard x:Name="CloseDelayTimer">
-                        <!--  关键：添加 FillBehavior="Stop" 避免动画结束后锁定属性值  -->
+                -->
+                <!--  关键：添加 FillBehavior="Stop" 避免动画结束后锁定属性值  -->
+                <!--
                         <Storyboard FillBehavior="Stop">
                             <ObjectAnimationUsingKeyFrames Storyboard.TargetName="pop" Storyboard.TargetProperty="IsOpen">
                                 <DiscreteObjectKeyFrame KeyTime="0:0:0.3" Value="{StaticResource Bool.False}" />
                             </ObjectAnimationUsingKeyFrames>
                         </Storyboard>
                     </BeginStoryboard>
-                </EventTrigger>
+                </EventTrigger>-->
 
                 <DataTrigger Binding="{Binding IsBackground}" Value="False">
                     <Setter TargetName="btns" Property="ContentTemplate">
@@ -385,9 +359,9 @@
                                         Background="AliceBlue"
                                         BorderThickness="0"
                                         Command="{Binding RunOnceCommand}"
-                                        Content="运行一次"
                                         DockPanel.Dock="Right"
-                                        IsEnabled="{Binding IsAvailable}" />
+                                        IsEnabled="{Binding IsAvailable}"
+                                        ToolTip="运行一次" />
                                 </DockPanel>
 
                                 <DataTemplate.Triggers>
@@ -401,6 +375,11 @@
                     </Setter>
                 </DataTrigger>
 
+                <DataTrigger Binding="{Binding IsExpanded}" Value="True">
+                    <Setter TargetName="cont" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="btns" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="status" Property="Visibility" Value="Hidden" />
+                </DataTrigger>
 
                 <DataTrigger Binding="{Binding IsActivated}" Value="False">
                     <Setter TargetName="content" Property="Opacity" Value="0.8" />

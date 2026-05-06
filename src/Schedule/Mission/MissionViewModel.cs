@@ -52,7 +52,13 @@ public partial class MissionViewModel : ObservableObject, IRecipient<MissionMess
     [ObservableProperty]
     public partial string? WorkLog { get; set; }
 
-    public ObservableCollection<string> Logs { get; }
+    /// <summary>
+    /// 展开状态
+    /// </summary>
+    [ObservableProperty]
+    public partial bool IsExpanded { get; set; }
+
+    public ObservableCollection<string> Logs { get; private set; } = null!;
 
     /// <summary>
     /// 后台创建，不可取消，删除
@@ -80,10 +86,14 @@ public partial class MissionViewModel : ObservableObject, IRecipient<MissionMess
 
         Title = $"Mission:{Id}";
 
-        using var db = DbHelper.Mission();
-        Logs = [.. db.GetCollection<MissionRecord>().Find(x => x.MissionId == Id).
-            OrderByDescending(x => x.Time).Take(10).Select(x => $"{x.Time}\n{x.Record}")];
+        //Task.Run(() =>
+        //{
+        //    using var db = DbHelper.Mission();
+        //    var data = db.GetCollection<MissionRecord>().Find(x => x.MissionId == Id).OrderByDescending(x => x.Time).Take(10).Select(x => $"{x.Time}\n{x.Record}").ToArray();
+        //    RunOnUIThread(() => Logs = [.. data]);
 
+        //    WorkLog = data.FirstOrDefault();
+        //});
         _syncContext = SynchronizationContext.Current;
     }
 
@@ -122,6 +132,17 @@ public partial class MissionViewModel : ObservableObject, IRecipient<MissionMess
 
         IsLogVisible = WorkLog?.Length > 0;
     }
+
+    partial void OnIsExpandedChanged(bool value)
+    {
+        if(value)
+        {
+            using var db = DbHelper.Mission();
+            var log = db.GetCollection<MissionRecord>().Find(x => x.MissionId == Id).OrderByDescending(x => x.Time).FirstOrDefault();//.Take(10).Select(x => $"{x.Time}\n{x.Record}").ToArray();
+            WorkLog = $"{log.Time}\n{log.Record}".Trim();
+        }
+    }
+
     partial void OnNextRunTimeChanged(DateTime? value)
     {
 
@@ -158,9 +179,10 @@ public partial class MissionViewModel : ObservableObject, IRecipient<MissionMess
             Logs.Add(message.Log);
             if (Logs.Count > 10)
                 Logs.RemoveAt(0);
+
+            WorkLog = message.Log;
         });
 
-        WorkLog = message.Log;
     }
 
     private void RunOnUIThread(Action action)

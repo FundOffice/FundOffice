@@ -3,7 +3,9 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.Schedule;
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace FMO;
 
@@ -22,7 +24,33 @@ public partial class TaskPage : UserControl
                 DataContext = new TaskPageViewModel();
         };
     }
-     
+
+ 
+
+    private void ListBox_PreviewMouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var listBox = (ListBox)sender;
+        if (listBox.SelectedItem == null) return;
+
+        // 沿可视化树向上查找，判断点击是否落在 ListBoxItem 上
+        var source = e.OriginalSource as DependencyObject;
+        bool isOnItem = false;
+        while (source != null)
+        {
+            if (source is ListBoxItem)
+            {
+                isOnItem = true;
+                break;
+            }
+            source = VisualTreeHelper.GetParent(source);
+        }
+
+        // 点击空白区域（背景/间隙/滚动条外）则取消选中
+        if (!isOnItem)
+        {
+            listBox.SelectedItem = null;
+        }
+    }
 }
 
 

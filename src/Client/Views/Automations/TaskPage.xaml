@@ -45,19 +45,19 @@
         <ListBox
             Margin="0"
             Padding="0"
+            Background="Transparent"
             BorderThickness="0"
             ItemsSource="{Binding Tasks}"
+            PreviewMouseUp="ListBox_PreviewMouseUp"
             Style="{StaticResource ListBoxCustom}">
             <ListBox.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <hc:UniformSpacingPanel
-                        ChildWrapping="Wrap"
-                        IsItemsHost="True"
-                        Spacing="5" />
+                    <hc:WaterfallPanel Groups="5" IsItemsHost="True" />
                 </ItemsPanelTemplate>
             </ListBox.ItemsPanel>
             <ListBox.ItemContainerStyle>
                 <Style TargetType="ListBoxItem">
+                    <Setter Property="IsSelected" Value="{Binding IsExpanded}" />
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ListBoxItem">
