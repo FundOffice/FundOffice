@@ -144,7 +144,7 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
                 {
                     Head = c,
                     Config = cm[c.Code],
-                    Workflows = rowd.Select(x => new DisclosureWorkflowViewModel(x, funds.Select(x => new DisclosureWorkflowViewModel.FundSelectInfo
+                    Workflows = rowd.Select(x => new DisclosureWorkflowViewModel(x, x is null ? false : c.IsWorkflowSealed(x.Type), funds.Select(x => new DisclosureWorkflowViewModel.FundSelectInfo
                     {
                         Code = x.Code,
                         Name = x.Name,
@@ -193,7 +193,7 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
     public bool IsSupported { get; }
 
 
-    public DisclosureWorkflowViewModel(DisclosureWorkflow? workflow, FundSelectInfo[] funds)
+    public DisclosureWorkflowViewModel(DisclosureWorkflow? workflow, bool isSealed, FundSelectInfo[] funds)
     {
         IsSupported = workflow is not null;
         if (workflow is not null)
@@ -207,6 +207,7 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
             RequireConfigWork = DisclosureService.GetChannel(Channel)?.RequireConfigWork(Type) ?? false;
         }
 
+        AllowModify = !isSealed;
         Funds = funds;
 
         foreach (var item in Funds)
@@ -216,6 +217,7 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
         }
     }
 
+    public bool AllowModify { get; }
 
     public FundSelectInfo[] Funds { get; }
 

@@ -39,7 +39,7 @@
 
 
         <DataTemplate x:Key="FlowItemTemplate">
-            <hc:SimplePanel>
+            <hc:SimplePanel IsEnabled="{Binding AllowModify}">
                 <TextBlock
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"

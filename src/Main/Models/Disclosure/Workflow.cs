@@ -13,7 +13,7 @@ public class DisclosureWorkflow
     public bool IsEnabled { get; set; }
 
     // 信批类型
-    public DisclosureType Type { get; init; }
+    public required DisclosureType Type { get; init; }
 
     /// <summary>
     /// 管理人维度，如果为true，则适用于管理人层面；

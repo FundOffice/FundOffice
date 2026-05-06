@@ -7,7 +7,7 @@ namespace FMO.Disclosure;
 /// </summary>
 public interface IDisclosureChannel
 {
-    public string Code { get; }
+    string Code { get; }
 
     string Name { get; }
 
@@ -19,6 +19,19 @@ public interface IDisclosureChannel
     /// <param name="type"></param>
     /// <returns></returns>
     bool IsSupported(DisclosureType type);
+
+    bool IsWorkflowSealed(DisclosureType type) => false;
+
+
+    /// <summary>
+    /// 生成默认的flow
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
+    DisclosureWorkflow? BuildWorkflow(DisclosureType type) => IsSupported(type) ? new DisclosureWorkflow { Channel = Code, Type = type } : null;
+
+
+
 
     /// <summary>
     /// 生成默认的工作参数，若不需要配置工作参数，则返回null
@@ -38,6 +51,6 @@ public interface IDisclosureChannel
     public ErrorReturn VerifyNotice(IDisclosureNotice Notice);
 
     public Task<ErrorReturn> Disclosure(IDisclosureNotice Notice, IWorkConfig? config);
- 
+
 }
 

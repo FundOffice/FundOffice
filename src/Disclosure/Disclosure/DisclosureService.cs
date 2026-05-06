@@ -38,7 +38,7 @@ public static partial class DisclosureService
         DataTracker.Hook(RegisterNotice);
     }
 
-  
+
 
 
     /// <summary>
@@ -74,15 +74,23 @@ public static partial class DisclosureService
             var id = DisclosureWorkflow.GetId(channel.Code, type);
             if (!_workflows.ContainsKey(id))
             {
-                var flow = new DisclosureWorkflow { Channel = channel.Code, Type = type };
+                var flow = channel.BuildWorkflow(type)!;
                 _workflows[id] = flow;
                 _toUpdate.Add(flow);
+            }
+
+            // 如果是PFIDDisclosureChannel，确保启用
+            if (channel is PFIDDisclosureChannel && type <= DisclosureType.Annually && _workflows[id] is DisclosureWorkflow fl && (!fl.IsEnabled || !fl.ForAllFunds))
+            {
+                fl.IsEnabled = true;
+                fl.ForAllFunds = true;
+                _toUpdate.Add(fl);
             }
         }
         if (_toUpdate.Count > 0)
         {
             using var db = DbHelper.Base();
-            var col = db.GetCollection<DisclosureWorkflow>().InsertBulk(_toUpdate);
+            var col = db.GetCollection<DisclosureWorkflow>().Upsert(_toUpdate);
         }
     }
 

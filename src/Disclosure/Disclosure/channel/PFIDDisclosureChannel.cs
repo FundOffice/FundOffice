@@ -43,6 +43,10 @@ public class PFIDDisclosureChannel : IDisclosureChannel
         };
     }
 
+    public bool IsWorkflowSealed(DisclosureType type) => true;
+
+    public DisclosureWorkflow? BuildWorkflow(DisclosureType type) => IsSupported(type) ? new DisclosureWorkflow { Channel = Code, Type = type, IsEnabled = true, ForAllFunds = true } : null;
+
     public bool RequireConfigWork(DisclosureType type) => false;
 
     public ErrorReturn VerifyNotice(IDisclosureNotice Notice)
