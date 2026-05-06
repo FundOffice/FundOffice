@@ -38,7 +38,7 @@ public static class TodoService
         // 如果UniqueId不为null，说明这是一个具有唯一标识的Todo，需要先将之前的同类Todo标记为已忽略
         var id = 0;
         if (todo.UniqueId is not null)
-            id = db.GetCollection<ITodo>().FindOne(x => x.UniqueId == todo.UniqueId)?.Id ?? 0;
+            id = db.GetCollection<ITodo>().FindOne(x => x.UniqueId == todo.UniqueId && x.Status == TotoStatus.None)?.Id ?? 0;
         //db.GetCollection<ITodo>().UpdateMany($"{{ '{nameof(ITodo.Status)}':'{nameof(TotoStatus.Ignored)}' }}", $"$.{nameof(ITodo.UniqueId)}='{todo.UniqueId}'");
 
         if (id > 0)
