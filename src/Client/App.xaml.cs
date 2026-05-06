@@ -116,8 +116,7 @@ public partial class App : Application
         else
             StartupUri = new Uri("MainWindow.xaml", UriKind.Relative);
 
-        // 初始化待办事项
-        TodoService.Initialize();
+
         //加载插件
         PluginManager.Init();
     }

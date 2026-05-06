@@ -86,5 +86,12 @@ public record NewDay(DateOnly Date);
 public record MainMenuEnableMessage(string Key, bool IsEnabled);
 
 
-
+/// <summary>
+/// 任务失败
+/// </summary>
+/// <param name="Id"></param>
+/// <param name="e"></param>
 public record MissionFailedMessage(int Id, Exception e);
+
+
+public record AddNotifyTodoMessage(string Unique, string Message);

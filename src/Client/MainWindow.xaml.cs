@@ -87,7 +87,7 @@ public partial class TabItemInfo : ObservableObject
 
 public partial class MainWindowViewModel : ObservableRecipient, IRecipient<string>, IRecipient<OpenFundMessage>,
     IRecipient<OpenPageMessage>, IRecipient<ToastMessage>, IRecipient<VerifyMessage>, IRecipient<VerifyResultMessage>,
-    IRecipient<TodoGroupStatusMessage>, IRecipient<TodoStatusMessage>, IRecipient<ITodo>, IRecipient<MissionFailedMessage>
+    IRecipient<TodoGroupStatusMessage>, IRecipient<TodoStatusMessage>, IRecipient<ITodo>, IRecipient<MissionFailedMessage>, IRecipient<AddNotifyTodoMessage>
 {
 
     private PlatformPageViewModel? PlatformDataContext { get; set; }
@@ -583,6 +583,8 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
     {
         TodoService.Register(new JustNotifyTodo { CreateTime = DateTime.Now, UniqueId = $"MissionError_{message.Id}", Message = $"{message.e}" });
     }
+
+    public void Receive(AddNotifyTodoMessage todo) => TodoService.Register(new JustNotifyTodo { CreateTime = DateTime.Now, UniqueId = todo.Unique, Message = todo.Message });
 }
 
 
