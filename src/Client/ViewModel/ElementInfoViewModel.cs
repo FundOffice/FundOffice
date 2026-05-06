@@ -1,10 +1,10 @@
-﻿using System.Collections.ObjectModel;
-using System.Text;
-using System.Text.RegularExpressions;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FMO.Models;
 using FMO.Shared;
+using System.Collections.ObjectModel;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace FMO;
 
@@ -100,6 +100,11 @@ public partial class SealingInfoViewModel : ObservableObject, IEquatable<Sealing
     internal SealingRule Build()
     {
         return new SealingRule { Type = Type ?? default, Month = Month ?? 0, Extra = Other };
+    }
+
+    public override string ToString()
+    {
+        return Type switch { SealingType.Has => $"{Month}月", SealingType.No => "无", _ => Other ?? "" };
     }
 }
 
@@ -258,7 +263,7 @@ public partial class RedemptionFeeInfoViewMdoel : ObservableObject, IDataValidat
                 s += $"T{(!p.Include ? '<' : '≤')}{p.Month}月, {p.Fee}%";
             else if (i == Parts.Count - 1)
                 s += $"；T{(Parts[i - 1].Include ? '>' : '≥')}{Parts[i - 1].Month}月, {p.Fee}%";
-            else s += $"；{Parts[i-1].Month}月{(Parts[i - 1].Include ? '<' : '≤')}T{(!p.Include ? '<' : '≤')}{p.Month}月, {p.Fee}%";
+            else s += $"；{Parts[i - 1].Month}月{(Parts[i - 1].Include ? '<' : '≤')}T{(!p.Include ? '<' : '≤')}{p.Month}月, {p.Fee}%";
         }
         return s;
     }
@@ -320,7 +325,8 @@ public partial class RedemptionFeeInfoViewMdoel : ObservableObject, IDataValidat
     }
 }
 
-
+[AutoChangeableViewModel(typeof(SealingRule))]
+public partial class LockingRuleViewModel;
 
 
 [AutoChangeableViewModel(typeof(AgencyInfo))]

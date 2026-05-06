@@ -132,7 +132,7 @@ public class ReadonlyFundInfo
     public decimal? HugeRedemptionRatio { get; set; }
     public CoolingPeriodInfo? CoolingPeriod { get; set; }
     public CallbackInfo? Callback { get; set; }
-    public ValueWithEnum<SealingType, int>? LockingRule { get; set; }
+    public SealingRule? LockingRule { get; set; }
     public FundFeeInfo? ManageFee { get; set; }
     public FeePayInfo? ManageFeePay { get; set; }
     public FundPurchaseRule? SubscriptionRule { get; set; }

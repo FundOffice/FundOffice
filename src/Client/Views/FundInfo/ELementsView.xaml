@@ -1216,7 +1216,10 @@
                                     ContentTemplate="{StaticResource Sealing}"
                                     Visibility="{Binding DataContext.IsSealingFund, RelativeSource={RelativeSource AncestorType=local:ElementsView}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
-
+                                <local:PortionElementView
+                                    Content="{Binding LockingRule}"
+                                    ContentTemplate="{StaticResource Sealing}"
+                                    Header="锁定期" />
 
                             </DockPanel>
 

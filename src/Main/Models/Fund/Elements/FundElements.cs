@@ -166,7 +166,7 @@ public class FundElements
     /// <summary>
     /// 锁定期
     /// </summary>
-    public PortionMutable<ValueWithEnum<SealingType, int>> LockingRule { get; set; } = new(nameof(LockingRule));
+    public PortionMutable<SealingRule> LockingRule { get; set; } = new(nameof(LockingRule));
 
 
 

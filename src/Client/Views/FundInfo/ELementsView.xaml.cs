@@ -203,6 +203,11 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     public partial ChangeableViewModel<FundElements, SealingInfoViewModel>? SealingRule { get; set; }
 
 
+
+    [ObservableProperty]
+    public partial ShareElementsViewModel<SealingRule, SealingInfoViewModel>? LockingRule { get; set; }
+
+
     //[ObservableProperty]
     //public partial ElementItemViewModelSealing? LockingRule { get; set; }
 
@@ -393,6 +398,11 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
             DisplayFunc = x => x?.Type switch { SealingType.No => "无", SealingType.Has => $"{x.Month}个月", SealingType.Other => x.Other, _ => "-" }
         };
         SealingRule.Init(elements);
+
+
+        LockingRule = new ShareElementsViewModel<SealingRule, SealingInfoViewModel>(FundId, FlowId, elements, sc, x => x.LockingRule, x => new(x), x => x!.Build(), x=> x.Type switch { SealingType.No => "无", SealingType.Has => $"{x.Month}个月", SealingType.Other => x.Other, _ => "未设置" });
+       
+
 
         RiskLevel = new ChangeableViewModel<FundElements, RiskLevel>
         {
@@ -625,8 +635,8 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         SubscriptionRule = new ShareElementsViewModel<FundPurchaseRule, FundPurchaseRuleViewModel>(FundId, FlowId, elements, sc, x => x.SubscriptionRule, x => new(x) { FeeName = "认购费" }, x => x!.Build());
         foreach (var item in SubscriptionRule.Data)
         {
-            if (item.NewValue!.MinDeposit == 0 || item.NewValue.MinDeposit is null)
-                item.NewValue.MinDeposit = 1000000;
+            if (item.NewValue?.MinDeposit is null or 0)
+                item.NewValue?.MinDeposit = 1000000;
         }
 
         //PurchaseFee = new ShareElementsViewModel2<FundFeeInfo, FundFeeInfoViewModel>(FundId, FlowId, elements, sc, x => x.PurchaseFee, x => new(x), x => x!.Build());

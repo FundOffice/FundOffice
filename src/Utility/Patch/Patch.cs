@@ -57,7 +57,18 @@ public static partial class DatabaseAssist
         [124] = RemoveFillFundDailyMission,
         [125] = MoveMissionDll,
         [126] = MiggreateToNewDisclosure,
+        [127] = ChangeLockingRule,
     };
+
+    private static void ChangeLockingRule(BaseDatabase db)
+    {
+        var els = db.GetCollection(nameof(FundElements)).FindAll().ToArray();
+        foreach (var item in els)
+        {
+            item[nameof(FundElements.LockingRule)] = BsonMapper.Global.ToDocument( new SealingRule());
+        }
+        db.GetCollection(nameof(FundElements)).Update(els);
+    }
 
     private static void MoveMissionDll(BaseDatabase database)
     {
