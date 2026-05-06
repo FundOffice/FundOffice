@@ -6,12 +6,10 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:FMO"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DataContext="{d:DesignInstance Type=local:TaskPageViewModel}"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
-    <UserControl.DataContext>
-        <local:TaskPageViewModel />
-    </UserControl.DataContext>
     <DockPanel Margin="5">
         <DockPanel DockPanel.Dock="Top">
 

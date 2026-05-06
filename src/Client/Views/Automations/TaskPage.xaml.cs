@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.Schedule;
-using Serilog;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
 
@@ -16,7 +15,14 @@ public partial class TaskPage : UserControl
     public TaskPage()
     {
         InitializeComponent();
+
+        Loaded += (s, e) =>
+        {
+            if (DataContext is not TaskPageViewModel)
+                DataContext = new TaskPageViewModel();
+        };
     }
+     
 }
 
 
@@ -40,28 +46,22 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
     {
         WeakReferenceMessenger.Default.RegisterAll(this);
         var ms = MissionSchedule.Missions;
-
-        foreach (var m in ms)
-        {
-            var vm = MissionManager.GetViewModel(m);
-            
-            Tasks.Add(vm);
-        }
-
-        InitTaskTpl();
-    }
-
-
-    public void InitTaskTpl()
-    {
         Templates = MissionManager.Templates;
 
-        //var mvm = AssemblyLoadContext.Default.Assemblies.SelectMany(x => x.DefinedTypes).Where(x => x.BaseType is not null && x.BaseType.IsGenericType && x.BaseType.GetGenericTypeDefinition() == typeof(MissionViewModel<>));
-
-        //Templates = mvm.Select(x => (type: x, attr: x.GetCustomAttribute<MissionTitleAttribute>())).Where(x => x.attr is not null).Select(x => new TaskTemplate { Title = x.attr!.Title, ViewModel = x.type }).ToArray();
-
-
+        Task.Run(async () =>
+        {
+            await Task.Delay(1);
+            foreach (var m in ms)
+            {
+                await App.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    var vm = MissionManager.GetViewModel(m);
+                    Tasks.Add(vm);
+                });
+            }
+        });
     }
+
 
 
 

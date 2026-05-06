@@ -281,7 +281,24 @@
 
             <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter TargetName="pop" Property="IsOpen" Value="True" />
+                    <!--<Setter TargetName="pop" Property="IsOpen" Value="True" />-->
+                    <Trigger.EnterActions>
+                        <!--  鼠标进入时，启动一个延迟 0.5 秒的动画  -->
+                        <BeginStoryboard x:Name="DelayOpenStoryboard">
+                            <Storyboard>
+                                <BooleanAnimationUsingKeyFrames Storyboard.TargetName="pop" Storyboard.TargetProperty="IsOpen">
+                                    <!--  在 0.5 秒时将 IsOpen 设为 True  -->
+                                    <DiscreteBooleanKeyFrame KeyTime="0:0:0.2" Value="True" />
+                                </BooleanAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </Trigger.EnterActions>
+                    <Trigger.ExitActions>
+                        <!--  鼠标离开时，立即取消未完成的延迟动画  -->
+                        <StopStoryboard BeginStoryboardName="DelayOpenStoryboard" />
+
+
+                    </Trigger.ExitActions>
                 </Trigger>
 
                 <!--  1. 鼠标离开 Popup 内容(extra)时，启动延迟关闭  -->
