@@ -1548,6 +1548,9 @@ public static partial class DataTracker
 
     public static void OnNewNotice(IDisclosureNotice notice)
     {
+        using var db = DbHelper.Base();
+        db.GetCollection<IDisclosureNotice>().Upsert(notice);
+
         WeakReferenceMessenger.Default.Send(notice);
 
         Notify(notice);
