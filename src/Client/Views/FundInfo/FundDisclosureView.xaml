@@ -73,7 +73,7 @@
     </UserControl.Resources>
 
 
-    <UniformGrid Margin="10" Columns="2">
+    <UniformGrid Margin="10" Rows="1">
         <StackPanel Background="WhiteSmoke">
             <Border Background="Green">
                 <DockPanel HorizontalAlignment="Center">
@@ -94,6 +94,99 @@
                 ItemsSource="{Binding Announcements}"
                 Style="{StaticResource ListBoxCustom}" />
         </StackPanel>
+
+        <DockPanel Margin="1,0,0,0" Background="WhiteSmoke">
+            <DockPanel.Resources>
+
+                <DataTemplate x:Key="ReportItem">
+                    <Border MinWidth="240">
+
+
+                        <UniformGrid
+                            Margin="5"
+                            Columns="3"
+                            Rows="2">
+
+                            <DockPanel>
+                                <TextBlock FontSize="15" Text="{Binding PeriodEnd, StringFormat=yy/MM}" />
+
+                                <TextBlock
+                                    Margin="10,0"
+                                    FontSize="15"
+                                    Text="{Binding Type}" />
+                            </DockPanel>
+
+                            <shared:FileView
+                                Content="{Binding Word}"
+                                IsReadOnly="False"
+                                Style="{StaticResource IconViewFileStyle}">
+                                <shared:FileView.Header>
+                                    <Viewbox Width="14" Height="14">
+                                        <Path Data="{StaticResource f.file-word}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                    </Viewbox>
+                                </shared:FileView.Header>
+                            </shared:FileView>
+
+                            <shared:FileView
+                                Content="{Binding Excel}"
+                                HeaderTemplate="{x:Null}"
+                                Style="{StaticResource IconViewFileStyle}">
+                                <shared:FileView.Header>
+                                    <Viewbox Width="14" Height="14">
+                                        <Path Data="{StaticResource f.file-excel}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                    </Viewbox>
+                                </shared:FileView.Header>
+                            </shared:FileView>
+
+                            <shared:FileView Content="{Binding Pdf}" Style="{StaticResource IconViewFileStyle}">
+                                <shared:FileView.Header>
+                                    <Viewbox Width="14" Height="14">
+                                        <Path Data="{StaticResource f.file-pdf}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                    </Viewbox>
+                                </shared:FileView.Header>
+                            </shared:FileView>
+
+                            <shared:FileView Content="{Binding Xbrl}" Style="{StaticResource IconViewFileStyle}">
+                                <shared:FileView.Header>
+                                    <Viewbox Width="14" Height="14">
+                                        <Path Data="{StaticResource f.file-code}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                    </Viewbox>
+                                </shared:FileView.Header>
+                            </shared:FileView>
+
+                            <shared:FileView Content="{Binding Sealed}" Style="{StaticResource IconViewFileStyle}">
+                                <shared:FileView.Header>
+                                    <Viewbox Width="14" Height="14">
+                                        <Path Data="{StaticResource f.file-shield}" Fill="Red" />
+                                    </Viewbox>
+                                </shared:FileView.Header>
+                            </shared:FileView>
+                        </UniformGrid>
+
+
+                    </Border>
+                </DataTemplate>
+            </DockPanel.Resources>
+            <Border Background="Green" DockPanel.Dock="Top">
+                <TextBlock
+                    Margin="0,5"
+                    HorizontalAlignment="Center"
+                    Foreground="White"
+                    Text="定期报告" />
+            </Border>
+
+
+            <ListBox
+                local:InfiniteScrollExtension.Command="{Binding LoadPeriodicNoticeCommand}"
+                BorderThickness="0"
+                DockPanel.Dock="Top"
+                ItemTemplate="{StaticResource ReportItem}"
+                ItemsSource="{Binding PeriodicNoticeSource.View}"
+                Style="{StaticResource ListBoxCustom}" />
+
+
+
+        </DockPanel>
 
         <DockPanel Margin="1,0,0,0" Background="WhiteSmoke">
             <DockPanel.Resources>
@@ -226,45 +319,16 @@
                     Margin="0,5"
                     HorizontalAlignment="Center"
                     Foreground="White"
-                    Text="定期报告" />
+                    Text="季度更新" />
             </Border>
 
 
-            <ScrollViewer>
-                <StackPanel Background="Transparent">
-                    <Expander Header="月报">
-                        <ListBox
-                            shared:MaskService.IsMask="True"
-                            ItemsSource="{Binding Monthly.View}"
-                            Style="{StaticResource Report}" />
-                    </Expander>
-                    <Expander Header="季报" IsExpanded="True">
-                        <ListBox
-                            shared:MaskService.IsMask="True"
-                            ItemsSource="{Binding Quarterly.View}"
-                            Style="{StaticResource Report}" />
-                    </Expander>
-                    <Expander Header="半年报">
-                        <ListBox
-                            shared:MaskService.IsMask="True"
-                            ItemsSource="{Binding SemiAnnually.View}"
-                            Style="{StaticResource Report}" />
-                    </Expander>
-                    <Expander Header="年报" IsExpanded="True">
-                        <ListBox
-                            shared:MaskService.IsMask="True"
-                            ItemsSource="{Binding Annually.View}"
-                            Style="{StaticResource Report}" />
-                    </Expander>
-                    <Expander Header="季度更新" IsExpanded="True">
-                        <ListBox
-                            shared:MaskService.IsMask="True"
-                            ItemsSource="{Binding QuarterlyUpdate.View}"
-                            Style="{StaticResource Update}" />
-                    </Expander>
-                </StackPanel>
-            </ScrollViewer>
+            <ListBox
+                shared:MaskService.IsMask="True"
+                ItemsSource="{Binding QuarterlyUpdate.View}"
+                Style="{StaticResource Update}" />
 
         </DockPanel>
+
     </UniformGrid>
 </UserControl>

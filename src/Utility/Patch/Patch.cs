@@ -56,6 +56,7 @@ public static partial class DatabaseAssist
         [122] = RebuildNotice,
         [124] = RemoveFillFundDailyMission,
         [125] = MoveMissionDll,
+        [126] = MiggreateToNewDisclosure,
     };
 
     private static void MoveMissionDll(BaseDatabase database)

@@ -44,13 +44,15 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<IDis
 
 
         IEnumerable<PeriodicalDisclosureNotice> notices = db.GetCollection<IDisclosureNotice>().Query().
-            Where(Query.EQ(nameof(PeriodicalDisclosureNotice.FundId), fid)).ToArray().OfType<PeriodicalDisclosureNotice>();
+            Where(Query.EQ(nameof(PeriodicalDisclosureNotice.FundId), fid)).
+            OrderByDescending($"$.{nameof(PeriodicalDisclosureNotice.ReportDate)}").Limit(30).ToArray().OfType<PeriodicalDisclosureNotice>();
 
         var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && !string.IsNullOrWhiteSpace(x.Channel)).ToArray().ToLookup(x => x.Type);
 
         var run = db.GetCollection<DisclosureInstance>().Query().Where(Query.In(nameof(DisclosureInstance.NoticeId), notices.Select(x => new BsonValue(x.Id)))).ToArray().ToLookup(x => x.NoticeId);
 
         PeriodicDisclosure = [.. notices.Select(x => new PeriodicReportViewModel(x, workflows[x.Type], run[x.Id]))];
+        PeriodicNoticeSource.Source = PeriodicDisclosure;
 
 
         var qu = db.GetCollection<IDisclosureNotice>().Query().
@@ -62,17 +64,7 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<IDis
         //if (PeriodicDisclosure.Count == 0) PeriodicDisclosure = [new FundPeriodicReport { FundId = FundId, Type = PeriodicReportType.MonthlyReport }, new FundQuarterlyUpdate { FundId = FundId }];
 
 
-        Monthly.Source = PeriodicDisclosure;
-        Monthly.Filter += (s, e) => e.Accepted = e.Item switch { PeriodicReportViewModel r => r.Type == DisclosureType.Monthly, _ => false };
-
-        Quarterly.Source = PeriodicDisclosure;
-        Quarterly.Filter += (s, e) => e.Accepted = e.Item switch { PeriodicReportViewModel r => r.Type == DisclosureType.Quarterly, _ => false };
-
-        SemiAnnually.Source = PeriodicDisclosure;
-        SemiAnnually.Filter += (s, e) => e.Accepted = e.Item switch { PeriodicReportViewModel r => r.Type == DisclosureType.SemiAnnually, _ => false };
-
-        Annually.Source = PeriodicDisclosure;
-        Annually.Filter += (s, e) => e.Accepted = e.Item switch { PeriodicReportViewModel r => r.Type == DisclosureType.Annually, _ => false };
+ 
 
         QuarterlyUpdate.Source = QuarterlyDisclosure;
     }
@@ -82,10 +74,10 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<IDis
 
     public ObservableCollection<AnnouncementViewModel> Announcements { get; init; }
 
-    public CollectionViewSource Monthly { get; } = new();
-    public CollectionViewSource Quarterly { get; } = new();
-    public CollectionViewSource SemiAnnually { get; } = new();
-    public CollectionViewSource Annually { get; } = new();
+
+
+    public CollectionViewSource PeriodicNoticeSource { get; } = new();
+
     public CollectionViewSource QuarterlyUpdate { get; } = new();
 
 
@@ -105,6 +97,20 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<IDis
 
     public void Receive(IDisclosureNotice message)
     {
+    }
+
+    [RelayCommand]
+    public void LoadPeriodicNotice()
+    {
+        using var db = DbHelper.Base();
+        IEnumerable<PeriodicalDisclosureNotice> notices = db.GetCollection<IDisclosureNotice>().Query().
+            Where(Query.EQ(nameof(PeriodicalDisclosureNotice.FundId), FundId)).
+            OrderByDescending($"$.{nameof(PeriodicalDisclosureNotice.ReportDate)}").Skip(PeriodicDisclosure.Count).Limit(30).ToArray().OfType<PeriodicalDisclosureNotice>();
+
+        foreach (var item in notices)
+        {
+            PeriodicDisclosure.Add(new PeriodicReportViewModel(item, [], []));
+        } 
     }
 }
 
