@@ -18,7 +18,7 @@
 		<_EsignClientOutput Condition="'$(TargetFramework)' == ''">$(_EsignClientBase)net10.0-windows\</_EsignClientOutput>
 
 		<!-- 发布模式优先使用 PublishDir -->
-		<_EsignClientOutput Condition="'$(PublishDir)' != ''">$(PublishDir)</_EsignClientOutput>
+		<_EsignClientOutput Condition="'$(PublishDir)' != ''">$(PublishDir)\</_EsignClientOutput>
 
 		<!-- 最终目标目录（单行）-->
 		<EsignTargetDir>$(_EsignClientOutput)mission\</EsignTargetDir>
