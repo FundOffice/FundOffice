@@ -52,7 +52,10 @@
                     Visibility="{Binding IsSupported, Converter={StaticResource Boolean2VisibilityConverter}}">
 
                     <DockPanel>
-                        <CheckBox Content="启用" IsChecked="{Binding IsEnabled}" />
+                        <CheckBox
+                            Content="启用"
+                            IsChecked="{Binding IsEnabled}"
+                            IsEnabled="{Binding CanEnable}" />
                         <ToggleButton
                             x:Name="set"
                             Margin="4,0,0,0"

@@ -227,6 +227,9 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsEnabled { get; set; }
 
+
+    public bool CanEnable => ForAllFunds || TargetFunds.Length > 0;
+
     // 信批类型 
     public DisclosureType Type { get; init; }
 
@@ -241,6 +244,7 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
     /// IsManagerLevel为true时，无效
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanEnable))]
     public partial bool ForAllFunds { get; set; }
 
     /// <summary>
@@ -248,6 +252,7 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
     /// IsManagerLevel为true时，无效
     /// </summary>
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanEnable))]
     public partial int[] TargetFunds { get; set; } = [];
 
 
