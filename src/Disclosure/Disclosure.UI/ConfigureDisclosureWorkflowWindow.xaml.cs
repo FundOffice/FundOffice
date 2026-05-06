@@ -92,6 +92,9 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
 
     public ObservableCollection<WorkflowRow> Workflows { get; } = [];
 
+    public CollectionViewSource WorkflowSource { get; } = new();
+
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowLoading))]
     public partial double LoadProgress { get; set; } = 0.1;
@@ -101,6 +104,10 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
 
     public ConfigureDisclosureWorkflowWindowViewModel()
     {
+        WorkflowSource.Source = Workflows;
+        WorkflowSource.SortDescriptions.Add(new SortDescription(nameof(WorkflowRow.Index), ListSortDirection.Ascending));
+
+
         Channels = DisclosureService.GetRegisteredChannels().ToArray();//.Where(x => x.Code != DisclosureChannelCode.QuarterlyUpdate).ToArray();
 
         // 检查是否有对应的配置界面
@@ -129,6 +136,7 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
 
         var dd = DisclosureService.GetWorkflows();
 
+        var id = 2;
         Task.Run(() =>
         {
             foreach (var c in Channels)
@@ -144,6 +152,7 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
                 {
                     Head = c,
                     Config = cm[c.Code],
+                    Index = c switch { QuarterlyUpdateChannel => 0, PFIDDisclosureChannel => 1, EmailDisclosureChannel => 2, _ => ++id },
                     Workflows = rowd.Select(x => new DisclosureWorkflowViewModel(x, x is null ? false : c.IsWorkflowSealed(x.Type), funds.Select(x => new DisclosureWorkflowViewModel.FundSelectInfo
                     {
                         Code = x.Code,
@@ -170,6 +179,9 @@ public partial class WorkflowRow : ObservableObject
 
 
     public DisclosureWorkflowViewModel[] Workflows { get; set; } = [];
+
+
+    public int Index { get; set; }
 
 
     [RelayCommand]
@@ -299,14 +311,14 @@ public partial class DisclosureWorkflowViewModel : ObservableObject
     }
 
 
- 
+
 
     partial void OnShowWorkConfigPopChanged(bool value)
     {
         if (Config is null)
             Config = DisclosureService.GetChannel(Channel)!.DefaultWorkConfig(Type);
 
-        if(!value)
+        if (!value)
             OnPropertyChanged(nameof(Config));
     }
 

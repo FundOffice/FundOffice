@@ -147,7 +147,7 @@
             HeadersVisibility="All"
             HorizontalGridLinesBrush="LightGray"
             IsReadOnly="True"
-            ItemsSource="{Binding Workflows}"
+            ItemsSource="{Binding WorkflowSource.View}"
             RowHeaderWidth="120"
             RowHeight="120"
             SelectionMode="Single"
@@ -184,6 +184,7 @@
                                             Style="{StaticResource ButtonDashedPrimary.Small}" />
 
                                         <TextBlock
+                                            x:Name="channel"
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
                                             FontSize="14"
@@ -191,6 +192,12 @@
                                     </DockPanel>
 
                                 </Border>
+                                <ControlTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding Config.IsAvailable}" Value="True">
+                                        <Setter TargetName="channel" Property="Foreground" Value="Green" />
+                                        <Setter TargetName="channel" Property="FontWeight" Value="Black" />
+                                    </DataTrigger>
+                                </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Setter.Value>
                     </Setter>
