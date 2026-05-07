@@ -1,4 +1,5 @@
-﻿using FMO.Models;
+﻿using FMO.Logging;
+using FMO.Models;
 using LiteDB;
 using PDFiumSharp;
 using PDFiumSharp.Enums;
@@ -603,5 +604,67 @@ public static class PdfHelper
         }
 
         return null;
+    }
+
+    public static int GetPageCount(Stream fs)
+    {
+        try
+        {
+            if (!fs.CanSeek)
+                fs.Seek(0, SeekOrigin.Begin);
+
+            List<string> strings = [];
+            byte[] buf = new byte[fs.Length];
+            fs.ReadExactly(buf);
+            var d = PDFium.FPDF_LoadDocument(buf);
+            var cnt = PDFium.FPDF_GetPageCount(d);
+            PDFium.FPDF_CloseDocument(d);
+            return cnt;
+        }
+        catch { return -1; }
+    }
+
+
+    public static bool HasAllTexts(Stream? fs, params string[] text)
+    {
+        if (fs is null) return false;
+        if (fs.CanSeek)
+            fs.Seek(0, SeekOrigin.Begin);
+
+        List<string> wait = text.ToList();
+        byte[] buf = new byte[fs.Length - fs.Position];
+        fs.ReadExactly(buf);
+        var d = PDFium.FPDF_LoadDocument(buf);
+        try
+        {
+            var cnt = PDFium.FPDF_GetPageCount(d);
+
+            for (int i = 0; i < cnt; i++)
+            {
+                var page = PDFium.FPDF_LoadPage(d, i);
+                var textpage = PDFium.FPDFText_LoadPage(page);
+                var charcnt = PDFium.FPDFText_CountChars(textpage);
+                if (charcnt == 0) continue;
+
+                var str = PDFium.FPDFText_GetText(textpage, 0, charcnt);
+
+                foreach (var c in wait.ToArray())
+                    if (str.Contains(c)) 
+                        wait.Remove(c);
+
+                if (wait.Count == 0)
+                    break;
+            }
+        }
+        catch (Exception e)
+        {
+            LogEx.Error(e);
+        }
+        finally
+        {
+            PDFium.FPDF_CloseDocument(d);
+        }
+
+        return wait.Count == 0;
     }
 }

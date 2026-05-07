@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using FMO.Disclosure;
+using FMO.Logging;
 using FMO.Models;
 using FMO.PDF;
 using FMO.Utilities;
@@ -174,10 +175,7 @@ public class DisclosureFromMailMission : MailMission
                                     break;
 
                                 case ".pdf":
-                                    if (ext.Count(x => !Regex.IsMatch(x.FileName, "复核函")) == 1)// 避免把复核函当成报告正文
-                                        fp.Pdf = new SimpleFile { File = FileMeta.Create(ext.First().Stream, ext.First().FileName) };
-                                    else if (PdfHelper.Merge(ext.Select(x => x.Stream).ToArray()) is Stream nes) // 有些托管会发多个Pdf，把它们合并成一个
-                                        fp.Pdf = new SimpleFile { File = FileMeta.Create(nes, $"{fundName}_{EnumDescriptionTypeConverter.GetEnumDescription(type.Key)}_{r.Key:yyyyMMdd}.pdf") };
+                                    FillPdf(fundName, type, fp, ext);
                                     break;
                             }
                             foreach (var ff in ext)
@@ -209,10 +207,25 @@ public class DisclosureFromMailMission : MailMission
         }
     }
 
-
-
-
-
+    private static void FillPdf(string fundName, IGrouping<DisclosureType, ParsedInfo> type, PeriodicalDisclosureNotice fp, IGrouping<string, ParsedInfo> ext)
+    {
+        // 排除小文件
+        var files = ext.Where(x => !Regex.IsMatch(x.FileName, "复核函")).ToArray();
+        if (files.Length == 1 && PdfHelper.GetPageCount(files[0].Stream) > 2)
+        {
+            fp.Pdf = new SimpleFile { File = FileMeta.Create(files[0].Stream, files[0].FileName) };
+        }
+        else if (files.Length == 2 && files.Count(x => x.FileName.Contains("用印")) == 1)
+        {
+            var nf = files.FirstOrDefault(x => !x.FileName.Contains("用印"));
+            var sf = files.FirstOrDefault(x => x.FileName.Contains("用印"));
+            fp.Pdf = new SimpleFile { File = FileMeta.Create(nf!.Stream, nf.FileName) };
+            fp.Sealed = new SimpleFile { File = FileMeta.Create(sf!.Stream, sf.FileName) };
+        }
+        else if (PdfHelper.Merge(ext.Select(x => x.Stream).ToArray()) is Stream nes) // 有些托管会发多个Pdf，把它们合并成一个
+            fp.Pdf = new SimpleFile { File = FileMeta.Create(nes, $"{fundName}_{EnumDescriptionTypeConverter.GetEnumDescription(type.Key)}_{fp.ReportDate:yyyyMMdd}.pdf") };
+        else LogEx.Error($"{fp.Name} pdf 设置出错，有以下文件，但不符合条件 {string.Join('\n', ext.Select(x => x.FileName))}");
+    }
 
     private MemoryStream Copy(IMimeContent c)
     {
@@ -252,7 +265,11 @@ public class DisclosureFromMailMission : MailMission
         string code = "";
         string fundName = "";
         var m = Regex.Match(path, "S[0-9A-Z]{5}", RegexOptions.IgnoreCase);
-        if (m.Success) code = m.Value;
+        if (m.Success && fundCodeMap.FirstOrDefault(x => x.Code == code) is FundIdf idf)
+        {
+            code = m.Value;
+            fundName = idf.Name;
+        }
         else
         {
             // 尝试从产品名获取 
