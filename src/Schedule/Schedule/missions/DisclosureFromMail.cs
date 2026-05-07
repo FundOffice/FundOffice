@@ -20,12 +20,12 @@ public record FundIdf(string Name, string Code);
 [MissionInfo("信批更新", "解析邮箱中的信批文件")]
 public class DisclosureFromMailMission : MailMission
 {
-    public int Interval { get; set; } = 6;
+    public int Interval { get; set; } = 120;
 
     protected override void SetNextRun()
     {
-        NextRun = (LastRun ?? DateTime.Now).AddHours(Interval);
-        if (NextRun < DateTime.Now) NextRun = DateTime.Now.AddHours(Interval);
+        NextRun = (LastRun ?? DateTime.Now).AddMinutes(Interval);
+        if (NextRun < DateTime.Now) NextRun = DateTime.Now.AddMinutes(Interval);
     }
 
     //public void Test() => WorkOverride();
