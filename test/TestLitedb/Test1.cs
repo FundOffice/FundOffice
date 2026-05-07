@@ -1,4 +1,7 @@
-﻿using LiteDB;
+﻿using FMO.Models;
+using FMO.Utilities;
+using LiteDB;
+using Microsoft.Win32;
 
 namespace TestLitedb;
 
@@ -20,6 +23,38 @@ public sealed class Test1
             Console.WriteLine($"{item.Id} {item.Name}");
         }
 
+    }
+
+    [TestMethod]
+    public void TestFact()
+    {
+        using (var key = Registry.CurrentUser.OpenSubKey(@$"Software\Nexus\Debug")) 
+        {
+            if (key != null)
+            {
+                var workFolder = key.GetValue("WorkingFolder") as string;
+                if (!string.IsNullOrWhiteSpace(workFolder))
+                {
+                    var di = new DirectoryInfo(workFolder);
+                    if (di.Exists)
+                        Directory.SetCurrentDirectory(di.FullName);
+                }
+            }
+        }
+        using var db = DbHelper.Base();
+        var ele =  db.GetCollection<FundElements>().FindById(9);
+        var facts = FundElementsFundFactHelper.FromElement(ele);
+                 
+        using var db2 = new LiteDatabase("FileName=xx.db");
+        //db2.DropCollection(nameof(IFundFact));
+        db2.GetCollection<IFundFact>().Upsert(facts);
+
+        facts = db2.GetCollection<IFundFact>().FindAll().ToArray();
+
+        var doc = db2.GetCollection(nameof(IFundFact)).FindAll().ToArray();
+
+
+        var nele = FundElementsFundFactHelper.ToElement(facts, 9);
     }
 }
 

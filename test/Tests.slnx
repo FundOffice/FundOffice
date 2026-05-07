@@ -1,5 +1,7 @@
 <Solution>
   <Project Path="../src/Disclosure/Disclosure/Disclosure.csproj" />
+  <Project Path="../src/Main/Models/Models.csproj" />
+  <Project Path="../src/Utility/Utilities/Utilities.csproj" />
   <Project Path="TestDisclosureChannel/TestDisclosureChannel.csproj" Id="fea4dcc8-b991-4c6d-b2c8-2881fb951f54" />
   <Project Path="TestLitedb/TestLitedb.csproj" Id="f33e637b-ae8f-4fc1-b238-921d6e434092" />
 </Solution>
