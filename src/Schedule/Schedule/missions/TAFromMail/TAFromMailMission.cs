@@ -53,7 +53,7 @@ public class TAFromMailMission : MailMission
         var coll = db.GetCollection<MailMissionRecord>($"mm_{Id}");
         var worked = coll.FindAll().ExceptBy(cat, x => x.Id).ToArray();
 
-        var work = FilterWork(files, worked, db);
+        var work = FilterWork(files, worked);
 
         var log = $"待处理邮件 {work.Length} 个";
 

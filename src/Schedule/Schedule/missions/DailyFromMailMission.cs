@@ -44,7 +44,7 @@ public class DailyFromMailMission : MailMission
         var cat = db.GetCollection<MailCategoryInfo>().FindAll().Where(x => x.Category != MailCategory.Unk && x.Category.HasFlag(MailCategory.ValueSheet)).Select(x => x.Id).ToArray();
 
         var worked = coll.FindAll().ExceptBy(cat, x => x.Id).ToArray();
-        var work = FilterWork(files, worked, db);
+        var work = FilterWork(files, worked);
 
         double unit = 100.0 / work.Length;
         double progress = 0;

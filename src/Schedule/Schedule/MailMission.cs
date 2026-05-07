@@ -74,7 +74,7 @@ public abstract class MailMission : Mission
     }
 
 
-    protected FileInfo[] FilterWork(FileInfo[] files, MailMissionRecord[] worked, LiteDB.LiteDatabase db)
+    protected FileInfo[] FilterWork(FileInfo[] files, MailMissionRecord[] worked)
     {
         if (Param is null || !Param.IgnoreHistory)
             return files.ExceptBy(worked.Select(x => x.Id), x => x.Name).ToArray();

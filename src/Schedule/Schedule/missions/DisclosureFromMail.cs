@@ -50,7 +50,7 @@ public class DisclosureFromMailMission : MailMission
         var worked = coll.FindAll().ExceptBy(cat, x => x.Id).ToArray();
 
         // 这里有问题， file 是uid， MailCategoryInfo是message id，不一样，无法排除
-        var work = FilterWork(files, worked, db);
+        var work = FilterWork(files, worked);
 
         var log = $"已处理{worked.Length}个邮件  待处理 {work.Length} 个";
 
@@ -73,7 +73,8 @@ public class DisclosureFromMailMission : MailMission
             {
                 var nlog = "";
                 WorkOne(f, fundmap, fundCodeMap, ref nlog);
-                logBag.Add(nlog);
+                if (!string.IsNullOrWhiteSpace(nlog))
+                    logBag.Add(nlog);
                 coll.Upsert(new MailMissionRecord { Id = f.Name, Time = DateTime.Now });
             }
             catch (Exception ex)
@@ -130,8 +131,7 @@ public class DisclosureFromMailMission : MailMission
         if (reports.Count == 0) return;
 
         // 合并成报告
-        using var db = DbHelper.Base();
-        db.BeginTrans();
+
         foreach (var fund in reports.GroupBy(x => x.Code))
         {
             if (!fundmap.TryGetValue(fund.Key, out int fundId)) continue;
@@ -207,8 +207,6 @@ public class DisclosureFromMailMission : MailMission
                 }
             }
         }
-
-        db.Commit();
     }
 
 
@@ -358,7 +356,7 @@ public class DisclosureFromMailMission : MailMission
     }
 
 
-    
+
     enum ParseType
     {
         InvestorInfo,

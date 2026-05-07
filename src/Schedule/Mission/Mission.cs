@@ -16,7 +16,7 @@ public abstract class Mission
     public DateTime? LastRun { get; set; }
 
     public DateTime? NextRun { get; set; }
-     
+
     public bool IsEnabled { get => field; set { field = value; if (value) SetNextRun(); } }
 
     public bool IsWorking { get; private set; }
@@ -26,7 +26,7 @@ public abstract class Mission
     /// </summary>
     public bool IsAborted { get; set; }
 
- 
+
 
     //private string? _log;
 
@@ -66,6 +66,7 @@ public abstract class Mission
         try
         {
             r = await WorkOverride();
+            log = r.Error;
             LastRun = now;
 
             // 已废弃 或 一次性任务，完成就释放
@@ -86,7 +87,7 @@ public abstract class Mission
         }
 
 
-        MissionRecord rec = new() { MissionId = Id, Record = log, Time = now };
+        MissionRecord rec = new() { MissionId = Id, Record = log ?? "", Time = now };
         using (var db = DbHelper.Mission())
         {
             db.GetCollection<Mission>().Upsert(this);
@@ -95,7 +96,7 @@ public abstract class Mission
 
         IsWorking = false;
         WeakReferenceMessenger.Default.Send(new MissionMessage { Id = Id, IsWorking = false, LastRun = LastRun, NextRun = NextRun });
-        WeakReferenceMessenger.Default.Send(new MissionWorkMessage(Id, log, now));
+        WeakReferenceMessenger.Default.Send(new MissionWorkMessage(Id, log ?? "", now));
         return r;
     }
 
