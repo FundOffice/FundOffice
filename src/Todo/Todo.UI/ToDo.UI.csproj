@@ -9,9 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TodoViewModelAutoRegister\TodoViewModelAutoRegister.csproj" OutputItemType="Analyzer"  />
+    <ProjectReference Include="..\TodoViewModelAutoRegister\TodoViewModelAutoRegister.csproj" OutputItemType="Analyzer"  ReferenceOutputAssembly="false"  />
     <ProjectReference Include="..\Todo\Todo.csproj" />
-    <ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer"  ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

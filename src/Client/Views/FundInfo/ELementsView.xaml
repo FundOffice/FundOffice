@@ -416,6 +416,22 @@
             <TextBox MinWidth="400" Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
         </DataTemplate>
 
+
+        <DataTemplate x:Key="DefaultDT">
+            <ContentPresenter Content="{Binding NewValue}" />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type local:PerformanceBenchmarkViewModel}">
+            <DockPanel>
+                <CheckBox IsChecked="{Binding Has}" />
+                <TextBox
+                    MinWidth="100"
+                    HorizontalAlignment="Stretch"
+                    Text="{Binding Benchmark, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                    Visibility="{Binding Has, Converter={StaticResource Boolean2VisibilityConverter}}" />
+            </DockPanel>
+        </DataTemplate>
+
         <ControlTemplate x:Key="CT.Agency" TargetType="shared:ChangeableContainer">
             <DockPanel
                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
@@ -1124,7 +1140,7 @@
     <Grid Margin="0,10">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
 
-            <Grid Background="Transparent">
+            <Grid Margin="0,0,15,0" Background="Transparent">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
                     <ColumnDefinition Width="8" />
@@ -1373,10 +1389,16 @@
                         </Border>
                         <StackPanel>
                             <DockPanel LastChildFill="False">
-                                <shared:ChangeableContainer
-                                    MinWidth="200"
-                                    HorizontalContentAlignment="Stretch"
-                                    Binding="{Binding OpenDayInfo}" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Foreground="Gray"
+                                    Text="固定开放日" />
+                                <!--<shared:ChangeableContainer HorizontalContentAlignment="Stretch" Binding="{Binding OpenDayInfo}" />-->
+
+                                <TextBlock
+                                    Margin="20,0"
+                                    VerticalAlignment="Center"
+                                    Text="{Binding OpenDayInfo.NewValue}" />
 
                                 <Button
                                     Command="{Binding SetOpenRuleCommand}"
@@ -1615,9 +1637,7 @@
                             <TextBlock Style="{StaticResource CategoryTab}" Text="投资相关" />
                         </Border>
 
-                        <StackPanel>
-
-                            <shared:ChangeableContainer Binding="{Binding InvestmentObjective}" ContentTemplate="{StaticResource DT.InvestmentObjective}" />
+                        <hc:UniformSpacingPanel Orientation="Vertical" VerticalSpacing="5">
 
                             <DockPanel>
                                 <shared:ChangeableContainer Binding="{Binding StopLine}" ContentTemplate="{StaticResource DT.StopLine}" />
@@ -1628,6 +1648,18 @@
                                     Binding="{Binding WarningLine}"
                                     ContentTemplate="{StaticResource DT.StopLine}" />
                             </DockPanel>
+
+
+                            <shared:ChangeableContainer
+                                Margin="0,0,30,0"
+                                HorizontalContentAlignment="Stretch"
+                                Binding="{Binding PerformanceBenchmark}" />
+
+
+                            <shared:ChangeableContainer
+                                HorizontalContentAlignment="Stretch"
+                                Binding="{Binding InvestmentObjective}"
+                                ContentTemplate="{StaticResource DT.InvestmentObjective}" />
 
                             <shared:ChangeableContainer
                                 HorizontalContentAlignment="Stretch"
@@ -1665,7 +1697,7 @@
                                 HorizontalContentAlignment="Stretch"
                                 Binding="{Binding InvestmentManagers}"
                                 ContentTemplate="{StaticResource DT.LongText}" />
-                        </StackPanel>
+                        </hc:UniformSpacingPanel>
                     </DockPanel>
                     <!--#endregion-->
 

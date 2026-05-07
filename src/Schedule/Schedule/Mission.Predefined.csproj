@@ -60,7 +60,7 @@
     <ProjectReference Include="..\..\SharedUI\SharedUI.csproj" />
     <ProjectReference Include="..\..\Utility\PDF\PdfExt.csproj" />
     <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
-    <ProjectReference Include="..\MissionRegisterGenerator\MissionRegisterGenerator.csproj" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\MissionRegisterGenerator\MissionRegisterGenerator.csproj" OutputItemType="Analyzer"  ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Mission\Mission.csproj" />
   </ItemGroup>
 

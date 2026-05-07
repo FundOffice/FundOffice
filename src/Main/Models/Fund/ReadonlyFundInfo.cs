@@ -124,7 +124,7 @@ public class ReadonlyFundInfo
 
 
     public string? InvestmentManager { get; set; }
-    public string? PerformanceBenchmarks { get; set; }
+    public PerformanceBenchmark? PerformanceBenchmark { get; set; }
     public string? InvestmentObjective { get; set; }
     public string? InvestmentScope { get; set; }
     public string? InvestmentStrategy { get; set; }
@@ -195,7 +195,7 @@ public class ReadonlyFundInfo
         OutsourcingFee = elements.OutsourcingFee?.Value;
         InvestmentManagers = elements.InvestmentManagers?.Value?.ToArray();
         InvestmentManager = elements.InvestmentManager?.Value;
-        PerformanceBenchmarks = elements.PerformanceBenchmarks?.Value switch { null => "", var n => n.IsAdopted ? n.Value : "" };
+        PerformanceBenchmark = elements.PerformanceBenchmark;// switch { null => "", var n => n.IsAdopted ? n.Value : "" };
         InvestmentObjective = elements.InvestmentObjective?.Value;
         InvestmentScope = elements.InvestmentScope?.Value;
         InvestmentStrategy = elements.InvestmentStrategy?.Value;

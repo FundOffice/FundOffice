@@ -82,12 +82,19 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         InitFlows(fund);
 
+        
+
         using var db = DbHelper.Base();
         FundElements ele = db.GetCollection<FundElements>().FindById(FundId);
         if (ele is null)
         {
             ele = FundElements.Create(FundId, Flows!.Min(x => x.FlowId));
             db.GetCollection<FundElements>().Insert(ele);
+        }
+        else
+        {
+            //检查是否有不存在的flow
+            ele.RemoveInvalidFlow(Flows?.Select(x => x.FlowId).ToArray());
         }
 
         CheckAndTodo(ele);
@@ -170,10 +177,25 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         {
             missingList.Add("运作方式");
         }
-        if (ele.SealingRule?.Changes is null || ele.SealingRule.Changes.Count == 0)
+        
+        if(ele.FundModeInfo?.Value?.Data == FundMode.Open)
         {
-            missingList.Add("封闭期");
+            if (ele.SealingRule?.Changes is null || ele.SealingRule.Changes.Count == 0)
+            {
+                missingList.Add("封闭期");
+            }
+
+            if (ele.OpenDayInfo?.Changes is null || ele.OpenDayInfo.Changes.Count == 0)
+            {
+                missingList.Add("开放日规则");
+            }
+            if (ele.FundOpenRule?.Changes is null || ele.FundOpenRule.Changes.Count == 0)
+            {
+                missingList.Add("开放规则");
+            }
+
         }
+
         if (ele.RiskLevel?.Changes is null || ele.RiskLevel.Changes.Count == 0)
         {
             missingList.Add("风险等级");
@@ -188,32 +210,25 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         }
         if (ele.CollectionAccount?.Changes is null || ele.CollectionAccount.Changes.Count == 0)
         {
-            missingList.Add("主募集账户");
+            missingList.Add("募集账户");
         }
         if (ele.CustodyAccount?.Changes is null || ele.CustodyAccount.Changes.Count == 0)
         {
-            missingList.Add("主托管账户");
+            missingList.Add("托管账户");
         }
         if (ele.ShareClasses?.Changes is null || ele.ShareClasses.Changes.Count == 0)
         {
             missingList.Add("份额类别");
         }
-        if (ele.StopLine?.Changes is null || ele.StopLine.Changes.Count == 0)
-        {
-            missingList.Add("止损线");
-        }
-        if (ele.WarningLine?.Changes is null || ele.WarningLine.Changes.Count == 0)
-        {
-            missingList.Add("预警线");
-        }
-        if (ele.OpenDayInfo?.Changes is null || ele.OpenDayInfo.Changes.Count == 0)
-        {
-            missingList.Add("开放日规则");
-        }
-        if (ele.FundOpenRule?.Changes is null || ele.FundOpenRule.Changes.Count == 0)
-        {
-            missingList.Add("开放规则");
-        }
+        //if (ele.StopLine?.Changes is null || ele.StopLine.Changes.Count == 0)
+        //{
+        //    missingList.Add("止损线");
+        //}
+        //if (ele.WarningLine?.Changes is null || ele.WarningLine.Changes.Count == 0)
+        //{
+        //    missingList.Add("预警线");
+        //}
+      
         if (ele.TrusteeInfo?.Changes is null || ele.TrusteeInfo.Changes.Count == 0)
         {
             missingList.Add("托管机构");
@@ -230,18 +245,18 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         {
             missingList.Add("外包费");
         }
-        if (ele.InvestmentManagers?.Changes is null || ele.InvestmentManagers.Changes.Count == 0)
-        {
-            missingList.Add("投资管理人");
-        }
+        //if (ele.InvestmentManagers?.Changes is null || ele.InvestmentManagers.Changes.Count == 0)
+        //{
+        //    missingList.Add("投资管理人");
+        //}
         if (ele.InvestmentManager?.Changes is null || ele.InvestmentManager.Changes.Count == 0)
         {
-            missingList.Add("投资管理人简称");
+            missingList.Add("投资经理");
         }
-        if (ele.PerformanceBenchmarks?.Changes is null || ele.PerformanceBenchmarks.Changes.Count == 0)
-        {
-            missingList.Add("业绩比较基准");
-        }
+        //if (ele.PerformanceBenchmark?.Changes is null || ele.PerformanceBenchmark.Changes.Count == 0)
+        //{
+        //    missingList.Add("业绩比较基准");
+        //}
         if (ele.InvestmentObjective?.Changes is null || ele.InvestmentObjective.Changes.Count == 0)
         {
             missingList.Add("投资目标");
@@ -254,13 +269,13 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         {
             missingList.Add("投资策略");
         }
-        if (ele.TemporarilyOpenInfo?.Changes is null || ele.TemporarilyOpenInfo.Changes.Count == 0)
-        {
-            missingList.Add("临时开放信息");
-        }
+        //if (ele.TemporarilyOpenInfo?.Changes is null || ele.TemporarilyOpenInfo.Changes.Count == 0)
+        //{
+        //    missingList.Add("临时开放信息");
+        //}
         if (ele.HugeRedemptionRatio?.Changes is null || ele.HugeRedemptionRatio.Changes.Count == 0)
         {
-            missingList.Add("巨额赎回比例");
+            missingList.Add("巨额赎回");
         }
         if (ele.CoolingPeriod?.Changes is null || ele.CoolingPeriod.Changes.Count == 0)
         {
@@ -296,7 +311,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         }
         if (ele.PerformanceFeeStatement?.Changes is null || ele.PerformanceFeeStatement.Changes.Count == 0)
         {
-            missingList.Add("业绩报酬说明");
+            missingList.Add("业绩报酬");
         }
 
         if (missingList.Count > 0)
@@ -720,7 +735,17 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     [RelayCommand]
     public void DeleteFlow(FlowViewModel flow)
     {
+        if (HandyControl.Controls.MessageBox.Show("删除后不可恢复，同时会删除关联的要素", "确认删除", System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.No)
+            return;
+
         using var db = DbHelper.Base();
+        var ele = db.GetCollection<FundElements>().FindById(FundId);
+        if (ele is not null)
+        {
+            ele.Remove(flow.FlowId);
+            db.GetCollection<FundElements>().Update(ele);
+        }
+
         db.GetCollection<FundFlow>().Delete(flow.FlowId);
         if (flow is LiquidationFlowViewModel && FundStatus <= FundStatus.StartLiquidation)
         {

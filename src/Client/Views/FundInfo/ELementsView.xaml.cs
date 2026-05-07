@@ -252,6 +252,9 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     //[ObservableProperty]
     //public partial ElementRefrenceWithBooleanViewModel<string>? PerformanceBenchmarks { get; set; }
 
+    [ObservableProperty]
+    public partial ChangeableViewModel<FundElements, PerformanceBenchmarkViewModel>? PerformanceBenchmark { get; set; }
+
 
     [ObservableProperty]
     public partial ChangeableViewModel<FundElements, string>? InvestmentObjective { get; set; }
@@ -360,7 +363,8 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
             InitFunc = x => x.SecurityFundType.GetValue(newValue).Value,
             InheritedFunc = x => x.SecurityFundType.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
             UpdateFunc = (x, y) => x.SecurityFundType.SetValue(y!, newValue),
-            ClearFunc = x => x.SecurityFundType.RemoveValue(newValue)
+            ClearFunc = x => x.SecurityFundType.RemoveValue(newValue),
+            DisplayFunc = x => x switch {  Models.SecurityFundType.Unk => "未设置", _=> EnumDescriptionTypeConverter.GetEnumDescription(x)}
         };
         SecurityFundType.Init(elements);
 
@@ -441,7 +445,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
                 }
             },
             ClearFunc = x => x.DurationInMonths!.RemoveValue(newValue),
-            DisplayFunc = x => x switch { >= 999 => "无固定期限", var m when m % 12 == 0 => $"{x / 12}年", > 0 => $"{x}个月", _ => "" }
+            DisplayFunc = x => x switch { >= 999 => "无固定期限", var m when m % 12 == 0 => $"{x / 12}年", > 0 => $"{x}个月", _ => "未设置" }
         };
         DurationInMonths.Init(elements);
 
@@ -452,6 +456,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
             InheritedFunc = x => x.ExpirationDate.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
             UpdateFunc = (x, y) => { if (y is not null) x.ExpirationDate!.SetValue(y.Value, newValue); },
             ClearFunc = x => x.ExpirationDate!.RemoveValue(newValue),
+            DisplayFunc = x => x is null || x.Value == default(DateOnly) ? "未设置" : x.Value.ToString("yyyy/MM/dd")
         };
         ExpirationDate.Init(elements);
 
@@ -576,6 +581,17 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         //PerformanceBenchmarks = new(elements, nameof(FundElements.PerformanceBenchmarks), FlowId, "业绩比较基准");
         //PerformanceBenchmarks.DisplayGenerator = (a, b) => a switch { true => b, false => "无", _ => ElementItemViewModel.UnsetValue };
 
+
+        PerformanceBenchmark = new()
+        {
+            Label = "业绩比较基准",
+            InitFunc = x => new(x.PerformanceBenchmark.GetValue(newValue).Value),
+            InheritedFunc = x => x.PerformanceBenchmark.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
+            UpdateFunc = (x, y) => { if (y is not null) x.PerformanceBenchmark!.SetValue(y.Build(), newValue); },
+            ClearFunc = x => x.PerformanceBenchmark.RemoveValue(newValue),
+            DisplayFunc = x=> x?.Has == true ? x.Benchmark : "-"
+        };
+        PerformanceBenchmark.Init(elements);
 
         InvestmentObjective = new ChangeableViewModel<FundElements, string>
         {

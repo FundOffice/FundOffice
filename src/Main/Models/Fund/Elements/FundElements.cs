@@ -1,7 +1,7 @@
 ﻿namespace FMO.Models;
 
 
-public class FundElements
+public partial class FundElements
 {
     public const string SingleShareKey = "单一份额";
 
@@ -126,7 +126,7 @@ public class FundElements
     /// <summary>
     /// 业绩比较基准
     /// </summary>
-    public Mutable<ValueWithBoolean<string>> PerformanceBenchmarks { get; set; } = new(nameof(PerformanceBenchmarks));
+    public Mutable<PerformanceBenchmark> PerformanceBenchmark { get; set; } = new(nameof(PerformanceBenchmark));
 
     /// <summary>
     /// 投资目标
@@ -282,8 +282,8 @@ public class FundElements
         { changed = true; InvestmentManagers = new(nameof(InvestmentManagers)); }
 
 
-        if (PerformanceBenchmarks is null)
-        { changed = true; PerformanceBenchmarks = new(nameof(PerformanceBenchmarks)); }
+        if (PerformanceBenchmark is null)
+        { changed = true; PerformanceBenchmark = new(nameof(PerformanceBenchmark)); }
 
         if (InvestmentObjective is null)
         { changed = true; InvestmentObjective = new(nameof(InvestmentObjective)); }

@@ -345,6 +345,11 @@ public partial class TemporarilyOpenInfoViewModel : IDataValidation
     public override string ToString() => !IsAllowed ? "不允许临开" : (IsLimited ? "仅合同变更、法规变更时，" : "") + $"允许{(AllowPurchase ? "申购" : "")}{(AllowRedemption ? "赎回" : "")}";
 }
 
+[AutoChangeableViewModel(typeof(PerformanceBenchmark))]
+public partial class PerformanceBenchmarkViewModel  
+{ 
+}
+
 
 [AutoChangeableViewModel(typeof(FundPurchaseRule))]
 public partial class FundPurchaseRuleViewModel : IDataValidation

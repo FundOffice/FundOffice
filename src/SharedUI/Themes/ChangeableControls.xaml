@@ -43,16 +43,15 @@
         </DockPanel>
     </ControlTemplate>
 
+
+    <DataTemplate x:Key="Changeable.DefaultDT">
+        <ContentPresenter Content="{Binding NewValue}" />
+    </DataTemplate>
+
     <!--  Style for ChangeableContainer  -->
     <Style TargetType="local:ChangeableContainer">
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="ContentTemplate">
-            <Setter.Value>
-                <DataTemplate>
-                    <TextBox Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
-                </DataTemplate>
-            </Setter.Value>
-        </Setter>
+        <Setter Property="ContentTemplate" Value="{StaticResource Changeable.DefaultDT}" />
         <Setter Property="EditTemplate" Value="{StaticResource Tpl.Changeable.Default}" />
         <Setter Property="Template" Value="{Binding RelativeSource={RelativeSource Self}, Path=EditTemplate, TargetNullValue={StaticResource Tpl.Changeable.Default}}" />
         <Style.Triggers>
