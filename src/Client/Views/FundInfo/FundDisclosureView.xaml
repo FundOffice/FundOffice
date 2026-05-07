@@ -70,6 +70,49 @@
             </Border>
         </DataTemplate>
 
+
+        <DataTemplate x:Key="QuarterlyUpdateItem">
+            <Border MinWidth="240">
+                <Grid Margin="4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60" />
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="2.2*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        shared:MaskService.IsMask="True"
+                        FontSize="15"
+                        Text="{Binding Title}" />
+
+                    <shared:FileView
+                        Grid.Column="1"
+                        Content="{Binding Operation}"
+                        Style="{StaticResource IconViewFileStyle}">
+                        <shared:FileView.Header>
+                            <TextBlock VerticalAlignment="Center" Text="运行表" />
+                        </shared:FileView.Header>
+                    </shared:FileView>
+
+
+                    <DockPanel Grid.Column="2">
+
+                        <Button
+                            Command="{Binding GenerateInvestorSheetCommand}"
+                            Content="生成"
+                            DockPanel.Dock="Right"
+                            Style="{StaticResource ButtonPrimary.Small}"
+                            Visibility="{Binding Investor.Exists, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                        <shared:FileView Content="{Binding Investor}" Style="{StaticResource IconViewFileStyle}">
+                            <shared:FileView.Header>
+                                <TextBlock VerticalAlignment="Center" Text="投资人表" />
+                            </shared:FileView.Header>
+                        </shared:FileView>
+
+                    </DockPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
     </UserControl.Resources>
 
 
@@ -325,8 +368,10 @@
 
             <ListBox
                 shared:MaskService.IsMask="True"
+                BorderThickness="0"
+                ItemTemplate="{StaticResource QuarterlyUpdateItem}"
                 ItemsSource="{Binding QuarterlyUpdate.View}"
-                Style="{StaticResource Update}" />
+                Style="{StaticResource ListBoxCustom}" />
 
         </DockPanel>
 

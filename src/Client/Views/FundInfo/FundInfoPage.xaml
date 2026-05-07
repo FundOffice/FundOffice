@@ -128,16 +128,16 @@
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
-    <Grid Margin="8">
+    <Grid Margin="0,8">
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="530" />
-            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <TabControl
             Grid.Column="1"
-            MaxWidth="1200"
+            Padding="0"
             BorderThickness="0"
             ItemContainerStyle="{StaticResource FundTab}">
             <TabItem Header="总览">

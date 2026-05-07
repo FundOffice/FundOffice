@@ -47,18 +47,15 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<IDis
             Where(Query.EQ(nameof(PeriodicalDisclosureNotice.FundId), fid)).
             OrderByDescending($"$.{nameof(PeriodicalDisclosureNotice.ReportDate)}").Limit(30).ToArray().OfType<PeriodicalDisclosureNotice>();
 
-        var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && !string.IsNullOrWhiteSpace(x.Channel)).ToArray().ToLookup(x => x.Type);
 
-        var run = db.GetCollection<DisclosureInstance>().Query().Where(Query.In(nameof(DisclosureInstance.NoticeId), notices.Select(x => new BsonValue(x.Id)))).ToArray().ToLookup(x => x.NoticeId);
-
-        PeriodicDisclosure = [.. notices.Select(x => new PeriodicReportViewModel(x, workflows[x.Type], run[x.Id]))];
+        PeriodicDisclosure = [.. notices.Select(x => new PeriodicReportViewModel(x, [], []))];
         PeriodicNoticeSource.Source = PeriodicDisclosure;
 
 
         var qu = db.GetCollection<IDisclosureNotice>().Query().
             Where(Query.EQ(nameof(PeriodicalDisclosureNotice.FundId), fid)).ToArray().OfType<QuarterlyUpdate>();
         var dic = db.GetCollection<AmacProcessResult>().Query().Where(Query.In("_id", qu.Select(x => new BsonValue(x.Id)))).ToArray().ToDictionary(x => x.Id, x => x);
-        QuarterlyDisclosure = [.. qu.Select(x => new QuarterlyUpdateViewModel(x, workflows[x.Type], run[x.Id]))];
+        QuarterlyDisclosure = [.. qu.Select(x => new QuarterlyUpdateViewModel(x, [], []))];
 
 
         //if (PeriodicDisclosure.Count == 0) PeriodicDisclosure = [new FundPeriodicReport { FundId = FundId, Type = PeriodicReportType.MonthlyReport }, new FundQuarterlyUpdate { FundId = FundId }];
