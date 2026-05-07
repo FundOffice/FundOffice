@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using FMO.AMAC.Direct;
 using FMO.Disclosure;
 using FMO.Models;
-using FMO.Shared;
 using FMO.Utilities;
 using HandyControl.Controls;
 using LiteDB;
@@ -89,6 +88,10 @@ public partial class DisclosurePageViewModel : ObservableObject
     public CollectionViewSource TemporaryNoticeSource { get; } = new();
 
 
+    [ObservableProperty]
+    public partial ObservableCollection<TemporaryNoticeViewModel> TemporaryNotices { get; set; }
+
+
     private Debouncer debouncer;
 
     partial void OnSelectedYearChanged(int? value)
@@ -139,6 +142,8 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         var run = db.GetCollection<DisclosureInstance>().Query().Where(Query.In(nameof(DisclosureInstance.NoticeId), noticeIds.Select(x => new BsonValue(x)))).ToArray().ToLookup(x => x.NoticeId);
 
+
+
         if (SelectedMonth % 3 == 0)
         {
             // 补全没有的季度更新
@@ -168,13 +173,11 @@ public partial class DisclosurePageViewModel : ObservableObject
             AnnualSource.Source = vm.Where(x => x.Type == DisclosureType.Annually);
             QuarterlyUpdateSource.Source = updates.Select(x => new QuarterlyUpdateViewModel(x, workflows[x.Type], run[x.Id]));
 
-            TemporaryNoticeSource.Source = otherNotice.OfType<IFundDisclosureNotice>().Select<IFundDisclosureNotice, object>(x => x switch
-            {
-                TemporaryOpenNotice t => new TemporaryOpenNoticeViewModel(t, workflows[x.Type], run[x.Id]),
-                _ => x
-            });
 
+            TemporaryNotices = [.. otherNotice.OfType<IFundDisclosureNotice>().Select(x => TemporaryNoticeViewModel.Create(x, workflows[x.Type], run[x.Id]))];
+            TemporaryNoticeSource.Source = TemporaryNotices;
         });
+
 
     }
 
@@ -198,11 +201,7 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         App.Current.Dispatcher.InvokeAsync(() =>
         {
-            TemporaryNoticeSource.Source = otherNotice.OfType<IFundDisclosureNotice>().Select<IFundDisclosureNotice, object>(x => x switch
-            {
-                TemporaryOpenNotice t => new TemporaryOpenNoticeViewModel(t, workflows[x.Type], run[x.Id]),
-                _ => x
-            });
+            TemporaryNotices = [..otherNotice.OfType<IFundDisclosureNotice>().Select(x => TemporaryNoticeViewModel.Create(x, workflows[x.Type], run[x.Id]))];
 
         });
 
@@ -222,7 +221,7 @@ public partial class DisclosurePageViewModel : ObservableObject
 
 
     [RelayCommand]
-    public void GenerateTemporaryOpen()
+    public async Task GenerateTemporaryOpen()
     {
         var pe = new DateOnly(SelectedYear!.Value, SelectedMonth!.Value, 1);
 
@@ -253,15 +252,29 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         DataTracker.OnNewNotice(notice);
 
-        UpdateTemporary();
+        await Task.Delay(1000);
+        var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && x.Type == notice.Type);
+
+        var run = db.GetCollection<DisclosureInstance>().Query().Where(x => x.NoticeId == notice.Id).ToArray();
+
+        await App.Current.Dispatcher.InvokeAsync(()=> TemporaryNotices.Add(TemporaryNoticeViewModel.Create(notice, workflows, run)));
     }
+
+    [RelayCommand]
+    public void DeleteTemporyNotice(TemporaryNoticeViewModel notice)
+    {
+        DisclosureService.RemoveNotice(notice.Id);
+
+        TemporaryNotices.Remove(notice);
+    }
+
 
     [RelayCommand]
     public void Delete(object obj)
     {
         switch (obj)
         {
-            case TemporaryNoticeViewModel v:
+            case TemporaryFundNoticeViewModel v:
                 if (MessageBox.Show(new HandyControl.Data.MessageBoxInfo
                 {
                     Caption = "是否删除临时报告",
@@ -280,37 +293,3 @@ public partial class DisclosurePageViewModel : ObservableObject
     }
 }
 
-
-public class TemporaryNoticeViewModel
-{
-    public long Id { get; set; }
-
-    public string? Name { get; set; }
-
-    public string? FundName { get; set; }
-
-    public string? DisplayName => Fund.GetDefaultShortName(FundName);
-
-    public SimpleFileViewModel? File { get; set; }
-
-    public ObservableCollection<DisclosureRunViewModel>? Runs { get; init; }
-
-
-}
-
-[AutoViewModel(typeof(TemporaryOpenNotice))]
-public partial class TemporaryOpenNoticeViewModel : TemporaryNoticeViewModel
-{
-
-    public TemporaryOpenNoticeViewModel(TemporaryOpenNotice report, IEnumerable<DisclosureWorkflow> workflows, IEnumerable<DisclosureInstance> runs) : this(report)
-    {
-        var data = from workflow in workflows
-                       // 左连接：以 workflow 为主体，匹配对应的实例
-                   join instance in runs on workflow.Id equals instance.WorkflowId into instanceGroup
-                   from instance in instanceGroup.DefaultIfEmpty()
-                       // 构建 ViewModel
-                   select new DisclosureRunViewModel(report, workflow, instance);
-
-        Runs = new(data);
-    }
-}

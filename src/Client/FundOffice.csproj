@@ -113,7 +113,7 @@
     <ProjectReference Include="..\Utility\PDF\PdfExt.csproj" TargetFramework="net9.0-windows" />
     <ProjectReference Include="..\Plugin\Plugin\Plugin.csproj" />
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
-    <ProjectReference Include="..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer"  ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Utility\FileTemplate\FileTemplate.csproj" />
     <ProjectReference Include="..\Trustee\Trustee\Trustee.csproj" />
     <ProjectReference Include="..\Utility\Utilities\Utilities.csproj" />

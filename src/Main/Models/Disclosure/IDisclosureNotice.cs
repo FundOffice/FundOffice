@@ -40,10 +40,6 @@ public interface IFundDisclosureNotice : IDisclosureNotice
 
 }
 
-public interface IDisclosureFile
-{
-    public SimpleFile? File { get; }
-}
 
  
 
@@ -135,10 +131,19 @@ public class QuarterlyUpdate : IFundPeriodicalDisclosure
 
 }
 
+
+public interface ITemporaryDisclosureNotice 
+{
+    SimpleFile? Word { get; set; }
+
+    SimpleFile? Pdf { get; set; }
+     
+}
+
 /// <summary>
 /// 临时报告
 /// </summary>
-public class TemporaryDisclosureNotice : IFundDisclosureNotice, IDisclosureFile
+public class TemporaryDisclosureNotice : IFundDisclosureNotice, ITemporaryDisclosureNotice
 {
     public long Id { get; init; }
 
@@ -156,7 +161,11 @@ public class TemporaryDisclosureNotice : IFundDisclosureNotice, IDisclosureFile
 
     public required string Name { get; set; }
 
-    public SimpleFile? File { get; set; }
+    public SimpleFile? Word { get; set; }
+
+    public SimpleFile? Pdf { get; set; }
+
+    //public SimpleFile? File => Pdf;
 
     public TemporaryDisclosureNotice()
     {
@@ -168,7 +177,7 @@ public class TemporaryDisclosureNotice : IFundDisclosureNotice, IDisclosureFile
 /// <summary>
 /// 临时开放公告
 /// </summary>
-public class TemporaryOpenNotice : IFundDisclosureNotice, IDisclosureFile
+public class TemporaryOpenNotice : IFundDisclosureNotice, ITemporaryDisclosureNotice
 {
     public long Id => ((long)OpenDay.DayNumber) << 32 | (long)FundId << 10 | ((long)Type);
 
@@ -191,14 +200,16 @@ public class TemporaryOpenNotice : IFundDisclosureNotice, IDisclosureFile
 
     public bool AllowRedemption { get; set; }
 
-    public SimpleFile? File { get; set; }
+    public SimpleFile? Word { get; set; }
+
+    public SimpleFile? Pdf { get; set; }
 }
 
 
 /// <summary>
 /// 巨额赎回公告
 /// </summary>
-public class HugeRedemptionNotice : IFundDisclosureNotice, IDisclosureFile
+public class HugeRedemptionNotice : IFundDisclosureNotice, ITemporaryDisclosureNotice
 {
     public long Id => ((long)OpenDay.DayNumber) << 32 | (long)FundId << 10 | ((long)Type);
 
@@ -233,13 +244,15 @@ public class HugeRedemptionNotice : IFundDisclosureNotice, IDisclosureFile
     /// </summary>
     public bool IsFullyPaied { get; set; }
 
-    public SimpleFile? File { get; set; }
+    public SimpleFile? Word { get; set; }
+
+    public SimpleFile? Pdf { get; set; }
 }
 
 /// <summary>
 /// 产品成立公告
 /// </summary>
-public class FundSetupNotice : IFundDisclosureNotice, IDisclosureFile
+public class FundSetupNotice : IFundDisclosureNotice, ITemporaryDisclosureNotice
 {
     public long Id => ((long)SetupDay.DayNumber) << 32 | (long)FundId << 10 | ((long)Type);
 
@@ -259,7 +272,9 @@ public class FundSetupNotice : IFundDisclosureNotice, IDisclosureFile
 
     public DateOnly SetupDay { get; set; }
 
-    public SimpleFile? File { get; set; }
+    public SimpleFile? Word { get; set; }
+
+    public SimpleFile? Pdf { get; set; }
 }
 
 /// <summary>
@@ -287,7 +302,7 @@ public enum ScaleWarningType
 
 }
 
-public class FundSacleWarningNotice : IFundDisclosureNotice, IDisclosureFile
+public class FundSacleWarningNotice : IFundDisclosureNotice, ITemporaryDisclosureNotice
 {
     public long Id => (long)WarningType << 58 | (long)TouchDate.DayNumber << 32 | (long)FundId << 10 | ((long)Type);
 
@@ -312,7 +327,9 @@ public class FundSacleWarningNotice : IFundDisclosureNotice, IDisclosureFile
 
     public required string Name { get; set; }
 
-    public SimpleFile? File { get; set; }
+    public SimpleFile? Word { get; set; }
+
+    public SimpleFile? Pdf { get; set; }
 }
 
 
@@ -322,7 +339,7 @@ public class FundSacleWarningNotice : IFundDisclosureNotice, IDisclosureFile
 /// <summary>
 /// 管理人公告
 /// </summary>
-public class ManagerDisclosureNotice : IDisclosureNotice, IDisclosureFile
+public class ManagerDisclosureNotice : IDisclosureNotice, ITemporaryDisclosureNotice
 {
     public long Id { get; init; }
 
@@ -334,7 +351,9 @@ public class ManagerDisclosureNotice : IDisclosureNotice, IDisclosureFile
 
     public required string Name { get; set; }
 
-    public SimpleFile? File { get; set; }
+    public SimpleFile? Word { get; set; }
+
+    public SimpleFile? Pdf { get; set; }
 
     public ManagerDisclosureNotice()
     {

@@ -224,7 +224,7 @@
         </DataTemplate>
 
 
-        <DataTemplate DataType="{x:Type local:TemporaryNoticeViewModel}">
+        <DataTemplate DataType="{x:Type local:TemporaryFundNoticeViewModel}">
             <Border MinWidth="240">
                 <StackPanel Margin="4">
                     <DockPanel DockPanel.Dock="Top">
@@ -476,20 +476,77 @@
         </DataTemplate>
 
 
+
+        <DataTemplate DataType="{x:Type local:TemporaryOpenNoticeViewModel}">
+            <Border Width="260">
+                <StackPanel Margin="4">
+                    <DockPanel>
+                        <TextBlock
+                            Width="32"
+                            Margin="0,0,20,0"
+                            FontSize="14"
+                            FontWeight="Black"
+                            Foreground="RoyalBlue"
+                            Text="临时开放"
+                            TextWrapping="Wrap" />
+
+                        <DockPanel DockPanel.Dock="Top">
+
+                            <TextBlock
+                                shared:MaskService.IsMask="True"
+                                FontSize="15"
+                                Text="{Binding DisplayName}" />
+
+                        </DockPanel>
+
+                        <DockPanel Margin="0,4">
+
+                            <TextBlock FontSize="14" Text="{Binding OpenDay, StringFormat={}yy/MM/dd}" />
+                            <TextBlock
+                                Margin="10,0"
+                                FontSize="14"
+                                Text="{Binding Allow}" />
+                        </DockPanel>
+                    </DockPanel>
+
+
+                    <UniformGrid Rows="1">
+
+                        <shared:FileView
+                            Content="{Binding Word}"
+                            IsReadOnly="False"
+                            Style="{StaticResource IconViewFileStyle}">
+                            <shared:FileView.Header>
+                                <Viewbox Width="14" Height="14">
+                                    <Path Data="{StaticResource f.file-word}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                </Viewbox>
+                            </shared:FileView.Header>
+                        </shared:FileView>
+
+
+                        <shared:FileView Content="{Binding Pdf}" Style="{StaticResource IconViewFileStyle}">
+                            <shared:FileView.Header>
+                                <Viewbox Width="14" Height="14">
+                                    <Path Data="{StaticResource f.file-pdf}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Control}}}" />
+                                </Viewbox>
+                            </shared:FileView.Header>
+                        </shared:FileView>
+
+
+                    </UniformGrid>
+
+                    <ListBox
+                        Margin="-4,0"
+                        BorderThickness="0"
+                        ItemTemplate="{StaticResource RunDataTemplate}"
+                        ItemsSource="{Binding Runs}"
+                        Style="{StaticResource ListBoxCustom}" />
+
+                </StackPanel>
+            </Border>
+        </DataTemplate>
     </UserControl.Resources>
     <DockPanel>
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         <DockPanel
@@ -697,16 +754,80 @@
                         </DockPanel>
                     </Expander.Header>
 
-                    <ListBox ItemsSource="{Binding TemporaryNoticeSource.View}" Style="{StaticResource ListBoxCustom}">
+                    <ListBox
+                        BorderThickness="0"
+                        ItemsSource="{Binding TemporaryNoticeSource.View}"
+                        Style="{StaticResource ListBoxCustom}">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <hc:UniformSpacingPanel
                                     ChildWrapping="Wrap"
-                                    HorizontalSpacing="20"
+                                    HorizontalSpacing="10"
                                     IsItemsHost="True"
                                     VerticalSpacing="5" />
                             </ItemsPanelTemplate>
                         </ListBox.ItemsPanel>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border
+                                                Background="Transparent"
+                                                BorderBrush="Gray"
+                                                BorderThickness="1"
+                                                CornerRadius="5">
+                                                <hc:SimplePanel>
+                                                    <ContentPresenter Content="{Binding}" />
+
+                                                    <DockPanel
+                                                        x:Name="del"
+                                                        Margin="4"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Top"
+                                                        hc:IconElement.Geometry="{StaticResource f.trash}"
+                                                        LastChildFill="False"
+                                                        Visibility="Collapsed">
+                                                        <ToggleButton
+                                                            x:Name="a"
+                                                            Content="删除"
+                                                            Style="{StaticResource ToggleButtonDanger.Small}"
+                                                            Visibility="{Binding IsChecked, RelativeSource={RelativeSource Self}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                                                        <DockPanel x:Name="b" Visibility="{Binding ElementName=a, Path=IsChecked, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                                            <Button
+                                                                Width="18"
+                                                                Margin="0"
+                                                                Padding="0"
+                                                                hc:IconElement.Geometry="{StaticResource f.check}"
+                                                                Command="{Binding DataContext.DeleteTemporyNoticeCommand, RelativeSource={RelativeSource AncestorType=local:DisclosurePage}}"
+                                                                CommandParameter="{Binding .}"
+                                                                Foreground="Red"
+                                                                Style="{StaticResource ButtonIcon.Small}" />
+                                                            <ToggleButton
+                                                                x:Name="c"
+                                                                hc:IconElement.Geometry="{StaticResource f.x}"
+                                                                Background="Transparent"
+                                                                BorderThickness="0"
+                                                                Style="{StaticResource ToggleButtonIcon.Small}" />
+                                                        </DockPanel>
+                                                    </DockPanel>
+                                                </hc:SimplePanel>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="del" Property="Visibility" Value="Visible" />
+                                                </Trigger>
+                                                <Trigger SourceName="c" Property="IsChecked" Value="True">
+                                                    <Setter TargetName="a" Property="IsChecked" Value="False" />
+                                                    <Setter TargetName="c" Property="IsChecked" Value="False" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
                     </ListBox>
                 </Expander>
             </hc:UniformSpacingPanel>
@@ -715,3 +836,4 @@
 
     </DockPanel>
 </UserControl>
+

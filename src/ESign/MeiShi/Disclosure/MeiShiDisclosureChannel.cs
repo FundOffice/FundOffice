@@ -58,8 +58,8 @@ public partial class MeiShiAssit : IDisclosureChannel
                 if (n.WarningType == ScaleWarningType.None) return new(false, "预警类型不合法");
                 return n.TouchDate.Year > 1970 ? new(true) : new(false, "触发日期不合法");
 
-            case IDisclosureFile n:
-                return (n.File?.Exists ?? false) ? new(true) : new(false, "文件不存在");
+            case ITemporaryDisclosureNotice n:
+                return (n.Pdf?.Exists ?? false) ? new(true) : new(false, "文件不存在");
 
             default:
                 return new(false, "不支持的通知类型");
@@ -87,8 +87,8 @@ public partial class MeiShiAssit : IDisclosureChannel
             case FundSacleWarningNotice n:
                 return await Disclosure(n, config as MeiShiWorkConfig);
 
-            case IDisclosureFile n and IFundDisclosureNotice f:
-                if (n.File?.Exists != true) return new(false, "文件不存在");
+            case ITemporaryDisclosureNotice n and IFundDisclosureNotice f:
+                if (n.Pdf?.Exists != true) return new(false, "文件不存在");
                 return await UploadDisclosureFile(f.FundName, f.FundCode, "", f.PublishDate.ToDateTime(f.PublishTime), f.Name, n.File.File!.GetFullPath());
 
             default:

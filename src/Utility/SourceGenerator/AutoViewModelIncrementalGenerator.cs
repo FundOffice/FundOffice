@@ -439,6 +439,9 @@ using System.Runtime.CompilerServices;
         {
             if (IsNestedViewModel)
             {
+                if(ViewModelTypeName.EndsWith("FileViewModel"))
+                    return $"{Name} = new {ViewModelTypeName}({sourceVar}.{Name});";
+
                 // a = val.A != null ? new ClassAViewModel(val.A) : null;
                 return IsNullable
                     ? $"{Name} = {sourceVar}.{Name} != null ? new {ViewModelTypeName}({sourceVar}.{Name}) : null;"

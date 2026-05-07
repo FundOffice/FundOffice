@@ -140,8 +140,8 @@ public class EmailDisclosureChannel : IDisclosureChannel
 
     private (string File, FileStream Stream)? GetAttachment(IDisclosureNotice notice)
     {
-        if (notice is IDisclosureFile n && n.File?.Exists == true)
-            return (n.File.File!.Name, n.File.File!.OpenRead()!);
+        if (notice is ITemporaryDisclosureNotice n && n.Pdf?.Exists == true)
+            return (n.Pdf.File!.Name, n.Pdf.File!.OpenRead()!);
         if (notice is PeriodicalDisclosureNotice d)
         {
             if (d.Sealed?.Exists == true) return (d.Sealed.File!.Name, d.Sealed.File?.OpenRead()!);
@@ -176,7 +176,7 @@ public class EmailDisclosureChannel : IDisclosureChannel
             case DisclosureType.MangerChange:
             case DisclosureType.OfficeAddressChange:
             case DisclosureType.OtherManagerNotice:
-                return Notice is IDisclosureFile n && n.File?.Exists == true ? new(true) : new(false, "文件不存在");
+                return Notice is ITemporaryDisclosureNotice n && n.Pdf?.Exists == true ? new(true) : new(false, "文件不存在");
 
             default:
                 return new(false, "不支持的公告类型");
