@@ -18,7 +18,7 @@ public partial class AddTemporaryOpenWindow : Window
 }
 
 
-public partial class AddTemporaryOpenWindowViewModel : ObservableObject
+public partial class AddTemporaryWindowViewModel : ObservableObject
 {
     public CollectionViewSource FundSource { get; } = new();
 
@@ -38,26 +38,16 @@ public partial class AddTemporaryOpenWindowViewModel : ObservableObject
     public partial bool ShowList { get; set; }
 
 
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(ConfirmCommand))]
-    public partial bool AllowBuy { get; set; }
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(ConfirmCommand))]
-    public partial bool AllowSell { get; set; }
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(ConfirmCommand))]
-    public partial DateTime OpenDate { get; set; }
-
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ConfirmCommand))]
     public partial DateTime PublishTime { get; set; } = DateTime.Now;
 
-    public bool CanConfirm => SelectedFund is not null && OpenDate.Year > 2000 && PublishTime.Year > 2000 && (AllowBuy || AllowSell);
+    public virtual bool CanConfirm => false;// CanConfirmOverrride();
 
-    public AddTemporaryOpenWindowViewModel(Fund[] names)
+    public virtual bool CanConfirmOverrride() => false;
+
+    public AddTemporaryWindowViewModel(Fund[] names)
     {
         Funds = names;
         FundSource.Source = Funds;
@@ -77,4 +67,33 @@ public partial class AddTemporaryOpenWindowViewModel : ObservableObject
         window.DialogResult = true;
         window.Close();
     }
+}
+
+
+
+public partial class AddTemporaryOpenWindowViewModel : AddTemporaryWindowViewModel
+{
+
+
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ConfirmCommand))]
+    public partial bool AllowBuy { get; set; }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ConfirmCommand))]
+    public partial bool AllowSell { get; set; }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ConfirmCommand))]
+    public partial DateTime OpenDate { get; set; }
+
+
+    public override bool CanConfirm => SelectedFund is not null && OpenDate.Year > 2000 && PublishTime.Year > 2000 && (AllowBuy || AllowSell);
+
+    public AddTemporaryOpenWindowViewModel(Fund[] names) : base(names)
+    {
+    }
+
+
 }

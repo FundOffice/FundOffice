@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FMO.AMAC.Direct;
 using FMO.Disclosure;
 using FMO.Models;
 using FMO.Utilities;
@@ -201,7 +200,7 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         App.Current.Dispatcher.InvokeAsync(() =>
         {
-            TemporaryNotices = [..otherNotice.OfType<IFundDisclosureNotice>().Select(x => TemporaryNoticeViewModel.Create(x, workflows[x.Type], run[x.Id]))];
+            TemporaryNotices = [.. otherNotice.OfType<IFundDisclosureNotice>().Select(x => TemporaryNoticeViewModel.Create(x, workflows[x.Type], run[x.Id]))];
 
         });
 
@@ -252,13 +251,66 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         DataTracker.OnNewNotice(notice);
 
+        await Task.Delay(500);
+        var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && x.Type == notice.Type);
+
+        var run = db.GetCollection<DisclosureInstance>().Query().Where(x => x.NoticeId == notice.Id).ToArray();
+
+        await App.Current.Dispatcher.InvokeAsync(() => TemporaryNotices.Add(TemporaryNoticeViewModel.Create(notice, workflows, run)));
+    }
+
+
+
+    [RelayCommand]
+    public async Task GenerateHugeRedemptionNotice()
+    {
+        var pe = new DateOnly(SelectedYear!.Value, SelectedMonth!.Value, 1);
+
+        using var db = DbHelper.Base();
+        var funds = db.GetCollection<Fund>().Query().Where(x => x.Status == FundStatus.Normal || x.ClearDate >= pe).ToArray();
+
+        var dc = new AddHugeRedemptionNoticeWindowViewModel(funds)
+        {
+            OpenDate = DateTime.Now,
+        };
+        var wnd = new AddHugeRedemptionNoticeWindow();
+        wnd.DataContext = dc;
+        wnd.Owner = App.Current.MainWindow;
+        if (wnd.ShowDialog() != true || dc.SelectedFund is null) return;
+
+        HugeRedemptionNotice notice = new()
+        {
+            FundId = dc.SelectedFund.Id,
+            FundCode = dc.SelectedFund.Code ?? "",
+            FundName = dc.SelectedFund.Name,
+            OpenDay = DateOnly.FromDateTime(dc.OpenDate),
+            RealRatio = (dc.RealRatio ?? 0) /100,
+            DefinedRatio = (dc.DefinedRatio ?? 0) /100,
+            PublishDate = DateOnly.FromDateTime(dc.PublishTime),
+            PublishTime = TimeOnly.FromDateTime(dc.PublishTime)
+        };
+
+        DataTracker.OnNewNotice(notice);
+
         await Task.Delay(1000);
         var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && x.Type == notice.Type);
 
         var run = db.GetCollection<DisclosureInstance>().Query().Where(x => x.NoticeId == notice.Id).ToArray();
 
-        await App.Current.Dispatcher.InvokeAsync(()=> TemporaryNotices.Add(TemporaryNoticeViewModel.Create(notice, workflows, run)));
+        await App.Current.Dispatcher.InvokeAsync(() => TemporaryNotices.Add(TemporaryNoticeViewModel.Create(notice, workflows, run)));
     }
+
+
+
+
+
+
+
+
+
+
+
+
 
     [RelayCommand]
     public void DeleteTemporyNotice(TemporaryNoticeViewModel notice)
