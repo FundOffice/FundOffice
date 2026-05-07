@@ -1549,13 +1549,36 @@ public static partial class DataTracker
     public static void OnNewNotice(IDisclosureNotice notice)
     {
         using var db = DbHelper.Base();
-        db.GetCollection<IDisclosureNotice>().Upsert(notice);
+        var x = db.GetCollection<IDisclosureNotice>().FindById(notice.Id);
+
+        if (x is not null)
+        {
+            // 去掉null值
+            var old = db.GetCollection(nameof(IDisclosureNotice)).FindById(notice.Id);
+            var doc = BsonMapper.Global.ToDocument(notice);
+
+            Merge(old, doc);
+            db.GetCollection(nameof(IDisclosureNotice)).Upsert(old);
+
+            notice = BsonMapper.Global.ToObject<IDisclosureNotice>(old);
+        }
+        else db.GetCollection<IDisclosureNotice>().Insert(notice);
 
         WeakReferenceMessenger.Default.Send(notice);
 
         Notify(notice);
     }
+    private static void Merge(BsonDocument oldDoc, BsonDocument newDoc)
+    {
+        if (newDoc is null) return;
 
+        foreach (var kvp in newDoc)
+        {
+            // 1. 排除 null 值
+            if (!kvp.Value.IsNull) 
+                oldDoc[kvp.Key] = kvp.Value;
+        }
+    }
 
     #region Hook
 
