@@ -17,7 +17,7 @@ public partial class ShareElementsViewModel<TProperty, TViewModel> : ObservableO
 
 
     [SetsRequiredMembers]
-    public ShareElementsViewModel(int fundid, int flowId, FundElements elements, ShareClass[] sc, Func<FundElements, PortionMutable<TProperty>> property, Func<TProperty?, TViewModel> o2v, Func<TViewModel?, TProperty> v2o, Func<TViewModel?, string>? desp = null)
+    public ShareElementsViewModel(int fundid, int flowId, FundElements elements, ShareClass[] sc, Func<FundElements, PortionMutable<TProperty>> property, Func<TProperty?, TViewModel> o2v, Func<TViewModel?, TProperty> v2o, Func<TViewModel?, string?>? desp = null)
     {
         FundId = fundid;
         FlowId = flowId;

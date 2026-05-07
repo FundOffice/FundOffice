@@ -107,6 +107,20 @@ public class CopyableTextBlock : Control
 
 
 
+
+    public TextWrapping TextWrapping
+    {
+        get { return (TextWrapping)GetValue(TextWrappingProperty); }
+        set { SetValue(TextWrappingProperty, value); }
+    }
+
+    // Using a DependencyProperty as the backing store for TextWrapping.  This enables animation, styling, binding, etc...
+    public static readonly DependencyProperty TextWrappingProperty =
+        DependencyProperty.Register(nameof(TextWrapping), typeof(TextWrapping), typeof(CopyableTextBlock), new PropertyMetadata(TextWrapping.WrapWithOverflow));
+
+
+
+
     private static void ModifyMasked(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not CopyableTextBlock tb) return;
@@ -141,6 +155,6 @@ public class CopyableTextBlock : Control
     }
     private void SetCanCopy(string? str)
     {
-        CanCopy = !string.IsNullOrWhiteSpace(str) && str != "-";
+        CanCopy = !string.IsNullOrWhiteSpace(str) && str != "-" && str != "未设置";
     }
 }

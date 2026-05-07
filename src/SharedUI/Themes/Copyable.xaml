@@ -24,8 +24,9 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock
                                 VerticalAlignment="Center"
+                                Foreground="{TemplateBinding Foreground}"
                                 Text="{TemplateBinding MaskedText}"
-                                TextWrapping="WrapWithOverflow" />
+                                TextWrapping="{TemplateBinding TextWrapping}" />
                             <Button
                                 x:Name="PART_Copy"
                                 Grid.Column="1"
@@ -40,6 +41,9 @@
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="未设置">
+                            <Setter Property="Foreground" Value="Red" />
+                        </Trigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="CanCopy" Value="True" />

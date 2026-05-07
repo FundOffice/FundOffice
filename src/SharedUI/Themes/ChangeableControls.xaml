@@ -70,12 +70,10 @@
                                     DockPanel.Dock="Left"
                                     Foreground="{StaticResource LabelBrush}"
                                     Text="{Binding Binding.Label, RelativeSource={RelativeSource Mode=TemplatedParent}}" />
-                                <local:CopyableControl Margin="10,0,0,0">
-                                    <TextBlock
-                                        local:MaskService.IsMask="True"
-                                        Text="{Binding Binding.Display, RelativeSource={RelativeSource Mode=TemplatedParent}}"
-                                        TextWrapping="WrapWithOverflow" />
-                                </local:CopyableControl>
+                                <local:CopyableTextBlock
+                                    Margin="10,0,0,0"
+                                    Text="{Binding Binding.Display, RelativeSource={RelativeSource Mode=TemplatedParent}}"
+                                    TextWrapping="WrapWithOverflow" />
                             </DockPanel>
                         </ControlTemplate>
                     </Setter.Value>

@@ -231,6 +231,7 @@
                             <ListBox
                                 x:Name="list"
                                 Margin="5,0,0,0"
+                                Padding="0"
                                 BorderThickness="0"
                                 ItemContainerStyle="{StaticResource Style.ListItem.PortionElement}"
                                 ItemTemplate="{StaticResource DTpl.PortionElement}"

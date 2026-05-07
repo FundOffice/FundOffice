@@ -57,7 +57,7 @@ public partial class ChangeableViewModel<TEntity, TProperty> : ObservableObject,
 
     private TProperty? _notnullDefault = default;// new TProperty();
 
-    public string? Display => DisplayFunc is not null ? DisplayFunc(OldValue) : OldValue?.ToString();
+    public string? Display => DisplayFunc is not null ? DisplayFunc(OldValue) : OldValue?.ToString() ?? "未设置";
 
     public virtual bool CanConfirm => NewValue is not null /*&& !NewValue.Equals(default(TProperty))*/ && IsValueChanged && NewValue switch { IDataValidation d => d.IsValid(), _ => true };
 
