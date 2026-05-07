@@ -240,7 +240,7 @@ public partial class PeriodicReportViewModel : ObservableObject
 
 
 
-public partial class DisclosureRunViewModel : ObservableObject, IRecipient<DisclosureInstance>
+public partial class DisclosureRunViewModel : ObservableObject, IRecipient<DisclosureInstance>, IRecipient<DisclosureRunMessage>
 {
 
     public string Channel { get; }
@@ -337,6 +337,13 @@ public partial class DisclosureRunViewModel : ObservableObject, IRecipient<Discl
     public void Receive(DisclosureInstance message)
     {
         if (message.Id == InstanceId) Fill(message);
+    }
+
+    public void Receive(DisclosureRunMessage message)
+    {
+        if (message.Id != InstanceId) return;
+
+        Error = message.Message;
     }
 }
 

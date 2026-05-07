@@ -162,6 +162,7 @@
                                 Height="12"
                                 Margin="5,0"
                                 Data="{StaticResource f.robot}"
+                                IsPlaying="{Binding AutoRun}"
                                 Stroke="Orange"
                                 Visibility="{Binding AutoRun, Converter={StaticResource Boolean2VisibilityConverter}}" />
                         </DockPanel>
@@ -186,7 +187,10 @@
                 </Expander.HeaderTemplate>
 
                 <hc:SimplePanel Visibility="{Binding HasInstance, Converter={StaticResource Boolean2VisibilityConverter}}">
-                    <StackPanel x:Name="detail" Margin="4,0">
+                    <hc:UniformSpacingPanel
+                        x:Name="detail"
+                        Margin="4,0"
+                        Orientation="Vertical">
                         <DockPanel>
 
                             <TextBlock DockPanel.Dock="Right" Text="{Binding StartedTime, StringFormat=yyyy/MM/dd HH:mm:ss}" />
@@ -207,13 +211,14 @@
 
                         <DockPanel>
 
+                            <Separator DockPanel.Dock="Top" />
+
                             <TextBlock
                                 DockPanel.Dock="Right"
                                 Text="{Binding Error}"
                                 TextWrapping="Wrap" />
-                            <TextBlock Text="错误" />
                         </DockPanel>
-                    </StackPanel>
+                    </hc:UniformSpacingPanel>
                 </hc:SimplePanel>
             </Expander>
         </DataTemplate>
@@ -280,7 +285,7 @@
 
 
         <DataTemplate x:Key="ReportItem">
-            <Border MinWidth="240">
+            <Border Width="260">
                 <StackPanel Margin="4">
                     <DockPanel DockPanel.Dock="Top">
                         <TextBlock
@@ -587,7 +592,7 @@
                             <ItemsPanelTemplate>
                                 <hc:UniformSpacingPanel
                                     ChildWrapping="Wrap"
-                                    HorizontalSpacing="20"
+                                    HorizontalSpacing="10"
                                     IsItemsHost="True"
                                     VerticalSpacing="5" />
                             </ItemsPanelTemplate>

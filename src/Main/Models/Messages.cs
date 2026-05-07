@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FMO.Models;
+﻿namespace FMO.Models;
 
 public record FundDailyUpdateMessage(int FundId, DailyValue Daily);
 
@@ -30,7 +24,7 @@ public record ElementChangedBackgroundMessage(int FundId, int FlowId);
 public enum LogLevel
 {
     Info,
-    Warning, 
+    Warning,
     Error,
     Success
 }
@@ -50,7 +44,7 @@ public record EntityRemoved<T>(Type Type, T Id);
 public record FundEntityRemoved<T>(Type Type, T Id, int FundId);
 
 
-public record EntityChangedMessage<TEntity,TProperty>(TEntity Entity, string PropertyName, TProperty Value);
+public record EntityChangedMessage<TEntity, TProperty>(TEntity Entity, string PropertyName, TProperty Value);
 
 
 public record EntityChanged<TEntity, TProperty>(TEntity Entity, string PropertyName, TProperty Old, TProperty New);
@@ -95,3 +89,6 @@ public record MissionFailedMessage(int Id, Exception e);
 
 
 public record AddNotifyTodoMessage(string Unique, string Message);
+
+
+public record DisclosureRunMessage(string Id, string Message);

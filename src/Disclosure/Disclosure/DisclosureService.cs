@@ -240,6 +240,8 @@ public static partial class DisclosureService
             IDisclosureNotice? notice;
             IWorkConfig? config;
             instance.LastRunTime = DateTime.Now;
+            WeakReferenceMessenger.Default.Send(new DisclosureRunMessage(instance.Id, "正在处理中..."));
+
 
             // 2. 加载业务数据（短连接）
             using (var db = DbHelper.Base())
@@ -409,11 +411,13 @@ public static partial class DisclosureService
         {
             try
             {
-                await ExecuteDisclosureAsync(instance);
-
+                // 移出队列，防止任务时间过长，未执行完又再次执行
                 _semaphore.Wait();
                 _instanceList.Remove(instance);
                 _semaphore.Release();
+
+                await ExecuteDisclosureAsync(instance);
+
             }
             catch (Exception ex)
             {

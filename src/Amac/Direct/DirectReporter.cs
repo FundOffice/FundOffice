@@ -501,7 +501,7 @@ public class AmacDirectReporter
                     return new(true, "操作成功");
                 else
                     return new(false, string.Join("\n", root.verifyMessage.children.Where(x => x.children is not null).
-                       SelectMany(x => x.children.Select(y => $"Level: {y.deepLevel}, Message: {y.description}"))));
+                       SelectMany(x => x.children.Select(y => $"Level: {y.level}, {y.description}"))));
             }
             else
                 return new(false, "未获取到返回信息");

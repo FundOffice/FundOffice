@@ -212,7 +212,7 @@ public class DisclosureFromMailMission : MailMission
     {
         // 排除小文件
         var files = ext.Where(x => !Regex.IsMatch(x.FileName, "复核函")).ToArray();
-        if (files.Length == 1 && PdfHelper.GetPageCount(files[0].Stream) > 2)
+        if (files.Length == 1)
         {
             fp.Pdf = new SimpleFile { File = FileMeta.Create(files[0].Stream, files[0].FileName) };
         }

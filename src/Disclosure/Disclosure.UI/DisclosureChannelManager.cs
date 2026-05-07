@@ -1,3 +1,4 @@
+using FMO.Logging;
 using FMO.Utilities;
 
 namespace FMO.Disclosure;
@@ -19,7 +20,7 @@ public static class DisclosureChannelManager
         Register(new EmailDisclosureChannel(), () => new EmailChannelConfigViewModel());
         Register(new PFIDDisclosureChannel(), () => new PfidChannelConfigViewModel());
         //Register<MeiShiChannelConfig>(new MeiShiDisclosureChannel(), () => new MeiShiChannelConfigViewModel(), (x) => new MeiShiChannelConfigViewModel(x));
-        
+
         // 创建季度更新通道
         //RegisterQuartlyUpdateChannel();
 
@@ -27,6 +28,10 @@ public static class DisclosureChannelManager
         var ins = db.GetCollection<DisclosureInstance>().Find(x => x.Status == DisclosureStatus.Waiting || x.Status == DisclosureStatus.Processing).ToArray();
         foreach (var item in ins)
             DisclosureService.AddToQueue(item);
+
+        LogEx.Information($"恢复信批队列：{string.Join('\n', ins.Select(x => $"{x.Channel}-{x.Type}-{x.NoticeId}"))}");
+
+
         DisclosureService.StartWorker();
     }
 
@@ -77,4 +82,3 @@ public static class DisclosureChannelManager
 /// 统一通道管理器：包含 通道实例注册 + 配置ViewModel创建
 /// 支持插件化、动态注册、无修改扩展
 /// </summary>
- 
