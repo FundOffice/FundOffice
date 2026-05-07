@@ -7,6 +7,7 @@ using FMO.Utilities;
 using MimeKit;
 using Serilog;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
@@ -67,26 +68,26 @@ public class DisclosureFromMailMission : MailMission
         }
 
         ConcurrentBag<string> logBag = new();
-        Parallel.ForEach(work, f => //)
-        //foreach (var f in work.AsEnumerable().Reverse())
+        //Parallel.ForEach(work, f => //)
+        foreach (var f in work.AsEnumerable().Reverse())
         {
             try
             {
                 var nlog = "";
                 WorkOne(f, fundmap, fundCodeMap, ref nlog);
                 if (!string.IsNullOrWhiteSpace(nlog))
-                    logBag.Add(nlog);
+                    logBag.Add(nlog.Trim());
                 coll.Upsert(new MailMissionRecord { Id = f.Name, Time = DateTime.Now });
             }
             catch (Exception ex)
             {
-                Log.Error($"TA From Mail {ex}");
+                Log.Error($"Mail 获取信批错误 {ex}");
             }
 
             progress += unit;
             WeakReferenceMessenger.Default.Send(new MissionProgressMessage { Id = Id, Progress = progress });
         }
-        );
+        //);
 
         log += "\n" + string.Join("\n", logBag);
 
@@ -99,7 +100,7 @@ public class DisclosureFromMailMission : MailMission
     public void WorkOne(FileInfo f, Dictionary<string, int> fundmap, FundIdf[] fundCodeMap, ref string log)
     {
         using MimeMessage mime = LoadMail(f.FullName);
-
+ 
         if (DetermineCategory(mime) switch { MailCategory.Unk or MailCategory.Disclosure => false, _ => true })
             return;
 
@@ -184,7 +185,7 @@ public class DisclosureFromMailMission : MailMission
 
                         DataTracker.OnNewNotice(fp);
 
-                        log += $"\n{fund.Key}: {type.Key} {r.Key}";
+                        log += $"\n{fp.Name}";
                     }
                     else if (type.Key == DisclosureType.QuarterlyUpdate)
                     {
@@ -200,7 +201,7 @@ public class DisclosureFromMailMission : MailMission
                         }
 
                         DataTracker.OnNewNotice(fp);
-                        log += $"\n{fund.Key}: {type.Key} {r.Key}";
+                        log += $"\n{fp.Name}";
                     }
                 }
             }
