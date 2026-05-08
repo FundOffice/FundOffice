@@ -340,6 +340,14 @@ public static partial class DisclosureService
             // 执行异步披露
             cancellationToken.ThrowIfCancellationRequested();
 
+            // notice 没有日期，就改成now
+            // report后2天
+            //if (notice.PublishDate == default && notice is IFundPeriodicalDisclosure dd)
+            //    dd.PublishDate = Days.NextTradingDay(dd.ReportDate, 2);
+            //else
+            notice.PublishDate = DateOnly.FromDateTime(DateTime.Now);
+            notice.PublishTime = TimeOnly.FromDateTime(DateTime.Now);
+
             return await channel.Disclosure(notice, config).WaitAsync(cancellationToken);
         }
         catch (Exception e)

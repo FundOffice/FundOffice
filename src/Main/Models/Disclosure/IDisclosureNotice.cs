@@ -15,9 +15,9 @@ public interface IDisclosureNotice
     /// <summary>
     /// 期望发布日期
     /// </summary>
-    DateOnly PublishDate { get; }
+    DateOnly PublishDate { get; set; }
 
-    TimeOnly PublishTime { get; }
+    TimeOnly PublishTime { get; set; }
 
 
     /// <summary>

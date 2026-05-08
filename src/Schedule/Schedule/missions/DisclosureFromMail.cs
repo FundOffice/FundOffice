@@ -147,14 +147,18 @@ public class DisclosureFromMailMission : MailMission
                     // 只处理周期报告
                     if (type.Key >= DisclosureType.Monthly && type.Key <= DisclosureType.Annually)
                     {
-                        var fp = new PeriodicalDisclosureNotice
+                        var rdate = mime.Date.Date;
+
+                      var fp = new PeriodicalDisclosureNotice
                         {
                             FundId = fundId,
                             FundCode = fund.Key,
                             FundName = fundName,
                             Name = $"{fundName}_{EnumDescriptionTypeConverter.GetEnumDescription(type.Key)}_{r.Key:yyyyMMdd}",
                             Type = type.Key,
-                            ReportDate = r.Key
+                            ReportDate = r.Key,
+                            PublishDate = DateOnly.FromDateTime(rdate),
+                            PublishTime = TimeOnly.FromDateTime(rdate)
                         };
 
                         // 按文件类型分配

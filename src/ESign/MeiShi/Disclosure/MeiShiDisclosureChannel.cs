@@ -358,7 +358,7 @@ public partial class MeiShiAssit : IDisclosureChannel
 
         var cont = await response.Content.ReadAsStringAsync();
 
-        SigningLoger.LogRun(this, nameof(QueryFundInfo), "", cont);
+        //SigningLoger.LogRun(this, nameof(QueryFundInfo), "", cont);
         if (Regex.IsMatch(cont, "token已失效|重新登录"))
         {
             isLogin = false;
@@ -368,7 +368,7 @@ public partial class MeiShiAssit : IDisclosureChannel
         root = JsonSerializer.Deserialize<RootJson>(cont);
         if (root is null) return new ErrorReturn(false, "Invalid response");
 
-        return root.code == 1008 ? new ErrorReturn(true) : new ErrorReturn(false, root.message);
+        return root.code == 1008 ? new ErrorReturn(true, $"附件Id{fileData.AttachmentsId}") : new ErrorReturn(false, root.message);
     }
 
 
