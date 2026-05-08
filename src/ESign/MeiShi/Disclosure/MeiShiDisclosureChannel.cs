@@ -89,7 +89,7 @@ public partial class MeiShiAssit : IDisclosureChannel
 
             case ITemporaryDisclosureNotice n and IFundDisclosureNotice f:
                 if (n.Pdf?.Exists != true) return new(false, "文件不存在");
-                return await UploadDisclosureFile(f.FundName, f.FundCode, "", f.PublishDate.ToDateTime(f.PublishTime), f.Name, n.File.File!.GetFullPath());
+                return await UploadDisclosureFile(f.FundName, f.FundCode, "", f.PublishDate.ToDateTime(f.PublishTime), f.Name, n.Pdf.File!.GetFullPath());
 
             default:
                 return new(false, "不支持的通知类型");
