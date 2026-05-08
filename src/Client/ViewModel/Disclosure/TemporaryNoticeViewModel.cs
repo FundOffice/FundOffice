@@ -92,15 +92,6 @@ public partial class HugeRedemptionNoticeViewModel : TemporaryFundNoticeViewMode
 {
     public HugeRedemptionNoticeViewModel(IDisclosureNotice notice, IEnumerable<DisclosureWorkflow> workflows, IEnumerable<DisclosureInstance> runs) : base(notice, workflows, runs)
     {
-        FillBy(notice as HugeRedemptionNotice);
-
-        if(Word?.Exists is false)
-        {
-            var path = @$"temp\{notice.Id}.docx";
-            Tpl.GenerateByPredefined(path, "HugeRedemptionNotice.docx", new
-            {
-
-            });
-        }
+        FillBy(notice as HugeRedemptionNotice); 
     }
 }

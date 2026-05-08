@@ -247,6 +247,8 @@ public class HugeRedemptionNotice : IFundDisclosureNotice, ITemporaryDisclosureN
     public SimpleFile? Word { get; set; }
 
     public SimpleFile? Pdf { get; set; }
+
+
 }
 
 /// <summary>

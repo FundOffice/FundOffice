@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="巨额赎回通知"
     Width="420"
-    Height="150"
+    Height="180"
     d:DataContext="{d:DesignInstance Type=local:AddHugeRedemptionNoticeWindowViewModel}"
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
@@ -79,19 +79,32 @@
                     <TextBlock VerticalAlignment="Center" Text="%" />
                 </DockPanel>
 
-                <DockPanel LastChildFill="False">
-
-                    <TextBlock VerticalAlignment="Center" Text="开放日" />
-                    <DatePicker SelectedDate="{Binding OpenDate}" />
-
-
-                    <TextBlock
-                        Width="60"
-                        VerticalAlignment="Center"
-                        Text="发布时间"
-                        TextAlignment="Center" />
-                    <hc:DateTimePicker SelectedDateTime="{Binding PublishTime}" />
+                <DockPanel Margin="0,4" DockPanel.Dock="Top">
+                    <RadioButton Content="部分确认" IsChecked="{Binding IsFullyPaid, Converter={StaticResource Boolean2BooleanReConverter}}" />
+                    <RadioButton Content="全部赎回" IsChecked="{Binding IsFullyPaid}" />
                 </DockPanel>
+
+            </DockPanel>
+
+
+            <DockPanel LastChildFill="False">
+
+                <hc:DateTimePicker DockPanel.Dock="Right" SelectedDateTime="{Binding PublishTime}" />
+
+                <TextBlock
+                    Width="60"
+                    VerticalAlignment="Center"
+                    DockPanel.Dock="Right"
+                    Text="发布时间"
+                    TextAlignment="Center" />
+
+
+                <TextBlock VerticalAlignment="Center" Text="开放日" />
+
+
+                <DatePicker SelectedDate="{Binding OpenDate}" />
+
+
             </DockPanel>
         </StackPanel>
     </DockPanel>

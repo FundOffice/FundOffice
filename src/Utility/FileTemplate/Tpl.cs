@@ -27,8 +27,7 @@ public static class Tpl
 
             if (Regex.IsMatch(tpl, @"\.doc|\.docx", RegexOptions.IgnoreCase))
             {
-                if (File.Exists(path))
-                    MiniWord.SaveAsByTemplate(path, tpl, obj);
+                MiniWord.SaveAsByTemplate(path, tpl, obj);
                 return true;
             }
             if (Regex.IsMatch(tpl, @"\.xls|\.xlsx", RegexOptions.IgnoreCase))

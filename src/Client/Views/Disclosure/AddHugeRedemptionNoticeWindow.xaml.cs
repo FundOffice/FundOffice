@@ -38,6 +38,11 @@ public partial class AddHugeRedemptionNoticeWindowViewModel : AddTemporaryWindow
     public partial DateTime OpenDate { get; set; }
 
 
+
+    [ObservableProperty]
+    public partial bool IsFullyPaid { get; set; } = true;
+
+
     public override bool CanConfirm => SelectedFund is not null && OpenDate.Year > 2000 && PublishTime.Year > 2000 && DefinedRatio > 0 && RealRatio > DefinedRatio;
 
     public AddHugeRedemptionNoticeWindowViewModel(Fund[] names) : base(names)

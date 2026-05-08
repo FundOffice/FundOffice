@@ -842,6 +842,23 @@
                                     Command="{Binding GenerateHugeRedemptionNoticeCommand}"
                                     Content="巨额赎回"
                                     Style="{StaticResource ButtonDefault.Small}" />
+
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.plus}"
+                                    Content="基金成立"
+                                    Style="{StaticResource ButtonDefault.Small}" />
+
+
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.plus}"
+                                    Content="基金分红"
+                                    Style="{StaticResource ButtonDefault.Small}" />
+
+
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.plus}"
+                                    Content="规模预警"
+                                    Style="{StaticResource ButtonDefault.Small}" />
                             </hc:UniformSpacingPanel>
                         </DockPanel>
                     </Expander.Header>

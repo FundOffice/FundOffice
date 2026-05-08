@@ -44,7 +44,7 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         Task.Run(() =>
         {
-            var recent = db.GetCollection<IDisclosureNotice>().Query().OrderByDescending(x=>x.PublishDate).Select(x => x.PublishDate).FirstOrDefault();
+            var recent = db.GetCollection<IDisclosureNotice>().Query().OrderByDescending(x => x.PublishDate).Select(x => x.PublishDate).FirstOrDefault();
             if (recent.Month != DateTime.Now.Month)
                 SelectedMonth = DateTime.Now.AddMonths(-1).Month;
         });
@@ -256,6 +256,17 @@ public partial class DisclosurePageViewModel : ObservableObject
             PublishTime = TimeOnly.FromDateTime(dc.PublishTime)
         };
 
+        var ma = db.GetCollection<Manager>().FindOne(x => x.IsMaster).Name!;
+        notice.MakeWord("临时开放公告.docx", new
+        {
+            Name = notice.FundName,
+            Code = notice.FundCode,
+            OpenDate = notice.OpenDay.ToString("yyyy-MM-dd"),
+            Allow = notice.AllowPurchase && notice.AllowRedemption ? "申购/赎回" : notice.AllowPurchase ? "申购" : notice.AllowRedemption ? "赎回" : "",
+            Date = $"{notice.PublishDate:yyyy-MM-dd}",
+            Manager = ma,
+        });
+
         DataTracker.OnNewNotice(notice);
 
         await Task.Delay(500);
@@ -291,11 +302,25 @@ public partial class DisclosurePageViewModel : ObservableObject
             FundCode = dc.SelectedFund.Code ?? "",
             FundName = dc.SelectedFund.Name,
             OpenDay = DateOnly.FromDateTime(dc.OpenDate),
-            RealRatio = (dc.RealRatio ?? 0) /100,
-            DefinedRatio = (dc.DefinedRatio ?? 0) /100,
+            RealRatio = (dc.RealRatio ?? 0) / 100,
+            DefinedRatio = (dc.DefinedRatio ?? 0) / 100,
+            IsFullyPaied = dc.IsFullyPaid,
             PublishDate = DateOnly.FromDateTime(dc.PublishTime),
             PublishTime = TimeOnly.FromDateTime(dc.PublishTime)
         };
+
+        var ma = db.GetCollection<Manager>().FindOne(x => x.IsMaster).Name!;
+        notice.MakeWord("巨额赎回公告.docx", new
+        {
+            Name = notice.FundName,
+            Code = notice.FundCode,
+            OpenDate = notice.OpenDay.ToString("yyyy-MM-dd"),
+            RealRatio = $"{notice.RealRatio * 100:N2}",
+            DefinedRatio = $"{notice.DefinedRatio * 100:N2}",
+            Handle = notice.IsFullyPaied ? "全额赎回" : "部分确认",
+            Date = $"{notice.PublishDate:yyyy-MM-dd}",
+            Manager = ma,
+        });
 
         DataTracker.OnNewNotice(notice);
 
