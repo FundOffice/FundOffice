@@ -1,16 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using FMO.Models;
-using FMO.Shared;
 using FMO.Utilities;
 using LiteDB;
-using Microsoft.Win32;
 using Serilog;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Windows;
 
 namespace FMO;
 
@@ -146,7 +142,26 @@ public partial class FlowViewModel : ObservableObject//, IFileSetter
     }
 
 
+    protected virtual void CanLockOverride(ref bool ok, List<string> err) { }
 
+    [RelayCommand]
+    public void Lock()
+    {
+        if (IsReadOnly)
+        {
+            IsReadOnly = !IsReadOnly;
+            return;
+        }
+
+
+        List<string> err = [];
+        bool ok = true;
+        CanLockOverride(ref ok, err);
+         
+        IsReadOnly = ok;
+        if (!ok)
+            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, string.Join('\n', err)));
+    }
 
 
     //[RelayCommand]

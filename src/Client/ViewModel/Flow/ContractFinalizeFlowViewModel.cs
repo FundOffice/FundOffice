@@ -1,18 +1,14 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
-using FMO.Models;
-using FMO.Utilities;
-using System.Collections.ObjectModel;
+﻿using FMO.Models;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
-using System.Windows;
 
 namespace FMO;
 
+/// <summary>
+/// 合同定稿
+/// </summary>
 public partial class ContractFinalizeFlowViewModel : ContractRelatedFlowViewModel, IElementChangable
-{ 
-      
+{
+
 
 
     [SetsRequiredMembers]
@@ -23,7 +19,29 @@ public partial class ContractFinalizeFlowViewModel : ContractRelatedFlowViewMode
 
 
 
-     
+    protected override void CanLockOverride(ref bool ok, List<string> err)
+    {
+        if (!Contract.Exists)
+        {
+            ok = false;
+            err.Add("缺少基金合同");
+        }
+        if (!RiskDisclosureDocument.Exists)
+        {
+            ok = false;
+            err.Add("缺少风险揭示书");
+        }
+        if (!CollectionAccount.Exists)
+        {
+            ok = false;
+            err.Add("缺少募集账户函");
+        }
+        //if (!CollectionAccount.Exists)
+        //{
+        //    ok = false;
+        //    err.Add("缺少托管账户函");
+        //} 
+    }
 
 
 }

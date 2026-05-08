@@ -1,12 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Disclosure;
 using FMO.Models;
 using FMO.Shared;
 using FMO.TPL;
 using FMO.Utilities;
 using LiteDB;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Windows;
 
 namespace FMO
 {
@@ -124,9 +127,25 @@ namespace FMO
         }
 
 
+        protected override void CanLockOverride(ref bool ok, List<string> err)
+        { 
+            if (RaisingEndDate.NewValue is null)
+            {
+                ok = false;
+                err.Add("结束日期不能为空");
+            }
+            if (RaisingStartDate.NewValue is null || RaisingStartDate.NewValue > RaisingEndDate.NewValue)
+            {
+                ok = false;
+                err.Add("开始日期不能为空\n开始日期不能晚于结束日期");
+            }
+            if (InitialAsset.NewValue is null)
+            {
+                ok = false;
+                err.Add("募集金额不能为空");
+            }
 
-
-
+        }
 
 
 
@@ -219,6 +238,47 @@ namespace FMO
 
         }
 
+
+        protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+        {
+            base.OnPropertyChanged(e);
+
+            if (e.PropertyName == nameof(IsReadOnly) && IsReadOnly && Date is not null && Date.Value != default(DateTime) && InitialAsset.OldValue is not null && Capital?.Length > 2) //锁定了
+            {
+                // 检查是否存在公告
+                using var db = DbHelper.Base();
+                var old = db.GetCollection<IDisclosureNotice>().Query().Where(Query.EQ(nameof(IFundDisclosureNotice.FundId), FundId)).Where(x => x.Type == DisclosureType.FundSetup).FirstOrDefault();
+
+                if (old is null && HandyControl.Controls.MessageBox.Show("是否创建成立公告，并发布", "提示", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                    return;
+                else if (old is not null && HandyControl.Controls.MessageBox.Show("是否更新成立公告，并发布", "提示", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                    return;
+
+                var fund = db.GetCollection<Fund>().FindById(FundId);
+                FundSetupNotice notice = new FundSetupNotice
+                {
+                    FundCode = fund.Code!,
+                    FundName = fund.Name,
+                    FundId = fund.Id,
+                    SetupDay = DateOnly.FromDateTime(Date.Value),
+                    PublishDate = DateOnly.FromDateTime(Date.Value),
+                    PublishTime = TimeOnly.FromDateTime(DateTime.Now),
+                };
+
+                var manager = db.GetCollection<Manager>().FindOne(x => x.IsMaster);
+                notice.MakeWord("产品成立公告.docx", new
+                {
+                    Manager = manager.Name,
+                    Name = fund.Name,
+                    Date = $"{Date ?? DateTime.Today:yyyy年MM月dd日}",
+                    Amount = InitialAsset.OldValue,
+                    Capital = Capital,
+                    Share = InitialAsset.OldValue
+                });
+
+                DataTracker.OnNewNotice(notice);
+            }
+        }
 
 
         //[RelayCommand]

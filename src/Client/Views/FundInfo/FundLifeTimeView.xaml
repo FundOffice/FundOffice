@@ -116,20 +116,17 @@
         <ControlTemplate x:Key="FlowShell" TargetType="UserControl">
             <DockPanel Margin="0,4">
                 <!--  锁定  -->
-                <ToggleButton
+                <Button
+                    x:Name="lock"
+                    hc:IconElement.Geometry="{StaticResource f.lock-open}"
                     BorderThickness="0"
+                    Command="{Binding LockCommand}"
                     DockPanel.Dock="Right"
-                    IsChecked="{Binding IsReadOnly, Converter={StaticResource Boolean2BooleanReConverter}}"
-                    Style="{StaticResource ToggleButtonFlip}">
-                    <hc:StatusSwitchElement.CheckedElement>
-                        <Viewbox Width="24" Height="24">
-                            <Path Data="{StaticResource f.lock-open}" Fill="Green" />
-                        </Viewbox>
-                    </hc:StatusSwitchElement.CheckedElement>
-                    <Viewbox Width="24" Height="24">
-                        <Path Data="{StaticResource f.lock}" Fill="Black" />
-                    </Viewbox>
-                </ToggleButton>
+                    Foreground="Green"
+                    Style="{StaticResource ButtonIcon}" />
+
+
+
 
                 <Button
                     hc:IconElement.Geometry="{StaticResource f.rotate}"
@@ -151,6 +148,12 @@
 
                 <ContentPresenter Content="{TemplateBinding Content}" />
             </DockPanel>
+            <ControlTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                    <Setter TargetName="lock" Property="Foreground" Value="Black" />
+                    <Setter TargetName="lock" Property="hc:IconElement.Geometry" Value="{StaticResource f.lock}" />
+                </DataTrigger>
+            </ControlTemplate.Triggers>
         </ControlTemplate>
 
 

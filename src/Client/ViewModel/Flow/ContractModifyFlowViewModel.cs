@@ -233,6 +233,16 @@ public partial class ContractModifyFlowViewModel : ContractRelatedFlowViewModel,
 
     //}
 
+    protected override void CanLockOverride(ref bool ok, List<string> err)
+    {
+        if (!Contract.Exists)
+        {
+            ok = false;
+            err.Add("缺少基金合同");
+        }
+        
+    }
+
 
 
     [RelayCommand]

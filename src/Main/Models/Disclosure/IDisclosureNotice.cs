@@ -41,7 +41,7 @@ public interface IFundDisclosureNotice : IDisclosureNotice
 }
 
 
- 
+
 
 
 public interface IFundPeriodicalDisclosure : IFundDisclosureNotice
@@ -132,12 +132,12 @@ public class QuarterlyUpdate : IFundPeriodicalDisclosure
 }
 
 
-public interface ITemporaryDisclosureNotice 
+public interface ITemporaryDisclosureNotice
 {
     SimpleFile? Word { get; set; }
 
     SimpleFile? Pdf { get; set; }
-     
+
 }
 
 /// <summary>
@@ -278,6 +278,50 @@ public class FundSetupNotice : IFundDisclosureNotice, ITemporaryDisclosureNotice
 
     public SimpleFile? Pdf { get; set; }
 }
+
+
+/// <summary>
+/// 基金分红
+/// </summary>
+public class FundDivdendNotice : IFundDisclosureNotice, ITemporaryDisclosureNotice
+{
+    public long Id => ((long)DividendDay.DayNumber) << 32 | (long)FundId << 10 | ((long)Type);
+
+    public DisclosureType Type => DisclosureType.FundDivdend;
+
+    public int FundId { get; set; }
+
+    public required string FundName { get; set; }
+
+    public required string FundCode { get; set; }
+
+    public DateOnly PublishDate { get; set; }
+
+    public TimeOnly PublishTime { get; set; }
+
+    public string Name => $"{FundName} 产品分红公告";
+
+    public DividendType DividendType { get; set; }
+
+    public decimal Target { get; set; }
+
+    public DividendMethod Method { get; set; }
+
+    public DateTime DividendReferenceDate { get; set; }
+    public DateTime RecordDate { get; set; }
+    public DateTime ExDividendDate { get; set; }
+    public DateTime CashPaymentDate { get; set; }
+
+
+
+    public DateOnly DividendDay { get; set; }
+
+    public SimpleFile? Word { get; set; }
+
+    public SimpleFile? Pdf { get; set; }
+}
+
+
 
 /// <summary>
 /// 基金规模预警类型

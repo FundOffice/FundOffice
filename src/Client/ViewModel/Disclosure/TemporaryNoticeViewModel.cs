@@ -1,7 +1,6 @@
 ﻿using FMO.Disclosure;
 using FMO.Models;
 using FMO.Shared;
-using FMO.TPL;
 using System.Collections.ObjectModel;
 
 namespace FMO;
@@ -45,7 +44,9 @@ public class TemporaryNoticeViewModel
         return notice switch
         {
             TemporaryOpenNotice t => new TemporaryOpenNoticeViewModel(t, workflows, runs),
-            HugeRedemptionNotice t =>  new HugeRedemptionNoticeViewModel(t, workflows, runs),
+            HugeRedemptionNotice t => new HugeRedemptionNoticeViewModel(t, workflows, runs),
+            FundSetupNotice t => new FundSetupNoticeViewModel(t, workflows, runs),
+            FundDivdendNotice t => new FundDivdendNoticeViewModel(t, workflows, runs),
             _ => new TemporaryNoticeViewModel(notice, workflows, runs)
         };
     }
@@ -92,6 +93,41 @@ public partial class HugeRedemptionNoticeViewModel : TemporaryFundNoticeViewMode
 {
     public HugeRedemptionNoticeViewModel(IDisclosureNotice notice, IEnumerable<DisclosureWorkflow> workflows, IEnumerable<DisclosureInstance> runs) : base(notice, workflows, runs)
     {
-        FillBy(notice as HugeRedemptionNotice); 
+        FillBy(notice as HugeRedemptionNotice);
+    }
+}
+
+[AutoViewModel(typeof(FundSetupNotice))]
+public partial class FundSetupNoticeViewModel : TemporaryFundNoticeViewModel
+{
+    public FundSetupNoticeViewModel(IDisclosureNotice notice, IEnumerable<DisclosureWorkflow> workflows, IEnumerable<DisclosureInstance> runs) : base(notice, workflows, runs)
+    {
+        FillBy(notice as FundSetupNotice);
+    }
+}
+
+[AutoViewModel(typeof(FundDivdendNotice))]
+public partial class FundDivdendNoticeViewModel : TemporaryFundNoticeViewModel
+{
+    public FundDivdendNoticeViewModel(IDisclosureNotice notice, IEnumerable<DisclosureWorkflow> workflows, IEnumerable<DisclosureInstance> runs) : base(notice, workflows, runs)
+    {
+        FillBy(notice as FundDivdendNotice);
+    }
+
+    public string Info => DividentStatement();
+
+    private string DividentStatement()
+    {
+        switch (DividendType)
+        {
+            case DividendType.PerUnitDividend:
+                return $"每单位分{Target}元";
+            case DividendType.SpecifiedAmount:
+                return $"总分红{Target}元";
+            case DividendType.TargetNetValue:
+                return $"分红后净值≈{Target}";
+            default:
+                return "";
+        }
     }
 }

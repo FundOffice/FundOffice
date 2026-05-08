@@ -1,12 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Disclosure;
 using FMO.Models;
 using FMO.Shared;
 using FMO.TPL;
 using FMO.Utilities;
+using LiteDB;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
+using System.Windows;
 
 namespace FMO;
 
@@ -122,7 +124,7 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
         CashPaymentDate.Init(flow);
 
 
-        Announcement = new(flow.Announcement) { Label = "分红公告", Filter = "文档|*.docx;*.doc;*.pdf",  }; 
+        Announcement = new(flow.Announcement) { Label = "分红公告", Filter = "文档|*.docx;*.doc;*.pdf", };
         Announcement.Normal.SpecificFileName = Announcement.SpecificFileName;
         Announcement.Another.SpecificFileName = Announcement.SpecificFileName;
         Announcement.FileChanged += f => SaveFileChanged(new { Announcement = f });
@@ -151,6 +153,39 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
 
         Initialized = true;
     }
+
+
+    protected override void CanLockOverride(ref bool ok, List<string> err)
+    {
+        if (Target.NewValue is not > 0)
+        {
+            ok = false;
+            err.Add("未设置分红目标");
+        }
+        if (DividendReferenceDate.NewValue.GetValueOrDefault() == default)
+        {
+            ok = false;
+            err.Add("未设置分红基准日");
+        }
+        if (RecordDate.NewValue.GetValueOrDefault() == default)
+        {
+            ok = false;
+            err.Add("未设置权益登记日");
+        }
+        if (ExDividendDate.NewValue.GetValueOrDefault() == default)
+        {
+            ok = false;
+            err.Add("未设置除息日");
+        }
+        if (CashPaymentDate.NewValue.GetValueOrDefault() == default)
+        {
+            ok = false;
+            err.Add("现金红利发放日");
+        }
+
+    }
+
+
 
 
     [RelayCommand]
@@ -243,7 +278,7 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
 
                 if (Tpl.GenerateByPredefined(temp.FilePath, "产品分红公告.docx", data))
                     v.Normal.Meta = FileMeta.Create(temp.FilePath, @$"{fund.Name}_产品分红公告.docx");
-                else 
+                else
                     HandyControl.Controls.Growl.Error($"生成{v.Label}失败，请查看Log，检查模板是否存在");
             }
             catch { }
@@ -267,6 +302,57 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
             if (CashPaymentDate.NewValue is null)
                 CashPaymentDate.NewValue = Date.Value.AddDays(1);
         }
+
+        if (e.PropertyName == nameof(IsReadOnly) && IsReadOnly && Date is not null && Date.Value != default(DateTime)) //锁定了
+        {
+            // 检查是否存在公告
+            using var db = DbHelper.Base();
+            var old = db.GetCollection<IDisclosureNotice>().Query().Where(Query.EQ(nameof(IFundDisclosureNotice.FundId), FundId)).Where(x => x.Type == DisclosureType.FundSetup).FirstOrDefault();
+
+            if (old is null && HandyControl.Controls.MessageBox.Show("是否创建分红公告，并发布", "提示", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                return;
+            else if (old is not null && HandyControl.Controls.MessageBox.Show("是否更新分红公告，并发布", "提示", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                return;
+
+            var fund = db.GetCollection<Fund>().FindById(FundId);
+            var anndate = DateTime.Today < Date ? DateTime.Today : Date;
+
+            FundDivdendNotice notice = new()
+            {
+                FundCode = fund.Code!,
+                FundName = fund.Name,
+                FundId = fund.Id,
+                DividendDay = DateOnly.FromDateTime(Date.Value),
+                PublishDate = DateOnly.FromDateTime(anndate.Value),
+                PublishTime = TimeOnly.FromDateTime(DateTime.Now),
+                DividendType = Type.NewValue,
+                Target = Target.OldValue ?? 1,
+                DividendReferenceDate = DividendReferenceDate.OldValue ?? default,
+                RecordDate = RecordDate.OldValue ?? default,
+                ExDividendDate = ExDividendDate.OldValue ?? default,
+                CashPaymentDate = CashPaymentDate.OldValue ?? default, 
+            };
+
+            var manager = db.GetCollection<Manager>().FindOne(x => x.IsMaster);
+            notice.MakeWord("产品分红公告.docx", new
+            {
+                ManagerName = manager.Name,
+                FundName = fund.Name,
+                FundCode = fund.Code,
+                FundTrustee = fund.Trustee,
+                ModeTarget = Type.OldValue switch { DividendType.PerUnitDividend => "每单位红利", DividendType.TargetNetValue => "分红后净值", DividendType.SpecifiedAmount => "分红总金额", _ => "" },
+                TargetValue = Target.OldValue,
+                DividendReferenceDate = $"{DividendReferenceDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
+                RecordDate = $"{RecordDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
+                ExDividendDate = $"{ExDividendDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
+                CashPaymentDate = $"{CashPaymentDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
+                AnnouncementDate = $"{anndate:yyyy年MM月dd日}",
+                Mail = manager.Email
+            });
+
+            DataTracker.OnNewNotice(notice);
+        }
+
     }
 
 }

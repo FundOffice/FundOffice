@@ -51,6 +51,9 @@ public enum DisclosureType
     [Description("基金成立")] FundSetup,
 
 
+    [Description("基金分红")] FundDivdend,
+
+
     [Description("基金规模预警")] FundScaleWarning,
 
 

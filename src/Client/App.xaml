@@ -14,6 +14,7 @@
                 <ResourceDictionary Source="/Themes/Generic.xaml" />
                 <ResourceDictionary Source="/HelpTemplates.xaml" />
                 <ResourceDictionary Source="/SharedUI;component/Themes/NewFileControl.xaml" />
+                <ResourceDictionary Source="/Themes/Notice.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
