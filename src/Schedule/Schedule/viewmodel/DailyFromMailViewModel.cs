@@ -34,6 +34,8 @@ public partial class DailyFromMailViewModel : MissionViewModel<DailyFromMailMiss
 
         MailName = m.MailName;
         Interval = m.Interval == 0 ? null : m.Interval;
+
+        _initialized = true;
     }
     public bool CanRedo => RedoAll || RedoCount is > 0;
 

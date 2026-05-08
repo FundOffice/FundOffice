@@ -76,6 +76,7 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
         var ms = MissionSchedule.Missions;
         Templates = MissionManager.Templates;
 
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         Task.Run(async () =>
         {
             await Task.Delay(1);
@@ -83,7 +84,9 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
             {
                 await App.Current.Dispatcher.InvokeAsync(() =>
                 {
+                    sw.Restart();
                     var vm = MissionManager.GetViewModel(m);
+                    sw.Stop(); System.Diagnostics.Debug.WriteLine($"{m.GetType()}, {sw.ElapsedMilliseconds}");
                     Tasks.Add(vm);
                 });
             }

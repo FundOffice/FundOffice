@@ -33,6 +33,8 @@ public partial class DisclosureFromMailViewModel : MissionViewModel<DisclosureFr
 
         MailName = m.MailName;
         Interval = m.Interval == 0 ? null : m.Interval;
+
+        _initialized = true;
     }
 
 

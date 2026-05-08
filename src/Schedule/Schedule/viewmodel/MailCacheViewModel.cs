@@ -42,11 +42,12 @@ public partial class MailCacheViewModel : MissionViewModel<MailCacheMission>
 
 
     public override bool IsAvailable => IsAccountVerified && IsServerAvailable;
+     
 
     public MailCacheViewModel(MailCacheMission m) : base(m)
     {
         Title = "邮件缓存";
-        IsServerAvailable = CheckPop3();
+
         IsAccountVerified = m.IsAccountVerified;
 
         MailName = m.MailName;
@@ -54,47 +55,21 @@ public partial class MailCacheViewModel : MissionViewModel<MailCacheMission>
         MailPop3 = m.MailPop3;
         MailPort = m.MailPort;
         Interval = m.Interval;
+
+        _initialized = true;
+        _ = InitializeServerCheckAsync();
     }
 
 
     partial void OnMailPop3Changed(string? value)
     {
+        if (!_initialized) return;
+
         IsServerAvailable = CheckPop3();
-
-        if (value?.Trim() != Mission.MailPop3)
-        {
-            Mission.MailPop3 = value?.Trim();
-            MissionSchedule.SaveChanges(Mission);
-        }
-    }
-
-    partial void OnIntervalChanged(int value)
-    {
-        if (value != Mission.Interval)
-        {
-            Mission.Interval = value;
-            MissionSchedule.SaveChanges(Mission);
-        }
-    }
-
-    partial void OnMailNameChanged(string? value)
-    {
-        if (value?.Trim() != Mission.MailName)
-        {
-            Mission.MailName = value?.Trim();
-            MissionSchedule.SaveChanges(Mission);
-        }
+         
     }
 
 
-    partial void OnMailPasswordChanged(string? value)
-    {
-        if (value?.Trim() != Mission.MailPassword)
-        {
-            Mission.MailPassword = value?.Trim();
-            MissionSchedule.SaveChanges(Mission);
-        }
-    }
 
     public bool CheckPop3()
     {
@@ -112,6 +87,30 @@ public partial class MailCacheViewModel : MissionViewModel<MailCacheMission>
             return reply.Status == IPStatus.Success;
         }
         catch { return false; }
+    }
+
+
+    public async Task<bool> CheckPop3Async()
+    {
+        if (string.IsNullOrWhiteSpace(MailPop3) || !Regex.IsMatch(MailPop3, @"(\w+\.)+\w+"))
+            return false;
+
+        if (!NetworkInterface.GetIsNetworkAvailable())
+            return false;
+
+        try
+        {
+            using var ping = new Ping();
+            // 设置 2 秒超时，避免长时间阻塞
+            var reply = await ping.SendPingAsync(MailPop3.Trim(), 2000);
+            return reply.Status == IPStatus.Success;
+        }
+        catch { return false; }
+    }
+     
+    private async Task InitializeServerCheckAsync()
+    {
+        IsServerAvailable = await CheckPop3Async();
     }
 
     bool CanVerify() => IsServerAvailable && !string.IsNullOrWhiteSpace(MailName) && !string.IsNullOrWhiteSpace(MailPassword);
@@ -154,10 +153,10 @@ public partial class MailCacheViewModel : MissionViewModel<MailCacheMission>
     [RelayCommand]
     public void RebuildData()
     {
-        Task.Run(() =>
+        Task.Run(async () =>
         {
             Mission.IgnoreCache = true;
-            Mission.Work();
+            await Mission.Work();
             Mission.IgnoreCache = false;
         });
     }

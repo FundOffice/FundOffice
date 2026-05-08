@@ -32,6 +32,7 @@ public partial class SendDailyReportToWebhookViewModel : MissionViewModel<SendDa
         {
             x.PropertyChanged += OnItemChanged;
         }
+        _initialized = true;
     }
 
 

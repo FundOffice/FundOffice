@@ -117,7 +117,7 @@ public class MissionViewModelSyncGenerator : IIncrementalGenerator
                 switchBuilder.AppendLine($"                if ({condition})");
                 switchBuilder.AppendLine($"                {{");
                 switchBuilder.AppendLine($"                    Mission.{missionPropName} = {value};");
-                switchBuilder.AppendLine($"                    MissionSchedule.SaveChanges(Mission);");
+                switchBuilder.AppendLine($"                    _debouncer.Invoke();");
                 switchBuilder.AppendLine($"                }}");
                 switchBuilder.AppendLine($"                break;");
             }
@@ -126,7 +126,7 @@ public class MissionViewModelSyncGenerator : IIncrementalGenerator
                 // 🟢 类型兼容或同为可空：直接赋值
                 switchBuilder.AppendLine($"            case nameof({propName}):");
                 switchBuilder.AppendLine($"                Mission.{missionPropName} = {propName};");
-                switchBuilder.AppendLine($"                MissionSchedule.SaveChanges(Mission);");
+                switchBuilder.AppendLine($"                _debouncer.Invoke();");
                 switchBuilder.AppendLine($"                break;");
             }
         }
@@ -156,7 +156,7 @@ public class MissionViewModelSyncGenerator : IIncrementalGenerator
             {{closeNs}}
             """;
 
-        spc.AddSource($"{symbol.ContainingNamespace.Name}_{className}_MissionSync.g.cs", SourceText.From(source, Encoding.UTF8));
+        spc.AddSource($"{className}_MissionSync.g.cs", SourceText.From(source, Encoding.UTF8));
     }
 
     private static bool IsNullableValueType(ITypeSymbol type)

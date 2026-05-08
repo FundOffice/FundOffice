@@ -27,6 +27,8 @@ public partial class TAFromMailViewModel : MissionViewModel<TAFromMailMission>
 
         MailName = m.MailName;
         Interval = m.Interval == 0 ? null : m.Interval;
+
+        _initialized = true;
     }
 
 

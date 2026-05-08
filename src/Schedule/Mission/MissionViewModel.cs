@@ -209,10 +209,12 @@ public partial class MissionViewModel<T> : MissionViewModel where T : Mission
 
     public virtual bool IsAvailable => true;
 
+    protected bool _initialized;
 
     public MissionViewModel(T mission) : base(mission)
     {
         Mission = mission;
+        _debouncer = new Debouncer(() => MissionSchedule.SaveChanges(Mission));
     }
 
 
@@ -220,9 +222,11 @@ public partial class MissionViewModel<T> : MissionViewModel where T : Mission
     [NotifyCanExecuteChangedFor(nameof(RunOnceCommand))]
     public partial bool CanRunOnce { get; set; } = true;
 
-
-    //public virtual void AfterRun() { }
-
+     
+    /// <summary>
+    /// 更新防抖
+    /// </summary>
+    protected Debouncer _debouncer;
 
     [RelayCommand(CanExecute = nameof(CanRunOnce))]
     public async Task RunOnce()
@@ -239,11 +243,11 @@ public partial class MissionViewModel<T> : MissionViewModel where T : Mission
     {
         base.OnPropertyChanged(e);
 
-        if (Mission is not null && e.PropertyName == nameof(IsActivated) && IsActivated != Mission.IsEnabled)
+        if (_initialized && Mission is not null && e.PropertyName == nameof(IsActivated) && IsActivated != Mission.IsEnabled)
         {
             Mission.IsEnabled = IsActivated;
             NextRunTime = Mission.NextRun;
-            MissionSchedule.SaveChanges(Mission);
+            _debouncer.Invoke();
         }
 
     }
