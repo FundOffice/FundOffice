@@ -3,7 +3,6 @@ using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
 using MiniExcelLibs;
-using System.Text.RegularExpressions;
 
 namespace FMO.Disclosure;
 
@@ -65,33 +64,12 @@ public class PFIDDisclosureChannel : IDisclosureChannel
                 case DisclosureType.Monthly:
                     return CheckMonthly(notice);
                 case DisclosureType.Quarterly:
-                    break;
+                    return CheckQuarterly(notice);
                 case DisclosureType.SemiAnnually:
-                    break;
+                    return CheckQuarterly(notice);
                 case DisclosureType.Annually:
-                    break;
-                case DisclosureType.QuarterlyUpdate:
-                    break;
-                case DisclosureType.Temporary:
-                    break;
-                case DisclosureType.TemporaryOpen:
-                    break;
-                case DisclosureType.HugeRedemption:
-                    break;
-                case DisclosureType.FundSetup:
-                    break;
-                case DisclosureType.FundScaleWarning:
-                    break;
-                case DisclosureType.OtherFundNotice:
-                    break;
-                case DisclosureType.ManagerLevel:
-                    break;
-                case DisclosureType.MangerChange:
-                    break;
-                case DisclosureType.OfficeAddressChange:
-                    break;
-                case DisclosureType.OtherManagerNotice:
-                    break;
+                    return CheckAnnually(notice);
+
                 default:
                     break;
             }
@@ -106,13 +84,55 @@ public class PFIDDisclosureChannel : IDisclosureChannel
             return new(false, "文件不存在");
 
         FileStream fs = notice.Excel!.File!.OpenRead()!;
-        var cells = ExcelReaderHelper.ReadCellsByRowOrder(fs, sheetName: "月度报告", "E4", "B12");
+        var cells = ExcelReaderHelper.ReadCellsByFieldValue(fs, sheetName: "月度报告", "基金编码:R", "估值日期:B");
+        //var cells = ExcelReaderHelper.ReadCellsByRowOrder(fs, sheetName: "月度报告", "E4", "B12");
 
         if (cells[0] is not string code || code != notice.FundCode)
             return new(false, "基金与报告不匹配");
 
         if (cells[1] is not string date || (DateOnly.TryParse(date, out var d) && d != notice.ReportDate))
             return new(false, "报告日期不匹配");
+
+        return new(true);
+    }
+
+
+    private static ErrorReturn CheckQuarterly(PeriodicalDisclosureNotice notice)
+    {
+        if (notice.Excel?.Exists != true)
+            return new(false, "文件不存在");
+
+        FileStream fs = notice.Excel!.File!.OpenRead()!;
+        var cells = ExcelReaderHelper.ReadCellsByFieldValue(fs, sheetName: "1 基金基本情况", "基金编码:R");
+        //var cells = ExcelReaderHelper.ReadCellsByRowOrder(fs, sheetName: "月度报告", "E4", "B12");
+
+        if (cells[0] is not string code || code != notice.FundCode)
+            return new(false, "基金与报告不匹配");
+
+        //cells = ExcelReaderHelper.ReadCellsByFieldValueWithOffset(fs, sheetName: "3 主要财务指标", "项目:R3");
+
+        //if (cells[0] is not string date || (DateOnly.TryParse(date, out var d) && d != notice.ReportDate))
+        //    return new(false, "报告日期不匹配");
+
+        return new(true);
+    }
+
+    private static ErrorReturn CheckAnnually(PeriodicalDisclosureNotice notice)
+    {
+        if (notice.Excel?.Exists != true)
+            return new(false, "文件不存在");
+
+        FileStream fs = notice.Excel!.File!.OpenRead()!;
+        var cells = ExcelReaderHelper.ReadCellsByFieldValue(fs, sheetName: "1.1 基金基本情况", "基金编码:R");
+        //var cells = ExcelReaderHelper.ReadCellsByRowOrder(fs, sheetName: "月度报告", "E4", "B12");
+
+        if (cells[0] is not string code || code != notice.FundCode)
+            return new(false, "基金与报告不匹配");
+
+        //cells = ExcelReaderHelper.ReadCellsByFieldValueWithOffset(fs, sheetName: "3 主要财务指标", "项目:R3");
+
+        //if (cells[0] is not string date || (DateOnly.TryParse(date, out var d) && d != notice.ReportDate))
+        //    return new(false, "报告日期不匹配");
 
         return new(true);
     }
@@ -222,5 +242,211 @@ file static class ExcelReaderHelper
         var rowStr = new string(cellRef.SkipWhile(char.IsLetter).ToArray());
         var colStr = new string(cellRef.TakeWhile(char.IsLetter).ToArray());
         return (cellRef, int.Parse(rowStr), colStr);
+    }
+
+    /// <summary>
+    /// 批量读取指定字段相邻单元格的值（支持方向+偏移量 + 结果保持输入顺序）
+    /// </summary>
+    /// <param name="stream">Excel 文件流</param>
+    /// <param name="sheetName">工作表名</param>
+    /// <param name="fields">
+    /// 字段配置集合，格式："字段值:方向[偏移量]"
+    /// - 方向: L(左), R(右), T(上), B(下)
+    /// - 偏移量: 正整数，表示跳过几个单元格，默认为1（可省略）
+    /// 示例：
+    ///   "姓名:R"    → 匹配"姓名"，返回右侧第1个单元格（等价于 "姓名:R1"）
+    ///   "年龄:R3"   → 匹配"年龄"，返回右侧第3个单元格（跳过2个）
+    ///   "电话:L2"   → 匹配"电话"，返回左侧第2个单元格
+    ///   "地址:B"    → 匹配"地址"，返回下方第1个单元格
+    /// </param>
+    /// <returns>按输入顺序返回的相邻单元格值数组 object?[]，未找到匹配或越界时对应位置为 null</returns>
+    /// <example>
+    /// Excel 内容：
+    /// | A列   | B列  | C列  | D列  | E列  |
+    /// |-------|------|------|------|------|
+    /// | 姓名  | 标签 | 张三 | 男   | 北京 |  ← Row1
+    /// | 电话  | 标签 | 138* | ***  | ***  |  ← Row2
+    /// 
+    /// ReadCellsByFieldValueWithOffset(stream, "Sheet1", 
+    ///     "姓名:R2",    // → "张三" (姓名→跳过"标签"→取"张三")
+    ///     "姓名:R",     // → "标签" (默认偏移1)
+    ///     "电话:R3",    // → "138*" (电话→跳过"标签","138*"前一位? 不，是电话在A2，R3=A2→B2→C2→D2="138*")
+    ///     "张三:T"      // → null (张三在C1，上方越界)
+    /// )
+    /// 返回：["张三", "标签", "138*", null]
+    /// </example>
+    public static object?[] ReadCellsByFieldValue(Stream stream, string sheetName, params string[] fields)
+    {
+        if (fields == null || fields.Length == 0)
+            return Array.Empty<object?>();
+
+        // 1. 解析输入参数：字段值、方向、偏移量、原始索引
+        var fieldConfigs = new List<(string FieldValue, char Direction, int Offset, int OriginalIndex)>();
+
+        for (int i = 0; i < fields.Length; i++)
+        {
+            var config = ParseFieldConfig(fields[i], i);
+            fieldConfigs.Add(config);
+        }
+
+        // 2. 初始化结果数组
+        var resultArray = new object?[fields.Length];
+        var foundFlags = new bool[fields.Length];
+        int foundCount = 0;
+
+        // 3. 读取所有行到内存（支持上下方向查找）
+        var allRows = MiniExcel.Query(stream, sheetName: sheetName, useHeaderRow: false)
+                               .Cast<IDictionary<string, object?>>()
+                               .ToList();
+
+        // 4. 构建行号(1基)到行数据的映射
+        var rowMap = new Dictionary<int, IDictionary<string, object?>>();
+        for (int i = 0; i < allRows.Count; i++)
+        {
+            rowMap[i + 1] = allRows[i];
+        }
+
+        // 5. 逐行遍历匹配字段值
+        foreach (var (rowNum, rowData) in rowMap)
+        {
+            foreach (var kvp in rowData)
+            {
+                var cellValue = kvp.Value?.ToString();
+                if (string.IsNullOrEmpty(cellValue))
+                    continue;
+
+                foreach (var config in fieldConfigs)
+                {
+                    if (foundFlags[config.OriginalIndex])
+                        continue;
+
+                    // 精确匹配字段值（区分大小写）
+                    if (string.Equals(cellValue, config.FieldValue, StringComparison.Ordinal))
+                    {
+                        var targetValue = GetAdjacentCellValueWithOffset(rowMap, kvp.Key, rowNum, config.Direction, config.Offset);
+
+                        resultArray[config.OriginalIndex] = targetValue;
+                        foundFlags[config.OriginalIndex] = true;
+                        foundCount++;
+
+                        if (foundCount == fieldConfigs.Count)
+                            return resultArray;
+                    }
+                }
+            }
+        }
+
+        return resultArray;
+    }
+
+    /// <summary>
+    /// 解析字段配置字符串 "字段值:方向[偏移量]"
+    /// </summary>
+    private static (string FieldValue, char Direction, int Offset, int OriginalIndex) ParseFieldConfig(string field, int originalIndex)
+    {
+        var parts = field.Split(':', 2);
+        if (parts.Length != 2)
+            throw new ArgumentException($"Invalid field format: '{field}'. Expected: 'FieldValue:Direction[Offset]' (e.g., '姓名:R3')");
+
+        var fieldValue = parts[0];
+        var dirPart = parts[1].Trim().ToUpperInvariant();
+
+        if (string.IsNullOrEmpty(dirPart) || "LRTB".IndexOf(dirPart[0]) == -1)
+            throw new ArgumentException($"Invalid direction: '{dirPart}'. Must start with L(Left), R(Right), T(Top), B(Bottom)");
+
+        char direction = dirPart[0];
+        int offset = 1; // 默认偏移量为1
+
+        // 解析偏移量数字部分（如 "R12" → direction='R', offset=12）
+        if (dirPart.Length > 1)
+        {
+            var numStr = dirPart.Substring(1);
+            if (!string.IsNullOrEmpty(numStr) && !int.TryParse(numStr, out offset) || offset <= 0)
+            {
+                throw new ArgumentException($"Invalid offset in: '{field}'. Offset must be a positive integer (e.g., 'R3', 'L12')");
+            }
+        }
+
+        return (fieldValue, direction, offset, originalIndex);
+    }
+
+    /// <summary>
+    /// 获取带偏移量的相邻单元格值，包含边界检查
+    /// </summary>
+    private static object? GetAdjacentCellValueWithOffset(
+        Dictionary<int, IDictionary<string, object?>> rowMap,
+        string currentCol,
+        int currentRow,
+        char direction,
+        int offset)
+    {
+        string? targetCol = null;
+        int targetRow = currentRow;
+
+        switch (direction)
+        {
+            case 'L': // Left: 列号 - offset
+                var targetColNum = ColumnToNumber(currentCol) - offset;
+                if (targetColNum < 1) return null; // 越界
+                targetCol = NumberToColumn(targetColNum);
+                break;
+
+            case 'R': // Right: 列号 + offset
+                var nextColNum = ColumnToNumber(currentCol) + offset;
+                // Excel最大列 XFD = 16384，可根据需要添加上限检查
+                targetCol = NumberToColumn(nextColNum);
+                break;
+
+            case 'T': // Top: 行号 - offset
+                targetRow = currentRow - offset;
+                if (targetRow < 1) return null; // 越界
+                targetCol = currentCol;
+                break;
+
+            case 'B': // Bottom: 行号 + offset
+                targetRow = currentRow + offset;
+                targetCol = currentCol;
+                break;
+        }
+
+        // 检查目标行是否存在
+        if (!rowMap.TryGetValue(targetRow, out var targetRowData))
+            return null;
+
+        // 获取目标单元格值（不存在则返回 null）
+        return targetRowData.TryGetValue(targetCol!, out var val) ? val : null;
+    }
+
+    /// <summary>
+    /// Excel列名转数字（A=1, B=2, ..., Z=26, AA=27, AB=28, ..., XFD=16384）
+    /// </summary>
+    private static int ColumnToNumber(string column)
+    {
+        if (string.IsNullOrEmpty(column)) return 0;
+
+        int num = 0;
+        foreach (char c in column.ToUpperInvariant())
+        {
+            if (c < 'A' || c > 'Z') return 0; // 非法字符
+            num = num * 26 + (c - 'A' + 1);
+        }
+        return num;
+    }
+
+    /// <summary>
+    /// 数字转Excel列名（1→A, 26→Z, 27→AA, 28→AB, ..., 16384→XFD）
+    /// </summary>
+    private static string NumberToColumn(int num)
+    {
+        if (num <= 0) return string.Empty;
+
+        var result = new System.Text.StringBuilder();
+        while (num > 0)
+        {
+            num--; // 调整为0基索引 (0→A, 25→Z)
+            result.Insert(0, (char)('A' + (num % 26)));
+            num /= 26;
+        }
+        return result.ToString();
     }
 }
