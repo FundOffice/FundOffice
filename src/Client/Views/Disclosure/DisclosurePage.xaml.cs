@@ -41,6 +41,13 @@ public partial class DisclosurePageViewModel : ObservableObject
         QuarterlySource.Filter += (s, e) => e.Accepted = Filter(e.Item as PeriodicReportViewModel);
         SemiAnnualSource.Filter += (s, e) => e.Accepted = Filter(e.Item as PeriodicReportViewModel);
         AnnualSource.Filter += (s, e) => e.Accepted = Filter(e.Item as PeriodicReportViewModel);
+
+        Task.Run(() =>
+        {
+            var recent = db.GetCollection<IDisclosureNotice>().Query().OrderByDescending(x=>x.PublishDate).Select(x => x.PublishDate).FirstOrDefault();
+            if (recent.Month != DateTime.Now.Month)
+                SelectedMonth = DateTime.Now.AddMonths(-1).Month;
+        });
     }
 
     private bool Filter(PeriodicReportViewModel? v)
@@ -88,7 +95,7 @@ public partial class DisclosurePageViewModel : ObservableObject
 
 
     [ObservableProperty]
-    public partial ObservableCollection<TemporaryNoticeViewModel> TemporaryNotices { get; set; }
+    public partial ObservableCollection<TemporaryNoticeViewModel>? TemporaryNotices { get; set; }
 
 
     private Debouncer debouncer;
@@ -256,7 +263,7 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         var run = db.GetCollection<DisclosureInstance>().Query().Where(x => x.NoticeId == notice.Id).ToArray();
 
-        await App.Current.Dispatcher.InvokeAsync(() => TemporaryNotices.Add(TemporaryNoticeViewModel.Create(notice, workflows, run)));
+        await App.Current.Dispatcher.InvokeAsync(() => TemporaryNotices!.Add(TemporaryNoticeViewModel.Create(notice, workflows, run)));
     }
 
 
@@ -297,7 +304,7 @@ public partial class DisclosurePageViewModel : ObservableObject
 
         var run = db.GetCollection<DisclosureInstance>().Query().Where(x => x.NoticeId == notice.Id).ToArray();
 
-        await App.Current.Dispatcher.InvokeAsync(() => TemporaryNotices.Add(TemporaryNoticeViewModel.Create(notice, workflows, run)));
+        await App.Current.Dispatcher.InvokeAsync(() => TemporaryNotices?.Add(TemporaryNoticeViewModel.Create(notice, workflows, run)));
     }
 
 
@@ -317,7 +324,7 @@ public partial class DisclosurePageViewModel : ObservableObject
     {
         DisclosureService.RemoveNotice(notice.Id);
 
-        TemporaryNotices.Remove(notice);
+        TemporaryNotices?.Remove(notice);
     }
 
 
