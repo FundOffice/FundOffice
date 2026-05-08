@@ -1016,7 +1016,9 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         {
             var today = DateOnly.FromDateTime(DateTime.Now);
 
-            VerifyRules.OnEntityArrival([new NewDay(today)]);
+            // 新的一天
+            DataTracker.OnNewDay(new NewDay(today));
+
             WeakReferenceMessenger.Default.Send(new NewDay(today));
 
             // 更新规模图

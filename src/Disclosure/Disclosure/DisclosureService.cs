@@ -35,7 +35,7 @@ public static partial class DisclosureService
         using var db = DbHelper.Base();
         _workflows = db.GetCollection<DisclosureWorkflow>().Find(x => !string.IsNullOrWhiteSpace(x.Channel)).DistinctBy(x => x.Id).ToDictionary(x => x.Id);
 
-        DataTracker.Hook(x => RegisterNotice(x));
+        DataTracker.Hook(RegisterNotice);
     }
 
 
@@ -449,13 +449,15 @@ public static partial class DisclosureService
     }
 
 
+    public static void RegisterNotice(IDisclosureNotice notice) => RegisterNotice(notice, false);
+
 
 
     /// <summary>
     /// 注册新报告
     /// </summary>
     /// <param name="notice"></param>
-    public static void RegisterNotice(IDisclosureNotice notice, bool forceRun = false)
+    public static void RegisterNotice(IDisclosureNotice notice, bool forceRun)
     {
         using var db = DbHelper.Base();
         var exist = db.GetCollection<IDisclosureNotice>().FindById(notice.Id);

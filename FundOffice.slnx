@@ -16,6 +16,7 @@
   </Folder>
   <Folder Name="/Main/">
     <Project Path="src/Main/Data/Data.csproj" />
+    <Project Path="src/Main/HookableGenerator/HookableGenerator.csproj" Id="828d7c6d-19d1-4fdf-ba6b-c77bd079eb57" />
     <Project Path="src/Main/Models/Models.csproj" />
   </Folder>
   <Folder Name="/Mission/">

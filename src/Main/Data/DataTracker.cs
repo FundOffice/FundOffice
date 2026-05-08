@@ -440,7 +440,7 @@ public static partial class DataTracker
 
     //}
 
-
+    [Hookable]
     public static void OnDailyValue(IEnumerable<DailyValue> data)
     {
         var dailyValues = data.Where(x => x.NetValue != 0).ToList();
@@ -682,6 +682,7 @@ public static partial class DataTracker
         //    WeakReferenceMessenger.Default.Send(new TransferRecordLinkOrderMessage(item.Id, item.OrderId));
     }
 
+    [Hookable]
     public static void OnBatchTransferRequest(IList<TransferRequest> data)
     {
         // 匹配订单
@@ -698,7 +699,7 @@ public static partial class DataTracker
 
     }
 
-
+    [Hookable]
     public static void OnBatchTransferRecord(IList<TransferRecord> records)
     {
         if (records.Count == 0) return;
@@ -707,15 +708,24 @@ public static partial class DataTracker
         SaveRecords(records, db);
 
         // 通知UI
-        try
-        {
-            WeakReferenceMessenger.Default.Send(records);
-        }
-        catch { }
+        try { WeakReferenceMessenger.Default.Send(records); } catch (Exception e) { LogEx.Error(e); }
 
         PostHandleTransferRecords(db, records);
 
         Notify(records);
+    }
+
+    [Hookable]
+    public static void OnBatchTransferOrder(IList<TransferOrder> data)
+    {
+        // 匹配订单
+        using var db = DbHelper.Base();
+
+        db.GetCollection<TransferOrder>().Upsert(data);
+
+        try { WeakReferenceMessenger.Default.Send(data); } catch (Exception e) { LogEx.Error(e); }
+
+        Notify(data);
     }
 
     private static void SaveRequests(BaseDatabase db, IList<TransferRequest> data)
@@ -1533,19 +1543,10 @@ public static partial class DataTracker
         WeakReferenceMessenger.Default.Send(data);
     }
 
-    public static void OnBatchTransferOrder(IList<TransferOrder> data)
-    {
-        // 匹配订单
-        using var db = DbHelper.Base();
-
-        db.GetCollection<TransferOrder>().Upsert(data);
-
-        WeakReferenceMessenger.Default.Send(data);
-    }
 
 
 
-
+    [Hookable]
     public static void OnNewNotice(IDisclosureNotice notice)
     {
         using var db = DbHelper.Base();
@@ -1568,6 +1569,7 @@ public static partial class DataTracker
 
         Notify(notice);
     }
+
     private static void Merge(BsonDocument oldDoc, BsonDocument newDoc)
     {
         if (newDoc is null) return;
@@ -1575,66 +1577,17 @@ public static partial class DataTracker
         foreach (var kvp in newDoc)
         {
             // 1. 排除 null 值
-            if (!kvp.Value.IsNull) 
+            if (!kvp.Value.IsNull)
                 oldDoc[kvp.Key] = kvp.Value;
         }
     }
 
-    #region Hook
-
-    private static ConcurrentBag<Action<IDisclosureNotice>> _hookNotice = [];
-    public static void Hook(Action<IDisclosureNotice> callback) => _hookNotice.Add(callback);
-
-    private static void Notify(IDisclosureNotice notice)
+    [Hookable]
+    public static void OnNewDay(NewDay today)
     {
-        Parallel.ForEach(_hookNotice, item =>
-        {
-            try { item(notice); } catch (Exception ex) { LogEx.Error(ex); }
-        });
+        VerifyRules.OnEntityArrival([today]);
+
+        Notify(today);
     }
-
-    private static ConcurrentBag<Action<IEnumerable<DailyValue>>> _hookDaily = [];
-    public static void Hook(Action<IEnumerable<DailyValue>> callback) => _hookDaily.Add(callback);
-    private static void Notify(IEnumerable<DailyValue> dv)
-    {
-        Parallel.ForEach(_hookDaily, item =>
-        {
-            try { item(dv); } catch (Exception ex) { LogEx.Error(ex); }
-        });
-    }
-
-    private static ConcurrentBag<Action<IEnumerable<TransferRecord>>> _hookTr = [];
-    public static void Hook(Action<IEnumerable<TransferRecord>> callback) => _hookTr.Add(callback);
-    private static void Notify(IEnumerable<TransferRecord> dv)
-    {
-        Parallel.ForEach(_hookTr, item =>
-        {
-            try { item(dv); } catch (Exception ex) { LogEx.Error(ex); }
-        });
-    }
-
-
-    private static ConcurrentBag<Action<IEnumerable<TransferRequest>>> _hookTr2 = [];
-    public static void Hook(Action<IEnumerable<TransferRequest>> callback) => _hookTr2.Add(callback);
-    private static void Notify(IEnumerable<TransferRequest> dv)
-    {
-        Parallel.ForEach(_hookTr2, item =>
-        {
-            try { item(dv); } catch (Exception ex) { LogEx.Error(ex); }
-        });
-    }
-
-
-    private static ConcurrentBag<Action<IEnumerable<TransferOrder>>> _hookTo = [];
-    public static void Hook(Action<IEnumerable<TransferOrder>> callback) => _hookTo.Add(callback);
-    public static void Notify(IEnumerable<TransferOrder> dv)
-    {
-        Parallel.ForEach(_hookTo, item =>
-        {
-            try { item(dv); } catch (Exception ex) { LogEx.Error(ex); }
-        });
-    }
-    #endregion
-
 }
 
