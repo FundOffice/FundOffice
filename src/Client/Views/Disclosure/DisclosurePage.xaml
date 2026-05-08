@@ -526,6 +526,7 @@
 
                                 <Button
                                     hc:IconElement.Geometry="{StaticResource f.plus}"
+                                    Command="{Binding GenerateFundScaleWarningNoticeCommand}"
                                     Content="规模预警"
                                     Style="{StaticResource ButtonDefault.Small}" />
                             </hc:UniformSpacingPanel>

@@ -334,8 +334,43 @@ public partial class DisclosurePageViewModel : ObservableObject
 
 
 
+    [RelayCommand]
+    public async Task GenerateFundScaleWarningNotice()
+    {
+        var pe = new DateOnly(SelectedYear!.Value, SelectedMonth!.Value, 1);
+
+        using var db = DbHelper.Base();
+        var funds = db.GetCollection<Fund>().Query().Where(x => x.Status == FundStatus.Normal || x.ClearDate >= pe).ToArray();
+
+        var dc = new AddFundSacleWarningNoticeWindowViewModel(funds);
+
+        var wnd = new AddFundSacleWarningNoticeWindow();
+        wnd.DataContext = dc;
+        wnd.Owner = App.Current.MainWindow;
+        if (wnd.ShowDialog() != true || dc.SelectedFund is null) return;
 
 
+        FundSacleWarningNotice notice = new()
+        {
+            FundId = dc.SelectedFund.Id,
+            FundCode = dc.SelectedFund.Code ?? "",
+            FundName = dc.SelectedFund.Name,
+            WarningType = dc.WarningType,
+            TouchDate = DateOnly.FromDateTime(dc.TouchDate ?? default),
+            PublishDate = DateOnly.FromDateTime(dc.PublishTime),
+            PublishTime = TimeOnly.FromDateTime(dc.PublishTime)
+        };
+
+
+        DataTracker.OnNewNotice(notice);
+
+        await Task.Delay(1000);
+        var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && x.Type == notice.Type);
+
+        var run = db.GetCollection<DisclosureInstance>().Query().Where(x => x.NoticeId == notice.Id).ToArray();
+
+        await App.Current.Dispatcher.InvokeAsync(() => TemporaryNotices?.Add(TemporaryNoticeViewModel.Create(notice, workflows, run)));
+    }
 
 
 

@@ -1,4 +1,5 @@
 ﻿using FMO.Models;
+using System.ComponentModel;
 
 namespace FMO.Disclosure;
 
@@ -327,24 +328,25 @@ public class FundDivdendNotice : IFundDisclosureNotice, ITemporaryDisclosureNoti
 /// 基金规模预警类型
 /// 最大32种，否则需要调整ID生成逻辑，增加预留位
 /// </summary>
+[TypeConverter(typeof(EnumDescriptionTypeConverter))]
 public enum ScaleWarningType
 {
-    None,
+    [Description("未选择")]None,
 
     /// <summary>
     /// 基金年度日均基金资产净值低于1000万元规模预警
     /// </summary>
-    AnnualAverageNetAssetBelow1000W = 1,
+    [Description("年度日均净资产净值低于1000万元")] AnnualAverageNetAssetBelow1000W = 1,
 
     /// <summary>
     /// 基金日均资产规模低于500万元停止申购通知
     /// </summary>
-    DailyAverageAssetBelow500W = 2,
+    [Description("年度日均净资产净值低于500万元")] DailyAverageAssetBelow500W = 2,
 
     /// <summary>
     /// 基金连续60个交易日基金资产低于500万元停止申购通知
     /// </summary>
-    Continuous60TradeDaysAssetBelow500W = 3,
+    [Description("连续60个交易日净资产低于500万元")] Continuous60TradeDaysAssetBelow500W = 3,
 
 }
 
@@ -371,7 +373,13 @@ public class FundSacleWarningNotice : IFundDisclosureNotice, ITemporaryDisclosur
 
     public TimeOnly PublishTime { get; set; }
 
-    public required string Name { get; set; }
+    public string Name => $"{FundName} {WarningType switch
+    {
+        ScaleWarningType.AnnualAverageNetAssetBelow1000W => "年度日均净资产净值低于1000万元预警",
+        ScaleWarningType.DailyAverageAssetBelow500W => "年度日均净资产净值低于500万元停止申购通知",
+        ScaleWarningType.Continuous60TradeDaysAssetBelow500W => "连续60个交易日净资产低于500万元停止申购通知",
+        _ => ""
+    }}";
 
     public SimpleFile? Word { get; set; }
 
