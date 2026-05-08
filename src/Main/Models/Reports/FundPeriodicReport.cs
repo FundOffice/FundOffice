@@ -53,6 +53,7 @@ public interface IPeriodical
 /// <summary>
 /// 定期报告
 /// </summary>
+[Obsolete]
 public class FundPeriodicReport : IPeriodical
 {
     public int Id => (PeriodEnd.DayNumber - 719162) << 16 | FundId << 4 | (int)Type;//1970-01-01是公历的第719162天

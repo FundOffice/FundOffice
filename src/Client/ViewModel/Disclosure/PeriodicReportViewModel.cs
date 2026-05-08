@@ -49,7 +49,7 @@ public partial class PeriodicReportViewModel : ObservableObject
         if (Id == 0) return;
         using var db = DbHelper.Base();
         report.UpdateFrom(v!);
-        db.GetCollection<FundPeriodicReport>().UpdateMany(BsonMapper.Global.ToDocument(v).ToString(), $"_id={Id}");
+        db.GetCollection<IDisclosureNotice>().UpdateMany(BsonMapper.Global.ToDocument(v).ToString(), $"_id={Id}");
     }
 
 

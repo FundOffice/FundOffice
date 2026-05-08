@@ -211,7 +211,7 @@ public class AmacDirectReporter
                     entryStream.Flush();
                 }
 
-                if (report.Type == DisclosureType.Annually && report is FundPeriodicReport fp && fp.Sealed?.File is FileMeta fmm)
+                if (report.Type == DisclosureType.Annually && report is PeriodicalDisclosureNotice fp && fp.Sealed?.File is FileMeta fmm)
                 {
                     entry = archive.CreateEntry($"01_{report.FundCode}_年报.pdf");
                     using (var es = entry.Open())

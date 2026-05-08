@@ -214,6 +214,7 @@
                             <Separator DockPanel.Dock="Top" />
 
                             <TextBlock
+                                x:Name="log"
                                 DockPanel.Dock="Right"
                                 Text="{Binding Error}"
                                 TextWrapping="Wrap" />
@@ -221,6 +222,11 @@
                     </hc:UniformSpacingPanel>
                 </hc:SimplePanel>
             </Expander>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="Processing">
+                    <Setter TargetName="log" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
 
 
