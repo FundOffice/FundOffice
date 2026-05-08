@@ -35,7 +35,6 @@ public static partial class DisclosureService
         using var db = DbHelper.Base();
         _workflows = db.GetCollection<DisclosureWorkflow>().Find(x => !string.IsNullOrWhiteSpace(x.Channel)).DistinctBy(x => x.Id).ToDictionary(x => x.Id);
 
-        DataTracker.Hook(RegisterNotice);
     }
 
 
@@ -471,6 +470,8 @@ public static partial class DisclosureService
 
         if (forceRun || IsCurrentlyNotice(notice))
             CreateInstance(notice);
+
+        DataTracker.OnNewNotice(notice);
     }
 
     public static void RemoveNotice(long id)

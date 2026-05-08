@@ -187,7 +187,7 @@ public class DisclosureFromMailMission : MailMission
                                 ff.Stream.Dispose();
                         }
 
-                        DataTracker.OnNewNotice(fp);
+                        DisclosureService.RegisterNotice(fp);
 
                         log += $"\n{fp.Name}";
                     }
@@ -204,7 +204,7 @@ public class DisclosureFromMailMission : MailMission
                             item.Stream.Dispose();
                         }
 
-                        DataTracker.OnNewNotice(fp);
+                        DisclosureService.RegisterNotice(fp);
                         log += $"\n{fp.Name}";
                     }
                 }

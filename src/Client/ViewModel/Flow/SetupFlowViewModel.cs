@@ -276,7 +276,7 @@ namespace FMO
                     Share = InitialAsset.OldValue
                 });
 
-                DataTracker.OnNewNotice(notice);
+                DisclosureService.RegisterNotice(notice);
             }
         }
 

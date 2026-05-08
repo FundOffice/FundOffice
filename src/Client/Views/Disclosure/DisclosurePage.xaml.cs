@@ -267,7 +267,8 @@ public partial class DisclosurePageViewModel : ObservableObject
             Manager = ma,
         });
 
-        DataTracker.OnNewNotice(notice);
+
+        DisclosureService.RegisterNotice(notice);
 
         await Task.Delay(500);
         var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && x.Type == notice.Type);
@@ -322,7 +323,7 @@ public partial class DisclosurePageViewModel : ObservableObject
             Manager = ma,
         });
 
-        DataTracker.OnNewNotice(notice);
+        DisclosureService.RegisterNotice(notice);
 
         await Task.Delay(1000);
         var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && x.Type == notice.Type);
@@ -362,7 +363,7 @@ public partial class DisclosurePageViewModel : ObservableObject
         };
 
 
-        DataTracker.OnNewNotice(notice);
+        DisclosureService.RegisterNotice(notice);
 
         await Task.Delay(1000);
         var workflows = DisclosureService.GetWorkflows().Where(x => x.IsEnabled && x.Type == notice.Type);

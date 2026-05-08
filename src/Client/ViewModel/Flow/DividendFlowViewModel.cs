@@ -350,7 +350,7 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
                 Mail = manager.Email
             });
 
-            DataTracker.OnNewNotice(notice);
+            DisclosureService.RegisterNotice(notice);
         }
 
     }
