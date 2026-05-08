@@ -1137,7 +1137,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
     /// </summary>
     /// <param name="filePath">目标文件路径</param>
     /// <param name="size">期望提取的宽高（如 32, 48, 256）</param>
-    public static BitmapSource ExtractIcon(string filePath, int size = 32)
+    public static BitmapSource? ExtractIcon(string filePath, int size = 32)
     {
         if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
             throw new FileNotFoundException("找不到指定文件", filePath);

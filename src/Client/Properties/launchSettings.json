@@ -1,8 +1,7 @@
 {
   "profiles": {
-    "FundMiddleOffice": {
-      "commandName": "Project",
-      "nativeDebugging": false
+    "FundOffice": {
+      "commandName": "Project"
     }
   }
 }

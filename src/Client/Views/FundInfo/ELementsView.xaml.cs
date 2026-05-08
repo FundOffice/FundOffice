@@ -404,7 +404,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         SealingRule.Init(elements);
 
 
-        LockingRule = new ShareElementsViewModel<SealingRule, SealingInfoViewModel>(FundId, FlowId, elements, sc, x => x.LockingRule, x => new(x), x => x!.Build(), x=> x.Type switch { SealingType.No => "无", SealingType.Has => $"{x.Month}个月", SealingType.Other => x.Other, _ => "未设置" });
+        LockingRule = new ShareElementsViewModel<SealingRule, SealingInfoViewModel>(FundId, FlowId, elements, sc, x => x.LockingRule, x => new(x), x => x!.Build(), x=> x?.Type switch { SealingType.No => "无", SealingType.Has => $"{x.Month}个月", SealingType.Other => x.Other, _ => "未设置" });
        
 
 
