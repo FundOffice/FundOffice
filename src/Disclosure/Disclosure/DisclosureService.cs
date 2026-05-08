@@ -206,7 +206,7 @@ public static partial class DisclosureService
                 try
                 {
                     item.Status = DisclosureStatus.Waiting;
-                    WeakReferenceMessenger.Default.Send(item); 
+                    WeakReferenceMessenger.Default.Send(item);
                 }
                 catch (Exception ex)
                 {
@@ -447,7 +447,7 @@ public static partial class DisclosureService
     /// 注册新报告
     /// </summary>
     /// <param name="notice"></param>
-    public static void RegisterNotice(IDisclosureNotice notice)
+    public static void RegisterNotice(IDisclosureNotice notice, bool forceRun = false)
     {
         using var db = DbHelper.Base();
         var exist = db.GetCollection<IDisclosureNotice>().FindById(notice.Id);
@@ -459,7 +459,8 @@ public static partial class DisclosureService
         }
         db.GetCollection<IDisclosureNotice>().Insert(notice);
 
-        CreateInstance(notice);
+        if (forceRun || IsCurrentlyNotice(notice))
+            CreateInstance(notice);
     }
 
     public static void RemoveNotice(long id)
@@ -467,6 +468,17 @@ public static partial class DisclosureService
         using var db = DbHelper.Base();
         db.GetCollection<IDisclosureNotice>().Delete(id);
         db.GetCollection<DisclosureInstance>().DeleteMany(x => x.NoticeId == id);
+    }
+
+    private static bool IsCurrentlyNotice(IDisclosureNotice notice)
+    {
+        if (DateTime.Now.Year == notice.PublishDate.Year && DateTime.Now.Month == notice.PublishDate.Month)
+            return true;
+
+        if (notice is IFundPeriodicalDisclosure d)
+            return DateTime.Now.Year == d.ReportDate.Year && DateTime.Now.Month == d.ReportDate.Month;
+
+        return false;
     }
 }
 
