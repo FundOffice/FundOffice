@@ -437,7 +437,7 @@ public class AmacDirectReporter
                        SelectMany(x => x.children.Select(y => $"Level: {y.level}, {y.description}"))));
             }
 
-            return new(false, "未获取到返回信息");
+            return new(false, $"返回信息解析异常：{responseContent}");
         }
         catch (Exception e)
         {
