@@ -746,7 +746,7 @@ public partial class MeiShiAssit : ISigning
 
 
 
-    internal async Task<string> UploadFile(string filePath, int codeType, string id = "")
+    internal async Task<string> UploadFile(string fileName, string filePath, int codeType, string id = "")
     {
         HttpRequestMessage request = new();
         request.Method = HttpMethod.Post;
@@ -764,7 +764,7 @@ public partial class MeiShiAssit : ISigning
         var fileContent = new StreamContent(fileStream);
         // 通用文件类型，可根据实际文件修改（如image/png、application/pdf）
         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
-        var fileName = Path.GetFileName(filePath);
+        
         // 第三个参数是文件名，必须正确
         formData.Add(fileContent, "file", fileName);
 

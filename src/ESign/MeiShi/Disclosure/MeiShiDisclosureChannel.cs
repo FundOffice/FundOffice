@@ -72,7 +72,7 @@ public partial class MeiShiAssit : IDisclosureChannel
         {
             case PeriodicalDisclosureNotice n:
                 if (n.Pdf?.Exists != true) return new(false, "文件不存在");
-                return await UploadDisclosureFile(n.FundName, n.FundCode, "", n.PublishDate.ToDateTime(n.PublishTime), n.Name, n.Pdf.File!.GetFullPath());
+                return await UploadDisclosureFile(n.FundName, n.FundCode, "", n.PublishDate.ToDateTime(n.PublishTime), n.Name, n.Pdf.File!);
 
             ///
             case TemporaryOpenNotice n:
@@ -89,7 +89,7 @@ public partial class MeiShiAssit : IDisclosureChannel
 
             case ITemporaryDisclosureNotice n and IFundDisclosureNotice f:
                 if (n.Pdf?.Exists != true) return new(false, "文件不存在");
-                return await UploadDisclosureFile(f.FundName, f.FundCode, "", f.PublishDate.ToDateTime(f.PublishTime), f.Name, n.Pdf.File!.GetFullPath());
+                return await UploadDisclosureFile(f.FundName, f.FundCode, "", f.PublishDate.ToDateTime(f.PublishTime), f.Name, n.Pdf.File!);
 
             default:
                 return new(false, "不支持的通知类型");
@@ -268,7 +268,7 @@ public partial class MeiShiAssit : IDisclosureChannel
     }
 
     #region 上传公告
-    public async Task<ErrorReturn> UploadDisclosureFile(string fundName, string fundCode, string shareClass, DateTime time, string announceName, string file)
+    public async Task<ErrorReturn> UploadDisclosureFile(string fundName, string fundCode, string shareClass, DateTime time, string announceName, FileMeta meta)
     {
         if (!IsValid) return new ErrorReturn(false, "Invalid");
         if (!isLogin && await LoginFromDisclosure() is ErrorReturn er && !er.Successed)
@@ -277,6 +277,8 @@ public partial class MeiShiAssit : IDisclosureChannel
             return er;
         }
 
+        var file = meta.GetFullPath();
+
         // 获取对应产品
         var funds = await QueryFundInfo();
         var fund = funds.FirstOrDefault(x => x.Name == fundName && x.Code == fundCode);
@@ -284,17 +286,17 @@ public partial class MeiShiAssit : IDisclosureChannel
             return new ErrorReturn(false, "Fund not found");
 
         // 上传文件
-        var fileJson = await UploadFile(file, 131);
+        var fileJson = await UploadFile(meta.Name, file, 131);
 
         if (!fileJson.Contains("1008"))
             return new ErrorReturn(false, "File upload failed");
 
         // 创建公告
-        return await CreateDisclosure(fund.Id, fileJson, file, time, announceName);
+        return await CreateDisclosure(fund.Id, fileJson, meta.Name, file, time, announceName);
 
     }
 
-    private async Task<ErrorReturn> CreateDisclosure(string fundId, string fileJson, string filePath, DateTime time, string announceName)
+    private async Task<ErrorReturn> CreateDisclosure(string fundId, string fileJson, string fileName, string filePath, DateTime time, string announceName)
     {
         var root = JsonSerializer.Deserialize<RootJson>(fileJson);
         if (root is null) return new ErrorReturn(false, "Invalid file JSON");
@@ -307,7 +309,7 @@ public partial class MeiShiAssit : IDisclosureChannel
         var fo = new UploadFileInfo
         {
             Uid = uid,
-            Name = fileData.FileName!,
+            Name = fileName,
             Size = new FileInfo(filePath).Length,
             Type = "application/pdf",
             Status = "done",
