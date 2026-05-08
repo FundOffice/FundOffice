@@ -21,31 +21,21 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      # ==========================================
-      # 核心步骤：执行 publish.ps1 逻辑（已修复语法并适配 CI）
-      # ==========================================
       - name: 执行发布脚本逻辑
         run: |
           $ErrorActionPreference = "Stop"
-          # 在 CI 行内脚本中，使用 $PWD.Path 替代 $MyInvocation.MyCommand.Path
           $scriptPath = $PWD.Path
           Set-Location $scriptPath
-          # 修复原脚本路径末尾多余的空格
           $publishDir = Join-Path $scriptPath "publish"
-          $languageFolders = @(
-            "cs", "de", "es", "fr", "it", "ja", "ko", "pl", "pt-BR",
-            "ru", "tr", "zh-Hans", "zh-Hant", "playwright"
-          )
+          $languageFolders = @("cs","de","es","fr","it","ja","ko","pl","pt-BR","ru","tr","zh-Hans","zh-Hant","playwright")
 
           Write-Host "========================================" -ForegroundColor Cyan
           Write-Host "开始发布 FundOffice 项目" -ForegroundColor Cyan
           Write-Host "========================================" -ForegroundColor Cyan
           Write-Host ""
 
-          # 需要保留的文件夹列表
           $foldersToKeep = @("esign", "mission", "runtimes", "trigger", "trustee")
 
-          # 清理并发布目录
           if (Test-Path $publishDir) {
               Write-Host "清理现有发布目录..." -ForegroundColor Yellow
               $allItems = Get-ChildItem -Path $publishDir -Force
@@ -71,9 +61,15 @@ jobs:
           if (Test-Path $solutionFile) {
               Write-Host "发布解决方案: $solutionFile" -ForegroundColor Yellow
               dotnet publish $solutionFile --configuration Release --output $publishDir --no-restore /p:DebugType=None /p:DebugSymbols=false
-              if ($LASTEXITCODE -eq 0) { Write-Host "✓ 解决方案发布成功" -ForegroundColor Green } else { Write-Host "✗ 解决方案发布失败" -ForegroundColor Red; exit 1 }
+              if ($LASTEXITCODE -eq 0) {
+                  Write-Host "[OK] 解决方案发布成功" -ForegroundColor Green
+              } else {
+                  Write-Host "[FAIL] 解决方案发布失败" -ForegroundColor Red
+                  exit 1
+              }
           } else {
-              Write-Host "⚠ 未找到解决方案文件: $solutionFile，跳过此步骤" -ForegroundColor Yellow
+              Write-Host "[FAIL] 未找到解决方案文件: $solutionFile" -ForegroundColor Red
+              exit 1
           }
           Write-Host ""
 
@@ -83,32 +79,36 @@ jobs:
           Write-Host "========================================" -ForegroundColor Cyan
           $toolsPath = Join-Path $scriptPath "src\Tools"
           if (Test-Path $toolsPath) {
-              $allProjects = Get-ChildItem -Path $toolsPath -Include "*.csproj", "*.vbproj" -Recurse -File
-              # 修复原脚本 $.BaseName 语法错误
+              $allProjects = Get-ChildItem -Path $toolsPath -Include "*.csproj","*.vbproj" -Recurse -File
               $projectFiles = $allProjects | Where-Object { $_.BaseName -notlike "*tmp*" }
               $excludedProjects = $allProjects | Where-Object { $_.BaseName -like "*tmp*" }
 
               if ($excludedProjects.Count -gt 0) {
-                  Write-Host "排除以下 tmp 项目: " -ForegroundColor Yellow
+                  Write-Host "[WARN] 排除以下 tmp 项目: " -ForegroundColor Yellow
                   $excludedProjects | ForEach-Object { Write-Host "  - $($_.BaseName) " -ForegroundColor Gray }
-                  Write-Host " "
+                  Write-Host ""
               }
 
               if ($projectFiles.Count -eq 0) {
-                  Write-Host "⚠ 未找到任何 Tools 项目文件 " -ForegroundColor Yellow
+                  Write-Host "[WARN] 未找到任何 Tools 项目文件" -ForegroundColor Yellow
               } else {
-                  Write-Host "找到 $($projectFiles.Count) 个项目文件（已排除 tmp） " -ForegroundColor Green
+                  Write-Host "[OK] 找到 $($projectFiles.Count) 个项目文件（已排除 tmp）" -ForegroundColor Green
                   $idx = 1
                   foreach ($project in $projectFiles) {
-                      Write-Host "[$idx/$($projectFiles.Count)] 发布: $($project.BaseName) " -ForegroundColor Yellow
+                      Write-Host "[$idx/$($projectFiles.Count)] 发布: $($project.BaseName)" -ForegroundColor Yellow
                       dotnet publish $project.FullName --configuration Release --output $publishDir --no-restore /p:DebugType=None /p:DebugSymbols=false
-                      # 修复原脚本 $LA STEXITCODE 拼写错误
-                      if ($LASTEXITCODE -eq 0) { Write-Host "  ✓ 成功 " -ForegroundColor Green } else { Write-Host "  ✗ 失败 " -ForegroundColor Red; exit 1 }
-                      $idx++; Write-Host " "
+                      if ($LASTEXITCODE -eq 0) {
+                          Write-Host "  [OK] 成功" -ForegroundColor Green
+                      } else {
+                          Write-Host "  [FAIL] 失败" -ForegroundColor Red
+                          exit 1
+                      }
+                      $idx++
+                      Write-Host ""
                   }
               }
           } else {
-              Write-Host "⚠ 未找到 src\Tools 目录，跳过此步骤" -ForegroundColor Yellow
+              Write-Host "[WARN] 未找到 src\Tools 目录，跳过此步骤" -ForegroundColor Yellow
           }
 
           # 3. 删除语言文件夹和 pdb 文件
@@ -118,29 +118,33 @@ jobs:
           $deletedLang = 0
           foreach ($lang in $languageFolders) {
               $p = Join-Path $publishDir $lang
-              if (Test-Path $p) { Remove-Item $p -Recurse -Force; $deletedLang++ }
+              if (Test-Path $p) {
+                  Remove-Item $p -Recurse -Force
+                  $deletedLang++
+              }
           }
-          if ($deletedLang -gt 0) { Write-Host "✓ 已删除 $deletedLang 个语言文件夹" -ForegroundColor Green }
+          if ($deletedLang -gt 0) { Write-Host "[OK] 已删除 $deletedLang 个语言文件夹" -ForegroundColor Green }
           else { Write-Host "  无语言文件夹需要删除" -ForegroundColor Gray }
 
           $pdbFiles = Get-ChildItem -Path $publishDir -Filter "*.pdb" -Recurse -File
           if ($pdbFiles.Count -gt 0) {
               $pdbFiles | Remove-Item -Force
-              Write-Host "✓ 已删除 $($pdbFiles.Count) 个 pdb 文件" -ForegroundColor Green
+              Write-Host "[OK] 已删除 $($pdbFiles.Count) 个 pdb 文件" -ForegroundColor Green
           } else { Write-Host "  无 pdb 文件" -ForegroundColor Gray }
           Write-Host ""
 
-          # 4. 【核心优化】安全清理未引用的项目级 DLL
+          # 4. 安全清理未引用的项目级 DLL
           Write-Host "========================================" -ForegroundColor Cyan
-          Write-Host "步骤 4: 清理未被 EXE 引用的项目 DLL（保留系统/第三方库）" -ForegroundColor Cyan
+          Write-Host "步骤 4: 清理未被 EXE 引用的项目 DLL" -ForegroundColor Cyan
           Write-Host "========================================" -ForegroundColor Cyan
-
-          # 提取仓库中所有项目的基础名称
+          
           $projectNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
           $searchDirs = @($scriptPath, (Join-Path $scriptPath "src\Tools"))
           foreach ($dir in $searchDirs) {
               if (Test-Path $dir) {
-                  Get-ChildItem -Path $dir -Include "*.csproj", "*.vbproj" -Recurse -File | ForEach-Object { $null = $projectNames.Add($_.BaseName) }
+                  Get-ChildItem -Path $dir -Include "*.csproj","*.vbproj" -Recurse -File | ForEach-Object {
+                      $null = $projectNames.Add($_.BaseName)
+                  }
               }
           }
 
@@ -163,7 +167,6 @@ jobs:
               }
           }
 
-          # 仅筛选“项目级 DLL”进行检查
           $allDlls = Get-ChildItem -Path $publishDir -Filter "*.dll" -File
           $candidateDlls = $allDlls | Where-Object { $projectNames.Contains($_.BaseName) }
 
@@ -176,15 +179,14 @@ jobs:
                   $base = $dll.BaseName
                   Write-Host "  删除未引用项目 DLL: $($dll.Name)" -ForegroundColor Yellow
                   Remove-Item $dll.FullName -Force -ErrorAction SilentlyContinue
-                  # 修复原脚本 $base$ 语法错误
                   @(".xml", ".config") | ForEach-Object {
                       $path = Join-Path $publishDir "$base$_"
                       if (Test-Path $path) { Remove-Item $path -Force -ErrorAction SilentlyContinue }
                   }
                   $delCount++
               }
-              if ($delCount -eq 0) { Write-Host "  ✓ 所有项目 DLL 均已被引用，无需清理" -ForegroundColor Green }
-              else { Write-Host "  ✓ 安全清理 $delCount 个未引用的项目 DLL 及附属文件" -ForegroundColor Green }
+              if ($delCount -eq 0) { Write-Host "  [OK] 所有项目 DLL 均已被引用，无需清理" -ForegroundColor Green }
+              else { Write-Host "  [OK] 安全清理 $delCount 个未引用的项目 DLL 及附属文件" -ForegroundColor Green }
               Write-Host "  (系统库与第三方库已自动保留)" -ForegroundColor Gray
           }
           Write-Host ""
@@ -192,7 +194,7 @@ jobs:
           Write-Host "发布完成!" -ForegroundColor Green
           Write-Host "========================================" -ForegroundColor Cyan
           Write-Host "发布目录: $publishDir" -ForegroundColor White
-        shell: powershell
+        shell: pwsh  # ← 关键：使用 PowerShell 7+ 避免 UTF-8 解析错误
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
@@ -201,7 +203,8 @@ jobs:
           path: ./publish/
 
       - name: 打包成单个 ZIP（方便 Release 下载）
-        run: Compress-Archive -Path ./publish/* -DestinationPath ./FundOffice-Win-x64.zip -Force
+        run: |
+          Compress-Archive -Path ./publish/* -DestinationPath ./FundOffice-Win-x64.zip -Force
         shell: powershell
 
       - name: 确定版本号
