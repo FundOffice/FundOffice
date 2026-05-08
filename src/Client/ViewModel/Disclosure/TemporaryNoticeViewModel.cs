@@ -47,6 +47,7 @@ public class TemporaryNoticeViewModel
             HugeRedemptionNotice t => new HugeRedemptionNoticeViewModel(t, workflows, runs),
             FundSetupNotice t => new FundSetupNoticeViewModel(t, workflows, runs),
             FundDivdendNotice t => new FundDivdendNoticeViewModel(t, workflows, runs),
+            FundSacleWarningNotice t => new FundSacleWarningNoticeViewModel(t,  workflows, runs),
             _ => new TemporaryNoticeViewModel(notice, workflows, runs)
         };
     }
@@ -130,4 +131,17 @@ public partial class FundDivdendNoticeViewModel : TemporaryFundNoticeViewModel
                 return "";
         }
     }
+}
+
+[AutoViewModel(typeof(FundSacleWarningNotice))]
+public partial class FundSacleWarningNoticeViewModel : TemporaryFundNoticeViewModel
+{
+    public FundSacleWarningNoticeViewModel(IDisclosureNotice notice, IEnumerable<DisclosureWorkflow> workflows, IEnumerable<DisclosureInstance> runs) : base(notice, workflows, runs)
+    {
+        FillBy(notice as FundSacleWarningNotice);
+    }
+
+
+
+
 }
