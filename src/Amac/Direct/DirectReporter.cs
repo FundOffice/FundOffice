@@ -112,7 +112,7 @@ public class AmacDirectReporter
             case QuarterlyUpdate qu:
                 return qu.Operation?.File;
             default:
-                return null ;
+                return null;
         }
     }
 
@@ -137,6 +137,8 @@ public class AmacDirectReporter
 
         // 读取错误信息
         var err = await QueryResult(result.Handle!, result.FileType, acc);
+        // 提交成功或已提交了，直接返回
+        if (err.Successed) return err;
 
         // 忽略警告直接提交（目前只有一种警告，状态码12，其他错误不允许直接提交）
         if (result.UploadCode == 12 && ignoreWarning)
@@ -441,10 +443,19 @@ public class AmacDirectReporter
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="handle"></param>
+    /// <param name="type"></param>
+    /// <param name="acc"></param>
+    /// <returns>true 表示报告提交成功 false 表示未提交</returns>
     public static async Task<ErrorReturn> QueryResult(string handle, DirectFileType type, AmacDirectAccount acc)
     {
         try
         {
+            if (acc is null) return new(false, "Direct 账号为空");
+
             // 异步加锁（不会阻塞线程）
             await _slimLock.WaitAsync();
 
@@ -499,12 +510,14 @@ public class AmacDirectReporter
             {
                 if (root.processCode == "00")
                     return new(true, "操作成功");
-                else
+                else if (root.processCode == "10")
+                    return new(true, "报告已提交过");
+                else if (root.verifyMessage?.children?.Count > 0)
                     return new(false, string.Join("\n", root.verifyMessage.children.Where(x => x.children is not null).
                        SelectMany(x => x.children.Select(y => $"Level: {y.level}, {y.description}"))));
             }
-            else
-                return new(false, "未获取到返回信息");
+
+            return new(false, "未获取到返回信息");
         }
         catch (Exception e)
         {
