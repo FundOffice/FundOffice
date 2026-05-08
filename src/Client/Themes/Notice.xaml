@@ -90,22 +90,35 @@
                             </DockPanel>
 
                             <DockPanel Visibility="{Binding HasInstance, Converter={StaticResource Boolean2VisibilityConverter}}">
-                                <Button
-                                    x:Name="btn"
-                                    hc:IconElement.Geometry="{StaticResource f.play}"
-                                    Command="{Binding StartRunCommand}"
+
+                                <hc:SimplePanel
+                                    x:Name="btns"
                                     DockPanel.Dock="Right"
-                                    Foreground="Green"
-                                    Style="{StaticResource ButtonIcon.Small}"
-                                    Visibility="Collapsed" />
-                                <Button
-                                    x:Name="stop"
-                                    hc:IconElement.Geometry="{StaticResource f.stop}"
-                                    Command="{Binding StopRunCommand}"
-                                    DockPanel.Dock="Right"
-                                    Foreground="Red"
-                                    Style="{StaticResource ButtonIcon.Small}"
-                                    Visibility="Collapsed" />
+                                    Visibility="Collapsed">
+
+                                    <Button
+                                        x:Name="reb"
+                                        hc:IconElement.Geometry="{StaticResource f.rotate-right}"
+                                        Command="{Binding RedoCommand}"
+                                        Foreground="Orange"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="Collapsed" />
+                                    <Button
+                                        x:Name="btn"
+                                        hc:IconElement.Geometry="{StaticResource f.play}"
+                                        Command="{Binding StartRunCommand}"
+                                        Foreground="Green"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="Collapsed" />
+                                    <Button
+                                        x:Name="stop"
+                                        hc:IconElement.Geometry="{StaticResource f.stop}"
+                                        Command="{Binding StopRunCommand}"
+                                        Foreground="Red"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="Collapsed" />
+                                </hc:SimplePanel>
+
                                 <TextBlock Text="{Binding Status, Converter={StaticResource EnumDescriptionConverter}}" />
                             </DockPanel>
                         </hc:SimplePanel>
@@ -119,6 +132,9 @@
                             Visibility="{Binding AutoRun, Converter={StaticResource Boolean2VisibilityConverter}}" />
                     </DockPanel>
                     <DataTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="btns" Property="Visibility" Value="Visible" />
+                        </Trigger>
                         <DataTrigger Binding="{Binding Status}" Value="Pending">
                             <Setter TargetName="btn" Property="Visibility" Value="Visible" />
                         </DataTrigger>
@@ -130,6 +146,9 @@
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Status}" Value="Waiting">
                             <Setter TargetName="stop" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Status}" Value="Successed">
+                            <Setter TargetName="reb" Property="Visibility" Value="Visible" />
                         </DataTrigger>
                         <!--<DataTrigger Binding="{Binding Status}" Value="Processing">
                             <Setter TargetName="stop" Property="Visibility" Value="Visible" />

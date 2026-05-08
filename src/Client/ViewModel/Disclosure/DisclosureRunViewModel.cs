@@ -93,6 +93,17 @@ public partial class DisclosureRunViewModel : ObservableObject, IRecipient<Discl
         DisclosureService.AddToQueue(inst);
     }
 
+    [RelayCommand]
+    public void Redo()
+    {
+        if (!HasInstance) return;
+
+        using var db = DbHelper.Base();
+        var inst = db.GetCollection<DisclosureInstance>().FindById(InstanceId);
+        //inst.Status = DisclosureStatus.Create;
+        DisclosureService.AddToQueue(inst);
+    }
+
 
     [RelayCommand]
     public void StopRun()
