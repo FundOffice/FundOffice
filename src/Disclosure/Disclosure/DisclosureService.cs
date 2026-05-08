@@ -199,11 +199,21 @@ public static partial class DisclosureService
 
         _semaphore.Release();
 
-        foreach (var item in list)
+        Task.Run(() =>
         {
-            item.Status = DisclosureStatus.Waiting;
-            WeakReferenceMessenger.Default.Send(item);
-        }
+            foreach (var item in list)
+            {
+                try
+                {
+                    item.Status = DisclosureStatus.Waiting;
+                    WeakReferenceMessenger.Default.Send(item); 
+                }
+                catch (Exception ex)
+                {
+                    LogEx.Error(ex, $"[信批 Queue {item.Channel} {item.NoticeId} ] Background task failed");
+                }
+            }
+        });
         return new ErrorReturn(true);
     }
 
@@ -360,19 +370,23 @@ public static partial class DisclosureService
 
         });
 
-        // 每工作日的10点，15点，把所有instance加入队列
+        // 每工作日的8-18点，每小时把所有instance加入队列
         Task.Run(async () =>
         {
             using var timer = new PeriodicTimer(TimeSpan.FromSeconds(600));
 
             while (await timer.WaitForNextTickAsync())
             {
-                if (!Days.IsTradingDay(DateTime.Now))
+                DateTime now = DateTime.Now;
+                if (!Days.IsTradingDay(now))
                     continue;
 
-                if (DateTime.Now.Hour is 10 or 15 && DateTime.Now - _lastFullRunTime > TimeSpan.FromHours(1))
+                if (now.Hour is < 8 or > 18 || now.Minute > 10) continue;
+
+                // 每小时一次，只在x:10分内执行，过时下一小时再跑
+                if (_lastFullRunTime == default || now.Hour != _lastFullRunTime.Hour)
                 {
-                    _lastFullRunTime = DateTime.Now;
+                    _lastFullRunTime = now;
 
                     try
                     {
