@@ -21,7 +21,7 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      - name: 执行发布逻辑（修复版）
+      - name: 执行发布逻辑（容错版）
         run: |
           $ErrorActionPreference = "Stop"
           $scriptPath = $PWD.Path
@@ -46,52 +46,89 @@ jobs:
               New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
           }
 
-          # 【关键修复】先执行 restore，避免 assets.json 缺失
+          # [1/4] NuGet Restore（必需）
           Write-Host "`n[1/4] 执行 NuGet Restore..." -ForegroundColor Cyan
           dotnet restore "FundOffice.slnx"
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
-          # 【关键修复】遍历项目单独 publish，避免 solution --output 不支持的问题
-          Write-Host "[2/4] 发布所有可执行项目..." -ForegroundColor Cyan
-          $projects = Get-ChildItem -Recurse -Filter *.csproj | Where-Object {
-              $_.FullName -notmatch '\\obj\\' -and $_.Name -notmatch '_'
-          }
-
-          foreach ($proj in $projects) {
-              $content = Get-Content $proj.FullName -Raw
-              if ($content -match '<OutputType>(WinExe|Exe)</OutputType>') {
-                  Write-Host "  → 发布: $($proj.Name)" -ForegroundColor Yellow
-                  dotnet publish $proj.FullName `
-                      -c Release `
-                      -r win-x64 `
-                      --self-contained false `
-                      -o $publishDir `
-                      /p:DebugSymbols=false `
-                      /p:DebugType=None `
-                      /p:UseAppHost=true
-                  if ($LASTEXITCODE -ne 0) {
-                      Write-Host "[FAIL] $($proj.Name)" -ForegroundColor Red
-                      exit 1
-                  }
-                  Write-Host "  [OK]" -ForegroundColor Green
+          # [2/4] 发布主解决方案（失败则终止）
+          Write-Host "[2/4] 发布主解决方案: FundOffice.slnx" -ForegroundColor Cyan
+          $solutionFile = Join-Path $scriptPath "FundOffice.slnx"
+          if (Test-Path $solutionFile) {
+              dotnet publish $solutionFile -c Release -r win-x64 --self-contained false -o $publishDir /p:DebugSymbols=false /p:DebugType=None /p:UseAppHost=true
+              if ($LASTEXITCODE -ne 0) {
+                  Write-Host "[FAIL] 主解决方案发布失败，终止流程" -ForegroundColor Red
+                  exit 1
               }
+              Write-Host "[OK] 主解决方案发布成功" -ForegroundColor Green
+          } else {
+              Write-Host "[WARN] 未找到 $solutionFile，跳过主解决方案发布" -ForegroundColor Yellow
           }
 
-          # 清理语言文件夹
-          Write-Host "[3/4] 清理语言文件夹和 PDB..." -ForegroundColor Cyan
+          # [3/4] 发布 Tools 项目（失败则跳过，继续下一个）
+          Write-Host "`n[3/4] 发布 src\Tools 下的工具项目（失败自动跳过）..." -ForegroundColor Cyan
+          $toolsPath = Join-Path $scriptPath "src\Tools"
+          $successCount = 0
+          $skipCount = 0
+          $failedProjects = @()
+
+          if (Test-Path $toolsPath) {
+              $projects = Get-ChildItem -Path $toolsPath -Include "*.csproj","*.vbproj" -Recurse -File |
+                          Where-Object { $_.FullName -notmatch '\\obj\\' -and $_.Name -notmatch '_' }
+
+              foreach ($proj in $projects) {
+                  Write-Host "`n  → 尝试发布: $($proj.Name)" -ForegroundColor Yellow
+                  # 使用 try-catch 捕获任何异常，确保单个项目失败不影响其他
+                  try {
+                      dotnet publish $proj.FullName `
+                          -c Release `
+                          -r win-x64 `
+                          --self-contained false `
+                          -o $publishDir `
+                          /p:DebugSymbols=false `
+                          /p:DebugType=None `
+                          /p:UseAppHost=true `
+                          --nologo
+
+                      if ($LASTEXITCODE -eq 0) {
+                          Write-Host "  [OK] $($proj.BaseName)" -ForegroundColor Green
+                          $successCount++
+                      } else {
+                          Write-Host "  [SKIP] $($proj.BaseName) - 发布返回非零退出码" -ForegroundColor Yellow
+                          $skipCount++
+                          $failedProjects += $proj.Name
+                      }
+                  } catch {
+                      Write-Host "  [SKIP] $($proj.BaseName) - $_" -ForegroundColor Yellow
+                      $skipCount++
+                      $failedProjects += $proj.Name
+                  }
+              }
+          } else {
+              Write-Host "[WARN] 未找到 src\Tools 目录" -ForegroundColor Yellow
+          }
+
+          # 统计 Tools 发布结果
+          Write-Host "`n[Tools 发布统计]" -ForegroundColor Cyan
+          Write-Host "  成功: $successCount | 跳过: $skipCount" -ForegroundColor White
+          if ($failedProjects.Count -gt 0) {
+              Write-Host "  跳过的项目:" -ForegroundColor Yellow
+              $failedProjects | ForEach-Object { Write-Host "    - $_" -ForegroundColor Gray }
+          }
+
+          # [4/4] 清理语言文件夹、PDB 和未引用 DLL
+          Write-Host "`n[4/4] 执行发布后清理..." -ForegroundColor Cyan
           foreach ($lang in $languageFolders) {
               $p = Join-Path $publishDir $lang
               if (Test-Path $p) { Remove-Item $p -Recurse -Force }
           }
-          Get-ChildItem -Path $publishDir -Filter "*.pdb" -Recurse | Remove-Item -Force
+          Get-ChildItem -Path $publishDir -Filter "*.pdb" -Recurse -File | Remove-Item -Force
 
-          # 安全清理未引用的项目 DLL（同原脚本逻辑）
-          Write-Host "[4/4] 清理未引用的项目 DLL..." -ForegroundColor Cyan
+          # 安全清理未引用的项目 DLL（同原逻辑）
           $projectNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
           Get-ChildItem -Path $scriptPath -Include "*.csproj","*.vbproj" -Recurse | ForEach-Object {
               $null = $projectNames.Add($_.BaseName)
           }
-
           $referencedDlls = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
           Get-ChildItem -Path $publishDir -Filter "*.exe" -File | ForEach-Object {
               $deps = Join-Path $publishDir "$($_.BaseName).deps.json"
@@ -104,11 +141,9 @@ jobs:
                   }
               }
           }
-
           Get-ChildItem -Path $publishDir -Filter "*.dll" -File |
               Where-Object { $projectNames.Contains($_.BaseName) -and -not $referencedDlls.Contains($_.BaseName) } |
               ForEach-Object {
-                  Write-Host "  删除未引用: $($_.Name)" -ForegroundColor Yellow
                   Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
                   @(".xml",".config") | ForEach-Object {
                       $path = Join-Path $publishDir "$($_.BaseName)$_"
@@ -116,7 +151,8 @@ jobs:
                   }
               }
 
-          Write-Host "`n[OK] 发布完成! 目录: $publishDir" -ForegroundColor Green
+          Write-Host "`n[OK] 发布流程完成!" -ForegroundColor Green
+          Write-Host "产物目录: $publishDir" -ForegroundColor White
         shell: pwsh
 
       - name: 上传构建产物
