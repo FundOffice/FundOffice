@@ -11,6 +11,7 @@ public record FundClearNotFinishedContext(string FundName, string? Code, DateOnl
 /// <summary>
 /// 基金长期未结束清盘
 /// </summary>
+[VerifySettingUnit("提示基金清盘超期", "基金清盘已提交，但长期未了结")]
 public partial class FundClearNotFinishedRule : VerifyRule, ITracker<FundFlow>, ITracker<EntityRemoved<FundFlow, int>>, ITracker<EntityChanged<Fund, DateOnly>>
 {
     private ConcurrentDictionary<int, DataTip> Tips { get; } = [];
@@ -64,7 +65,7 @@ public partial class FundClearNotFinishedRule : VerifyRule, ITracker<FundFlow>, 
         var finfo = db.GetCollection<Fund>().Query().Where(Query.In("_id", Params.Distinct().Select(x => new BsonValue(x)))).
             Where(x => x.Status == FundStatus.StartLiquidation).
             Select(x => new { x.Id, x.Name, x.Code, x.Status, x.ClearDate, x.LastUpdate }).
-            ToList().Where(x => x.ClearDate == default || (x.LastUpdate != default && today.DayNumber - x.ClearDate.DayNumber > 7));
+            ToList().Where(x => x.ClearDate == default || (x.LastUpdate != default && today.DayNumber - x.ClearDate.DayNumber > 10));
 
         // 需要删除
         foreach (var item in Params.Except(finfo.Select(x => x.Id)))

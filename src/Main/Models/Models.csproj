@@ -13,6 +13,8 @@
     <Compile Remove="Investor\Customer.cs" />
     <Compile Remove="LegalEntity\LegalEntity.cs" />
     <Compile Remove="Manager\InstitutionFiles.cs" />
+    <Compile Remove="Month.cs" />
+    <Compile Remove="TradingDay.cs" />
   </ItemGroup>
 
   <ItemGroup> 

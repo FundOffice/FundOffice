@@ -8,6 +8,8 @@ namespace FMO.Trigger;
 
 public record FundClearDateMissingContext(string Name, string? Code, DateOnly? Clear, DateTime Last);
 
+
+[VerifySettingUnit("提示基金清盘流缺失", "基金已清盘，但未设置清盘流程")]
 public partial class FundClearDateMissingRule : VerifyRule, ITracker<EntityChanged<Fund, DateOnly>>
 {
 

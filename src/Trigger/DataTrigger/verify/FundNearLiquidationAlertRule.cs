@@ -9,6 +9,7 @@ public record FundNearLiquidationContext(string FundName, DateOnly SetupDate, Da
 /// <summary>
 /// 基金临近清盘（<1年）
 /// </summary>
+[VerifySettingUnit("提示基金临近到期", "提醒基金距到期日不足一年")]
 public partial class FundNearLiquidationAlertRule : VerifyRule, ITracker<NewDay>, ITracker<EntityChanged<FundElements, DateOnly, int>>
 {
     public ConcurrentDictionary<int, IDataTip> Tips { get; } = [];
