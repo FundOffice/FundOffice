@@ -1,165 +1,207 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Text;
-using System.Threading;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace HookableSourceGenerator;
 
-
 [Generator]
-public class HookableGenerator : IIncrementalGenerator
+public class DataHubGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // 1. 快速语法过滤：只拦截带特性且至少有一个参数的方法
-        var provider = context.SyntaxProvider.CreateSyntaxProvider(
-            predicate: static (node, _) => node is MethodDeclarationSyntax { AttributeLists.Count: > 0, ParameterList.Parameters.Count: > 0 },
-            transform: static (ctx, ct) => ExtractHookInfo(ctx, ct)
-        ).Where(static x => x != null);
+        // 1. 筛选带有 [Hookable] 特性的类
+        var hookableProvider = context.SyntaxProvider.CreateSyntaxProvider(
+            predicate: static (node, _) => node is ClassDeclarationSyntax { AttributeLists.Count: > 0 },
+            transform: static (ctx, _) => ExtractHookableInfo(ctx))
+            .Where(static info => info is not null)
+            .Collect();
 
-        // 2. 收集所有匹配项，进入语义分析后分组去重
-        var collected = provider.Collect();
-
-        context.RegisterSourceOutput(collected, static (ctx, allInfos) =>
+        // 2. 生成强类型 Partial 代码
+        context.RegisterSourceOutput(hookableProvider, static (spc, infos) =>
         {
-            var valid = allInfos.Where(x => x.HasValue).Select(x => x!.Value).ToArray();
-            if (valid.Length == 0) return;
-
-            // 按类分组
-            var byClass = valid.GroupBy(x => (x.Namespace, x.ClassName));
-
-            foreach (var classGroup in byClass)
+            foreach (var info in infos)
             {
-                // 核心去重：按规范化后的类型去重，一种参数类型只生成一套基础设施
-                var uniqueTypes = classGroup
-                    .GroupBy(x => x.NormalizedType)
-                    .Select(g => g.First())
-                    .ToArray();
-
-                var source = GenerateClassSource(classGroup.Key.Namespace, classGroup.Key.ClassName, uniqueTypes);
-                ctx.AddSource($"{classGroup.Key.ClassName}.Hookable.g.cs", SourceText.From(source, Encoding.UTF8));
+                if (info is null) continue;
+                var source = GeneratePartialClass(info);
+                spc.AddSource($"{info.ClassName}.Generated.g.cs", SourceText.From(source, Encoding.UTF8));
             }
         });
     }
 
-    // 使用 C# 12 原始字面量 ($$""") 生成模板
-    private static string GenerateClassSource(string ns, string className, HookInfo[] hooks)
+    private static HookableClassInfo? ExtractHookableInfo(GeneratorSyntaxContext context)
+    {
+        var classDecl = (ClassDeclarationSyntax)context.Node;
+        var types = new List<string>();
+        var namespaces = new HashSet<string>();
+
+        foreach (var attrList in classDecl.AttributeLists)
+        {
+            foreach (var attr in attrList.Attributes)
+            {
+                var name = attr.Name.ToString();
+                if (name is "Hookable" or "HookableAttribute")
+                {
+                    var arg = attr.ArgumentList?.Arguments.FirstOrDefault();
+                    if (arg?.Expression is TypeOfExpressionSyntax typeOfExpr)
+                    {
+                        var typeSyntax = typeOfExpr.Type;
+                        types.Add(typeSyntax.ToString());
+
+                        // 🔍 语义分析：获取 ITypeSymbol 并提取命名空间
+                        var typeInfo = context.SemanticModel.GetTypeInfo(typeSyntax);
+                        if (typeInfo.Type is ITypeSymbol typeSymbol)
+                        {
+                            CollectNamespaces(typeSymbol, namespaces);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (types.Count == 0) return null;
+
+        var ns = classDecl.GetFullNamespace();
+        var className = classDecl.Identifier.Text;
+        return new HookableClassInfo(ns, className, types.ToImmutableArray(), namespaces.ToImmutableArray());
+    }
+
+    /// <summary>
+    /// 递归提取类型及其泛型参数的命名空间
+    /// </summary>
+    private static void CollectNamespaces(ITypeSymbol typeSymbol, HashSet<string> namespaces)
+    {
+        if (typeSymbol.TypeKind == TypeKind.Error) return;
+
+        var ns = typeSymbol.ContainingNamespace?.ToDisplayString();
+        if (!string.IsNullOrWhiteSpace(ns) && ns != "<global namespace>")
+        {
+            namespaces.Add(ns!);
+        }
+
+        // 处理泛型参数（如 IEnumerable<TransferOrder> 中的 TransferOrder）
+        if (typeSymbol is INamedTypeSymbol namedType)
+        {
+            foreach (var typeArg in namedType.TypeArguments)
+            {
+                if (typeArg is ITypeSymbol argSymbol)
+                {
+                    CollectNamespaces(argSymbol, namespaces);
+                }
+            }
+        }
+    }
+
+    private static string GeneratePartialClass(HookableClassInfo info)
     {
         var sb = new StringBuilder();
         sb.AppendLine("// <auto-generated/>");
-        sb.AppendLine("#nullable enable");
+        sb.AppendLine("#pragma warning disable CS8669");
+        sb.AppendLine("using System;");
+        sb.AppendLine("using System.Threading.Tasks;");
         sb.AppendLine("using FMO.Logging;");
-        sb.AppendLine($"namespace {ns}");
-        sb.AppendLine("{");
-        sb.AppendLine($"    public partial class {className}");
-        sb.AppendLine("    {");
 
-        foreach (var hook in hooks)
+        // 📦 动态生成 using 引用（去重、排序、过滤默认命名空间）
+        var defaultUsings = new HashSet<string>
         {
-            sb.Append($$"""
-                            private static readonly global::System.Collections.Generic.List<global::System.Action<{{hook.NormalizedType}}>> _h_{{hook.FieldName}} = [];
-                            public static void Hook(global::System.Action<{{hook.NormalizedType}}> callback) => _h_{{hook.FieldName}}.Add(callback);
-                            public static void Unhook(global::System.Action<{{hook.NormalizedType}}> callback) => _h_{{hook.FieldName}}.Remove(callback);
-                            public static void Notify({{hook.NormalizedType}} dv)
-                            {
-                                global::System.Threading.Tasks.Parallel.ForEach(_h_{{hook.FieldName}}, item =>
-                                {
-                                    try { item(dv); } catch (global::System.Exception ex) { LogEx.Error(ex); }
-                                });
-                            }
+            "System", "System.Threading.Tasks", "FMO.Logging", info.Namespace
+        };
 
-                """);
+        var requiredUsings = info.RequiredNamespaces
+            .Where(ns => !defaultUsings.Contains(ns))
+            .OrderBy(ns => ns);
+
+        foreach (var ns in requiredUsings)
+        {
+            sb.AppendLine($"using {ns};");
         }
 
-        sb.AppendLine("    }");
+        sb.AppendLine();
+        sb.AppendLine($"namespace {info.Namespace};");
+        sb.AppendLine();
+        sb.AppendLine($"public sealed partial class {info.ClassName}");
+        sb.AppendLine("{");
+
+        foreach (var typeStr in info.HookedTypes)
+        {
+            var safeName = SanitizeIdentifier(typeStr);
+            var t = typeStr;
+
+            sb.AppendLine($"    // ================= {t} =================");
+            sb.AppendLine($"    private static readonly SubscriptionManager<{t}> _manager_{safeName} = new();");
+            sb.AppendLine($"    private static Func<{t}, {t}>? _processor_{safeName};");
+            sb.AppendLine();
+
+            sb.AppendLine($"    public static IDisposable Register(Action<{t}> handler)");
+            sb.AppendLine($"    {{");
+            sb.AppendLine($"        if (handler is null) throw new ArgumentNullException(nameof(handler));");
+            sb.AppendLine($"        return _manager_{safeName}.Add(handler);");
+            sb.AppendLine($"    }}");
+            sb.AppendLine();
+
+            sb.AppendLine($"    public static void RegisterProcessor(Func<{t}, {t}> processor)");
+            sb.AppendLine($"    {{");
+            sb.AppendLine($"        if (processor is null) throw new ArgumentNullException(nameof(processor));");
+            sb.AppendLine($"        _processor_{safeName} = processor;");
+            sb.AppendLine($"    }}");
+            sb.AppendLine();
+
+            sb.AppendLine($"    public static void Push({t} data)");
+            sb.AppendLine($"    {{");
+            sb.AppendLine($"        if (data is null) return;");
+            sb.AppendLine($"        var processedData = _processor_{safeName} is not null ? _processor_{safeName}(data) : data;");
+            sb.AppendLine($"        var handlers = _manager_{safeName}.GetSnapshot();");
+            sb.AppendLine($"        if (handlers.Length == 0) return;");
+            sb.AppendLine();
+            sb.AppendLine($"        var options = new ParallelOptions");
+            sb.AppendLine($"        {{");
+            sb.AppendLine($"            MaxDegreeOfParallelism = Environment.ProcessorCount,");
+            sb.AppendLine($"            TaskScheduler = TaskScheduler.Default");
+            sb.AppendLine($"        }};");
+            sb.AppendLine();
+            sb.AppendLine($"        Parallel.ForEach(handlers, options, handler =>");
+            sb.AppendLine($"        {{");
+            sb.AppendLine($"            try {{ handler(processedData); }}");
+            sb.AppendLine($"            catch (Exception ex) {{ OnSubscriberError(typeof({t}), ex); }}");
+            sb.AppendLine($"        }});");
+            sb.AppendLine($"    }}");
+            sb.AppendLine();
+        }
+
         sb.AppendLine("}");
         return sb.ToString();
     }
 
-    private static HookInfo? ExtractHookInfo(GeneratorSyntaxContext ctx, CancellationToken ct)
+    private static string SanitizeIdentifier(string typeName)
+        => Regex.Replace(typeName, @"[<>,\.\s\[\]\?]", "_").Trim('_');
+
+    private record HookableClassInfo(
+        string Namespace,
+        string ClassName,
+        ImmutableArray<string> HookedTypes,
+        ImmutableArray<string> RequiredNamespaces);
+}
+
+internal static class SyntaxExtensions
+{
+    public static string GetFullNamespace(this TypeDeclarationSyntax syntax)
     {
-        var method = (MethodDeclarationSyntax)ctx.Node;
-        if (!HasHookableAttribute(method)) return null;
-
-        var symbol = ctx.SemanticModel.GetDeclaredSymbol(method, ct) as IMethodSymbol;
-        if (symbol?.Parameters.Length != 1) return null;
-
-        var pType = symbol.Parameters[0].Type;
-        string normalizedType, fieldName;
-
-        // 判断是否为常见集合类型，是则转为 IEnumerable<T>
-        if (IsCollectionType(pType, out var elemType))
+        var sb = new StringBuilder();
+        var parent = syntax.Parent;
+        while (parent != null)
         {
-            normalizedType = $"global::System.Collections.Generic.IEnumerable<{elemType}>";
-            // 列表名按参数类型生成，避免同名冲突
-            fieldName = SanitizeIdentifier($"Enumerable_{elemType}");
-        }
-        else
-        {
-            normalizedType = pType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            fieldName = SanitizeIdentifier(normalizedType);
-        }
-
-        return new HookInfo(
-            symbol.ContainingNamespace.ToDisplayString(),
-            symbol.ContainingType.Name,
-            normalizedType,
-            fieldName
-        );
-    }
-
-    private static bool IsCollectionType(ITypeSymbol type, out string elemType)
-    {
-        elemType = string.Empty;
-        if (type is not INamedTypeSymbol named || !named.IsGenericType || named.TypeArguments.Length != 1)
-            return false;
-
-        // 匹配常见集合接口/类型
-        bool isKnown = named.Name is "IList" or "ICollection" or "List" or "IEnumerable"
-                            or "IReadOnlyList" or "IReadOnlyCollection" or "HashSet"
-                            or "Queue" or "Stack" or "IReadOnlySet";
-
-        if (isKnown)
-        {
-            elemType = named.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            return true;
-        }
-        return false;
-    }
-
-    private static string SanitizeIdentifier(string name)
-    {
-        var sb = new StringBuilder(name.Length);
-        foreach (char c in name)
-        {
-            if (char.IsLetterOrDigit(c)) sb.Append(c);
-            else sb.Append('_');
-        }
-        var res = sb.ToString();
-        while (res.Contains("__")) res = res.Replace("__", "_");
-
-        // 🔽 替换原有的 res[1..] 和 res[..^1]，兼容 netstandard2.0
-        if (res.Length > 0 && res.StartsWith("_")) res = res.Substring(1);
-        if (res.Length > 0 && res.EndsWith("_")) res = res.Substring(0, res.Length - 1);
-
-        return res;
-    }
-
-    private static bool HasHookableAttribute(MethodDeclarationSyntax method)
-    {
-        foreach (var list in method.AttributeLists)
-            foreach (var attr in list.Attributes)
+            if (parent is BaseNamespaceDeclarationSyntax ns)
             {
-                var n = attr.Name.ToString();
-                if (n is "Hookable" or "HookableAttribute") return true;
+                if (sb.Length > 0) sb.Insert(0, '.');
+                sb.Insert(0, ns.Name.ToString());
             }
-        return false;
+            parent = parent.Parent;
+        }
+        return sb.Length > 0 ? sb.ToString() : "global";
     }
-
-    private record struct HookInfo(string Namespace, string ClassName, string NormalizedType, string FieldName);
 }

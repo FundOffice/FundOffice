@@ -1,22 +1,24 @@
-﻿using System;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Text;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using System;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 
 namespace TriggerGenerators;
 
 [Generator]
 public class HookDataGenerator : IIncrementalGenerator
 {
-    // 使用 record 明确类型契约
+    // 🔧 修改：添加 FirstParameterType 字段，在变换阶段就解析好类型
     private sealed record CandidateData(
         MethodDeclarationSyntax Method,
         ClassDeclarationSyntax Class,
-        string Namespace);
+        string Namespace,
+        string FirstParameterType); // 新增：存储完全限定类型名
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -24,21 +26,18 @@ public class HookDataGenerator : IIncrementalGenerator
             .CreateSyntaxProvider(
                 predicate: (node, _) =>
                     node is MethodDeclarationSyntax { AttributeLists.Count: > 0, Parent: ClassDeclarationSyntax },
-                transform: (ctx, _) =>
+                transform: (ctx, _) =>  // ctx 是 GeneratorSyntaxContext，包含 SemanticModel
                 {
                     var method = (MethodDeclarationSyntax)ctx.Node;
                     var classDecl = (ClassDeclarationSyntax)method.Parent!;
                     var namespaceName = GetNamespaceName(classDecl);
+                    var semanticModel = ctx.SemanticModel; // 🔑 获取语义模型
 
                     // 1. 方法必须是 static
                     if (!method.Modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
                         return (CandidateData?)null;
 
-                    // 2. 类必须是 partial
-                    //if (!classDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)))
-                    //    return (CandidateData?)null;
-
-                    // 3. 检查 [HookData] 或 [HookDataAttribute]（兼容限定名）
+                    // 2. 检查 [HookData] 或 [HookDataAttribute]
                     bool hasHookData = method.AttributeLists.Any(al =>
                         al.Attributes.Any(a =>
                         {
@@ -51,21 +50,31 @@ public class HookDataGenerator : IIncrementalGenerator
                             return attrName is "HookData" or "HookDataAttribute";
                         }));
 
-                    return hasHookData
-                        ? new CandidateData(method, classDecl, namespaceName)
-                        : (CandidateData?)null;
+                    if (!hasHookData) return null;
+
+                    // 🔧 修复：在此处解析第一个参数的完全限定类型名
+                    string firstParamFullType = "object";
+                    var firstParam = method.ParameterList.Parameters.FirstOrDefault();
+                    if (firstParam?.Type != null)
+                    {
+                        var typeSymbol = semanticModel.GetTypeInfo(firstParam.Type).Type;
+                        // 使用标准 API 获取完全限定名（带 global:: 前缀，避免命名冲突）
+                        firstParamFullType = typeSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                                           ?? "object";
+                    }
+
+                    return new CandidateData(method, classDecl, namespaceName, firstParamFullType);
                 })
             .Where(c => c is not null)
-            .Select((c, _) => c!); // 过滤后安全断言
+            .Select((c, _) => c!);
 
-        // 🔥 关键修改：收集所有候选方法，不再按类分组
         var allMethods = methodCandidates.Collect();
 
         context.RegisterSourceOutput(allMethods, (ctx, methods) =>
         {
             if (methods.IsDefaultOrEmpty) return;
 
-            // 生成统一的调用代码：使用完全限定名避免命名空间冲突
+            // 🔧 修复：直接使用预先解析好的 FirstParameterType
             var hookCalls = string.Join("\n",
                 methods.Select(m =>
                 {
@@ -73,11 +82,11 @@ public class HookDataGenerator : IIncrementalGenerator
                         ? m.Class.Identifier.Text
                         : $"{m.Namespace}.{m.Class.Identifier.Text}";
                     var methodName = m.Method.Identifier.Text;
-                    // 生成: DataTracker.Hook(Namespace.ClassName.MethodName);
-                    return $"\t\t\tDataTracker.Hook({fullClassName}.{methodName});";
+
+                    // 直接使用 record 中存储的类型，无需再次解析
+                    return $"\t\t\tDataHub.Register<{m.FirstParameterType}>({fullClassName}.{methodName});";
                 }));
 
-            // 使用时间戳确保类名唯一，避免增量编译冲突
             var uniqueSuffix = DateTime.UtcNow.Ticks.ToString("x");
 
             var source = $$"""
@@ -89,6 +98,7 @@ public class HookDataGenerator : IIncrementalGenerator
 
                 internal static class HookInit_{{uniqueSuffix}}
                 {
+                    [ModuleInitializer]
                     public static void InitHooks()
                     {
                 {{hookCalls}}

@@ -440,7 +440,7 @@ public static partial class DataTracker
 
     //}
 
-    [Hookable]
+    
     public static void OnDailyValue(IEnumerable<DailyValue> data)
     {
         var dailyValues = data.Where(x => x.NetValue != 0).ToList();
@@ -595,7 +595,7 @@ public static partial class DataTracker
         // 检验
         VerifyRules.OnEntityArrival(dailyValues);
 
-        Notify(dailyValues);
+        DataHub.Push(dailyValues);
     }
 
     public static void UpdateManageSacle(IEnumerable<DateOnly> dates)
@@ -682,7 +682,7 @@ public static partial class DataTracker
         //    WeakReferenceMessenger.Default.Send(new TransferRecordLinkOrderMessage(item.Id, item.OrderId));
     }
 
-    [Hookable]
+    
     public static void OnBatchTransferRequest(IList<TransferRequest> data)
     {
         // 匹配订单
@@ -694,12 +694,12 @@ public static partial class DataTracker
         catch (Exception ex) { Log.Error($"{ex}"); }
 
 
-        Notify(data);
+        DataHub.Push(data);
         WeakReferenceMessenger.Default.Send(data);
 
     }
 
-    [Hookable]
+    
     public static void OnBatchTransferRecord(IList<TransferRecord> records)
     {
         if (records.Count == 0) return;
@@ -712,10 +712,10 @@ public static partial class DataTracker
 
         PostHandleTransferRecords(db, records);
 
-        Notify(records);
+        DataHub.Push(records);
     }
 
-    [Hookable]
+    
     public static void OnBatchTransferOrder(IList<TransferOrder> data)
     {
         // 匹配订单
@@ -725,7 +725,7 @@ public static partial class DataTracker
 
         try { WeakReferenceMessenger.Default.Send(data); } catch (Exception e) { LogEx.Error(e); }
 
-        Notify(data);
+        DataHub.Push(data);
     }
 
     private static void SaveRequests(BaseDatabase db, IList<TransferRequest> data)
@@ -1546,7 +1546,7 @@ public static partial class DataTracker
 
 
 
-    [Hookable]
+    
     public static void OnNewNotice(IDisclosureNotice notice)
     {
         using var db = DbHelper.Base();
@@ -1567,7 +1567,7 @@ public static partial class DataTracker
 
         WeakReferenceMessenger.Default.Send(notice);
 
-        Notify(notice);
+        DataHub.Push(notice);
     }
 
     private static void Merge(BsonDocument oldDoc, BsonDocument newDoc)
@@ -1582,12 +1582,14 @@ public static partial class DataTracker
         }
     }
 
-    [Hookable]
+    
     public static void OnNewDay(NewDay today)
     {
         VerifyRules.OnEntityArrival([today]);
 
-        Notify(today);
+        DataHub.Push(today);
+
+        DataHub.Push(today);
     }
 }
 
