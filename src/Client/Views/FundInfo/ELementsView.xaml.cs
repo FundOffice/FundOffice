@@ -847,7 +847,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         else if (unit == CustodyAccount)
             WeakReferenceMessenger.Default.Send(new FundAccountChangedMessage(FundId, FundAccountType.Custody));
         else if (unit == ExpirationDate)
-            DataTracker.OnEntityChanged(new EntityChanged<DateOnly>(typeof(FundElements), Id, nameof(FundElements.ExpirationDate), ExpirationDate.OldValue ?? default, ExpirationDate.NewValue ?? default));
+            DataHub.Push(new EntityChanged<FundElements, DateOnly, int>(Id, nameof(FundElements.ExpirationDate), ExpirationDate.OldValue ?? default, ExpirationDate.NewValue ?? default));
     }
 
 
@@ -855,7 +855,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     {
         base.DeleteOverride(unit);
         if (unit == ExpirationDate)
-            DataTracker.OnEntityChanged(new EntityChanged<DateOnly>(typeof(FundElements), Id, nameof(FundElements.ExpirationDate), ExpirationDate.OldValue ?? default, ExpirationDate.NewValue ?? default));
+            DataHub.Push(new EntityChanged<FundElements, DateOnly, int>(Id, nameof(FundElements.ExpirationDate), ExpirationDate.OldValue ?? default, ExpirationDate.NewValue ?? default));
     }
 
     protected override void SaveOverride()

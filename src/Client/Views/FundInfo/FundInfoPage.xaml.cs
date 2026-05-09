@@ -722,7 +722,8 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         db.Dispose();
         Flows.Add(new LiquidationFlowViewModel(flow));
 
-        VerifyRules.OnEntityArrival([flow]);
+        DataHub.Push(flow);
+        //VerifyRules.OnEntityArrival([flow]);
         WeakReferenceMessenger.Default.Send(new EntityChangedMessage<Fund, FundStatus>(fund, nameof(Fund.Status), fund.Status));
         //WeakReferenceMessenger.Default.Send(new FundStatusChangedMessage(default, default) { FundId = fund.Id, Status = fund.Status });
     }
@@ -761,7 +762,8 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         Flows.Remove(flow);
 
         if (flow is LiquidationFlowViewModel)
-            VerifyRules.OnEntityArrival([new FundEntityRemoved<int>(typeof(LiquidationFlow), flow.FlowId, flow.FundId)]);
+            DataHub.Push(new EntityRemoved<FundFlow, int>(flow.FlowId));
+            //VerifyRules.OnEntityArrival([new FundEntityRemoved<int>(typeof(LiquidationFlow), flow.FlowId, flow.FundId)]);
     }
 
 

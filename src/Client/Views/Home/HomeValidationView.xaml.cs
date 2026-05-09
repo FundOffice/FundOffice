@@ -1,4 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using FMO.Models;
+using FMO.Trigger;
 using FMO.Utilities;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -34,38 +36,38 @@ public partial class HomeValidationViewModel : ObservableObject
     /// <summary>
     /// 基金已 清盘，但是未设置清盘日期
     /// </summary>
-    public CollectionViewSource ClearDateMissing { get; } = new() { Source = DataObserver.Instance.Tips };
+    public CollectionViewSource ClearDateMissing { get; } = new() { Source = TipsObserver.Instance.Tips };
 
     /// <summary>
     /// 净值日期缺失
     /// </summary>
-    public CollectionViewSource DailyMissing { get; } = new() { Source = DataObserver.Instance.Tips };
+    public CollectionViewSource DailyMissing { get; } = new() { Source = TipsObserver.Instance.Tips };
 
     /// <summary>
     /// 净值中的份额与TA的份额不一致
     /// </summary>
-    public CollectionViewSource ShareNotPair { get; } = new() { Source = DataObserver.Instance.Tips };
+    public CollectionViewSource ShareNotPair { get; } = new() { Source = TipsObserver.Instance.Tips };
 
     /// <summary>
     ///  
     /// </summary>
-    public CollectionViewSource FundOverdue { get; } = new() { Source = DataObserver.Instance.Tips };
+    public CollectionViewSource FundOverdue { get; } = new() { Source = TipsObserver.Instance.Tips };
 
 
     /// <summary>
     ///  
     /// </summary>
-    public CollectionViewSource FundClearNotFinished { get; } = new() { Source = DataObserver.Instance.Tips };
+    public CollectionViewSource FundClearNotFinished { get; } = new() { Source = TipsObserver.Instance.Tips };
 
     /// <summary>
     /// 连续交易日低于500万
     /// </summary>
-    public CollectionViewSource FundScaleWarn { get; } = new() { Source = DataObserver.Instance.Tips };
+    public CollectionViewSource FundScaleWarn { get; } = new() { Source = TipsObserver.Instance.Tips };
 
 
-    public CollectionViewSource FundStopPurchase { get; } = new() { Source = DataObserver.Instance.Tips };
+    public CollectionViewSource FundStopPurchase { get; } = new() { Source = TipsObserver.Instance.Tips };
 
 
-    public CollectionViewSource FundNearLiquidation { get; } = new() { Source = DataObserver.Instance.Tips };
+    public CollectionViewSource FundNearLiquidation { get; } = new() { Source = TipsObserver.Instance.Tips };
 
 }

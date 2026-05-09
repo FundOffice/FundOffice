@@ -494,8 +494,7 @@
                 HorizontalAlignment="Center"
                 Command="{Binding OpenSettingCommand}"
                 DockPanel.Dock="Top"
-                Style="{StaticResource ButtonCustom}"
-                Visibility="Collapsed">
+                Style="{StaticResource ButtonCustom}">
                 <DockPanel Margin="6,0">
                     <TextBlock
                         Margin="0,4,0,0"

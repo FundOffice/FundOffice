@@ -14,5 +14,10 @@
         <GroupBox Header="消息通道">
             <TextBlock />
         </GroupBox>
+
+        <StackPanel>
+            <CheckBox Content="新订单" />
+            <CheckBox Content="巨额赎回" />
+        </StackPanel>
     </DockPanel>
 </Window>

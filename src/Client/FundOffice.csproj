@@ -108,6 +108,7 @@
     <ProjectReference Include="..\Main\Data\Data.csproj" />
     <ProjectReference Include="..\Schedule\Mission\Mission.csproj" />
     <ProjectReference Include="..\Todo\Todo.UI\Todo.UI.csproj" />
+    <ProjectReference Include="..\Trigger\DataTrigger\DataTrigger.csproj" />
     <ProjectReference Include="..\Utility\Logging\Logging.csproj" />
     <ProjectReference Include="..\Utility\Patch\Patch.csproj" />
     <ProjectReference Include="..\Utility\PDF\PdfExt.csproj" TargetFramework="net9.0-windows" />
