@@ -1,4 +1,4 @@
-﻿namespace FMO.Utilities;
+﻿namespace FMO.Models;
 
 public interface IDataTip
 {

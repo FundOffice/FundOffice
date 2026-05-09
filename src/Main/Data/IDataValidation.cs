@@ -221,3 +221,6 @@ public abstract class VerifyRule<T1, T2, T3> : VerifyRuleBase
     protected abstract void OnEntityOverride(IEnumerable<T2> obj);
     protected abstract void OnEntityOverride(IEnumerable<T3> obj);
 }
+
+
+

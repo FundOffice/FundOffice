@@ -39,9 +39,16 @@ public record EntityDeleted<T>(T Value);
 
 public record EntityDeleted(Type Type, object Id);
 
-public record EntityRemoved<T>(Type Type, T Id);
+/// <summary>
+/// 
+/// </summary>
+/// <typeparam name="T">Entity Type</typeparam>
+/// <param name="Id"></param>
+public record EntityRemoved<TEntity, TId>(TId Id);
 
 public record FundEntityRemoved<T>(Type Type, T Id, int FundId);
+
+public record EntityRemoved(Type Type, object Id);
 
 
 public record EntityChangedMessage<TEntity, TProperty>(TEntity Entity, string PropertyName, TProperty Value);
@@ -52,6 +59,8 @@ public record EntityChanged<TEntity, TProperty>(TEntity Entity, string PropertyN
 
 public record EntityChanged<TProperty>(Type Type, object Id, string PropertyName, TProperty Old, TProperty New);
 
+
+public record EntityChanged<TEntity, TProperty, Tid>(Tid Id, string PropertyName, TProperty Old, TProperty New);
 
 /// <summary>
 /// 交易确认关联订单

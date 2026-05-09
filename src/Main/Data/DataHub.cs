@@ -13,13 +13,20 @@ namespace FMO.Utilities;
 [Hookable(typeof(IEnumerable<DailyValue>))]
 [Hookable(typeof(IDisclosureNotice))]
 [Hookable(typeof(NewDay))]
+[Hookable(typeof(EntityChanged<Fund, DateOnly>))]
+[Hookable(typeof(FundFlow))]
+[Hookable(typeof(EntityRemoved<FundFlow, int>))]
+[Hookable(typeof(EntityChanged<FundElements, DateOnly, int>))]
+[Hookable(typeof(IEnumerable<FundShareRecordByDaily>))]
+[Hookable(typeof(IEnumerable<FundShareRecordByTransfer>))]
 public sealed partial class DataHub
 {
     // 内部类型路由容器，对外完全透明
     private static readonly ConcurrentDictionary<Type, object> _managers = new();
     private static readonly ConcurrentDictionary<Type, Delegate> _processors = new();
 
-   
+
+
     /// <summary>
     /// 订阅者异常处理钩子，可重写或注入 ILogger
     /// </summary>

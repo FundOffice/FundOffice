@@ -1,26 +1,28 @@
 ﻿using FMO.Logging;
 using FMO.Models;
+using FMO.Schedule;
 using FMO.Todo;
 using FMO.Utilities;
-using FMO.Schedule;
 using Schedule;
 
 namespace FMO.Trigger;
 
-internal static class TransferRequestTriggers
+/// <summary>
+/// 赎回监控是否发生了巨额赎回
+/// </summary>
+public partial class HugeRedemptionMonitor : ITracker<IEnumerable<TransferRequest>>
 {
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="dv"></param>
-    /// <exception cref="NotImplementedException"></exception>
-    [HookData]
-    public static void AutoHugeRedemption(IEnumerable<TransferRequest> tr)
+    /// <exception cref="NotImplementedException"></exception> 
+    private partial void OnDataArrival(IEnumerable<TransferRequest> obj)
     {
         using var db = DbHelper.Base();
         // 忽略子份额，按基金分组
-        foreach (var fv in tr.GroupBy(x => x.FundId))
+        foreach (var fv in obj.GroupBy(x => x.FundId))
         {
             foreach (var item in fv.GroupBy(x => x.RequestDate))
             {
@@ -46,8 +48,8 @@ internal static class TransferRequestTriggers
                 var defRatio = db.GetCollection<FundElements>().FindById(fv.Key).HugeRedemptionRatio.Value;
                 if (defRatio == 0)
                 {
-                    
-                    TodoService.Register(new FundElementMissingTodo { FundCode = code, FundName =  fundName, Missing = "巨额赎回" });
+
+                    TodoService.Register(new FundElementMissingTodo { FundCode = code, FundName = fundName, Missing = "巨额赎回" });
                     LogEx.Warning($"基金巨额赎回监控未设置阈值，无法进行监控，基金：{fundName}");
                     continue;
                 }

@@ -5,25 +5,25 @@ namespace FMO.Utilities;
 public static partial class VerifyRules
 {
 
-    public static FundClearDateMissingRule FundClearDateMissingRule { get; } = new();
+    //public static FundClearDateMissingRule FundClearDateMissingRule { get; } = new();
      
 
-    public static FundDailyMissingRule FundDailyMissingRule { get; } = new();
+    //public static FundDailyMissingRule FundDailyMissingRule { get; } = new();
 
-    public static FundSharePairRule FundSharePairRule { get; } = new();
+    //public static FundSharePairRule FundSharePairRule { get; } = new();
 
-    public static FundOverdueRule FundOverdueRule { get; } = new();
-
-
-    public static FundClearNotFinishedRule FundClearNotFinishedRule { get; } = new();
-
-    public static FundScaleWarnRule FundScaleWarnRule { get; } = new();
+    //public static FundOverdueRule FundOverdueRule { get; } = new();
 
 
-    public static FundStopPurchaseRule FundStopPurchaseRule { get; } = new();
+    //public static FundClearNotFinishedRule FundClearNotFinishedRule { get; } = new();
+
+    //public static FundScaleWarnRule FundScaleWarnRule { get; } = new();
 
 
-    public static FundNearLiquidationAlertRule FundNearLiquidationAlertRule { get; } = new();
+    //public static FundStopPurchaseRule FundStopPurchaseRule { get; } = new();
+
+
+    //public static FundNearLiquidationAlertRule FundNearLiquidationAlertRule { get; } = new();
 }
 
 ////生成结果如下 

@@ -7,7 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Rules\**" />
+    <EmbeddedResource Remove="Rules\**" />
+    <None Remove="Rules\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="DataObserbler.cs" />
+    <Compile Remove="IDataValidation.cs" />
   </ItemGroup>
 
   <ItemGroup> 

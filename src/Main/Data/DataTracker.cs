@@ -592,8 +592,7 @@ public static partial class DataTracker
         //});
 
 
-        // 检验
-        VerifyRules.OnEntityArrival(dailyValues);
+        // 检验 
 
         DataHub.Push(dailyValues);
     }
@@ -632,25 +631,23 @@ public static partial class DataTracker
 
     private static void OnFundShareRecord(List<FundShareRecordByDaily> add)
     {
-        VerifyRules.OnEntityArrival(add);
+        DataHub.Push(add);
     }
 
     private static void OnFundShareRecord(List<FundShareRecordByTransfer> add)
     {
-        VerifyRules.OnEntityArrival(add);
+        DataHub.Push(add);
     }
     public static void OnEntityChanged(EntityChanged<Fund, DateOnly> changed)
     {
         if (changed.PropertyName == nameof(Fund.ClearDate) && changed.New != default)
-            VerifyRules.OnEntityArrival([changed]);
+            DataHub.Push(changed);
     }
-    public static void OnEntityChanged(EntityChanged<DateOnly> changed)
-    {
-        VerifyRules.OnEntityArrival([changed]);
-    }
+   
+
     public static void OnEntityChanged(LiquidationFlow d)
     {
-        VerifyRules.OnEntityArrival([d]);
+        DataHub.Push(d);
     }
 
     //public static void OnEntityDeleted<T>(EntityRemoved<T> entityDeleted)
@@ -1005,7 +1002,7 @@ public static partial class DataTracker
         //    item.a.RecordId = item.Id;
         //db.GetCollection<TransferMapping>().Upsert(map.Select(x => x.a));
 
-        Task.Run(() => VerifyRules.OnEntityArrival(fsr));
+        DataHub.Push(fsr);
 
         var handled = records.Select(x => x.Id).ToList();
         db.GetCollection<PostHandleIds>("ph_record").DeleteMany(x => handled.Contains(x.Id));
@@ -1585,10 +1582,6 @@ public static partial class DataTracker
     
     public static void OnNewDay(NewDay today)
     {
-        VerifyRules.OnEntityArrival([today]);
-
-        DataHub.Push(today);
-
         DataHub.Push(today);
     }
 }

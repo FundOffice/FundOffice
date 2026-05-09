@@ -84,7 +84,7 @@ public class HookDataGenerator : IIncrementalGenerator
                     var methodName = m.Method.Identifier.Text;
 
                     // 直接使用 record 中存储的类型，无需再次解析
-                    return $"\t\t\tDataHub.Register<{m.FirstParameterType}>({fullClassName}.{methodName});";
+                    return $"\t\t\tDataHub.Register({fullClassName}.{methodName});";
                 }));
 
             var uniqueSuffix = DateTime.UtcNow.Ticks.ToString("x");

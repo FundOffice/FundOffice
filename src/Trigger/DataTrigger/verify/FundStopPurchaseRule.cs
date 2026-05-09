@@ -1,19 +1,18 @@
 ﻿using FMO.Logging;
 using FMO.Models;
+using FMO.Utilities;
 using System.Collections.Concurrent;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace FMO.Utilities;
-
+namespace FMO.Trigger;
 
 
-public record FundStopPurchaseContext(string FundName, bool PurchaseLimited, decimal DailyAverage, DateOnly LimitedDate, DateOnly? ClearDate);
+
+public record FundStopPurchaseContext(string FundName, bool PurchaseLimited, decimal DailyAverage, DateOnly LimitedDate, DateOnly? ClearDate); 
+
+ 
 
 
-/// <summary>
-/// 停止申购预警
-/// </summary>
-public class FundStopPurchaseRule : VerifyRule<DailyValue>
+public partial class FundStopPurchaseRule : VerifyRule, ITracker<IEnumerable<DailyValue>>
 {
     public List<DailyValue> DailyValues { get; set; } = [];
 
@@ -26,7 +25,7 @@ public class FundStopPurchaseRule : VerifyRule<DailyValue>
     {
         using var db = DbHelper.Base();
         var funds = db.GetCollection<Fund>().Query().Select(x => new { x.Id, x.Name, x.SetupDate, x.Status }).ToList();
-        
+
 
         // 运行中的产品，重新算一遍
         foreach (var f in funds.Where(x => x.Status == FundStatus.Normal))
@@ -219,10 +218,13 @@ public class FundStopPurchaseRule : VerifyRule<DailyValue>
         DailyValues.Clear();
     }
 
-    protected override void OnEntityOverride(IEnumerable<DailyValue> obj)
+
+    private partial void OnDataArrival(IEnumerable<DailyValue> obj)
     {
         DailyValues.AddRange(obj);
     }
+
+
 
 
     protected override void VerifyOverride()
@@ -314,4 +316,7 @@ public class FundStopPurchaseRule : VerifyRule<DailyValue>
 
         }
     }
+
+
 }
+
