@@ -11,7 +11,7 @@ public record FundClearNotFinishedContext(string FundName, string? Code, DateOnl
 /// <summary>
 /// 基金长期未结束清盘
 /// </summary>
-public partial class FundClearNotFinishedRule : VerifyRule, ITracker<LiquidationFlow>, ITracker<EntityRemoved<FundFlow, int>>, ITracker<EntityChanged<Fund, DateOnly>>
+public partial class FundClearNotFinishedRule : VerifyRule, ITracker<FundFlow>, ITracker<EntityRemoved<FundFlow, int>>, ITracker<EntityChanged<Fund, DateOnly>>
 {
     private ConcurrentDictionary<int, DataTip> Tips { get; } = [];
 
@@ -40,7 +40,7 @@ public partial class FundClearNotFinishedRule : VerifyRule, ITracker<Liquidation
         FlowId.Clear();
     }
 
-    private partial void OnDataArrival(LiquidationFlow obj) => Params.Add(obj.FundId);
+    private partial void OnDataArrival(FundFlow obj)  { if(obj is LiquidationFlow) Params.Add(obj.FundId); }
 
     private partial void OnDataArrival(EntityChanged<Fund, DateOnly> obj) => Params.Add(obj.Entity.Id);
 

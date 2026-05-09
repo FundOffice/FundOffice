@@ -1,7 +1,6 @@
 ﻿using FMO.Models;
-using System.Collections.Concurrent;
-
 using FMO.Utilities;
+using System.Collections.Concurrent;
 
 namespace FMO.Trigger;
 
@@ -10,13 +9,13 @@ public record FundNearLiquidationContext(string FundName, DateOnly SetupDate, Da
 /// <summary>
 /// 基金临近清盘（<1年）
 /// </summary>
-public partial class FundNearLiquidationAlertRule : VerifyRule, ITracker<NewDay>, ITracker<EntityChanged<DateOnly>>
+public partial class FundNearLiquidationAlertRule : VerifyRule, ITracker<NewDay>, ITracker<EntityChanged<FundElements, DateOnly, int>>
 {
     public ConcurrentDictionary<int, IDataTip> Tips { get; } = [];
 
     private bool VerifyAll { get; set; }
 
-    private List<EntityChanged<DateOnly>> entityChangeds { get; } = new();
+    private List<EntityChanged<FundElements, DateOnly, int>> entityChangeds { get; } = new();
 
     public override void Init()
     {
@@ -29,7 +28,7 @@ public partial class FundNearLiquidationAlertRule : VerifyRule, ITracker<NewDay>
         entityChangeds.Clear();
     }
 
-    private partial void OnDataArrival(EntityChanged<DateOnly> obj) => entityChangeds.AddRange(obj);
+    private partial void OnDataArrival(EntityChanged<FundElements, DateOnly, int> obj) => entityChangeds.AddRange(obj);
 
     private partial void OnDataArrival(NewDay obj) => VerifyAll = true;
 
@@ -37,7 +36,7 @@ public partial class FundNearLiquidationAlertRule : VerifyRule, ITracker<NewDay>
 
     protected override void VerifyOverride()
     {
-        var ids = entityChangeds.Where(x => x.Type == typeof(FundElements) && x.Id is int).Select(x => x.Id).OfType<int>().ToList();
+        var ids = entityChangeds.Select(x => x.Id).ToList();
         if (ids.Count == 0) return;
 
         using var db = DbHelper.Base();
