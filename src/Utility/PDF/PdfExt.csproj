@@ -23,7 +23,7 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="bblanchon.PDFium.Win32" Version="137.0.7123" />
+    <PackageReference Include="bblanchon.PDFium.Win32" Version="149.0.7825" />
     <PackageReference Include="PDFium.WindowsV2" Version="1.1.4" />
   </ItemGroup>
 
