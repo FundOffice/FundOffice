@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
 using Serilog;
@@ -110,7 +111,7 @@ public partial class ModifyOrderWindowViewModel : AddOrderWindowViewModelBase
         }
         catch (Exception e)
         {
-            Log.Error($"更新交易订单失败，{e}");
+            LogEx.Error($"更新交易订单失败，{e}");
         }
     }
 

@@ -300,7 +300,7 @@ public class ESigningWorker
     {
         WeakReferenceMessenger.Default.Send(new SigningRunMessage(name, true));
 
-        try { await task; } catch (Exception e) { Log.Error($"{name} {e.Message}"); }
+        try { await task; } catch (Exception e) { LogEx.Error($"{name} {e.Message}"); }
 
         WeakReferenceMessenger.Default.Send(new SigningRunMessage(name, false));
     }

@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
@@ -21,7 +22,7 @@ public class TempFile : IDisposable
 
     public void Dispose()
     {
-        try { File.Delete(FilePath); } catch (Exception e) { Log.Error(e, $"删除临时文件【{FilePath}】失败"); }
+        try { File.Delete(FilePath); } catch (Exception e) { LogEx.Error(e, $"删除临时文件【{FilePath}】失败"); }
     }
 }
 

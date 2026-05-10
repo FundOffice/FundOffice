@@ -1,4 +1,5 @@
 ﻿
+using FMO.Logging;
 using Serilog;
 using System.Reflection;
 using System.Runtime.Loader;
@@ -10,6 +11,7 @@ public class PluginLoadContext : AssemblyLoadContext
     private PluginDefinition _def;
 
     public IReadOnlyList<IPlugin> Plugins { get; private set; }
+ 
 
     private readonly AssemblyDependencyResolver _resolver;
 
@@ -40,18 +42,18 @@ public class PluginLoadContext : AssemblyLoadContext
                     }
                     catch (Exception ex)
                     {
-                        Log.Error($"创建 {type.FullName} 失败：{ex.Message}");
+                        LogEx.Error($"创建 {type.FullName} 失败：{ex.Message}");
                     }
                 }
             }
         }
         catch (ReflectionTypeLoadException ex)
         {
-            Log.Error($"加载 {def.EndPoint} 失败：{string.Join('\n', ex.LoaderExceptions.Select(x => x?.Message))}");
+            LogEx.Error($"加载 {def.EndPoint} 失败：{string.Join('\n', ex.LoaderExceptions.Select(x => x?.Message))}");
         }
         catch (Exception ex)
         {
-            Log.Error($"加载 {def.EndPoint} 失败：{ex.Message}");
+            LogEx.Error($"加载 {def.EndPoint} 失败：{ex.Message}");
         }
         Plugins = list.ToArray();
     }

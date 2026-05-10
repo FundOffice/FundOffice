@@ -81,13 +81,13 @@ public partial class App : Application
         AppDomain.CurrentDomain.UnhandledException += (s, args) =>
         {
             var exception = (Exception)args.ExceptionObject;
-            Log.Error($"{exception}");
+            LogEx.Error($"{exception}");
         };
 
         // 处理 Task 内部未处理的异常
         TaskScheduler.UnobservedTaskException += (s, args) =>
         {
-            Log.Error($"{s}");
+            LogEx.Error($"{s}");
             args.SetObserved(); // 避免后续崩溃
         };
 
@@ -155,7 +155,7 @@ public partial class App : Application
 
     private void Application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
-        Log.Error(e.Exception.Message);
+        LogEx.Error(e.Exception.Message);
 #if !DEBUG
         e.Handled = true;
 #endif

@@ -227,7 +227,7 @@ public partial class TrusteeWorker : ObservableObject
                 catch (Exception e)
                 {
                     ret.Add(new(tr.Title, ReturnCode.Unknown));
-                    Log.Error($"QueryRaisingBalanceOnce {e}");
+                    LogEx.Error($"QueryRaisingBalanceOnce {e}");
                 }
             }
 
@@ -241,7 +241,7 @@ public partial class TrusteeWorker : ObservableObject
         }
         catch (Exception e)
         {
-            Log.Error($"{nameof(QueryRaisingBalanceOnce)} {e.Message}");
+            LogEx.Error($"{nameof(QueryRaisingBalanceOnce)} {e.Message}");
         }
     }
 
@@ -314,7 +314,7 @@ public partial class TrusteeWorker : ObservableObject
                 {
                     ret.Add(new(tr.Title, ReturnCode.Unknown));
 
-                    Log.Error($"QueryTransferRequestOnce {e}");
+                    LogEx.Error($"QueryTransferRequestOnce {e}");
                 }
             }
 
@@ -328,7 +328,7 @@ public partial class TrusteeWorker : ObservableObject
         }
         catch (Exception e)
         {
-            Log.Error($"{nameof(QueryTransferRequestOnce)} {e.Message}");
+            LogEx.Error($"{nameof(QueryTransferRequestOnce)} {e.Message}");
         }
     }
 
@@ -392,7 +392,7 @@ public partial class TrusteeWorker : ObservableObject
                 {
                     ret.Add(new(tr.Title, ReturnCode.Unknown));
 
-                    Log.Error($"QueryTransferRecordOnce {e}");
+                    LogEx.Error($"QueryTransferRecordOnce {e}");
                 }
             }
 
@@ -406,7 +406,7 @@ public partial class TrusteeWorker : ObservableObject
         }
         catch (Exception e)
         {
-            Log.Error($"{nameof(QueryTransferRecordOnce)} {e.Message}");
+            LogEx.Error($"{nameof(QueryTransferRecordOnce)} {e.Message}");
         }
     }
 
@@ -473,7 +473,7 @@ public partial class TrusteeWorker : ObservableObject
                 catch (Exception e)
                 {
                     ret.Add(new(tr.Title, ReturnCode.Unknown));
-                    Log.Error($"QueryDailyFeeOnce {e}");
+                    LogEx.Error($"QueryDailyFeeOnce {e}");
                 }
             }
 
@@ -487,7 +487,7 @@ public partial class TrusteeWorker : ObservableObject
         }
         catch (Exception e)
         {
-            Log.Error($"{nameof(QueryDailyFeeOnce)} {e.Message}");
+            LogEx.Error($"{nameof(QueryDailyFeeOnce)} {e.Message}");
         }
     }
 
@@ -540,7 +540,7 @@ public partial class TrusteeWorker : ObservableObject
             catch (Exception e)
             {
                 ret.Add(new(tr.Title, ReturnCode.Unknown));
-                Log.Error($"QueryRaisingAccountTransctionOnce {e}");
+                LogEx.Error($"QueryRaisingAccountTransctionOnce {e}");
             }
         }
 
@@ -602,7 +602,7 @@ public partial class TrusteeWorker : ObservableObject
             catch (Exception e)
             {
                 ret.Add(new(tr.Title, ReturnCode.Unknown));
-                Log.Error($"{method} {e}");
+                LogEx.Error($"{method} {e}");
             }
 
             WeakReferenceMessenger.Default.Send(new TrusteeWorkResult(nameof(ITrustee.QueryNetValue), ret));
@@ -673,7 +673,7 @@ public partial class TrusteeWorker : ObservableObject
     {
         WeakReferenceMessenger.Default.Send(new TrusteeRunMessage(name, true));
 
-        try { await task; } catch (Exception e) { Log.Error($"{name} {e.Message}"); }
+        try { await task; } catch (Exception e) { LogEx.Error($"{name} {e.Message}"); }
 
         WeakReferenceMessenger.Default.Send(new TrusteeRunMessage(name, false));
     }
@@ -814,7 +814,7 @@ public partial class TrusteeWorker : ObservableObject
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"Trustee Worker Error executing command: {ex.Message}");
+                    LogEx.Error($"Trustee Worker Error executing command: {ex.Message}");
                 }
                 finally
                 {

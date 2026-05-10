@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
@@ -415,7 +416,7 @@ public partial class AddOrderWindowViewModel : AddOrderWindowViewModelBase
         catch (Exception e)
         {
             db.Rollback();
-            Log.Error($"添加交易订单失败，{e}");
+            LogEx.Error($"添加交易订单失败，{e}");
         }
     }
 
@@ -689,7 +690,7 @@ public partial class SupplementaryOrderWindowViewModel : AddOrderWindowViewModel
         catch (Exception e)
         {
             db.Rollback();
-            Log.Error($"添加交易订单失败，{e}");
+            LogEx.Error($"添加交易订单失败，{e}");
         }
     }
 

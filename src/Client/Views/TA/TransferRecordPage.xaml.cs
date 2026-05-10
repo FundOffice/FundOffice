@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
@@ -288,7 +289,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
         }
         catch (Exception e)
         {
-            Log.Error($"{e}");
+            LogEx.Error($"{e}");
         }
     }
 
@@ -788,7 +789,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
         }
         catch (Exception e)
         {
-            Log.Error($"void Receive(TransferRecordLinkOrderMessage message) {e}");
+            LogEx.Error($"void Receive(TransferRecordLinkOrderMessage message) {e}");
         }
     }
 

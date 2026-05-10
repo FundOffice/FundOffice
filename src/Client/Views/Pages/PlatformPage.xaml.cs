@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.ESigning;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Trustee;
 using FMO.Utilities;
@@ -89,7 +90,7 @@ public partial class ProxyViewModel : ObservableObject
         catch (Exception e)
         {
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"连接失败，请检查端口、用户名密码是否正确"));
-            Log.Error($"连接Proxy  {e}");
+            LogEx.Error($"连接Proxy  {e}");
         }
     }
 
@@ -212,7 +213,7 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
             //    }
             //    catch (Exception e)
             //    {
-            //        Log.Error($"[{file.Name}]加载插件失败{e.Message}");
+            //        LogEx.Error($"[{file.Name}]加载插件失败{e.Message}");
             //    }
             //}
 

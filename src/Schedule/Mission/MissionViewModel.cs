@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Logging;
 using FMO.Utilities;
 using Serilog;
 using System.Collections.ObjectModel;
@@ -80,7 +81,7 @@ public partial class MissionViewModel : ObservableObject, IRecipient<MissionMess
             NextRunTime = mission.NextRun;
             IsActivated = mission.IsEnabled;
         }
-        catch (Exception ex) { Log.Error($"无法初始化任务ViewModel{ex.Message}"); }
+        catch (Exception ex) { LogEx.Error($"无法初始化任务ViewModel{ex.Message}"); }
 
         Id = mission.Id;
 

@@ -105,7 +105,7 @@ public  static partial class DatabaseAssist
                 item.InvestorId = tmp.First().Id;
             else
             {
-                Log.Error($"TransferRecord {item.Id} {item.FundName} {item.InvestorName} 与多个Inverstor对应");
+                LogEx.Error($"TransferRecord {item.Id} {item.FundName} {item.InvestorName} 与多个Inverstor对应");
                 WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"{item.FundName} {item.InvestorName} 交易无法对应投资人，因为证件号重复"));
             }
         }

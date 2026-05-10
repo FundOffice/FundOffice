@@ -233,7 +233,7 @@ public partial class ExporterWindowViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            Log.Error(e, $"打开模板失败，{value.Name} {value.Id}");
+            LogEx.Error(e, $"打开模板失败，{value.Name} {value.Id}");
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "打开模板失败，请查看log"));
         }
     }

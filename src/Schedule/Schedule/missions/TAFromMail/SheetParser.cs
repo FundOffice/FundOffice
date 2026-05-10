@@ -1,4 +1,5 @@
 ﻿using ExcelDataReader;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
@@ -96,13 +97,13 @@ public class SheetParser
         // 没找到对应的fund
         if (fund is null)
         {
-            Log.Error($"{r.FundName}({r.FundCode}) {r.InvestorName} {r.ConfirmedDate} 未找到对应基金");
+            LogEx.Error($"{r.FundName}({r.FundCode}) {r.InvestorName} {r.ConfirmedDate} 未找到对应基金");
             return;
         }
 
         if (string.IsNullOrWhiteSpace(r.FundName))
         {
-            Log.Error($"{r.FundName}({r.FundCode}) {r.InvestorName} {r.ConfirmedDate} 数据异常");
+            LogEx.Error($"{r.FundName}({r.FundCode}) {r.InvestorName} {r.ConfirmedDate} 数据异常");
             return;
         }
         r.FundId = fund.Id;
@@ -210,7 +211,7 @@ public class CMSParser : SheetParser
 
         if (errors.Count > 0)
         {
-            Log.Error($"TA表头无法解析 {string.Join(',', fields)}");
+            LogEx.Error($"TA表头无法解析 {string.Join(',', fields)}");
             return Array.Empty<TransferRecord>();
         }
 
@@ -322,7 +323,7 @@ public class CSTISCParser : SheetParser
 
         if (errors.Count > 0)
         {
-            Log.Error($"TA表头无法解析 {string.Join(',', fields)}");
+            LogEx.Error($"TA表头无法解析 {string.Join(',', fields)}");
             return Array.Empty<TransferRecord>();
         }
 
@@ -436,7 +437,7 @@ public class CSCParser : SheetParser
 
         if (errors.Count > 0)
         {
-            Log.Error($"TA表头无法解析 {string.Join(',', fields)}");
+            LogEx.Error($"TA表头无法解析 {string.Join(',', fields)}");
             return Array.Empty<TransferRecord>();
         }
 
@@ -543,7 +544,7 @@ public class CSCParser : SheetParser
 
         if (errors.Count > 0)
         {
-            Log.Error($"TA表头无法解析 {string.Join(',', fields)}");
+            LogEx.Error($"TA表头无法解析 {string.Join(',', fields)}");
             return Array.Empty<TransferRecord>();
         }
 

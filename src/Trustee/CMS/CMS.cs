@@ -1,4 +1,5 @@
-﻿using FMO.Models;
+﻿using FMO.Logging;
+using FMO.Models;
 using FMO.Utilities;
 using System.Diagnostics;
 using System.Net.Http;
@@ -170,7 +171,7 @@ public partial class CMS : TrusteeApiBase
             item.FundId = db.FindFund(item.FundCode)?.Id ?? 0;
 
         if (transactions.Any(x => x.FundId == 0))
-            Serilog.Log.Error($"募资流水 {string.Join(',', transactions.Where(x => x.FundId == 0).Select(x => $"{x.AccountName}-{x.FundCode}"))} 未找到对应基金");
+            LogEx.Error($"募资流水 {string.Join(',', transactions.Where(x => x.FundId == 0).Select(x => $"{x.AccountName}-{x.FundCode}"))} 未找到对应基金");
 
         return new(ReturnCode.Success, transactions.ToArray());
     }

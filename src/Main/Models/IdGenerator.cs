@@ -63,7 +63,7 @@ public static class IdGenerator
             catch //(Exception ex)
             {
                 // 添加日志记录
-                //Log.Error($"持久化失败: {ex.Message}");
+                //LogEx.Error($"持久化失败: {ex.Message}");
             }
         });
     }

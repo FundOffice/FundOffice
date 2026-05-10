@@ -81,7 +81,7 @@ public class DisclosureFromMailMission : MailMission
             }
             catch (Exception ex)
             {
-                Log.Error($"Mail 获取信批错误 {ex}");
+                LogEx.Error($"Mail 获取信批错误 {ex}");
             }
 
             progress += unit;

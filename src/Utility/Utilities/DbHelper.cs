@@ -175,7 +175,7 @@ public static class DbHelper
     //    }
     //    catch (Exception e)
     //    {
-    //        Log.Error($"BuildFundShareRecord {e.Message}");
+    //        LogEx.Error($"BuildFundShareRecord {e.Message}");
     //        return false;
     //    }
     //}

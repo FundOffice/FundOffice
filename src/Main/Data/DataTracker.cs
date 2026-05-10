@@ -76,7 +76,7 @@ public static partial class DataTracker
                 if (di.Name != name)
                 {
                     Directory.Move(di.FullName, folder);
-                    Log.Warning($"基金 {f.Code} 名称已更新 [{di.Name}] -> [{f.Name}]");
+                    LogEx.Warning($"基金 {f.Code} 名称已更新 [{di.Name}] -> [{f.Name}]");
                 }
 
                 FundHelper.Map(f, folder);
@@ -688,7 +688,7 @@ public static partial class DataTracker
         SaveRequests(db, data);
 
         try { PostHandleTransferRequests(db, data); }
-        catch (Exception ex) { Log.Error($"{ex}"); }
+        catch (Exception ex) { LogEx.Error($"{ex}"); }
 
 
         DataHub.Push(data);
@@ -747,7 +747,7 @@ public static partial class DataTracker
                     r.ShareClass = c;
                 continue;
             }
-            else Log.Error($"QueryTransferRequests 发现未知的产品{r.FundName} {r.FundCode}");
+            else LogEx.Error($"QueryTransferRequests 发现未知的产品{r.FundName} {r.FundCode}");
         }
 
         // 不在库中的投资人
@@ -829,7 +829,7 @@ public static partial class DataTracker
                     r.ShareClass = c;
                 continue;
             }
-            else Log.Error($"QueryTransferRequests 发现未知的产品{r.FundName} {r.FundCode}");
+            else LogEx.Error($"QueryTransferRequests 发现未知的产品{r.FundName} {r.FundCode}");
         }
 
         // 不在库中的投资人
@@ -973,7 +973,7 @@ public static partial class DataTracker
                     // 校验一定是赎回类型
                     if (item.Type != TransferRecordType.Redemption && item.Type != TransferRecordType.ForceRedemption)
                     {
-                        Log.Error($"基金 {fid} 清盘时， 最后 TransferRecordType = {item.Type}，应为 赎回");
+                        LogEx.Error($"基金 {fid} 清盘时， 最后 TransferRecordType = {item.Type}，应为 赎回");
                         db.Rollback();
                         break;
                     }

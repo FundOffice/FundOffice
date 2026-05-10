@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.IO.AMAC;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
@@ -622,7 +623,7 @@ public partial class ManagerPageViewModel : EditableControlViewModelBase<Manager
         }
         catch (Exception ex)
         {
-            Log.Error($"获取管理人成员失败，{ex}");
+            LogEx.Error($"获取管理人成员失败，{ex}");
             HandyControl.Controls.Growl.Error($"获取管理人成员失败，请查看log");
         }
     }
@@ -999,7 +1000,7 @@ public partial class ManagerPageViewModel : EditableControlViewModelBase<Manager
             }
             catch (Exception e)
             {
-                Log.Error($"SetLogo Error {e}");
+                LogEx.Error($"SetLogo Error {e}");
             }
         }
     }
@@ -1112,7 +1113,7 @@ public partial class ManagerPageViewModel : EditableControlViewModelBase<Manager
                     wnd.Owner = App.Current.MainWindow;
                     wnd.ShowDialog();
                 }
-                catch (Exception e) { Log.Error($"{e}"); }
+                catch (Exception e) { LogEx.Error($"{e}"); }
             }
         }
 
@@ -1318,7 +1319,7 @@ public partial class ManagerFlowViewModel : EditableControlViewModelBase<Manager
         }
         catch (Exception e)
         {
-            Log.Error($"OpenFolder Error {e}");
+            LogEx.Error($"OpenFolder Error {e}");
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "打开文件夹失败"));
         }
     }

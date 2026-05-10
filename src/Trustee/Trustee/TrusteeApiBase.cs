@@ -1,5 +1,6 @@
 
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
@@ -176,7 +177,7 @@ public abstract class TrusteeApiBase : ITrustee
         }
         catch (Exception ex)
         {
-            Serilog.Log.Error($"Can Not Load Log {ex.Message}");
+            LogEx.Error($"Can Not Load Log {ex.Message}");
             return [];
         }
         // return _db.GetCollection<LogInfo>().FindAll().GroupBy(x=>x.Identifier).Select(x=> (x.Key, x.GroupBy(x=>x.Method).Select(y=> (y.Key, y.Take(5))))).ToArray();

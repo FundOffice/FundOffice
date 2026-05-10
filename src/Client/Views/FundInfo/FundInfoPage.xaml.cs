@@ -341,7 +341,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     //            var v = ValuationSheetHelper.ParseExcel(fs);
     //            if (v.dy is null)
     //            {
-    //                Log.Warning($"解析估值表 {e.Name} 出错");
+    //                LogEx.Warning($"解析估值表 {e.Name} 出错");
     //                return;
     //            }
 
@@ -353,7 +353,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     //        }
     //        catch (Exception er)
     //        {
-    //            Log.Warning($"解析估值表 {e.Name} 出错 {er.Message}");
+    //            LogEx.Warning($"解析估值表 {e.Name} 出错 {er.Message}");
     //        }
     //    };
     //}
@@ -800,7 +800,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
                     var item = ValuationSheetHelper.ParseExcel(fs);
                     if (item.dy is not null)
                         item.dy.SheetPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), f.FullName);
-                    else Log.Error($"解析{f.Name}出错");
+                    else LogEx.Error($"解析{f.Name}出错");
 
                     bag.Add(item);
                 });
@@ -827,7 +827,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
                 // 从属验证 
                 if (err.Count != 0)
                 {
-                    Log.Error($"{FundName} 解析全部估值表出错 发现{err.Count}个文件不属于本基金\n{string.Join('\n', err.Select(x => x.name))}))");
+                    LogEx.Error($"{FundName} 解析全部估值表出错 发现{err.Count}个文件不属于本基金\n{string.Join('\n', err.Select(x => x.name))}))");
                     HandyControl.Controls.Growl.Info($"发现{err.Count}个文件不属于本基金\n{string.Join('\n', err.Select(x => x.name))}))");
                 }
 
@@ -837,7 +837,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
             }
             catch (Exception e)
             {
-                Log.Error($"{FundName} 解析全部估值表出错 {e.Message}");
+                LogEx.Error($"{FundName} 解析全部估值表出错 {e.Message}");
             }
 
             App.Current.Dispatcher.BeginInvoke(() => CanRefreshNetValues = true);
@@ -925,7 +925,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         }
         catch (Exception e)
         {
-            Log.Error($"生成基金合同附件失败{e}");
+            LogEx.Error($"生成基金合同附件失败{e}");
             HandyControl.Controls.Growl.Warning("生成基金合同附件失败");
         }
     }
@@ -1060,7 +1060,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         if (!dir.Exists)
         {
-            Log.Error($"[{FundName}]存储文件夹无法创建,{dir}");
+            LogEx.Error($"[{FundName}]存储文件夹无法创建,{dir}");
             HandyControl.Controls.Growl.Error($"[{FundName}]存储文件夹无法创建");
             return;
         }
@@ -1233,7 +1233,7 @@ public partial class LatestFileViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Log.Error($"文件另存为失败: {ex.Message}");
+            LogEx.Error($"文件另存为失败: {ex.Message}");
         }
     }
 }

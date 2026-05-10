@@ -431,7 +431,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
               }
               catch (Exception e)
               {
-                  Log.Error($"备份失败 {e}");
+                  LogEx.Error($"备份失败 {e}");
                   HandyControl.Controls.Growl.Error("备份失败");
               }
           }, TaskCreationOptions.LongRunning);
@@ -589,7 +589,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         }
         catch (Exception ex)
         {
-            Log.Error($"HomePage, OnNewDate {ex}");
+            LogEx.Error($"HomePage, OnNewDate {ex}");
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "更新每日数据失败"));
         }
 

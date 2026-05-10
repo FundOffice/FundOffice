@@ -178,7 +178,7 @@ public partial class FundAccountsViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            Log.Error($"加载期货公司列表失败{e.Message}");
+            LogEx.Error($"加载期货公司列表失败{e.Message}");
         }
 
 
@@ -354,7 +354,7 @@ public partial class FundAccountsViewModel : ObservableObject
                         if (c.text.Contains("申请日期")) continue;
 
                         ++failed;
-                        Log.Error($"解析股卡失败:\n {c.text}");
+                        LogEx.Error($"解析股卡失败:\n {c.text}");
                         continue;
                     }
 

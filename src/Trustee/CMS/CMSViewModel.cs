@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FMO.Logging;
 using Microsoft.Win32;
 using Serilog;
 using System.IO;
@@ -115,7 +116,7 @@ public partial class CMSViewModel : TrusteeViewModelBase<CMS>
         catch (Exception e)
         {
             CertIsValid = false;
-            Log.Error($"CheckCertificate {e}");
+            LogEx.Error($"CheckCertificate {e}");
         }
     }
 }

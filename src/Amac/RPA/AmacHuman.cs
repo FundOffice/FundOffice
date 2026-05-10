@@ -38,7 +38,7 @@ public static class AmacHuman
         }
         catch (Exception ex)
         {
-            Log.Error($"获取管理人成员，关闭弹窗出错{ex}");
+            LogEx.Error($"获取管理人成员，关闭弹窗出错{ex}");
         }
 
         // 设置账户密码
@@ -61,7 +61,7 @@ public static class AmacHuman
         }
         catch (Exception ex)
         {
-            Log.Error($"获取管理人成员，登录错误{ex}");
+            LogEx.Error($"获取管理人成员，登录错误{ex}");
             return (AmacReturn.Browser, []);
         }
 
@@ -72,13 +72,13 @@ public static class AmacHuman
             await locator.WaitForAsync(new LocatorWaitForOptions { Timeout = 20 * 1000 });
             if (await locator.CountAsync() == 0)
             {
-                Log.Error($"获取管理人成员，无法验证登录结果");
+                LogEx.Error($"获取管理人成员，无法验证登录结果");
                 return (AmacReturn.Browser, []);
             }
         }
         catch (Exception ex)
         {
-            Log.Error($"获取管理人成员，无法验证登录结果{ex}");
+            LogEx.Error($"获取管理人成员，无法验证登录结果{ex}");
             return (AmacReturn.Browser, []);
         }
 

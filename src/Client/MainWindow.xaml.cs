@@ -452,7 +452,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
     [RelayCommand]
     public void test()
     {
-        Log.Warning(DateTime.Now.ToString());
+        LogEx.Warning(DateTime.Now.ToString());
     }
 
 

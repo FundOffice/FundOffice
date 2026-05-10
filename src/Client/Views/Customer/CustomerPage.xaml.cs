@@ -402,7 +402,7 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
                         }
                         catch (Exception e)
                         {
-                            Log.Error($"ImportQualificationData {e}");
+                            LogEx.Error($"ImportQualificationData {e}");
                         }
                     }
 
@@ -454,7 +454,7 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
                                 //if (!old.CertificationFiles.Files.Any(x => x.Path == fsi.Path))
                                 old.CertificationFiles.Files.Add(fsi);
                             }
-                            else Log.Warning($"未识别的合投文件 {cus.Name}:{qf.Name}");
+                            else LogEx.Warning($"未识别的合投文件 {cus.Name}:{qf.Name}");
                         }
 
                         db.GetCollection<InvestorQualification>().Upsert(old);
@@ -572,7 +572,7 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
             }
             catch (Exception e)
             {
-                Log.Error($"更新investor出错 {e.Message}");
+                LogEx.Error($"更新investor出错 {e.Message}");
             }
 
         }));

@@ -688,7 +688,7 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
         }
         catch (Exception e)
         {
-            Log.Error($"{nameof(CustomerViewModel)} {nameof(UpdateBank)} {e}");
+            LogEx.Error($"{nameof(CustomerViewModel)} {nameof(UpdateBank)} {e}");
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "更新银行账户出错"));
         }
     }
@@ -706,7 +706,7 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
         }
         catch (Exception e)
         {
-            Log.Error($"{nameof(CustomerViewModel)} {nameof(DeleteBank)} {e}");
+            LogEx.Error($"{nameof(CustomerViewModel)} {nameof(DeleteBank)} {e}");
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "删除银行账户出错"));
         }
     }
@@ -795,7 +795,7 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
         }
         catch (Exception ex)
         {
-            Log.Error($"合并证件图片出错 {ex}");
+            LogEx.Error($"合并证件图片出错 {ex}");
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "合并证件图片出错"));
         }
 
@@ -848,7 +848,7 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
         }
         catch (Exception e)
         {
-            Log.Error($"void Receive(TransferRecordLinkOrderMessage message) {e}");
+            LogEx.Error($"void Receive(TransferRecordLinkOrderMessage message) {e}");
         }
     }
 
@@ -880,7 +880,7 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
         }
         catch (Exception e)
         {
-            Log.Error($"void Receive(TransferRecordLinkOrderMessage message) {e}");
+            LogEx.Error($"void Receive(TransferRecordLinkOrderMessage message) {e}");
         }
     }
 

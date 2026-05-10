@@ -1,4 +1,5 @@
-﻿using Serilog;
+﻿using FMO.Logging;
+using Serilog;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.Json;
@@ -36,7 +37,7 @@ public static class PluginManager
                 var def = JsonSerializer.Deserialize<PluginDefinition>(sr.ReadToEnd());
                 if (def is null)
                 {
-                    Log.Error($"Load Plugin [{di.Name}] Error: 无法解析配置");
+                    LogEx.Error($"Load Plugin [{di.Name}] Error: 无法解析配置");
                     continue;
                 }
 
@@ -51,7 +52,7 @@ public static class PluginManager
             }
             catch (Exception e)
             {
-                Log.Error($"Load Plugin [{di.Name}] Error: {e}");
+                LogEx.Error($"Load Plugin [{di.Name}] Error: {e}");
             }
         }
 
@@ -104,18 +105,18 @@ public static class PluginManager
                     }
                     catch (Exception ex)
                     {
-                        Log.Error($"创建 {type.FullName} 失败：{ex.Message}");
+                        LogEx.Error($"创建 {type.FullName} 失败：{ex.Message}");
                     }
                 }
             }
         }
         catch (ReflectionTypeLoadException ex)
         {
-            Log.Error($"加载 {def.EndPoint} 失败：{string.Join('\n', ex.LoaderExceptions.Select(x => x?.Message))}");
+            LogEx.Error($"加载 {def.EndPoint} 失败：{string.Join('\n', ex.LoaderExceptions.Select(x => x?.Message))}");
         }
         catch (Exception ex)
         {
-            Log.Error($"加载 {def.EndPoint} 失败：{ex.Message}");
+            LogEx.Error($"加载 {def.EndPoint} 失败：{ex.Message}");
         }
     }
 
