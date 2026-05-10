@@ -1,0 +1,20 @@
+<Project>
+  <PropertyGroup>
+    <!-- 全局编码设置 -->
+    <LangVersion>latest</LangVersion>
+    <Deterministic>true</Deterministic>
+
+    <!-- 资源文件编码 -->
+    <SatelliteResourceLanguages>zh-CN</SatelliteResourceLanguages>
+
+    <!-- 发布时保留资源 -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <!-- 确保 .resx 文件处理时保留编码 -->
+  <ItemDefinitionGroup>
+    <EmbeddedResource>
+      <WithCulture>true</WithCulture>
+    </EmbeddedResource>
+  </ItemDefinitionGroup>
+</Project>

@@ -182,7 +182,7 @@ jobs:
 
 
       - name: 签名指定文件夹 DLL（防篡改）
-        if: ${{ !success() }}
+        if: ${{ success() }}
         shell: pwsh
         env:
           CERT_PFX_BASE64: ${{ secrets.CERT_PFX_BASE64 }}
