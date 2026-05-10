@@ -7,15 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
 	  <LangVersion>preview</LangVersion>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="dt.xaml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Include="dt.xaml" />
-  </ItemGroup>
-
+ 
   <ItemGroup>
     <ProjectReference Include="..\Trustee\Trustee.csproj" />
   </ItemGroup>

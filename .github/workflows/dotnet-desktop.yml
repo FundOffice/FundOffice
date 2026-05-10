@@ -314,6 +314,124 @@ jobs:
           echo "ISTAG=$isTag" >> $env:GITHUB_OUTPUT
         shell: powershell
 
+      - name: 创建增量更新包 (Delta)
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $publishDir = "./publish"
+          $deltaDir = "./publish-delta"
+          $currentTag = "${{ steps.version.outputs.TAG }}"
+          
+          # 🔹 获取上一个语义化版本标签
+          $tags = git tag --sort=-version:refname | Where-Object { $_ -like "v*" -and $_ -ne $currentTag }
+          if ($tags.Count -eq 0) {
+              Write-Host "⚠️ 首个版本发布，跳过增量包生成" -ForegroundColor Yellow
+              echo "HAS_DELTA=false" >> $env:GITHUB_OUTPUT
+              exit 0
+          }
+          $prevTag = $tags[0]
+          Write-Host "🔄 生成增量包: $prevTag → $currentTag" -ForegroundColor Cyan
+          
+          # 🔹 使用 GitHub API 获取上一个 release 的主包
+          $repo = "${{ github.repository }}"
+          $releaseUrl = "https://api.github.com/repos/$repo/releases/tags/$prevTag"
+          $release = Invoke-RestMethod -Uri $releaseUrl -Headers @{"Authorization" = "token $env:GITHUB_TOKEN"}
+          
+          # 查找主发布包 (排除 Trustee 专用包)
+          $asset = $release.assets | Where-Object { 
+              $_.name -like "*Win-x64.zip" -and $_.name -notlike "*Trustee*" 
+          } | Select-Object -First 1
+          
+          if (-not $asset) {
+              Write-Host "⚠️ 未找到上一个版本的发布包，跳过增量包" -ForegroundColor Yellow
+              echo "HAS_DELTA=false" >> $env:GITHUB_OUTPUT
+              exit 0
+          }
+          
+          # 🔹 下载并解压上一个版本
+          $prevDir = "./.prev-release"
+          $zipPath = "./.prev-release.zip"
+          Invoke-WebRequest -Uri $asset.browser_download_url -Headers @{"Authorization" = "token $env:GITHUB_TOKEN"} -OutFile $zipPath
+          if (Test-Path $prevDir) { Remove-Item $prevDir -Recurse -Force }
+          Expand-Archive -Path $zipPath -DestinationPath $prevDir -Force
+          Remove-Item $zipPath -Force
+          
+          # 🔹 创建增量目录
+          if (Test-Path $deltaDir) { Remove-Item $deltaDir -Recurse -Force }
+          New-Item -ItemType Directory -Path $deltaDir -Force | Out-Null
+          
+          $stats = @{Changed=0; Added=0; Deleted=0}
+          
+          # 🔹 遍历当前发布文件，对比哈希
+          Get-ChildItem -Path $publishDir -File -Recurse | ForEach-Object {
+              $relPath = [System.IO.Path]::GetRelativePath($publishDir, $_.FullName)
+              $prevPath = Join-Path $prevDir $relPath
+              $deltaPath = Join-Path $deltaDir $relPath
+              
+              if (Test-Path $prevPath) {
+                  # 文件存在，比较哈希
+                  $currHash = Get-FileHash $_.FullName -Algorithm SHA256
+                  $prevHash = Get-FileHash $prevPath -Algorithm SHA256
+                  if ($currHash.Hash -ne $prevHash.Hash) {
+                      $deltaDirPath = Split-Path $deltaPath -Parent
+                      if (-not (Test-Path $deltaDirPath)) { New-Item -ItemType Directory -Path $deltaDirPath -Force | Out-Null }
+                      Copy-Item $_.FullName $deltaPath -Force
+                      $stats.Changed++
+                  }
+              } else {
+                  # 新文件
+                  $deltaDirPath = Split-Path $deltaPath -Parent
+                  if (-not (Test-Path $deltaDirPath)) { New-Item -ItemType Directory -Path $deltaDirPath -Force | Out-Null }
+                  Copy-Item $_.FullName $deltaPath -Force
+                  $stats.Added++
+              }
+          }
+          
+          # 🔹 统计删除的文件（仅记录，不打包）
+          Get-ChildItem -Path $prevDir -File -Recurse | ForEach-Object {
+              $relPath = [System.IO.Path]::GetRelativePath($prevDir, $_.FullName)
+              $currPath = Join-Path $publishDir $relPath
+              if (-not (Test-Path $currPath)) { $stats.Deleted++ }
+          }
+          
+          # 🔹 生成变更清单
+          @"
+          # FundOffice Delta Package
+          ## Version: $currentTag
+          ## Previous: $prevTag
+          ## Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ssZ')
+
+          ### 📊 Statistics
+          - 🔁 Changed files: $($stats.Changed)
+          - ➕ Added files: $($stats.Added)
+          - ➖ Deleted files: $($stats.Deleted)
+
+          ### 📦 Usage
+          1. 确保已安装 $prevTag 或相近版本
+          2. 解压此 ZIP 到 FundOffice 安装目录
+          3. 覆盖提示时选择"替换"
+          4. 重启应用完成更新
+
+          > ⚠️ 如果跨多个版本更新，建议使用完整包
+          "@ | Out-File (Join-Path $deltaDir "DELTA_README.md") -Encoding UTF8
+          
+                    # 🔹 打包增量文件
+                    if ($stats.Changed + $stats.Added -gt 0) {
+                        $deltaZip = "./FundOffice-Delta-$currentTag.zip"
+                        Compress-Archive -Path "$deltaDir/*" -DestinationPath $deltaZip -Force
+                        Write-Host "✅ 增量包创建成功: $deltaZip" -ForegroundColor Green
+                        Write-Host "   📈 变更:$($stats.Changed) | ➕新增:$($stats.Added) | ➖删除:$($stats.Deleted)" -ForegroundColor Cyan
+                        echo "HAS_DELTA=true" >> $env:GITHUB_OUTPUT
+                        echo "DELTA_ZIP=$deltaZip" >> $env:GITHUB_OUTPUT
+                    } else {
+                        Write-Host "ℹ️  无文件变更，跳过增量包生成" -ForegroundColor Gray
+                        echo "HAS_DELTA=false" >> $env:GITHUB_OUTPUT
+                    }
+
+
+
       - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -322,5 +440,14 @@ jobs:
           files: ./FundOffice-Win-x64.zip
           draft: false
           prerelease: ${{ steps.version.outputs.ISTAG != 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 上传增量包到 Release
+        if: env.HAS_DELTA == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.TAG }}
+          files: ${{ env.DELTA_ZIP }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -7,12 +7,7 @@
     <Nullable>enable</Nullable>
 	  <LangVersion>preview</LangVersion>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Page Include="dt.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
+ 
 
   <ItemGroup> 
 		<ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer"  ReferenceOutputAssembly="false" /> 
