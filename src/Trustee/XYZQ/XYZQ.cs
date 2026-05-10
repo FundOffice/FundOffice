@@ -3,6 +3,7 @@ using FMO.Models;
 using FMO.Utilities;
 using Microsoft.CodeAnalysis;
 using System.Diagnostics;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
