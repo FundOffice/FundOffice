@@ -187,7 +187,7 @@ jobs:
 
             Write-Host "🔐 正在加载签名证书..." -ForegroundColor Cyan
 
-            $cleanBase64 = $env:PLUGIN_CERT_PFX_BASE64 -replace '[\s"\'']', ''
+            $cleanBase64 = $env:CERT_PFX_BASE64 -replace '[\s"\'']', ''
             try {
                 $certBytes = [System.Convert]::FromBase64String($cleanBase64)
             } catch {
@@ -204,7 +204,7 @@ jobs:
             try {
                 $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(
                     $certBytes,
-                    $env:PLUGIN_CERT_PASSWORD,
+                    $env:CERT_PASSWORD,
                     [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
                 )
             } catch {
