@@ -17,24 +17,39 @@
 	  <MajorVersion>1</MajorVersion>
 	  <MinorVersion>2</MinorVersion>
 
-    <!-- 自动生成Patch版本：基于日期的两位数字 -->
-    <Patch>$([System.DateTime]::Now.Day)</Patch>
 
-    <!-- 自动生成修订号：基于时间的三位数字 -->
-    <Hour>$([System.DateTime]::Now.TimeOfDay.TotalHours)</Hour>
-    <Revision>$([MSBuild]::Modulo($(Hour), 1000).ToString('00'))</Revision>
-
-    <!-- 组合完整版本号 -->
-    <Version>$(MajorVersion).$(MinorVersion).$(Patch).$(Revision)</Version>
-    <!--<Version>1.1.4.348</Version>-->
-
-
-    <FileVersion>$(Version)</FileVersion>
-    <Version>$(Version)</Version>
-    <AssemblyVersion>$(Version)</AssemblyVersion>
     <AssemblyName>Gnoly</AssemblyName>
   </PropertyGroup>
 
+  <!-- 🔹 Debug配置：自动生成版本号 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>portable</DebugType>
+
+    <!-- 自动生成Patch：基于日期 -->
+    <Patch>$([System.DateTime]::Now.Day)</Patch>
+    <!-- 自动生成Revision：基于小时取模 -->
+    <Hour>$([System.DateTime]::Now.TimeOfDay.TotalHours)</Hour>
+    <Revision>$([MSBuild]::Modulo($(Hour), 1000).ToString('00'))</Revision>
+    <!-- 组合版本号 -->
+    <Version>$(MajorVersion).$(MinorVersion).$(Patch).$(Revision)</Version>
+  </PropertyGroup>
+
+  <!-- 🔹 Release配置：手动指定版本号 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>full</DebugType>
+
+    <!-- ✏️ 手动修改此处版本号 -->
+    <Version>1.0.2.0</Version>
+  </PropertyGroup>
+
+  <!-- 🔹 全局应用版本属性（确保两个配置都生效）-->
+  <PropertyGroup>
+    <FileVersion>$(Version)</FileVersion>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+  </PropertyGroup>
+  
+  
+  
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DebugType>portable</DebugType>
   </PropertyGroup>
