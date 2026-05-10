@@ -210,15 +210,29 @@ jobs:
           }
           Write-Host "✅ 证书加载成功，包含私钥" -ForegroundColor Green
 
-          # 4. 提取私钥（兼容所有 RSA 类型，避开 GetRSAPrivateKey 问题）
+           # 4. 🔥 核心修复：分级兼容提取私钥（支持 CAPI / CNG / 纯托管）
           try {
-              # 先通过 .PrivateKey 获取底层对象，再导出为标准 PKCS#8 格式
-              $privateKeyBytes = $cert.PrivateKey.ExportPkcs8PrivateKey()
-              
-              # 重建独立 RSA 实例用于签名（纯托管，无系统依赖）
-              $rsa = [System.Security.Cryptography.RSA]::Create()
-              $null = $rsa.ImportPkcs8PrivateKey($privateKeyBytes, [ref]$null)
-              Write-Host "✅ RSA 私钥提取成功，已重建独立实例" -ForegroundColor Green
+              $privateKey = $cert.PrivateKey
+
+              # 方案 A: PrivateKey 本身就是 RSA 且可直接签名（最常见）
+              if ($privateKey -is [System.Security.Cryptography.RSA]) {
+                  $rsa = $privateKey
+                  Write-Host "✅ 方案 A: 直接使用证书内置 RSA 私钥" -ForegroundColor Green
+              }
+              # 方案 B: 尝试从证书对象直接导出 PKCS#8（新式 .NET）
+              elseif ($cert.GetType().GetMethod("ExportPkcs8PrivateKey")) {
+                  $pkcs8Bytes = $cert.ExportPkcs8PrivateKey()
+                  $rsa = [System.Security.Cryptography.RSA]::Create()
+                  $null = $rsa.ImportPkcs8PrivateKey($pkcs8Bytes, [ref]$null)
+                  Write-Host "✅ 方案 B: 通过 ExportPkcs8PrivateKey 提取私钥" -ForegroundColor Green
+              }
+              # 方案 C: 传统 CAPI 回退（兼容 RSACryptoServiceProvider）
+              else {
+                  $cspBlob = $privateKey.ExportCspBlob($true)  # $true = 包含私钥
+                  $rsa = [System.Security.Cryptography.RSACryptoServiceProvider]::new()
+                  $rsa.ImportCspBlob($cspBlob)
+                  Write-Host "✅ 方案 C: 通过 ExportCspBlob 提取私钥（兼容旧版）" -ForegroundColor Green
+              }
           } catch {
               Write-Error "⛔ 私钥提取失败：$_"; exit 1
           }
