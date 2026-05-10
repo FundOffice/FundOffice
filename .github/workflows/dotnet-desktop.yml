@@ -186,31 +186,47 @@ jobs:
             }
 
             Write-Host "🔐 正在加载签名证书..." -ForegroundColor Cyan
-            $certBytes = [System.Convert]::FromBase64String($env:CERT_PFX_BASE64)
-            $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(
-                $certBytes,
-                $env:CERT_PASSWORD,
-                [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
-            )
+
+            $cleanBase64 = $env:PLUGIN_CERT_PFX_BASE64 -replace '[\s"\'']', ''
+            try {
+                $certBytes = [System.Convert]::FromBase64String($cleanBase64)
+            } catch {
+                Write-Error "❌ Base64 解码失败。请检查 Secret 是否包含非法字符或已被截断。"
+                exit 1
+            }
+
+            Write-Host "📦 解码后证书大小: $($certBytes.Length) 字节" -ForegroundColor Cyan
+            if ($certBytes.Length -lt 500) {
+                Write-Error "⛔ 证书数据异常（过小）。请确认上传的是完整的 .pfx 文件 Base64。"
+                exit 1
+            }
+
+            try {
+                $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(
+                    $certBytes,
+                    $env:PLUGIN_CERT_PASSWORD,
+                    [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
+                )
+            } catch {
+                Write-Error "❌ 证书加载失败。可能原因：1. 密码错误 2. 非标准 .pfx 格式 3. 证书已损坏。原始错误: $_"
+                exit 1
+            }
 
             $rsa = $cert.GetRSAPrivateKey()
-            if (-not $rsa) { throw "⛔ 无法从证书中提取私钥，请检查 PFX 格式或密码。" }
+            if (-not $rsa) { throw "⛔ 无法从证书中提取私钥。" }
 
             $signCount = 0
             foreach ($folder in $targetFolders) {
                 $folderPath = Join-Path $publishDir $folder
                 if (Test-Path $folderPath) {
                     Write-Host "📂 正在扫描并签名: $folderPath" -ForegroundColor Cyan
-                    # -Recurse 会包含子文件夹中的 DLL，若只需当前层级请移除 -Recurse
                     $dlls = Get-ChildItem -Path $folderPath -Filter "*.dll" -File -Recurse
-                  
                     foreach ($dll in $dlls) {
                         try {
                             $data = [System.IO.File]::ReadAllBytes($dll.FullName)
                             $sig = $rsa.SignData($data, [System.Security.Cryptography.HashAlgorithmName]::SHA256, [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
                             [System.IO.File]::WriteAllBytes("$($dll.FullName).sig", $sig)
                             $signCount++
-                            Write-Host "  ✅ $($dll.Name)" -ForegroundColor Gray
                         } catch {
                             Write-Host "  ⚠️ 签名失败: $($dll.Name) - $_" -ForegroundColor Yellow
                         }
@@ -219,8 +235,7 @@ jobs:
                     Write-Host "⚠️ 文件夹不存在，跳过: $folderPath" -ForegroundColor Yellow
                 }
             }
-
-            Write-Host "`n✅ 签名完成！共处理 $signCount 个 DLL，已生成对应 .sig 文件。" -ForegroundColor Green
+            Write-Host "`n✅ 签名完成！共处理 $signCount 个 DLL。" -ForegroundColor Green
 
 
 
