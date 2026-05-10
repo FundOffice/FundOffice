@@ -15,7 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 
-[assembly: InternalsVisibleTo("TestMeiShi")]
+//[assembly: InternalsVisibleTo("TestMeiShi")]
 
 
 namespace FMO.ESigning.MeiShi;
