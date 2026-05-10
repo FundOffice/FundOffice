@@ -40,6 +40,27 @@ jobs:
           $ErrorActionPreference = "Stop"
           $scriptPath = $PWD.Path
           Set-Location $scriptPath
+
+           # 🔥 [新增] 批量转换编码：GB2312/GBK → UTF-8 with BOM
+          Write-Host "`n[0/4] 修复源文件编码..." -ForegroundColor Cyan
+          $gb2312CodePage = [System.Text.Encoding]::GetEncoding(936)  # GB2312/GBK
+          $utf8Bom = [System.Text.UTF8Encoding]::new($true)           # UTF-8 with BOM
+    
+          Get-ChildItem -Path $scriptPath -Include "*.cs" -Recurse -File | Where-Object {
+              $_.FullName -notmatch '\\obj\\|\\bin\\|\\publish\\'
+          } | ForEach-Object {
+              try {
+                  $content = [System.IO.File]::ReadAllText($_.FullName, $gb2312CodePage)
+                  [System.IO.File]::WriteAllText($_.FullName, $content, $utf8Bom)
+                  Write-Host "  ✓ $($_.Name)" -ForegroundColor DarkGray
+              } catch {
+                  # 如果已经是 UTF-8 或其他编码，读取失败则跳过（避免破坏文件）
+                  Write-Host "  ⊘ $($_.Name) (跳过)" -ForegroundColor Gray
+              }
+          }
+          # 🔥 [编码转换结束]
+
+
           $publishDir = Join-Path $scriptPath "publish"
           $languageFolders = @("cs","de","es","fr","it","ja","ko","pl","pt-BR","ru","tr")
           $foldersToKeep = @("esign", "mission", "runtimes", "trigger", "trustee")
