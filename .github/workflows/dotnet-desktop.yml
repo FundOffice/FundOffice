@@ -141,68 +141,43 @@ jobs:
           # ========================================
           # 安全清理未引用的项目 DLL（CI/CD 安全版）
           # ========================================
-          $projectNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+          
+          # 🔧 修复原脚本 $publishDir 末尾空格导致的路径匹配失败
+          $publishRoot = (Get-Item $publishDir).FullName.Trim()
 
-          # 修复1：补全 src\Tools 扫描路径，与 publish.ps1 保持一致
-          $searchDirs = @($scriptPath, (Join-Path $scriptPath "src\Tools"))
-          foreach ($dir in $searchDirs) {
-              if (Test-Path $dir) {
-                  Get-ChildItem -Path $dir -Include "*.csproj","*.vbproj" -Recurse -File | ForEach-Object {
-                      $null = $projectNames.Add($_.BaseName)
-                  }
-              }
-          }
+          # 1. 收集所有子目录中的 DLL 文件名（忽略大小写）
+          $subDllNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+          Get-ChildItem -Path $publishRoot -Filter "*.dll" -File -Recurse |
+              Where-Object { $_.Directory.FullName -ne $publishRoot } |
+              ForEach-Object { $null = $subDllNames.Add($_.Name) }
 
-          $referencedDlls = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-          $exes = Get-ChildItem -Path $publishDir -Filter "*.exe" -File
-          foreach ($exe in $exes) {
-              $deps = Join-Path $publishDir "$($exe.BaseName).deps.json"
-              if (Test-Path $deps) {
-                  try {
-                      $json = Get-Content $deps -Raw | ConvertFrom-Json -ErrorAction Stop
-                      if ($json?.libraries) {
-                          $json.libraries.PSObject.Properties.Name | ForEach-Object {
-                              # .deps.json 格式通常为 PackageName/Version
-                              $null = $referencedDlls.Add(($_ -split '/')[0])
-                          }
-                      }
-                  } catch {
-                      Write-Warning "解析 $deps 失败: $_"
-                  }
-              }
-          }
-
+          # 2. 遍历根目录 DLL，若子目录有同名则删除根目录版本
           $delCount = 0
-          Get-ChildItem -Path $publishDir -Filter "*.dll" -File |
-              Where-Object { $projectNames.Contains($_.BaseName) -and -not $referencedDlls.Contains($_.BaseName) } |
+          Get-ChildItem -Path $publishRoot -Filter "*.dll" -File |
+              Where-Object { $subDllNames.Contains($_.Name) } |
               ForEach-Object {
-                  $dll = $_ # 🔑 锁定外层对象，防止内层循环覆盖 $_
-        
-                  # 🖨️ 打印将被删除的 DLL（满足你的需求）
-                  Write-Host "  [WARN] 删除未引用项目 DLL: $($dll.Name)" -ForegroundColor Yellow
+                  $dll = $_
+                  Write-Host "  [删除] 根目录重复 DLL: $($dll.FullName)" -ForegroundColor Yellow
                   Remove-Item $dll.FullName -Force -ErrorAction SilentlyContinue
                   $delCount++
 
-                  # 同步清理附属文件（修复 $_ 作用域冲突）
+                  # 同步清理根目录附属文件（.xml / .config）
                   @(".xml", ".config") | ForEach-Object {
                       $ext = $_
-                      $path = Join-Path $publishDir "$($dll.BaseName)$ext"
-                      if (Test-Path $path) { 
-                          Write-Host "    └─ 清理附属文件: $ext" -ForegroundColor DarkGray
-                          Remove-Item $path -Force -ErrorAction SilentlyContinue 
+                      $path = Join-Path $publishRoot "$($dll.BaseName)$ext"
+                      if (Test-Path $path) {
+                          Remove-Item $path -Force -ErrorAction SilentlyContinue
+                          Write-Host "    └─ 清理附属: $ext" -ForegroundColor DarkGray
                       }
                   }
               }
 
           if ($delCount -gt 0) {
-              Write-Host "`n[WARN] 共清理 $delCount 个未引用的项目级 DLL 及附属文件。" -ForegroundColor Yellow
-              Write-Host "       若发现误删，请检查项目 <AssemblyName> 配置或确认是否为动态加载插件。" -ForegroundColor Gray
+              Write-Host "  ✓ 共清理 $delCount 个根目录重复 DLL（已保留子目录版本）" -ForegroundColor Green
           } else {
-              Write-Host "`n[OK] 所有项目 DLL 均已被引用，无需清理。" -ForegroundColor Green
+              Write-Host "  ✓ 无根目录重复 DLL，无需清理" -ForegroundColor Gray
           }
-
-          Write-Host "`n[OK] 发布流程完成!" -ForegroundColor Green
-          Write-Host "产物目录: $publishDir" -ForegroundColor White
+          Write-Host ""
         shell: pwsh
 
 
