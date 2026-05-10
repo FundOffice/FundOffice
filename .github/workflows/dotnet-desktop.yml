@@ -169,69 +169,82 @@ jobs:
           Write-Host "产物目录: $publishDir" -ForegroundColor White
         shell: pwsh
 
-      
       - name: 签名指定文件夹 DLL（防篡改）
         if: ${{ success() }}
         shell: pwsh
         env:
-            CERT_PFX_BASE64: ${{ secrets.CERT_PFX_BASE64 }}
-            CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
+          CERT_PFX_BASE64: ${{ secrets.CERT_PFX_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
         run: |
-            $publishDir = "./publish"
-            $targetFolders = @("esign", "mission", "trigger", "trustee")
+          $publishDir = "./publish"
+          $targetFolders = @("esign", "mission", "trigger", "trustee")
 
-            if ([string]::IsNullOrWhiteSpace($env:CERT_PFX_BASE64)) {
-                Write-Error "❌ 缺少签名证书 Secret (CERT_PFX_BASE64)，终止流程。"
-                exit 1
-            }
+          if ([string]::IsNullOrWhiteSpace($env:CERT_PFX_BASE64)) {
+              Write-Error "❌ 缺少签名证书 Secret (CERT_PFX_BASE64)，终止流程。"
+              exit 1
+          }
 
-            Write-Host "🔐 正在加载签名证书..." -ForegroundColor Cyan
-             
-            $cleanBase64 = $env:CERT_PFX_BASE64 -replace '[\s"\'']', ''
-            try { $certBytes = [System.Convert]::FromBase64String($cleanBase64) } catch {
-                Write-Error "❌ Base64 解码失败。请检查 Secret 是否被截断。"; exit 1
-            }
+          Write-Host "🔐 正在加载签名证书..." -ForegroundColor Cyan
+          
+          # 1. 清理并解码 Base64
+          $cleanBase64 = $env:CERT_PFX_BASE64 -replace '[\s"\'']', ''
+          try { $certBytes = [System.Convert]::FromBase64String($cleanBase64) } catch {
+              Write-Error "❌ Base64 解码失败。请检查 Secret 是否被截断。"; exit 1
+          }
 
-            try {
-                $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(
-                    $certBytes,
-                    $env:CERT_PASSWORD,
-                    [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
-                )
-            } catch {
-                Write-Error "❌ 证书加载失败。可能原因：密码错误 / 非 .pfx 格式 / 证书损坏。原始错误: $_"; exit 1
-            }
+          # 2. 🔥 核心修复：强制加载私钥的终极标志组合（参考你提供的脚本）
+          try {
+              $flags = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable -bor
+                        [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::UserKeySet -bor
+                        [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::PersistKeySet -bor
+                        [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::MachineKeySet
 
-            # 🔑 核心修复：使用 PKCS#8 导出/导入模式，彻底避开 GetRSAPrivateKey() 兼容性问题
-            try {
-                $pkcs8Bytes = $cert.ExportPkcs8PrivateKey()
-                $rsa = [System.Security.Cryptography.RSA]::Create()
-                $null = $rsa.ImportPkcs8PrivateKey($pkcs8Bytes, [ref]$null)
-            } catch {
-                Write-Error "⛔ 无法提取 RSA 私钥。请确保证书由 RSA 算法生成且标记为可导出。"; exit 1
-            }
+              $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($certBytes, $env:CERT_PASSWORD, $flags)
+          } catch {
+              Write-Error "❌ PFX 加载失败：$_"; exit 1
+          }
 
-            $signCount = 0
-            foreach ($folder in $targetFolders) {
-                $folderPath = Join-Path $publishDir $folder
-                if (Test-Path $folderPath) {
-                    Write-Host "📂 正在扫描并签名: $folderPath" -ForegroundColor Cyan
-                    $dlls = Get-ChildItem -Path $folderPath -Filter "*.dll" -File -Recurse
-                    foreach ($dll in $dlls) {
-                        try {
-                            $data = [System.IO.File]::ReadAllBytes($dll.FullName)
-                            $sig = $rsa.SignData($data, [System.Security.Cryptography.HashAlgorithmName]::SHA256, [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
-                            [System.IO.File]::WriteAllBytes("$($dll.FullName).sig", $sig)
-                            $signCount++
-                        } catch {
-                            Write-Host "  ⚠️ 签名失败: $($dll.Name) - $_" -ForegroundColor Yellow
-                        }
-                    }
-                } else {
-                    Write-Host "⚠️ 文件夹不存在，跳过: $folderPath" -ForegroundColor Yellow
-                }
-            }
-            Write-Host "`n✅ 签名完成！共处理 $signCount 个 DLL。" -ForegroundColor Green
+          # 3. 🔑 提前校验：证书是否包含私钥（最关键！）
+          if (-not $cert.HasPrivateKey) {
+              Write-Error "❌ 致命错误：PFX 证书未加载出私钥！请检查密码或证书是否损坏。"; exit 1
+          }
+          Write-Host "✅ 证书加载成功，包含私钥" -ForegroundColor Green
+
+          # 4. 提取私钥（兼容所有 RSA 类型，避开 GetRSAPrivateKey 问题）
+          try {
+              # 先通过 .PrivateKey 获取底层对象，再导出为标准 PKCS#8 格式
+              $privateKeyBytes = $cert.PrivateKey.ExportPkcs8PrivateKey()
+              
+              # 重建独立 RSA 实例用于签名（纯托管，无系统依赖）
+              $rsa = [System.Security.Cryptography.RSA]::Create()
+              $null = $rsa.ImportPkcs8PrivateKey($privateKeyBytes, [ref]$null)
+              Write-Host "✅ RSA 私钥提取成功，已重建独立实例" -ForegroundColor Green
+          } catch {
+              Write-Error "⛔ 私钥提取失败：$_"; exit 1
+          }
+
+          # 5. 执行签名
+          $signCount = 0
+          foreach ($folder in $targetFolders) {
+              $folderPath = Join-Path $publishDir $folder
+              if (Test-Path $folderPath) {
+                  Write-Host "📂 正在扫描并签名: $folderPath" -ForegroundColor Cyan
+                  $dlls = Get-ChildItem -Path $folderPath -Filter "*.dll" -File -Recurse
+                  foreach ($dll in $dlls) {
+                      try {
+                          $data = [System.IO.File]::ReadAllBytes($dll.FullName)
+                          $sig = $rsa.SignData($data, [System.Security.Cryptography.HashAlgorithmName]::SHA256, [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+                          [System.IO.File]::WriteAllBytes("$($dll.FullName).sig", $sig)
+                          $signCount++
+                      } catch {
+                          Write-Host "  ⚠️ 签名失败: $($dll.Name) - $_" -ForegroundColor Yellow
+                      }
+                  }
+              } else {
+                  Write-Host "⚠️ 文件夹不存在，跳过: $folderPath" -ForegroundColor Yellow
+              }
+          }
+          Write-Host "`n✅ 签名完成！共处理 $signCount 个 DLL，已生成对应 .sig 文件。" -ForegroundColor Green
 
 
 
