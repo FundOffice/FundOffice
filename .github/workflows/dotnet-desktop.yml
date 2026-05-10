@@ -169,6 +169,61 @@ jobs:
           Write-Host "产物目录: $publishDir" -ForegroundColor White
         shell: pwsh
 
+      
+      - name: 签名指定文件夹 DLL（防篡改）
+        if: ${{ success() }}
+        shell: pwsh
+        env:
+            CERT_PFX_BASE64: ${{ secrets.CERT_PFX_BASE64 }}
+            CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
+        run: |
+            $publishDir = "./publish"
+            $targetFolders = @("esign", "mission", "trigger", "trustee")
+
+            if ([string]::IsNullOrWhiteSpace($env:CERT_PFX_BASE64)) {
+                Write-Error "❌ 缺少签名证书 Secret (CERT_PFX_BASE64)，终止流程。"
+                exit 1
+            }
+
+            Write-Host "🔐 正在加载签名证书..." -ForegroundColor Cyan
+            $certBytes = [System.Convert]::FromBase64String($env:CERT_PFX_BASE64)
+            $cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(
+                $certBytes,
+                $env:CERT_PASSWORD,
+                [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
+            )
+
+            $rsa = $cert.GetRSAPrivateKey()
+            if (-not $rsa) { throw "⛔ 无法从证书中提取私钥，请检查 PFX 格式或密码。" }
+
+            $signCount = 0
+            foreach ($folder in $targetFolders) {
+                $folderPath = Join-Path $publishDir $folder
+                if (Test-Path $folderPath) {
+                    Write-Host "📂 正在扫描并签名: $folderPath" -ForegroundColor Cyan
+                    # -Recurse 会包含子文件夹中的 DLL，若只需当前层级请移除 -Recurse
+                    $dlls = Get-ChildItem -Path $folderPath -Filter "*.dll" -File -Recurse
+                  
+                    foreach ($dll in $dlls) {
+                        try {
+                            $data = [System.IO.File]::ReadAllBytes($dll.FullName)
+                            $sig = $rsa.SignData($data, [System.Security.Cryptography.HashAlgorithmName]::SHA256, [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+                            [System.IO.File]::WriteAllBytes("$($dll.FullName).sig", $sig)
+                            $signCount++
+                            Write-Host "  ✅ $($dll.Name)" -ForegroundColor Gray
+                        } catch {
+                            Write-Host "  ⚠️ 签名失败: $($dll.Name) - $_" -ForegroundColor Yellow
+                        }
+                    }
+                } else {
+                    Write-Host "⚠️ 文件夹不存在，跳过: $folderPath" -ForegroundColor Yellow
+                }
+            }
+
+            Write-Host "`n✅ 签名完成！共处理 $signCount 个 DLL，已生成对应 .sig 文件。" -ForegroundColor Green
+
+
+
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
         with:

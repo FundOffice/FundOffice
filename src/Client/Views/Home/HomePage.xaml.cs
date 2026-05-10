@@ -803,7 +803,8 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 #if DEBUG
         return true;
 #else
-        return AssemblyName.GetAssemblyName(dll).GetPublicKeyToken().SequenceEqual(new byte[] { 0xA9, 0x4A, 0x3A, 0xC4, 0x0B, 0x3F, 0xC1, 0xBE });
+        return SecurityHelper.IsAuthorSigned(dll);
+//return AssemblyName.GetAssemblyName(dll).GetPublicKeyToken().SequenceEqual(new byte[] { 0xA9, 0x4A, 0x3A, 0xC4, 0x0B, 0x3F, 0xC1, 0xBE });
 #endif
     }
 
