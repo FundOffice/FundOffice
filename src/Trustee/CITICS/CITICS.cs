@@ -1,4 +1,4 @@
-using FMO.Models;
+ï»¿using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
 using System.Diagnostics;
@@ -26,7 +26,7 @@ public partial class CITICS : TrusteeApiBase
 
     public override string Identifier => "trustee_citics";
 
-    public override string Title => "ÖĞĞÅÖ¤È¯";
+    public override string Title => "ä¸­ä¿¡è¯åˆ¸";
 
     public override string TestDomain { get; } = "https://apitest-iservice.citicsinfo.com";
 
@@ -38,7 +38,7 @@ public partial class CITICS : TrusteeApiBase
 
     private DateTime? TokenTime { get; set; }
 
-    public override bool IsSuit(string? company) => string.IsNullOrWhiteSpace(company) ? false : Regex.IsMatch(company, $"ÖĞĞÅÖ¤È¯¹É·İÓĞÏŞ¹«Ë¾|ÖĞĞÅÖ¤È¯|{_Identifier}");
+    public override bool IsSuit(string? company) => string.IsNullOrWhiteSpace(company) ? false : Regex.IsMatch(company, $"ä¸­ä¿¡è¯åˆ¸è‚¡ä»½æœ‰é™å…¬å¸|ä¸­ä¿¡è¯åˆ¸|{_Identifier}");
 
     public override async Task<ReturnWrap<Investor>> QueryInvestors()
     {
@@ -46,7 +46,7 @@ public partial class CITICS : TrusteeApiBase
 
         var r = await SyncWork<InvestorJson, InvestorJson>(part, null, x => x);
 
-        // ĞèÒª±£´æ»ù½ğÕËºÅµ½Í¶×ÊÈËÓ³Éä£¬ÒòÎªTA·µ»ØÊı¾İÃ»ÓĞÍ¶×ÊÈËĞÅÏ¢
+        // éœ€è¦ä¿å­˜åŸºé‡‘è´¦å·åˆ°æŠ•èµ„äººæ˜ å°„ï¼Œå› ä¸ºTAè¿”å›æ•°æ®æ²¡æœ‰æŠ•èµ„äººä¿¡æ¯
         if (r.Data?.Count > 0)
         {
             using var db = DbHelper.Platform();
@@ -61,15 +61,15 @@ public partial class CITICS : TrusteeApiBase
     //{
     //    var data = await Query<TransferRecordJson>("/v1/ta/TradeConfirmationForApi", [("ackBeginDate", begin.ToString("yyyyMMdd")), ("ackEndDate", end.ToString("yyyyMMdd"))]);
 
-    //    // ¼ì²é´íÎó
+    //    // æ£€æŸ¥é”™è¯¯
     //    if (data.Code != 0) ;
 
 
-    //    // ±£´æ
+    //    // ä¿å­˜
     //    using var db = DbHelper.Platform();
     //    db.GetCollection<TransferRecordJson>(Identifier).Upsert(data.Data);
 
-    //    // ËùÓĞµÄ»ù½ğÕËºÅ
+    //    // æ‰€æœ‰çš„åŸºé‡‘è´¦å·
     //    var accouts = data.Data.Select(x => x.TradeAcco).Distinct().ToList();
 
 
@@ -95,8 +95,8 @@ public partial class CITICS : TrusteeApiBase
         var result = await SyncWork<TransferRequest, TransferRequestJson>(part, new { requestBeginDate = $"{begin:yyyyMMdd}", requestEndDate = $"{end:yyyyMMdd}", fundCode = fundCode }, x => x.ToObject());
         return result;
 
-        // ºó´¦Àí ²»´¦Àí£¬Í³Ò»ÔÚDataTrackerÖĞ
-        // Èç¹û api ¸üĞÂ»ù½ğ·İ¶îÓ³Éä£¬ÔÙÌí¼Ó
+        // åå¤„ç† ä¸å¤„ç†ï¼Œç»Ÿä¸€åœ¨DataTrackerä¸­
+        // å¦‚æœ api æ›´æ–°åŸºé‡‘ä»½é¢æ˜ å°„ï¼Œå†æ·»åŠ 
 
 
         //return   new(result.Code, result.Data?.Select(x=>x.ToObject()));
@@ -116,26 +116,26 @@ public partial class CITICS : TrusteeApiBase
         var result = await SyncWork<TransferRecordJson, TransferRecordJson>(part, new { ackBeginDate = $"{begin:yyyyMMdd}", ackEndDate = $"{end:yyyyMMdd}", fundCode = fundCode }, x => x);
 
         List<TransferRecord> list = new();
-        // ºó´¦Àí
+        // åå¤„ç†
         if (result.Data?.Count > 0)
         {
-            // »ñÈ¡´ı´¦ÀíÕËºÅÁĞ±í
+            // è·å–å¾…å¤„ç†è´¦å·åˆ—è¡¨
             var unk = result.Data.Select(x => x.FundAcco).Distinct().ToList();
 
 
-            // »ñÈ¡ÕË»§Ó³Éä
+            // è·å–è´¦æˆ·æ˜ å°„
             using var db = DbHelper.Platform();
             var map = db.GetCollection<InvestorAccountMapping>("citics_cus_accout_map").FindAll().ToDictionary(x => x.Id);
 
-            // ¼ì²éÊÇ·ñÆ¥Åä£¬Èç¹ûÓĞÈ±Ê§
+            // æ£€æŸ¥æ˜¯å¦åŒ¹é…ï¼Œå¦‚æœæœ‰ç¼ºå¤±
             if (map.Keys.Intersect(unk).Count() != unk.Count)
             {
-                // ÖØĞÂ»ñÈ¡
+                // é‡æ–°è·å–
                 await QueryInvestors();
                 map = db.GetCollection<InvestorAccountMapping>("citics_cus_accout_map").FindAll().ToDictionary(x => x.Id);
             }
 
-            // Ó³Éä»ù½ğÃû¡¢Í¶×ÊÈË
+            // æ˜ å°„åŸºé‡‘åã€æŠ•èµ„äºº
             using (var b = DbHelper.Base())
             {
                 foreach (var item in result.Data)
@@ -151,25 +151,25 @@ public partial class CITICS : TrusteeApiBase
                 }
             }
 
-            // Èç¹ûÓĞÈÎºÎÎ´Ó³ÉäµÄ 
+            // å¦‚æœæœ‰ä»»ä½•æœªæ˜ å°„çš„ 
             if (list.Count != result.Data.Count)
                 return new(ReturnCode.CITICS_Investor, list.ToArray());
 
         }
 
 
-        // ·Öºì
+        // åˆ†çº¢
         var dis = await QueryDistibution(begin, end);
         if (dis.Code == ReturnCode.Success && dis.Data is not null)
             list.AddRange(dis.Data);
 
-        // ÅÅ³ıÊ§°ÜµÄ ÌØÊâÇé¿ö
-        // Èç¹ûÓĞÊ§°Ü£¬»áÒ»ÌõÌæ´ú£¬ ÇÒreqidºÍidÒ»Ñù£¬
+        // æ’é™¤å¤±è´¥çš„ ç‰¹æ®Šæƒ…å†µ
+        // å¦‚æœæœ‰å¤±è´¥ï¼Œä¼šä¸€æ¡æ›¿ä»£ï¼Œ ä¸”reqidå’Œidä¸€æ ·ï¼Œ
         foreach (var failed in list.Where(x => x.IsFailed).ToList())
         {
             if (list.FirstOrDefault(x => !x.IsFailed && x.FundCode == failed.FundCode && x.InvestorIdentity == failed.InvestorIdentity && x.ConfirmedDate == failed.ConfirmedDate && x.ExternalRequestId == x.ExternalId) is TransferRecord repl)
             {
-                repl.ExternalRequestId = failed.ExternalRequestId; // Ìæ»»Ê§°ÜµÄÇëÇóid
+                repl.ExternalRequestId = failed.ExternalRequestId; // æ›¿æ¢å¤±è´¥çš„è¯·æ±‚id
                 list.Remove(failed);
             }
         }
@@ -182,7 +182,7 @@ public partial class CITICS : TrusteeApiBase
 
 
     /// <summary>
-    /// Ä¼¼¯»§Óà¶î
+    /// å‹Ÿé›†æˆ·ä½™é¢
     /// </summary>
     /// <param name="fundCode"></param>
     /// <returns></returns>
@@ -219,13 +219,13 @@ public partial class CITICS : TrusteeApiBase
                 transactions.AddRange(result.Data);
         }
 
-        // ¶ÔÆëµ½»ù½ğ
+        // å¯¹é½åˆ°åŸºé‡‘
         using var db = DbHelper.Base();
         foreach (var item in transactions)
             item.FundId = db.FindFund(item.FundCode)?.Id ?? 0;
 
         if (transactions.Any(x => x.FundId == 0))
-            Serilog.Log.Error($"Ä¼×ÊÁ÷Ë® {string.Join(',', transactions.Where(x => x.FundId == 0).Select(x => $"{x.AccountName}-{x.FundCode}"))} Î´ÕÒµ½¶ÔÓ¦»ù½ğ");
+            Serilog.Log.Error($"å‹Ÿèµ„æµæ°´ {string.Join(',', transactions.Where(x => x.FundId == 0).Select(x => $"{x.AccountName}-{x.FundCode}"))} æœªæ‰¾åˆ°å¯¹åº”åŸºé‡‘");
 
         return new(ReturnCode.Success, transactions.ToArray());
     }
@@ -236,14 +236,14 @@ public partial class CITICS : TrusteeApiBase
 
         if (begin == DateOnly.FromDateTime(DateTime.Today))
         {
-            //µ±ÈÕ 
+            //å½“æ—¥ 
             var part = "/v1/cs/queryTgAccountCurrentFlowForApi";
             var result = await SyncWork<BankTransaction, CustodialTransactionJson>(part, null, x => x.ToObject());
             return result;
         }
         else
         {
-            //ÀúÊ· 
+            //å†å² 
             var ts = Split(begin, end, 3000);
 
             List<BankTransaction> data = [];
@@ -266,14 +266,14 @@ public partial class CITICS : TrusteeApiBase
 
         if (begin == DateOnly.FromDateTime(DateTime.Today))
         {
-            //µ±ÈÕ 
+            //å½“æ—¥ 
             var part = "/v1/cs/queryTgAccountCurrentFlowForApi";
             var result = await SyncWork<BankTransaction, CustodialTransactionJson>(part, new { pdCode = code }, x => x.ToObject());
             return result;
         }
         else
         {
-            //ÀúÊ· 
+            //å†å² 
             var part = "/v1/cs/queryTgAccountHistoryFlowForApi";
             var result = await SyncWork<BankTransaction, CustodialTransactionJson2>(part, new { pdCode = code }, x => x.ToObject());
             return result;
@@ -283,9 +283,9 @@ public partial class CITICS : TrusteeApiBase
 
 
     /// <summary>
-    /// ²éÑ¯ÒøĞĞĞÅÏ¢
-    /// Á÷Á¿¿ØÖÆ²ßÂÔ£º50´Î/Ìì£¬1´Î/Ãë£¨Éú²ú»·¾³£©
-    /// ±£´æµ½
+    /// æŸ¥è¯¢é“¶è¡Œä¿¡æ¯
+    /// æµé‡æ§åˆ¶ç­–ç•¥ï¼š50æ¬¡/å¤©ï¼Œ1æ¬¡/ç§’ï¼ˆç”Ÿäº§ç¯å¢ƒï¼‰
+    /// ä¿å­˜åˆ°
     /// </summary>
     /// <returns></returns>
     public async Task<ReturnWrap<FundBankAccount>> QueryCustodialAccountInfo()
@@ -306,11 +306,11 @@ public partial class CITICS : TrusteeApiBase
             }
 
 
-            // ¸üĞÂ
+            // æ›´æ–°
             using (var db = DbHelper.Platform())
             {
                 var old = db.GetCollection<FundBankAccount>().FindAll().ToArray();
-                // Í¬²½id
+                // åŒæ­¥id
                 //foreach (var d in result.Data)
                 //{
                 //if (old.FirstOrDefault(x => x.Number == d.Number) is FundBankAccount o)
@@ -324,7 +324,7 @@ public partial class CITICS : TrusteeApiBase
 
 
     /// <summary>
-    /// »ñÈ¡ĞéÄâ¾»Öµ
+    /// è·å–è™šæ‹Ÿå‡€å€¼
     /// </summary>
     /// <param name="begin"></param>
     /// <param name="end"></param>
@@ -338,7 +338,7 @@ public partial class CITICS : TrusteeApiBase
 
 
     /// <summary>
-    /// ÍĞ¹Ü»§ÒøĞĞÊµÊ±Óà¶î²éÑ¯½Ó¿Ú
+    /// æ‰˜ç®¡æˆ·é“¶è¡Œå®æ—¶ä½™é¢æŸ¥è¯¢æ¥å£
     /// </summary>
     /// <param name="fundCode"></param>
     /// <returns></returns>
@@ -346,7 +346,7 @@ public partial class CITICS : TrusteeApiBase
     {
         var part = "/v1/cs/queryTgAccountBalanceForApi";
 
-        // »ñÈ¡ÍĞ¹ÜÕË»§ÁĞ±í
+        // è·å–æ‰˜ç®¡è´¦æˆ·åˆ—è¡¨
         using var db = DbHelper.Platform();
         var acc = db.GetCollection<FundBankAccount>().Find(x => x.FundCode == fundCode && !x.IsCanceled).ToList();
 
@@ -372,7 +372,7 @@ public partial class CITICS : TrusteeApiBase
 
 
     /// <summary>
-    /// ÍĞ¹Ü»§ÒøĞĞÊµÊ±Óà¶î²éÑ¯½Ó¿Ú
+    /// æ‰˜ç®¡æˆ·é“¶è¡Œå®æ—¶ä½™é¢æŸ¥è¯¢æ¥å£
     /// </summary>
     /// <param name="fundCode"></param>
     /// <returns></returns>
@@ -408,7 +408,7 @@ public partial class CITICS : TrusteeApiBase
     {
         var part = "/v1/fa/queryFundNetValForApi";
 
-        // ²éÑ¯Çø¼ä´óÓÚ1Äê£¬ĞèÒª¶à´Î²éÑ¯ 
+        // æŸ¥è¯¢åŒºé—´å¤§äº1å¹´ï¼Œéœ€è¦å¤šæ¬¡æŸ¥è¯¢ 
         var ts = Split(begin, end, 365);
         List<NetValueJson> list = new();
 
@@ -506,7 +506,7 @@ public partial class CITICS : TrusteeApiBase
 
             var obj = JsonSerializer.Deserialize<ReturnJsonRoot<TokenJson>>(json);
 
-            // ¸üĞÂ
+            // æ›´æ–°
             if (obj?.Data?.Token is string s)
             {
                 Token = s;
@@ -540,25 +540,25 @@ public partial class CITICS : TrusteeApiBase
 
     protected async Task<ReturnWrap<TEntity>> SyncWork<TEntity, TJSON>(string part, object? param, Func<TJSON, TEntity> transfer, [CallerMemberName] string caller = "") where TJSON : JsonBase
     {
-        // Ğ£Ñé
+        // æ ¡éªŒ
         if (CheckBreforeSync() is ReturnCode rc && rc != ReturnCode.Success) return new(rc, null);
 
-        // ¼ì²étoken
+        // æ£€æŸ¥token
         if (string.IsNullOrWhiteSpace(Token) || TokenTime is null || (DateTime.Now - TokenTime.Value).TotalHours > 18)
             await GetToken();
 
 
-        // ·Çdict ×ª³Édict ·½±ãĞŞ¸Äpage
+        // édict è½¬æˆdict æ–¹ä¾¿ä¿®æ”¹page
         Dictionary<string, object> formatedParams;
         if (param is Dictionary<string, object> pp) formatedParams = pp;
         else formatedParams = GenerateParams(param);
 
         List<TJSON> list = new();
 
-        // »ñÈ¡ËùÓĞ½á¹û 
+        // è·å–æ‰€æœ‰ç»“æœ 
         try
         {
-            for (int i = 0; i < 19; i++) // ·ÀÖ¹ÎŞÏŞÑ­»·£¬×î¶à99´Î 
+            for (int i = 0; i < 19; i++) // é˜²æ­¢æ— é™å¾ªç¯ï¼Œæœ€å¤š99æ¬¡ 
             {
 #if DEBUG
                 string? json = TrusteeApiBase.GetCache(Identifier, caller, formatedParams);
@@ -583,7 +583,7 @@ public partial class CITICS : TrusteeApiBase
                     var ret = JsonSerializer.Deserialize<RootJson>(json)!;
 
                     var code = ret.Code;
-                    // ÓĞ´íÎó
+                    // æœ‰é”™è¯¯
                     if (code != 0)
                     {
                         if (ret.Data is JsonObject obj && obj.ContainsKey("reason"))
@@ -598,7 +598,7 @@ public partial class CITICS : TrusteeApiBase
 
                     var data = ret.Data.Deserialize<QueryRoot<JsonElement>>()!;
 
-                    // ¼ÇÂ¼·µ»ØµÄÀàĞÍ£¬ÓÃÓÚdebug
+                    // è®°å½•è¿”å›çš„ç±»å‹ï¼Œç”¨äºdebug
                     //if (data.List is not null)
                     //    CacheJson(caller, data!.List);
 
@@ -608,7 +608,7 @@ public partial class CITICS : TrusteeApiBase
                             try { return x.Deserialize<TJSON>()!; }
                             catch (Exception ex)
                             {
-                                // ¼ÇÂ¼¾ßÌåÄÄ¸öÔªËØ·´ĞòÁĞ»¯Ê§°Ü
+                                // è®°å½•å…·ä½“å“ªä¸ªå…ƒç´ ååºåˆ—åŒ–å¤±è´¥
                                 JsonBase.ReportJsonUnexpected(Identifier, caller!, $"Failed to deserialize item Error: {ex.Message}: {x}.");
                                 throw;
                             }
@@ -618,11 +618,11 @@ public partial class CITICS : TrusteeApiBase
 
                     var page = data.PageNum;// (int)formatedParams["pageNum"];
 
-                    // Êı¾İ»ñÈ¡È« 
+                    // æ•°æ®è·å–å…¨ 
                     if (page >= data.Pages)
                         break;
 
-                    // ÏÂÒ»Ò³
+                    // ä¸‹ä¸€é¡µ
                     formatedParams["pageNum"] = page + 1;
                 }
                 catch (Exception e)
@@ -736,7 +736,7 @@ public partial class CITICS : TrusteeApiBase
 
     protected override ReturnCode CheckBreforeSync()
     {
-        // ¼ìÑé¿ÉÓÃĞÔ 
+        // æ£€éªŒå¯ç”¨æ€§ 
         if (!IsValid) return ReturnCode.ConfigInvalid;
 
         if (string.IsNullOrWhiteSpace(CustomerAuth) /*|| string.IsNullOrWhiteSpace(Token)*/)

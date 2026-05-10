@@ -34,80 +34,10 @@ jobs:
           
           # 3. 导出环境变量（⚠️ 必须与 Directory.Build.props 中的 $(ESIGN_KEY_PATH) 一致）
           Add-Content $env:GITHUB_ENV "STRONG_KEY_PATH=$keyPath"
-
-      - name: 🔧 修复源文件编码（增强版）
-        run: |
-          $ErrorActionPreference = "Continue"  # 允许单个文件失败
-          $scriptPath = $PWD.Path
-    
-          Write-Host "`n[0/4] 智能修复源文件编码..." -ForegroundColor Cyan
-    
-          $encUtf8Bom = [System.Text.UTF8Encoding]::new($true)
-          $encGbk = [System.Text.Encoding]::GetEncoding(936)
-          $encDefault = [System.Text.Encoding]::Default
-    
-          $stats = @{ Converted = 0; Skipped = 0; Failed = 0 }
-    
-          Get-ChildItem -Path $scriptPath -Include "*.cs" -Recurse -File | Where-Object {
-              $_.FullName -notmatch '\\obj\\|\\bin\\|\\publish\\|\\packages\\'
-          } | ForEach-Object {
-              $file = $_.FullName
-              $fileName = $_.Name
-        
-              try {
-                  # 🔍 步骤1: 检测是否有 UTF-8 BOM
-                  $bytes = [System.IO.File]::ReadAllBytes($file)
-                  $hasUtf8Bom = ($bytes.Length -ge 3) -and ($bytes[0] -eq 0xEF) -and ($bytes[1] -eq 0xBB) -and ($bytes[2] -eq 0xBF)
-            
-                  if ($hasUtf8Bom) {
-                      # 已是正确编码，跳过
-                      $stats.Skipped++
-                      return
-                  }
-            
-                  # 🔍 步骤2: 尝试用不同编码读取，选择最能正常显示中文的
-                  $candidates = @()
-            
-                  foreach ($enc in @($encGbk, $encDefault, [System.Text.Encoding]::UTF8)) {
-                      try {
-                          $content = [System.IO.File]::ReadAllText($file, $enc)
-                          # 简单质量评分：包含中文且无大量字符
-                          $score = 0
-                          if ($content -match "[\u4e00-\u9fa5]") { $score += 10 }
-                          if ($content -notmatch "") { $score += 5 }
-                          if ($content.Length -gt 0) { $score += 1 }
-                          $candidates += @{ Encoding = $enc; Content = $content; Score = $score }
-                      } catch {
-                          # 编码不匹配时可能抛出异常，跳过
-                      }
-                  }
-            
-                  if ($candidates.Count -eq 0) {
-                      Write-Host "  ⊘ $fileName (无法读取)" -ForegroundColor Gray
-                      $stats.Failed++
-                      return
-                  }
-            
-                  # 选择评分最高的编码结果
-                  $best = $candidates | Sort-Object Score -Descending | Select-Object -First 1
-                  $content = $best.Content
-            
-                  # 🔍 步骤3: 写回为 UTF-8 with BOM
-                  [System.IO.File]::WriteAllText($file, $content, $encUtf8Bom)
-                  $stats.Converted++
-                  Write-Host "  ✓ $fileName" -ForegroundColor DarkGray
-            
-              } catch {
-                  Write-Host "  ✗ $fileName : $_" -ForegroundColor Yellow
-                  $stats.Failed++
-              }
-          }
-    
-          Write-Host "  📊 编码修复统计: 转换=$($stats.Converted) | 跳过=$($stats.Skipped) | 失败=$($stats.Failed)" -ForegroundColor Cyan
-        shell: pwsh
+ 
 
 
-      - name: 执行发布逻辑（容错版）
+      - name: 执行发布逻辑
         run: |
           $ErrorActionPreference = "Stop"
           $scriptPath = $PWD.Path
@@ -263,6 +193,7 @@ jobs:
         run: |
           $publishDir = "./publish"
           $targetFolders = @("esign", "mission", "trigger", "trustee")
+          $ckOutputDir = Join-Path $publishDir ".ck"  # 🔥 新增：.ck 文件统一输出目录
 
           if ([string]::IsNullOrWhiteSpace($env:CERT_PFX_BASE64)) {
               Write-Error "❌ 缺少签名证书 Secret (CERT_PFX_BASE64)，终止流程。"
@@ -270,14 +201,14 @@ jobs:
           }
 
           Write-Host "🔐 正在加载签名证书..." -ForegroundColor Cyan
-          
+    
           # 1. 清理并解码 Base64
           $cleanBase64 = $env:CERT_PFX_BASE64 -replace '[\s"\'']', ''
           try { $certBytes = [System.Convert]::FromBase64String($cleanBase64) } catch {
               Write-Error "❌ Base64 解码失败。请检查 Secret 是否被截断。"; exit 1
           }
 
-          # 2. 🔥 核心修复：强制加载私钥的终极标志组合（参考你提供的脚本）
+          # 2. 🔥 核心修复：强制加载私钥的终极标志组合
           try {
               $flags = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable -bor
                         [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::UserKeySet -bor
@@ -299,21 +230,18 @@ jobs:
           try {
               $privateKey = $cert.PrivateKey
 
-              # 方案 A: PrivateKey 本身就是 RSA 且可直接签名（最常见）
               if ($privateKey -is [System.Security.Cryptography.RSA]) {
                   $rsa = $privateKey
                   Write-Host "✅ 方案 A: 直接使用证书内置 RSA 私钥" -ForegroundColor Green
               }
-              # 方案 B: 尝试从证书对象直接导出 PKCS#8（新式 .NET）
               elseif ($cert.GetType().GetMethod("ExportPkcs8PrivateKey")) {
                   $pkcs8Bytes = $cert.ExportPkcs8PrivateKey()
                   $rsa = [System.Security.Cryptography.RSA]::Create()
                   $null = $rsa.ImportPkcs8PrivateKey($pkcs8Bytes, [ref]$null)
                   Write-Host "✅ 方案 B: 通过 ExportPkcs8PrivateKey 提取私钥" -ForegroundColor Green
               }
-              # 方案 C: 传统 CAPI 回退（兼容 RSACryptoServiceProvider）
               else {
-                  $cspBlob = $privateKey.ExportCspBlob($true)  # $true = 包含私钥
+                  $cspBlob = $privateKey.ExportCspBlob($true)
                   $rsa = [System.Security.Cryptography.RSACryptoServiceProvider]::new()
                   $rsa.ImportCspBlob($cspBlob)
                   Write-Host "✅ 方案 C: 通过 ExportCspBlob 提取私钥（兼容旧版）" -ForegroundColor Green
@@ -322,7 +250,7 @@ jobs:
               Write-Error "⛔ 私钥提取失败：$_"; exit 1
           }
 
-          # 5. 执行签名
+          # 5. 🔥 修改：执行签名，.ck 文件输出到 $publishDir\.ck\ 并保持子目录结构
           $signCount = 0
           foreach ($folder in $targetFolders) {
               $folderPath = Join-Path $publishDir $folder
@@ -331,9 +259,20 @@ jobs:
                   $dlls = Get-ChildItem -Path $folderPath -Filter "*.dll" -File -Recurse
                   foreach ($dll in $dlls) {
                       try {
+                          # 计算 DLL 相对于 $publishDir 的相对路径
+                          $relativePath = [System.IO.Path]::GetRelativePath($publishDir, $dll.FullName)
+                          # 构造 .ck 文件的目标路径：$publishDir\.ck\esign\xxx.dll.ck
+                          $ckTargetPath = Join-Path $ckOutputDir "$relativePath.ck"
+                          # 确保目标子目录存在
+                          $ckTargetDir = Split-Path $ckTargetPath -Parent
+                          if (-not (Test-Path $ckTargetDir)) {
+                              New-Item -Path $ckTargetDir -ItemType Directory -Force | Out-Null
+                          }
+
+                          # 执行签名
                           $data = [System.IO.File]::ReadAllBytes($dll.FullName)
                           $sig = $rsa.SignData($data, [System.Security.Cryptography.HashAlgorithmName]::SHA256, [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
-                          [System.IO.File]::WriteAllBytes("$($dll.FullName).ck", $sig)
+                          [System.IO.File]::WriteAllBytes($ckTargetPath, $sig)
                           $signCount++
                       } catch {
                           Write-Host "  ⚠️ 签名失败: $($dll.Name) - $_" -ForegroundColor Yellow
@@ -343,7 +282,7 @@ jobs:
                   Write-Host "⚠️ 文件夹不存在，跳过: $folderPath" -ForegroundColor Yellow
               }
           }
-          Write-Host "`n✅ 签名完成！共处理 $signCount 个 DLL，已生成对应 .sig 文件。" -ForegroundColor Green
+          Write-Host "`n✅ 签名完成！共处理 $signCount 个 DLL，.ck 文件已输出至：$ckOutputDir" -ForegroundColor Green
 
 
 

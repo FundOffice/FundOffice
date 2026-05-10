@@ -1,10 +1,10 @@
-
+ï»¿
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace FMO.Trustee;
 
 /// <summary>
-/// ÖÐÐÅ
+/// ä¸­ä¿¡
 /// </summary>
 public partial class CITICSViewModel : TrusteeViewModelBase<CITICS>
 {

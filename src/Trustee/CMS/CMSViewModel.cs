@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+锘縰sing CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using Serilog;
@@ -85,7 +85,7 @@ public partial class CMSViewModel : TrusteeViewModelBase<CMS>
     public void ChooseCertificateFile()
     {
         var fd = new OpenFileDialog();
-        fd.Filter = "证书|*.PFX";
+        fd.Filter = "璇佷功|*.PFX";
         var r = fd.ShowDialog();
         if (r switch { true => true, _ => false })
         {
@@ -101,7 +101,7 @@ public partial class CMSViewModel : TrusteeViewModelBase<CMS>
         {
             X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(CertPath!, Password);
 
-            // 获取私钥
+            // 鑾峰彇绉侀挜
             using var rsa = certificate.GetRSAPrivateKey();
 
             CertIsValid = rsa is not null;

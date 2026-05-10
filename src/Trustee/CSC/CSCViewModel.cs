@@ -1,9 +1,9 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+锘縰sing CommunityToolkit.Mvvm.ComponentModel;
 
 namespace FMO.Trustee;
 
 /// <summary>
-/// 中信建投
+/// 涓俊寤烘姇
 /// </summary>
 public partial class CSCViewModel : TrusteeViewModelBase<CSC>
 {
