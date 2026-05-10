@@ -336,7 +336,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             }
             catch (Exception ex)
             {
-                LogEx.Error($"加载托管组件失败，错误：{ex.Message}");
+                LogEx.Error($"，错误：{ex.Message}");
             }
         }
 
@@ -372,7 +372,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         }
         catch (Exception ex)
         {
-            LogEx.Error($"注册电子签名组件失败：{type.Name}，错误：{ex.Message}");
+            LogEx.Error($"加载托管组件失败：{type.Name}，错误：{ex.Message}");
         }
 
         return true;

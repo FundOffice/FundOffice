@@ -10,7 +10,23 @@
     <!-- 发布时保留资源 -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+  
+  <PropertyGroup>
+    <!-- 确保源代码和输出使用 UTF-8 -->
+    <CodePage>65001</CodePage>
+    <SatelliteResourceLanguages>zh-CN;en-US</SatelliteResourceLanguages>
+  </PropertyGroup>
 
+  <ItemGroup>
+    <!-- 确保 .resx 文件作为嵌入式资源且保留编码 -->
+    <EmbeddedResource Update="Properties\Resources.zh-CN.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.zh-CN.Designer.cs</LastGenOutput>
+      <Encoding>utf-8</Encoding>
+    </EmbeddedResource>
+  </ItemGroup>
+  
+  
   <!-- 确保 .resx 文件处理时保留编码 -->
   <ItemDefinitionGroup>
     <EmbeddedResource>
