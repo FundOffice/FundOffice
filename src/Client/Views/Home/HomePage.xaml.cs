@@ -801,8 +801,8 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
     private static bool VerifyDll(string dll)
     {
 #if DEBUG
-       // return true;
-//#else
+        return true;
+#else
         return SecurityHelper.IsAuthorSigned(dll);
 //return AssemblyName.GetAssemblyName(dll).GetPublicKeyToken().SequenceEqual(new byte[] { 0xA9, 0x4A, 0x3A, 0xC4, 0x0B, 0x3F, 0xC1, 0xBE });
 #endif
