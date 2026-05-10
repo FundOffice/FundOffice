@@ -11,6 +11,8 @@ public record FundOverdueContext(string FundName, DateOnly SetupDate, DateOnly E
 /// <summary>
 /// 基金超期
 /// </summary>
+
+[VerifySettingUnit("基金超期运行", "提醒基金到期后仍未清算")]
 public partial class FundOverdueRule : VerifyRule, ITracker<NewDay>,ITracker<EntityChanged<FundElements, DateOnly, int>>
 {
 

@@ -15,6 +15,12 @@ public record class FundSharePairErrorDate(DateOnly Date, DateOnly? RequestDate,
 public record FundSharePairContext(string FundName, int ByDailyCount, int ByTransferCount, IEnumerable<FundSharePairErrorDate> Diff);
 
 
+
+
+
+
+
+[VerifySettingUnit("基金份额异常监控", "基金交易确认的份额与净值中的不一致")]
 public partial class FundSharePairRule : VerifyRule, ITracker<IEnumerable<FundShareRecordByDaily>>, ITracker<IEnumerable<FundShareRecordByTransfer>>
 {
 

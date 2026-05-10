@@ -8,16 +8,22 @@
     Title="设置"
     Width="800"
     Height="450"
+    d:DataContext="{d:DesignInstance Type=local:SettingsWindowViewModel}"
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
     <DockPanel>
-        <GroupBox Header="消息通道">
+        <!--<GroupBox Header="消息通道">
             <TextBlock />
-        </GroupBox>
+        </GroupBox>-->
 
         <StackPanel>
-            <CheckBox Content="新订单" />
-            <CheckBox Content="巨额赎回" />
+            <!--<CheckBox Content="新订单" />
+            <CheckBox Content="巨额赎回" />-->
+
+
+            <GroupBox Header="数据监控">
+                <ListBox ItemsSource="{Binding VerifyRuleUnits}" Style="{StaticResource ListBoxCustom}" />
+            </GroupBox>
         </StackPanel>
     </DockPanel>
 </Window>

@@ -27,6 +27,7 @@
   </Folder>
   <Folder Name="/Setting/">
     <Project Path="src/Setting/SettingGenerator/SettingGenerator.csproj" Id="26d1e5a6-9480-4bb4-9d09-c592c50fd272" />
+    <Project Path="src/Setting/Settings.UI/Settings.UI.csproj" Id="7a9f4836-68fa-478f-9bb7-591ce2771d65" />
     <Project Path="src/Setting/Settings/Settings.csproj" />
   </Folder>
   <Folder Name="/Todo/">

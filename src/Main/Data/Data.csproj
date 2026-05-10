@@ -15,6 +15,7 @@
   <ItemGroup>
     <Compile Remove="DataObserbler.cs" />
     <Compile Remove="IDataValidation.cs" />
+    <Compile Remove="VerifyRules.cs" />
   </ItemGroup>
 
   <ItemGroup> 

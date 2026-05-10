@@ -7,11 +7,12 @@ namespace FMO.Trigger;
 
 
 
-public record FundStopPurchaseContext(string FundName, bool PurchaseLimited, decimal DailyAverage, DateOnly LimitedDate, DateOnly? ClearDate); 
-
- 
+public record FundStopPurchaseContext(string FundName, bool PurchaseLimited, decimal DailyAverage, DateOnly LimitedDate, DateOnly? ClearDate);
 
 
+
+
+[VerifySettingUnit("基金停止申购预警", "提醒基金未来触发停止申购时间")]
 public partial class FundStopPurchaseRule : VerifyRule, ITracker<IEnumerable<DailyValue>>
 {
     public List<DailyValue> DailyValues { get; set; } = [];

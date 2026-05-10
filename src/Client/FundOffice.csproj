@@ -122,6 +122,7 @@
     <ProjectReference Include="..\ESign\ESigning\ESigning.csproj" />
     <ProjectReference Include="..\Main\Data\Data.csproj" />
     <ProjectReference Include="..\Schedule\Mission\Mission.csproj" />
+    <ProjectReference Include="..\Setting\Settings.UI\Settings.UI.csproj" />
     <ProjectReference Include="..\Todo\Todo.UI\Todo.UI.csproj" />
     <ProjectReference Include="..\Trigger\DataTrigger\DataTrigger.csproj" />
     <ProjectReference Include="..\Utility\Logging\Logging.csproj" />

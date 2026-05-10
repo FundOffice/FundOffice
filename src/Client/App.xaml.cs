@@ -6,6 +6,8 @@ using FMO.Utilities;
 using Microsoft.Win32;
 using Serilog;
 using System.IO;
+using System.Reflection;
+using System.Runtime.Loader;
 using System.Windows;
 
 namespace FMO;
@@ -91,9 +93,6 @@ public partial class App : Application
 
 
 
-        //DbHelper.initpassword();
-
-
         Directory.CreateDirectory("data");
         Directory.CreateDirectory("config");
         Directory.CreateDirectory("files\\funds");
@@ -125,8 +124,9 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        AssemblyLoadContext.Default.Resolving += Default_Resolving;
 
-
+        Task.Run(() => DelayLoader.Load());
          
     }
 
@@ -162,4 +162,12 @@ public partial class App : Application
         //MessageBox.Show("出错了，请查看Log");
     }
 
+
+
+    private static Assembly? Default_Resolving(AssemblyLoadContext ctx, AssemblyName name)
+    {
+        var file = name.Name + ".dll";
+        var path = Directory.EnumerateFiles(AppContext.BaseDirectory, file, SearchOption.AllDirectories).FirstOrDefault();
+        return string.IsNullOrWhiteSpace(path) ? null : ctx.LoadFromAssemblyPath(path);
+    }
 }

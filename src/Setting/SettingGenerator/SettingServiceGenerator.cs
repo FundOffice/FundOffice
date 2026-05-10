@@ -139,16 +139,16 @@ public class VerifySettingGenerator : IIncrementalGenerator
 
         namespace FMO.Settings;
 
-        public partial class SettingService
+        public static partial class SettingService
         {
-            public ImmutableDictionary<string, SettingUnit> VerifyRuleSection { get; set; } = [];
-            private Dictionary<string, VerifyRule> VerifyRuleObject { get; set; } = [];
+            public static ImmutableDictionary<string, VerifyRuleUnit> VerifyRuleSection { get; set; } = [];
+            private static Dictionary<string, VerifyRule> VerifyRuleObject { get; set; } = [];
 
-            private void InitVerifySection()
+            private static void InitVerifySection()
             {
                 // 安全加载已有配置，防止 Load 返回 null
-                var exist = Load(SettingSections.VerifyRule)?.ToDictionary(x=>x.Name, x=>x) ?? [];
-                var builder = ImmutableDictionary.CreateBuilder<string, SettingUnit>();
+                var exist = Load(SettingSections.VerifyRule)?.OfType<VerifyRuleUnit>().ToDictionary(x=>x.Name, x=>x) ?? [];
+                var builder = ImmutableDictionary.CreateBuilder<string, VerifyRuleUnit>();
 
         {{initBlocks}}
 
@@ -156,7 +156,7 @@ public class VerifySettingGenerator : IIncrementalGenerator
             }
 
 
-            private void InitVerifyUnit(ImmutableDictionary<string, SettingUnit>.Builder builder, Dictionary<string, SettingUnit> exist, string  key, string title, string desc, bool isEnable, VerifyRule instance)
+            private static void InitVerifyUnit(ImmutableDictionary<string, VerifyRuleUnit>.Builder builder, Dictionary<string, VerifyRuleUnit> exist, string  key, string title, string desc, bool isEnable, VerifyRule instance)
             {
                 var defaultUnit = new VerifyRuleUnit
                 {
@@ -164,29 +164,28 @@ public class VerifySettingGenerator : IIncrementalGenerator
                     Section = SettingSections.VerifyRule,
                     Title = title,
                     Description = desc,
-                    Data = new VerifyRuleUnitData { IsEnabled = isEnable }
+                    IsEnabled = isEnable
                 };
                 builder[key] = exist.TryGetValue(key, out var ex) ? ex : defaultUnit;
         
                 // 仅对启用状态的规则进行实例化与启动
-                if (builder[key] is VerifyRuleUnit u && u.Data?.IsEnabled == true)
+                if (builder[key] is VerifyRuleUnit u && u.IsEnabled == true)
                     EnableVerifyInstance(key, instance); 
             }
 
-            private void EnableVerifyInstance(string name, VerifyRule instance)
+            private static void EnableVerifyInstance(string name, VerifyRule instance)
             {
                 instance.Init();
                 instance.Start();
                 VerifyRuleObject[name] = instance;
             }
 
-            public void EnableVerify(string name)
+            public static void EnableVerify(string name)
             {
                 if (VerifyRuleSection.TryGetValue(name, out var unit) && unit is VerifyRuleUnit u)
                 {
                     // Null 安全防御：确保 Data 对象存在
-                    u.Data ??= new VerifyRuleUnitData();
-                    u.Data.IsEnabled = true;
+                    u.IsEnabled = true;
 
                     if (!VerifyRuleObject.ContainsKey(name))
                     {
@@ -200,12 +199,11 @@ public class VerifySettingGenerator : IIncrementalGenerator
                 }
             }
 
-            public void DisableVerify(string name)
+            public static void DisableVerify(string name)
             {
                 if (VerifyRuleSection.TryGetValue(name, out var unit) && unit is VerifyRuleUnit u)
                 {
-                    u.Data ??= new VerifyRuleUnitData();
-                    u.Data.IsEnabled = false;
+                    u.IsEnabled = false;
 
                     if (VerifyRuleObject.TryGetValue(name, out var obj))
                     {
