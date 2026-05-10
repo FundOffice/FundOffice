@@ -284,6 +284,11 @@ jobs:
         run: Compress-Archive -Path ./publish/* -DestinationPath ./FundOffice-Win-x64.zip -Force
         shell: powershell
 
+      - name: 打包 Trustee 文件夹 ZIP
+        run: Compress-Archive -Path ./publish/trustee/* -DestinationPath ./FundOffice-Trustee-Win-x64.zip -Force
+        shell: powershell
+
+
       - name: 确定版本号
         id: version
         run: |
