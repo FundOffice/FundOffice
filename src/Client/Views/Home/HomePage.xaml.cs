@@ -200,6 +200,8 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         {
             try
             {
+                if (!VerifyDll(dllPath)) continue;
+
                 // 3. 加载程序集
                 Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dllPath);
                 foreach (Type type in assembly.GetTypes())
@@ -245,6 +247,8 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         {
             try
             {
+                if (!VerifyDll(dllPath)) continue;
+
                 // 3. 加载程序集
                 Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dllPath);
 
@@ -319,6 +323,8 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         {
             try
             {
+                if (!VerifyDll(dllPath)) continue;
+
                 // 3. 加载程序集
                 Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dllPath);
 
@@ -396,6 +402,8 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         {
             try
             {
+                if (!VerifyDll(dllPath)) continue;
+
                 // 3. 加载程序集
                 Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dllPath);
 
@@ -473,6 +481,8 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         {
             try
             {
+                if (!VerifyDll(dllPath)) continue;
+
                 // 3. 加载程序集
                 Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dllPath);
                 foreach (Type type in assembly.GetTypes())
@@ -788,7 +798,14 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
 
 
-
+    private static bool VerifyDll(string dll)
+    {
+#if DEBUG
+        return true;
+#else
+        return AssemblyName.GetAssemblyName(dll).GetPublicKeyToken().SequenceEqual(new byte[] { 0xA9, 0x4A, 0x3A, 0xC4, 0x0B, 0x3F, 0xC1, 0xBE });
+#endif
+    }
 
 
 

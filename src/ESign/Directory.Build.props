@@ -24,7 +24,15 @@
 		<EsignTargetDir>$(_EsignClientOutput)esign\</EsignTargetDir>
 	</PropertyGroup>
 
-	<!-- 核心复制 Target -->
+  <!-- 🟢 强签名配置（单行定义，仅当 CI 传入密钥路径时生效，本地构建自动跳过） -->
+  <PropertyGroup Condition="'$(STRONG_KEY_PATH)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(STRONG_KEY_PATH)</AssemblyOriginatorKeyFile>
+    <PublicSign Condition=" '$([MSBuild]::IsOSPlatform(Windows))' == 'false' ">true</PublicSign>
+  </PropertyGroup>
+
+
+  <!-- 核心复制 Target -->
 	<Target Name="_CopyEsignDllsToClient"
 			AfterTargets="Build;Publish"
 			Condition="'$(ProjectName)' != 'ESigning' AND '$(ProjectName)' != 'Galley'">
