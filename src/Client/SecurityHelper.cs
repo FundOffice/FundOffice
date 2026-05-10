@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FMO.Logging;
+using System;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -17,26 +18,35 @@ public static class SecurityHelper
     /// </summary>
     public static bool IsAuthorSigned(string dllPath)
     {
-        if (string.IsNullOrWhiteSpace(dllPath) || !File.Exists(dllPath))
-            return false;
-
-        string sigPath = dllPath + ".sig";
-        if (!File.Exists(sigPath)) return false; // 缺少签名文件直接拒绝
-
         try
         {
+            if (string.IsNullOrWhiteSpace(dllPath) || !File.Exists(dllPath))
+                return false;
+
+            var sigPath = dllPath + ".sig";
+            if (!File.Exists(sigPath))
+                return false; // 🔹 缺少签名文件 = 未授权，静默拒绝
+
+            // 🔹 用 FileShare.Read 允许其他进程读取（避免 SmartScreen/杀毒软件锁定冲突）
+            using var dllStream = new FileStream(dllPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var sigStream = new FileStream(sigPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+            byte[] dllBytes = new byte[dllStream.Length];
+            dllStream.ReadExactly(dllBytes, 0, dllBytes.Length);
+
+            byte[] sigBytes = new byte[sigStream.Length];
+            sigStream.ReadExactly(sigBytes, 0, sigBytes.Length);
+
             using var rsa = RSA.Create();
             rsa.ImportSubjectPublicKeyInfo(Convert.FromBase64String(TrustedPublicKeyBase64), out _);
 
-            byte[] dllBytes = File.ReadAllBytes(dllPath);
-            byte[] sigBytes = File.ReadAllBytes(sigPath);
-
-            // 验证 SHA256 哈希与签名是否匹配
             return rsa.VerifyData(dllBytes, sigBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         }
-        catch
+        catch(Exception ex)
         {
-            return false; // 任何异常均视为验证失败
+            // 🔹 任何异常（格式错误/权限不足/解码失败）均视为验证失败，绝不崩溃
+            LogEx.Error(ex); 
+            return false;
         }
     }
 
