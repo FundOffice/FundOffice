@@ -260,7 +260,7 @@ jobs:
                       try {
                           $data = [System.IO.File]::ReadAllBytes($dll.FullName)
                           $sig = $rsa.SignData($data, [System.Security.Cryptography.HashAlgorithmName]::SHA256, [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
-                          [System.IO.File]::WriteAllBytes("$($dll.FullName).sig", $sig)
+                          [System.IO.File]::WriteAllBytes("$($dll.FullName).ck", $sig)
                           $signCount++
                       } catch {
                           Write-Host "  ⚠️ 签名失败: $($dll.Name) - $_" -ForegroundColor Yellow

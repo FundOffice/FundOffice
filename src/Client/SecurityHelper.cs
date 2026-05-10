@@ -22,7 +22,7 @@ public static class SecurityHelper
             if (string.IsNullOrWhiteSpace(dllPath) || !File.Exists(dllPath))
                 return false;
 
-            var sigPath = dllPath + ".sig";
+            var sigPath = dllPath + ".ck";
             if (!File.Exists(sigPath))
                 return false; // 🔹 缺少签名文件 = 未授权，静默拒绝
 

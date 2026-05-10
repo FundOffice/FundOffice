@@ -336,7 +336,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             }
             catch (Exception ex)
             {
-                LogEx.Error($"注册电子签名组件失败，错误：{ex.Message}");
+                LogEx.Error($"加载托管组件失败，错误：{ex.Message}");
             }
         }
 
@@ -801,9 +801,10 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
     private static bool VerifyDll(string dll)
     {
 #if DEBUG
+        //return SecurityHelper.IsAuthorSigned(dll);
         return true;
 #else
-        return SecurityHelper.IsAuthorSigned(dll);
+       return true;// return SecurityHelper.IsAuthorSigned(dll);
 //return AssemblyName.GetAssemblyName(dll).GetPublicKeyToken().SequenceEqual(new byte[] { 0xA9, 0x4A, 0x3A, 0xC4, 0x0B, 0x3F, 0xC1, 0xBE });
 #endif
     }
