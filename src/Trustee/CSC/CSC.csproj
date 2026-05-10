@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
-    <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
 	  <LangVersion>preview</LangVersion>
   </PropertyGroup>

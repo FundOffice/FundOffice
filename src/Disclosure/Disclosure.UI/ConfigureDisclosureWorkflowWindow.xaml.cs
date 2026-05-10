@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using FMO.Models;
 using FMO.Utilities;
+using LiteDB;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
@@ -112,7 +113,17 @@ public partial class ConfigureDisclosureWorkflowWindowViewModel : ObservableObje
 
         // 检查是否有对应的配置界面
         using var db = DbHelper.Base();
-        var configs = db.GetCollection<DisclosureChannelConfig>().FindAll().ToArray().ToDictionary(x => x.ChannelCode);
+        var docs = db.GetCollection(nameof(DisclosureChannelConfig)).FindAll().ToArray();
+
+
+        var configs = docs.Select(x =>
+        {
+            try
+            {
+                return BsonMapper.Global.ToObject<DisclosureChannelConfig>(x);
+            }
+            catch { return null; }
+        }).OfType<DisclosureChannelConfig>().ToDictionary(x => x.ChannelCode);
 
         List<ChannelConfigViewModel> channelConfigs = new();
         foreach (var c in Channels)
