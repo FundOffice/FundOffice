@@ -35,54 +35,84 @@ jobs:
           # 3. 导出环境变量（⚠️ 必须与 Directory.Build.props 中的 $(ESIGN_KEY_PATH) 一致）
           Add-Content $env:GITHUB_ENV "STRONG_KEY_PATH=$keyPath"
 
-      - name: 执行发布逻辑（容错版）
+      - name: 🔧 修复源文件编码（增强版）
         run: |
-          $ErrorActionPreference = "Stop"
+          $ErrorActionPreference = "Continue"  # 允许单个文件失败
           $scriptPath = $PWD.Path
-          Set-Location $scriptPath
-
-           # 🔥 [新增] 批量转换编码：GB2312/GBK → UTF-8 with BOM
-          # 🔥 [0/4] 修复编码：将 GB2312/GBK 的 .cs 文件转为 UTF-8 with BOM
-          Write-Host "`n[0/4] 修复源文件编码 (GB2312 → UTF-8 BOM)..." -ForegroundColor Cyan
-          try {
-              $encGbk = [System.Text.Encoding]::GetEncoding(936)  # GB2312/GBK
-          } catch {
-              # Windows Runner 默认支持 936，如失败则尝试备用方案
-              Write-Host "⚠️ 无法加载 GB2312 编码，尝试用 UTF-8 直接读取（可能已转换）" -ForegroundColor Yellow
-              $encGbk = $null
-          }
-          $encUtf8Bom = [System.Text.UTF8Encoding]::new($true)
     
-          $converted = 0
-          $skipped = 0
+          Write-Host "`n[0/4] 智能修复源文件编码..." -ForegroundColor Cyan
+    
+          $encUtf8Bom = [System.Text.UTF8Encoding]::new($true)
+          $encGbk = [System.Text.Encoding]::GetEncoding(936)
+          $encDefault = [System.Text.Encoding]::Default
+    
+          $stats = @{ Converted = 0; Skipped = 0; Failed = 0 }
     
           Get-ChildItem -Path $scriptPath -Include "*.cs" -Recurse -File | Where-Object {
               $_.FullName -notmatch '\\obj\\|\\bin\\|\\publish\\|\\packages\\'
           } | ForEach-Object {
               $file = $_.FullName
+              $fileName = $_.Name
+        
               try {
-                  # 尝试用 GB2312 读取（如果文件确实是该编码）
-                  if ($encGbk) {
-                      $content = [System.IO.File]::ReadAllText($file, $encGbk)
-                  } else {
-                      # 降级方案：直接用 UTF-8 读（文件可能已是正确编码）
-                      $content = [System.IO.File]::ReadAllText($file)
+                  # 🔍 步骤1: 检测是否有 UTF-8 BOM
+                  $bytes = [System.IO.File]::ReadAllBytes($file)
+                  $hasUtf8Bom = ($bytes.Length -ge 3) -and ($bytes[0] -eq 0xEF) -and ($bytes[1] -eq 0xBB) -and ($bytes[2] -eq 0xBF)
+            
+                  if ($hasUtf8Bom) {
+                      # 已是正确编码，跳过
+                      $stats.Skipped++
+                      return
                   }
-                  # 写回为 UTF-8 with BOM
+            
+                  # 🔍 步骤2: 尝试用不同编码读取，选择最能正常显示中文的
+                  $candidates = @()
+            
+                  foreach ($enc in @($encGbk, $encDefault, [System.Text.Encoding]::UTF8)) {
+                      try {
+                          $content = [System.IO.File]::ReadAllText($file, $enc)
+                          # 简单质量评分：包含中文且无大量字符
+                          $score = 0
+                          if ($content -match "[\u4e00-\u9fa5]") { $score += 10 }
+                          if ($content -notmatch "") { $score += 5 }
+                          if ($content.Length -gt 0) { $score += 1 }
+                          $candidates += @{ Encoding = $enc; Content = $content; Score = $score }
+                      } catch {
+                          # 编码不匹配时可能抛出异常，跳过
+                      }
+                  }
+            
+                  if ($candidates.Count -eq 0) {
+                      Write-Host "  ⊘ $fileName (无法读取)" -ForegroundColor Gray
+                      $stats.Failed++
+                      return
+                  }
+            
+                  # 选择评分最高的编码结果
+                  $best = $candidates | Sort-Object Score -Descending | Select-Object -First 1
+                  $content = $best.Content
+            
+                  # 🔍 步骤3: 写回为 UTF-8 with BOM
                   [System.IO.File]::WriteAllText($file, $content, $encUtf8Bom)
-                  $converted++
-                  Write-Host "  ✓ $($_.Name)" -ForegroundColor DarkGray
+                  $stats.Converted++
+                  Write-Host "  ✓ $fileName" -ForegroundColor DarkGray
+            
               } catch {
-                  # 如果读取失败，可能是已经是 UTF-8 或其他编码，跳过避免破坏
-                  $skipped++
-                  Write-Host "  ⊘ $($_.Name) (跳过)" -ForegroundColor Gray
+                  Write-Host "  ✗ $fileName : $_" -ForegroundColor Yellow
+                  $stats.Failed++
               }
           }
-          Write-Host "  ✅ 编码转换完成: $converted 个文件已转换, $skipped 个跳过" -ForegroundColor Green
+    
+          Write-Host "  📊 编码修复统计: 转换=$($stats.Converted) | 跳过=$($stats.Skipped) | 失败=$($stats.Failed)" -ForegroundColor Cyan
+        shell: pwsh
 
-          # 🔥 [编码修复结束，继续原有发布逻辑] 👇
 
-
+      - name: 执行发布逻辑（容错版）
+        run: |
+          $ErrorActionPreference = "Stop"
+          $scriptPath = $PWD.Path
+          Set-Location $scriptPath
+            
           $publishDir = Join-Path $scriptPath "publish"
           $languageFolders = @("cs","de","es","fr","it","ja","ko","pl","pt-BR","ru","tr")
           $foldersToKeep = @("esign", "mission", "runtimes", "trigger", "trustee")
