@@ -186,19 +186,10 @@ jobs:
             }
 
             Write-Host "🔐 正在加载签名证书..." -ForegroundColor Cyan
-
+             
             $cleanBase64 = $env:CERT_PFX_BASE64 -replace '[\s"\'']', ''
-            try {
-                $certBytes = [System.Convert]::FromBase64String($cleanBase64)
-            } catch {
-                Write-Error "❌ Base64 解码失败。请检查 Secret 是否包含非法字符或已被截断。"
-                exit 1
-            }
-
-            Write-Host "📦 解码后证书大小: $($certBytes.Length) 字节" -ForegroundColor Cyan
-            if ($certBytes.Length -lt 500) {
-                Write-Error "⛔ 证书数据异常（过小）。请确认上传的是完整的 .pfx 文件 Base64。"
-                exit 1
+            try { $certBytes = [System.Convert]::FromBase64String($cleanBase64) } catch {
+                Write-Error "❌ Base64 解码失败。请检查 Secret 是否被截断。"; exit 1
             }
 
             try {
@@ -208,12 +199,17 @@ jobs:
                     [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
                 )
             } catch {
-                Write-Error "❌ 证书加载失败。可能原因：1. 密码错误 2. 非标准 .pfx 格式 3. 证书已损坏。原始错误: $_"
-                exit 1
+                Write-Error "❌ 证书加载失败。可能原因：密码错误 / 非 .pfx 格式 / 证书损坏。原始错误: $_"; exit 1
             }
 
-            $rsa = $cert.GetRSAPrivateKey()
-            if (-not $rsa) { throw "⛔ 无法从证书中提取私钥。" }
+            # 🔑 核心修复：使用 PKCS#8 导出/导入模式，彻底避开 GetRSAPrivateKey() 兼容性问题
+            try {
+                $pkcs8Bytes = $cert.ExportPkcs8PrivateKey()
+                $rsa = [System.Security.Cryptography.RSA]::Create()
+                $null = $rsa.ImportPkcs8PrivateKey($pkcs8Bytes, [ref]$null)
+            } catch {
+                Write-Error "⛔ 无法提取 RSA 私钥。请确保证书由 RSA 算法生成且标记为可导出。"; exit 1
+            }
 
             $signCount = 0
             foreach ($folder in $targetFolders) {
