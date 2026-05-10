@@ -125,12 +125,8 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
-        // 🔥 强制 UTF-8 与中文文化，避免提权后乱码
-        System.Globalization.CultureInfo.DefaultThreadCurrentCulture = new System.Globalization.CultureInfo("zh-CN");
-        System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = new System.Globalization.CultureInfo("zh-CN");
-        Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-        
+
          
     }
 

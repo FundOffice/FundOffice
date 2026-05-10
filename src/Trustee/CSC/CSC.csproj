@@ -3,9 +3,18 @@
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
 	  <LangVersion>preview</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="dt.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="dt.xaml" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Trustee\Trustee.csproj" />
