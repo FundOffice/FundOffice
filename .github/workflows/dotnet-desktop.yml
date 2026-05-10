@@ -22,11 +22,18 @@ jobs:
           dotnet-version: '10.x'
 
       - name: 初始化强签名密钥
+        shell: pwsh
         run: |
-          # 1. 将 Base64 编码的 .snk 还原为临时文件（GitHub 会在作业结束后自动清理 runner.temp）
-          echo "${{ secrets.FOSNK }}" | base64 -d > "${{ runner.temp }}/fo.snk"
-          # 2. 导出为环境变量，MSBuild 会自动将其识别为 $(ESIGN_KEY_PATH)
-          echo "STRONG_KEY_PATH=${{ runner.temp }}/fo.snk" >> $GITHUB_ENV
+          # 1. 获取 Secret 并清除所有空白/换行符（防止手动粘贴带入的格式问题）
+          $b64 = "${{ secrets.FOSNK }}" -replace '\s', ''
+          
+          # 2. 原生 Base64 解码并写入临时文件
+          $bytes = [Convert]::FromBase64String($b64)
+          $keyPath = Join-Path $env:RUNNER_TEMP "fo.snk"
+          [IO.File]::WriteAllBytes($keyPath, $bytes)
+          
+          # 3. 导出环境变量（⚠️ 必须与 Directory.Build.props 中的 $(ESIGN_KEY_PATH) 一致）
+          Add-Content $env:GITHUB_ENV "STRONG_KEY_PATH=$keyPath"
 
       - name: 执行发布逻辑（容错版）
         run: |
