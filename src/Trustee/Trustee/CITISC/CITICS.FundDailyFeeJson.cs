@@ -3,192 +3,192 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee.JsonCITICS;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 /// <summary>
-/// ½ğÈÚ²úÆ··ÑÓÃÊı¾İÄ£ĞÍ
+/// é‡‘èäº§å“è´¹ç”¨æ•°æ®æ¨¡å‹
 /// </summary>
 internal class FundDailyFeeJson : JsonBase
 {
     /// <summary>
-    /// ²úÆ·´úÂë
+    /// äº§å“ä»£ç 
     /// </summary>
     [JsonPropertyName("fcpdm")]
     public string ProductCode { get; set; }
 
     /// <summary>
-    /// ·Ö¼¶²úÆ·´úÂë
+    /// åˆ†çº§äº§å“ä»£ç 
     /// </summary>
     [JsonPropertyName("ffjdm")]
     public string? ClassificationCode { get; set; }
 
     /// <summary>
-    /// ²úÆ·Ãû³Æ
+    /// äº§å“åç§°
     /// </summary>
     [JsonPropertyName("fcpmc")]
     public string ProductName { get; set; }
 
     /// <summary>
-    /// ÒµÎñÈÕÆÚ£¬¸ñÊ½£ºYYYY - MM - DD
+    /// ä¸šåŠ¡æ—¥æœŸï¼Œæ ¼å¼ï¼šYYYY - MM - DD
     /// </summary>
     [JsonPropertyName("cdate")]
     public string BusinessDate { get; set; }
 
-    #region ¹ÜÀí·ÑÏà¹Ø
+    #region ç®¡ç†è´¹ç›¸å…³
     /// <summary>
-    /// ¼ÆÌá¹ÜÀí·Ñ
+    /// è®¡æç®¡ç†è´¹
     /// </summary>
     [JsonPropertyName("jtglf")]
     public string AccruedManagementFee { get; set; }
 
     /// <summary>
-    /// Ö§¸¶¹ÜÀí·Ñ
+    /// æ”¯ä»˜ç®¡ç†è´¹
     /// </summary>
     [JsonPropertyName("zfglf")]
     public string PaidManagementFee { get; set; }
 
     /// <summary>
-    /// Î´Ö§¸¶¹ÜÀí·Ñ
+    /// æœªæ”¯ä»˜ç®¡ç†è´¹
     /// </summary>
     [JsonPropertyName("wzfglf")]
     public string UnpaidManagementFee { get; set; }
     #endregion
 
-    #region Òµ¼¨±¨³êÏà¹Ø
+    #region ä¸šç»©æŠ¥é…¬ç›¸å…³
     /// <summary>
-    /// ¼ÆÌáÒµ¼¨±¨³ê
+    /// è®¡æä¸šç»©æŠ¥é…¬
     /// </summary>
     [JsonPropertyName("jtyjbc")]
     public string AccruedPerformanceFee { get; set; }
 
     /// <summary>
-    /// Ö§¸¶Òµ¼¨±¨³ê
+    /// æ”¯ä»˜ä¸šç»©æŠ¥é…¬
     /// </summary>
     [JsonPropertyName("zfyjbc")]
     public string PaidPerformanceFee { get; set; }
 
     /// <summary>
-    /// Î´Ö§¸¶Òµ¼¨±¨³ê
+    /// æœªæ”¯ä»˜ä¸šç»©æŠ¥é…¬
     /// </summary>
     [JsonPropertyName("wzfyjbc")]
     public string UnpaidPerformanceFee { get; set; }
     #endregion
 
-    #region ÍĞ¹Ü·ÑÏà¹Ø
+    #region æ‰˜ç®¡è´¹ç›¸å…³
     /// <summary>
-    /// ¼ÆÌáÍĞ¹Ü·Ñ
+    /// è®¡ææ‰˜ç®¡è´¹
     /// </summary>
     [JsonPropertyName("jttgf")]
     public string AccruedCustodyFee { get; set; }
 
     /// <summary>
-    /// Ö§¸¶ÍĞ¹Ü·Ñ
+    /// æ”¯ä»˜æ‰˜ç®¡è´¹
     /// </summary>
     [JsonPropertyName("zftgf")]
     public string PaidCustodyFee { get; set; }
 
     /// <summary>
-    /// Î´Ö§¸¶ÍĞ¹Ü·Ñ
+    /// æœªæ”¯ä»˜æ‰˜ç®¡è´¹
     /// </summary>
     [JsonPropertyName("wzftgf")]
     public string UnpaidCustodyFee { get; set; }
     #endregion
 
-    #region ĞĞÕş·şÎñ·ÑÏà¹Ø
+    #region è¡Œæ”¿æœåŠ¡è´¹ç›¸å…³
     /// <summary>
-    /// ¼ÆÌáĞĞÕş·şÎñ·Ñ
+    /// è®¡æè¡Œæ”¿æœåŠ¡è´¹
     /// </summary>
     [JsonPropertyName("jtxzfwf")]
     public string AccruedAdministrativeFee { get; set; }
 
     /// <summary>
-    /// Ö§¸¶ĞĞÕş·şÎñ·Ñ
+    /// æ”¯ä»˜è¡Œæ”¿æœåŠ¡è´¹
     /// </summary>
     [JsonPropertyName("zfxzfwf")]
     public string PaidAdministrativeFee { get; set; }
 
     /// <summary>
-    /// Î´Ö§¸¶ĞĞÕş·şÎñ·Ñ
+    /// æœªæ”¯ä»˜è¡Œæ”¿æœåŠ¡è´¹
     /// </summary>
     [JsonPropertyName("wzfxzfwf")]
     public string UnpaidAdministrativeFee { get; set; }
     #endregion
 
-    #region ÏúÊÛ·şÎñ·ÑÏà¹Ø
+    #region é”€å”®æœåŠ¡è´¹ç›¸å…³
     /// <summary>
-    /// ¼ÆÌáÏúÊÛ·şÎñ·Ñ
+    /// è®¡æé”€å”®æœåŠ¡è´¹
     /// </summary>
     [JsonPropertyName("jtxsfwf")]
     public string AccruedSalesServiceFee { get; set; }
 
     /// <summary>
-    /// Ö§¸¶ÏúÊÛ·şÎñ·Ñ
+    /// æ”¯ä»˜é”€å”®æœåŠ¡è´¹
     /// </summary>
     [JsonPropertyName("zfxsfwf")]
     public string PaidSalesServiceFee { get; set; }
 
     /// <summary>
-    /// Î´Ö§¸¶ÏúÊÛ·şÎñ·Ñ
+    /// æœªæ”¯ä»˜é”€å”®æœåŠ¡è´¹
     /// </summary>
     [JsonPropertyName("wzfxsfwf")]
     public string UnpaidSalesServiceFee { get; set; }
     #endregion
 
-    #region Í¶×Ê¹ËÎÊ·ÑÏà¹Ø
+    #region æŠ•èµ„é¡¾é—®è´¹ç›¸å…³
     /// <summary>
-    /// ¼ÆÌáÍ¶×Ê¹ËÎÊ·Ñ
+    /// è®¡ææŠ•èµ„é¡¾é—®è´¹
     /// </summary>
     [JsonPropertyName("jttzgwf")]
     public string AccruedInvestmentAdvisoryFee { get; set; }
 
     /// <summary>
-    /// Ö§¸¶Í¶×Ê¹ËÎÊ·Ñ
+    /// æ”¯ä»˜æŠ•èµ„é¡¾é—®è´¹
     /// </summary>
     [JsonPropertyName("zftzgwf")]
     public string PaidInvestmentAdvisoryFee { get; set; }
 
     /// <summary>
-    /// Î´Ö§¸¶Í¶×Ê¹ËÎÊ·Ñ
+    /// æœªæ”¯ä»˜æŠ•èµ„é¡¾é—®è´¹
     /// </summary>
     [JsonPropertyName("wzftzgwf")]
     public string UnpaidInvestmentAdvisoryFee { get; set; }
     #endregion
 
-    #region ÔöÖµË°¸½¼ÓË°Ïà¹Ø
+    #region å¢å€¼ç¨é™„åŠ ç¨ç›¸å…³
     /// <summary>
-    /// ¼ÆÌáÔöÖµË°¸½¼ÓË°
+    /// è®¡æå¢å€¼ç¨é™„åŠ ç¨
     /// </summary>
     [JsonPropertyName("jtzzsfjs")]
     public string AccruedVatSurcharge { get; set; }
 
     /// <summary>
-    /// Ö§¸¶ÔöÖµË°¸½¼ÓË°
+    /// æ”¯ä»˜å¢å€¼ç¨é™„åŠ ç¨
     /// </summary>
     [JsonPropertyName("zfzzsfjs")]
     public string PaidVatSurcharge { get; set; }
 
     /// <summary>
-    /// Î´Ö§¸¶ÔöÖµË°¸½¼ÓË°
+    /// æœªæ”¯ä»˜å¢å€¼ç¨é™„åŠ ç¨
     /// </summary>
     [JsonPropertyName("wzfzzsfjs")]
     public string UnpaidVatSurcharge { get; set; }
     #endregion
 
-    #region Éó¼Æ·ÑÏà¹Ø
+    #region å®¡è®¡è´¹ç›¸å…³
     /// <summary>
-    /// ¼ÆÌáÉó¼Æ·Ñ
+    /// è®¡æå®¡è®¡è´¹
     /// </summary>
     [JsonPropertyName("jtsjf")]
     public string AccruedAuditFee { get; set; }
 
     /// <summary>
-    /// Ö§¸¶Éó¼Æ·Ñ
+    /// æ”¯ä»˜å®¡è®¡è´¹
     /// </summary>
     [JsonPropertyName("zfsjf")]
     public string PaidAuditFee { get; set; }
 
     /// <summary>
-    /// Î´Ö§¸¶Éó¼Æ·Ñ
+    /// æœªæ”¯ä»˜å®¡è®¡è´¹
     /// </summary>
     [JsonPropertyName("wzfsjf")]
     public string UnpaidAuditFee { get; set; }
@@ -228,4 +228,4 @@ internal class FundDailyFeeJson : JsonBase
 
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

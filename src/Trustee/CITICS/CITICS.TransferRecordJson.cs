@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class TransferRecordJson : JsonBase
 {
@@ -20,168 +20,168 @@ internal class TransferRecordJson : JsonBase
     public string TradeAcco { get; set; }
 
     /// <summary>
-    /// ÒµÎñÀàĞÍ£º
-    ///01-ÈÏ¹º	50-»ù½ğ³ÉÁ¢
-    ///02-Éê¹º	51-»ù½ğÖÕÖ¹
-    ///03-Êê»Ø	52-»ù½ğÇåÅÌ
-    ///04-×ªÍĞ¹Ü	54-·¢ĞĞÊ§°Ü
-    ///05-ÍĞ¹Ü×ªÈë	70-Ç¿ÖÆµ÷Ôö
-    ///06-ÍĞ¹Ü×ª³ö	71-Ç¿ÖÆµ÷¼õ
-    ///07-ĞŞ¸Ä·Öºì·½Ê½	74-ºìÀû·¢·Å
-    ///10-·İ¶î¶³½á	77-¶¨ÆÚÉê¹ºĞŞ¸Ä
-    ///11-·İ¶î½â¶³	78-¶¨ÆÚÊê»ØĞŞ¸Ä
-    ///12-·Ç½»Ò×¹ı»§	81-»ù½ğ¿ª»§
-    ///13-»ù½ğ×ª»»(³ö)  82-»ù½ğÏú»§
-    ///14-·Ç½»Ò×¹ı»§³ö	83-ÕË»§ĞŞ¸Ä
-    ///15-·Ç½»Ò×¹ı»§Èë	84-ÕË»§¶³½á
-    ///16-»ù½ğ×ª»»Èë	85-ÕË»§½â¶³
-    ///17-³·µ¥	88-ÕË»§µÇ¼Ç
-    ///20-ÄÚ²¿×ªÍĞ¹Ü	89-È¡ÏûµÇ¼Ç
-    ///21-ÄÚ²¿×ªÍĞ¹ÜÈë	90-¶¨ÆÚÉê¹ºĞ­Òé
-    ///22-ÄÚ²¿×ªÍĞ¹Ü³ö	91-¶¨ÆÚÊê»ØĞ­Òé
-    ///31-Ôö¿ª½»Ò×ÕËºÅ	92-³ĞÅµÓÅ»İĞ­Òé
-    ///32-±ä¸ü½»Ò×ÕËºÅ	93-¶¨ÆÚÉê¹ºÈ¡Ïû
-    ///41-ÂòÈë	94-¶¨ÆÚÊê»ØÈ¡Ïû
-    ///42-Âô³ö	96-Ïú½»Ò×ÕËºÅ
-    ///46-ÁªÃû¿¨²éÑ¯	97-ÄÚ²¿×ªÍĞ¹Ü
-    ///47-ÁªÃû¿¨¿ªÍ¨	98-ÄÚ²¿ÍĞ¹Ü×ªÈë
-    ///48-ÁªÃû¿¨È¡Ïû	99-ÄÚ²¿ÍĞ¹Ü×ª³ö
-    ///49-ÁªÃû¿¨»¹¿î
+    /// ä¸šåŠ¡ç±»å‹ï¼š
+    ///01-è®¤è´­	50-åŸºé‡‘æˆç«‹
+    ///02-ç”³è´­	51-åŸºé‡‘ç»ˆæ­¢
+    ///03-èµå›	52-åŸºé‡‘æ¸…ç›˜
+    ///04-è½¬æ‰˜ç®¡	54-å‘è¡Œå¤±è´¥
+    ///05-æ‰˜ç®¡è½¬å…¥	70-å¼ºåˆ¶è°ƒå¢
+    ///06-æ‰˜ç®¡è½¬å‡º	71-å¼ºåˆ¶è°ƒå‡
+    ///07-ä¿®æ”¹åˆ†çº¢æ–¹å¼	74-çº¢åˆ©å‘æ”¾
+    ///10-ä»½é¢å†»ç»“	77-å®šæœŸç”³è´­ä¿®æ”¹
+    ///11-ä»½é¢è§£å†»	78-å®šæœŸèµå›ä¿®æ”¹
+    ///12-éäº¤æ˜“è¿‡æˆ·	81-åŸºé‡‘å¼€æˆ·
+    ///13-åŸºé‡‘è½¬æ¢(å‡º)  82-åŸºé‡‘é”€æˆ·
+    ///14-éäº¤æ˜“è¿‡æˆ·å‡º	83-è´¦æˆ·ä¿®æ”¹
+    ///15-éäº¤æ˜“è¿‡æˆ·å…¥	84-è´¦æˆ·å†»ç»“
+    ///16-åŸºé‡‘è½¬æ¢å…¥	85-è´¦æˆ·è§£å†»
+    ///17-æ’¤å•	88-è´¦æˆ·ç™»è®°
+    ///20-å†…éƒ¨è½¬æ‰˜ç®¡	89-å–æ¶ˆç™»è®°
+    ///21-å†…éƒ¨è½¬æ‰˜ç®¡å…¥	90-å®šæœŸç”³è´­åè®®
+    ///22-å†…éƒ¨è½¬æ‰˜ç®¡å‡º	91-å®šæœŸèµå›åè®®
+    ///31-å¢å¼€äº¤æ˜“è´¦å·	92-æ‰¿è¯ºä¼˜æƒ åè®®
+    ///32-å˜æ›´äº¤æ˜“è´¦å·	93-å®šæœŸç”³è´­å–æ¶ˆ
+    ///41-ä¹°å…¥	94-å®šæœŸèµå›å–æ¶ˆ
+    ///42-å–å‡º	96-é”€äº¤æ˜“è´¦å·
+    ///46-è”åå¡æŸ¥è¯¢	97-å†…éƒ¨è½¬æ‰˜ç®¡
+    ///47-è”åå¡å¼€é€š	98-å†…éƒ¨æ‰˜ç®¡è½¬å…¥
+    ///48-è”åå¡å–æ¶ˆ	99-å†…éƒ¨æ‰˜ç®¡è½¬å‡º
+    ///49-è”åå¡è¿˜æ¬¾
     /// </summary>
     [JsonPropertyName("apkind")]
-    public string Apkind { get; set; } // ÒµÎñÀàĞÍ´úÂë
+    public string Apkind { get; set; } // ä¸šåŠ¡ç±»å‹ä»£ç 
 
     [JsonPropertyName("taFlag")]
-    public string TaFlag { get; set; } // TA·¢Æğ±êÖ¾£º0-·ñ£¬1-ÊÇ
+    public string TaFlag { get; set; } // TAå‘èµ·æ ‡å¿—ï¼š0-å¦ï¼Œ1-æ˜¯
 
     [JsonPropertyName("fundCode")]
     public string FundCode { get; set; }
 
     [JsonPropertyName("shareLevel")]
-    public string ShareLevel { get; set; } // ·İ¶îÀà±ğ£ºA-Ç°ÊÕ·Ñ£¬B-ºóÊÕ·Ñ
+    public string ShareLevel { get; set; } // ä»½é¢ç±»åˆ«ï¼šA-å‰æ”¶è´¹ï¼ŒB-åæ”¶è´¹
 
     [JsonPropertyName("currency")]
-    public string Currency { get; set; } // ±ÒÖÖ£ºÈËÃñ±Ò¡¢ÃÀÔª »ò null
+    public string Currency { get; set; } // å¸ç§ï¼šäººæ°‘å¸ã€ç¾å…ƒ æˆ– null
 
     [JsonPropertyName("largeRedemptionFlag")]
-    public string LargeRedemptionFlag { get; set; } // ¾Ş¶îÊê»Ø´¦Àí±êÖ¾£º0-È¡Ïû£¬1-Ë³ÑÓ
+    public string LargeRedemptionFlag { get; set; } // å·¨é¢èµå›å¤„ç†æ ‡å¿—ï¼š0-å–æ¶ˆï¼Œ1-é¡ºå»¶
 
     [JsonPropertyName("subAmt")]
-    public string SubAmt { get; set; } // ÉêÇë½ğ¶î
+    public string SubAmt { get; set; } // ç”³è¯·é‡‘é¢
 
     [JsonPropertyName("subQuty")]
-    public string SubQuty { get; set; } // ÉêÇë·İ¶î
+    public string SubQuty { get; set; } // ç”³è¯·ä»½é¢
 
     [JsonPropertyName("bonusType")]
-    public string BonusType { get; set; } // ·Öºì·½Ê½£º0-ºìÀûÔÙÍ¶×Ê£¬1-ÏÖ½ğºìÀû
+    public string BonusType { get; set; } // åˆ†çº¢æ–¹å¼ï¼š0-çº¢åˆ©å†æŠ•èµ„ï¼Œ1-ç°é‡‘çº¢åˆ©
 
     [JsonPropertyName("nav")]
-    public string Nav { get; set; } // µ¥Î»¾»Öµ
+    public string Nav { get; set; } // å•ä½å‡€å€¼
 
     [JsonPropertyName("ackAmt")]
-    public string AckAmt { get; set; } // È·ÈÏ½ğ¶î
+    public string AckAmt { get; set; } // ç¡®è®¤é‡‘é¢
 
     [JsonPropertyName("ackQuty")]
-    public string AckQuty { get; set; } // È·ÈÏ·İ¶î
+    public string AckQuty { get; set; } // ç¡®è®¤ä»½é¢
 
     [JsonPropertyName("tradeFee")]
-    public string TradeFee { get; set; } // ½»Ò×·Ñ
+    public string TradeFee { get; set; } // äº¤æ˜“è´¹
 
     [JsonPropertyName("taFee")]
-    public string TaFee { get; set; } // ¹ı»§·Ñ
+    public string TaFee { get; set; } // è¿‡æˆ·è´¹
 
     [JsonPropertyName("backFee")]
-    public string BackFee { get; set; } // ºóÊÕ·Ñ
+    public string BackFee { get; set; } // åæ”¶è´¹
 
     [JsonPropertyName("realBalance")]
-    public string RealBalance { get; set; } // Ó¦·µ»¹½ğ¶î
+    public string RealBalance { get; set; } // åº”è¿”è¿˜é‡‘é¢
 
     [JsonPropertyName("profitBalance")]
-    public string ProfitBalance { get; set; } // Òµ¼¨±¨³ê
+    public string ProfitBalance { get; set; } // ä¸šç»©æŠ¥é…¬
 
     [JsonPropertyName("profitBalanceForAgency")]
-    public string ProfitBalanceForAgency { get; set; } // Òµ¼¨±¨³ê¹éÏúÊÛÉÌ
+    public string ProfitBalanceForAgency { get; set; } // ä¸šç»©æŠ¥é…¬å½’é”€å”®å•†
 
     [JsonPropertyName("totalNav")]
-    public string TotalNav { get; set; } // ÀÛ¼Æ¾»Öµ
+    public string TotalNav { get; set; } // ç´¯è®¡å‡€å€¼
 
     [JsonPropertyName("totalFee")]
-    public string TotalFee { get; set; } // ×Ü·ÑÓÃ
+    public string TotalFee { get; set; } // æ€»è´¹ç”¨
 
     [JsonPropertyName("agencyFee")]
-    public string AgencyFee { get; set; } // ¹éÏúÊÛ»ú¹¹·ÑÓÃ
+    public string AgencyFee { get; set; } // å½’é”€å”®æœºæ„è´¹ç”¨
 
     [JsonPropertyName("fundFee")]
-    public string FundFee { get; set; } // ¹é»ù½ğ×Ê²ú·ÑÓÃ
+    public string FundFee { get; set; } // å½’åŸºé‡‘èµ„äº§è´¹ç”¨
 
     [JsonPropertyName("registFee")]
-    public string RegistFee { get; set; } // ¹é¹ÜÀíÈË·ÑÓÃ
+    public string RegistFee { get; set; } // å½’ç®¡ç†äººè´¹ç”¨
 
     [JsonPropertyName("interest")]
-    public string Interest { get; set; } // ÀûÏ¢
+    public string Interest { get; set; } // åˆ©æ¯
 
     [JsonPropertyName("interestTax")]
-    public string InterestTax { get; set; } // ÀûÏ¢Ë°
+    public string InterestTax { get; set; } // åˆ©æ¯ç¨
 
     [JsonPropertyName("interestShare")]
-    public string InterestShare { get; set; } // ÀûÏ¢×ª·İ¶î
+    public string InterestShare { get; set; } // åˆ©æ¯è½¬ä»½é¢
 
     [JsonPropertyName("frozenBalance")]
-    public string FrozenBalance { get; set; } // È·ÈÏ¶³½á·İ¶î
+    public string FrozenBalance { get; set; } // ç¡®è®¤å†»ç»“ä»½é¢
 
     [JsonPropertyName("unfrozenBalance")]
-    public string UnfrozenBalance { get; set; } // È·ÈÏ½â¶³·İ¶î
+    public string UnfrozenBalance { get; set; } // ç¡®è®¤è§£å†»ä»½é¢
 
     [JsonPropertyName("unShares")]
-    public string UnShares { get; set; } // ¾Ş¶îÊê»ØË³ÑÓ·İ¶î
+    public string UnShares { get; set; } // å·¨é¢èµå›é¡ºå»¶ä»½é¢
 
     [JsonPropertyName("applyDate")]
-    public string ApplyDate { get; set; } // ÉêÇë¹¤×÷ÈÕ
+    public string ApplyDate { get; set; } // ç”³è¯·å·¥ä½œæ—¥
 
     [JsonPropertyName("ackDate")]
-    public string AckDate { get; set; } // È·ÈÏÈÕÆÚ
+    public string AckDate { get; set; } // ç¡®è®¤æ—¥æœŸ
 
     /// <summary>
-    /// È·ÈÏ×´Ì¬:
-    ///0-Î´´¦Àí	9-ÑÓ»º´¦Àí
-    ///1-È·ÈÏ³É¹¦ a-Î´´¦Àí
-    ///2-È·ÈÏÊ§°Ü b-Î´´¦Àí
-    ///3-½»Ò×³·Ïû c-Î´´¦Àí
-    ///4-Öğ±ÊÈ·ÈÏ d-Î´´¦Àí
-    ///5-Öğ±Ê·ñ¾ö e-Î´´¦Àí
-    ///6-¼ì²éÌØÊâ f-Î´´¦Àí
-    ///7-¾Ş¶îÊê»ØÑÓĞø g-Î´´¦Àí
-    ///8-ÁÙÊ±µ¼Èë
+    /// ç¡®è®¤çŠ¶æ€:
+    ///0-æœªå¤„ç†	9-å»¶ç¼“å¤„ç†
+    ///1-ç¡®è®¤æˆåŠŸ a-æœªå¤„ç†
+    ///2-ç¡®è®¤å¤±è´¥ b-æœªå¤„ç†
+    ///3-äº¤æ˜“æ’¤æ¶ˆ c-æœªå¤„ç†
+    ///4-é€ç¬”ç¡®è®¤ d-æœªå¤„ç†
+    ///5-é€ç¬”å¦å†³ e-æœªå¤„ç†
+    ///6-æ£€æŸ¥ç‰¹æ®Š f-æœªå¤„ç†
+    ///7-å·¨é¢èµå›å»¶ç»­ g-æœªå¤„ç†
+    ///8-ä¸´æ—¶å¯¼å…¥
     /// </summary>
     [JsonPropertyName("ackStatus")]
-    public string AckStatus { get; set; } // È·ÈÏ×´Ì¬
+    public string AckStatus { get; set; } // ç¡®è®¤çŠ¶æ€
 
     [JsonPropertyName("agencyNo")]
-    public string AgencyNo { get; set; } // ÏúÊÛÉÌ´úÂë
+    public string AgencyNo { get; set; } // é”€å”®å•†ä»£ç 
 
     [JsonPropertyName("agencyName")]
-    public string AgencyName { get; set; } // ÏúÊÛÉÌÃû³Æ
+    public string AgencyName { get; set; } // é”€å”®å•†åç§°
 
     [JsonPropertyName("retCod")]
-    public string RetCod { get; set; } // ·µ»ØÂë
+    public string RetCod { get; set; } // è¿”å›ç 
 
     [JsonPropertyName("retMsg")]
-    public string RetMsg { get; set; } // Ê§°ÜÔ­Òò
+    public string RetMsg { get; set; } // å¤±è´¥åŸå› 
 
     [JsonPropertyName("adjustCause")]
-    public string AdjustCause { get; set; } // ·İ¶îµ÷ÕûÔ­Òò
+    public string AdjustCause { get; set; } // ä»½é¢è°ƒæ•´åŸå› 
 
     [JsonPropertyName("navDate")]
-    public string NavDate { get; set; } // ¾»ÖµÈÕÆÚ (YYYYMMDD)
+    public string NavDate { get; set; } // å‡€å€¼æ—¥æœŸ (YYYYMMDD)
 
     [JsonPropertyName("oriCserialNo")]
-    public string OriCserialNo { get; set; } // Ô­È·ÈÏµ¥ºÅ
+    public string OriCserialNo { get; set; } // åŸç¡®è®¤å•å·
 
     public override string? JsonId => $"{CITICS._Identifier}.{AckNo}";
 
     /// <summary>
-    /// È±ÉÙCustomer ĞÅÏ¢
-    /// Fund ĞÅÏ¢
+    /// ç¼ºå°‘Customer ä¿¡æ¯
+    /// Fund ä¿¡æ¯
     /// </summary>
     /// <returns></returns>
     internal TransferRecord ToObject()
@@ -223,57 +223,57 @@ internal class TransferRecordJson : JsonBase
     {
         return businessTypeCode switch
         {
-            "01" => TransferRecordType.InitialOffer,         // ÈÏ¹º ´ËÏî È·ÈÏ·İ¶îÊÇ0
-            "02" => TransferRecordType.Purchase,             // Éê¹º
-            "03" => TransferRecordType.Redemption,           // Êê»Ø
-            "04" => TransferRecordType.MoveOut,              // ×ªÍĞ¹Ü£¨×ª³ö£©
-            "05" => TransferRecordType.MoveIn,               // ÍĞ¹Ü×ªÈë£¨×ªÈë£©
-            "06" => TransferRecordType.MoveOut,              // ÍĞ¹Ü×ª³ö£¨×ª³ö£©
-            "07" => TransferRecordType.BonusType,            // ĞŞ¸Ä·Öºì·½Ê½
-            "10" => TransferRecordType.Frozen,               // ·İ¶î¶³½á
-            "11" => TransferRecordType.Thawed,               // ·İ¶î½â¶³
-            "12" => TransferRecordType.TransferIn,           // ·Ç½»Ò×¹ı»§£¨×ªÈë£©
-            "13" => TransferRecordType.SwitchOut,            // »ù½ğ×ª»»(³ö)
-            "14" => TransferRecordType.TransferOut,          // ·Ç½»Ò×¹ı»§³ö£¨×ª³ö£©
-            "15" => TransferRecordType.TransferIn,           // ·Ç½»Ò×¹ı»§Èë£¨×ªÈë£©
-            "16" => TransferRecordType.SwitchIn,             // »ù½ğ×ª»»Èë
-            "17" => TransferRecordType.UNK,                  // ³·µ¥£¨ÎŞ¶ÔÓ¦TA¼ÇÂ¼ÀàĞÍ£©
-            "20" => TransferRecordType.TransferOut,          // ÄÚ²¿×ªÍĞ¹Ü£¨×ª³ö£©
-            "21" => TransferRecordType.TransferIn,           // ÄÚ²¿×ªÍĞ¹ÜÈë£¨×ªÈë£©
-            "22" => TransferRecordType.TransferOut,          // ÄÚ²¿×ªÍĞ¹Ü³ö£¨×ª³ö£©
-            "31" => TransferRecordType.UNK,                  // Ôö¿ª½»Ò×ÕËºÅ£¨ÎŞÃ÷È·¶ÔÓ¦£©
-            "32" => TransferRecordType.UNK,                  // ±ä¸ü½»Ò×ÕËºÅ£¨ÎŞÃ÷È·¶ÔÓ¦£©
-            "41" => TransferRecordType.Purchase,             // ÂòÈë£¨µÈÍ¬ÓÚÉê¹º£©
-            "42" => TransferRecordType.Redemption,           // Âô³ö£¨µÈÍ¬ÓÚÊê»Ø£©
-            "46" => TransferRecordType.UNK,                  // ÁªÃû¿¨²éÑ¯£¨ÎŞ¶ÔÓ¦£©
-            "47" => TransferRecordType.UNK,                  // ÁªÃû¿¨¿ªÍ¨£¨ÎŞ¶ÔÓ¦£©
-            "48" => TransferRecordType.UNK,                  // ÁªÃû¿¨È¡Ïû£¨ÎŞ¶ÔÓ¦£©
-            "49" => TransferRecordType.UNK,                  // ÁªÃû¿¨»¹¿î£¨ÎŞ¶ÔÓ¦£©
-            "50" => TransferRecordType.Subscription,                  // »ù½ğ³ÉÁ¢£¨Í¨³£²»ÊÇµ¥±Ê¼ÇÂ¼£© ÕâÀïËãÈÏ¹º
-            "51" => TransferRecordType.UNK,                  // »ù½ğÖÕÖ¹£¨Í¨³£²»ÊÇµ¥±Ê¼ÇÂ¼£©
-            "52" => TransferRecordType.Clear,                // »ù½ğÇåÅÌ
-            "54" => TransferRecordType.RaisingFailed,        // ·¢ĞĞÊ§°Ü
-            "70" => TransferRecordType.Increase,             // Ç¿ÖÆµ÷Ôö
-            "71" => TransferRecordType.Decrease,             // Ç¿ÖÆµ÷¼õ
-            "74" => TransferRecordType.Distribution,         // ºìÀû·¢·Å
-            "77" => TransferRecordType.UNK,                  // ¶¨ÆÚÉê¹ºĞŞ¸Ä£¨ÎŞÃ÷È·¶ÔÓ¦£©
-            "78" => TransferRecordType.UNK,                  // ¶¨ÆÚÊê»ØĞŞ¸Ä£¨ÎŞÃ÷È·¶ÔÓ¦£©
-            "81" => TransferRecordType.UNK,                  // »ù½ğ¿ª»§£¨·Ç½»Ò×¼ÇÂ¼£©
-            "82" => TransferRecordType.UNK,                  // »ù½ğÏú»§£¨·Ç½»Ò×¼ÇÂ¼£©
-            "83" => TransferRecordType.UNK,                  // ÕË»§ĞŞ¸Ä£¨·Ç½»Ò×¼ÇÂ¼£©
-            "84" => TransferRecordType.Frozen,               // ÕË»§¶³½á£¨Óë·İ¶î¶³½áÀàËÆ£©
-            "85" => TransferRecordType.Thawed,               // ÕË»§½â¶³£¨Óë·İ¶î½â¶³ÀàËÆ£©
-            "88" => TransferRecordType.UNK,                  // ÕË»§µÇ¼Ç£¨·Ç½»Ò×¼ÇÂ¼£©
-            "89" => TransferRecordType.UNK,                  // È¡ÏûµÇ¼Ç£¨·Ç½»Ò×¼ÇÂ¼£©
-            "90" => TransferRecordType.UNK,                  // ¶¨ÆÚÉê¹ºĞ­Òé£¨·Ç½»Ò×¼ÇÂ¼£©
-            "91" => TransferRecordType.UNK,                  // ¶¨ÆÚÊê»ØĞ­Òé£¨·Ç½»Ò×¼ÇÂ¼£©
-            "92" => TransferRecordType.UNK,                  // ³ĞÅµÓÅ»İĞ­Òé£¨·Ç½»Ò×¼ÇÂ¼£©
-            "93" => TransferRecordType.UNK,                  // ¶¨ÆÚÉê¹ºÈ¡Ïû£¨·Ç½»Ò×¼ÇÂ¼£©
-            "94" => TransferRecordType.UNK,                  // ¶¨ÆÚÊê»ØÈ¡Ïû£¨·Ç½»Ò×¼ÇÂ¼£©
-            "96" => TransferRecordType.UNK,                  // Ïú½»Ò×ÕËºÅ£¨·Ç½»Ò×¼ÇÂ¼£©
-            "97" => TransferRecordType.TransferOut,          // ÄÚ²¿×ªÍĞ¹Ü£¨×ª³ö£©
-            "98" => TransferRecordType.TransferIn,           // ÄÚ²¿ÍĞ¹Ü×ªÈë£¨×ªÈë£©
-            "99" => TransferRecordType.TransferOut,          // ÄÚ²¿ÍĞ¹Ü×ª³ö£¨×ª³ö£©
+            "01" => TransferRecordType.InitialOffer,         // è®¤è´­ æ­¤é¡¹ ç¡®è®¤ä»½é¢æ˜¯0
+            "02" => TransferRecordType.Purchase,             // ç”³è´­
+            "03" => TransferRecordType.Redemption,           // èµå›
+            "04" => TransferRecordType.MoveOut,              // è½¬æ‰˜ç®¡ï¼ˆè½¬å‡ºï¼‰
+            "05" => TransferRecordType.MoveIn,               // æ‰˜ç®¡è½¬å…¥ï¼ˆè½¬å…¥ï¼‰
+            "06" => TransferRecordType.MoveOut,              // æ‰˜ç®¡è½¬å‡ºï¼ˆè½¬å‡ºï¼‰
+            "07" => TransferRecordType.BonusType,            // ä¿®æ”¹åˆ†çº¢æ–¹å¼
+            "10" => TransferRecordType.Frozen,               // ä»½é¢å†»ç»“
+            "11" => TransferRecordType.Thawed,               // ä»½é¢è§£å†»
+            "12" => TransferRecordType.TransferIn,           // éäº¤æ˜“è¿‡æˆ·ï¼ˆè½¬å…¥ï¼‰
+            "13" => TransferRecordType.SwitchOut,            // åŸºé‡‘è½¬æ¢(å‡º)
+            "14" => TransferRecordType.TransferOut,          // éäº¤æ˜“è¿‡æˆ·å‡ºï¼ˆè½¬å‡ºï¼‰
+            "15" => TransferRecordType.TransferIn,           // éäº¤æ˜“è¿‡æˆ·å…¥ï¼ˆè½¬å…¥ï¼‰
+            "16" => TransferRecordType.SwitchIn,             // åŸºé‡‘è½¬æ¢å…¥
+            "17" => TransferRecordType.UNK,                  // æ’¤å•ï¼ˆæ— å¯¹åº”TAè®°å½•ç±»å‹ï¼‰
+            "20" => TransferRecordType.TransferOut,          // å†…éƒ¨è½¬æ‰˜ç®¡ï¼ˆè½¬å‡ºï¼‰
+            "21" => TransferRecordType.TransferIn,           // å†…éƒ¨è½¬æ‰˜ç®¡å…¥ï¼ˆè½¬å…¥ï¼‰
+            "22" => TransferRecordType.TransferOut,          // å†…éƒ¨è½¬æ‰˜ç®¡å‡ºï¼ˆè½¬å‡ºï¼‰
+            "31" => TransferRecordType.UNK,                  // å¢å¼€äº¤æ˜“è´¦å·ï¼ˆæ— æ˜ç¡®å¯¹åº”ï¼‰
+            "32" => TransferRecordType.UNK,                  // å˜æ›´äº¤æ˜“è´¦å·ï¼ˆæ— æ˜ç¡®å¯¹åº”ï¼‰
+            "41" => TransferRecordType.Purchase,             // ä¹°å…¥ï¼ˆç­‰åŒäºç”³è´­ï¼‰
+            "42" => TransferRecordType.Redemption,           // å–å‡ºï¼ˆç­‰åŒäºèµå›ï¼‰
+            "46" => TransferRecordType.UNK,                  // è”åå¡æŸ¥è¯¢ï¼ˆæ— å¯¹åº”ï¼‰
+            "47" => TransferRecordType.UNK,                  // è”åå¡å¼€é€šï¼ˆæ— å¯¹åº”ï¼‰
+            "48" => TransferRecordType.UNK,                  // è”åå¡å–æ¶ˆï¼ˆæ— å¯¹åº”ï¼‰
+            "49" => TransferRecordType.UNK,                  // è”åå¡è¿˜æ¬¾ï¼ˆæ— å¯¹åº”ï¼‰
+            "50" => TransferRecordType.Subscription,                  // åŸºé‡‘æˆç«‹ï¼ˆé€šå¸¸ä¸æ˜¯å•ç¬”è®°å½•ï¼‰ è¿™é‡Œç®—è®¤è´­
+            "51" => TransferRecordType.UNK,                  // åŸºé‡‘ç»ˆæ­¢ï¼ˆé€šå¸¸ä¸æ˜¯å•ç¬”è®°å½•ï¼‰
+            "52" => TransferRecordType.Clear,                // åŸºé‡‘æ¸…ç›˜
+            "54" => TransferRecordType.RaisingFailed,        // å‘è¡Œå¤±è´¥
+            "70" => TransferRecordType.Increase,             // å¼ºåˆ¶è°ƒå¢
+            "71" => TransferRecordType.Decrease,             // å¼ºåˆ¶è°ƒå‡
+            "74" => TransferRecordType.Distribution,         // çº¢åˆ©å‘æ”¾
+            "77" => TransferRecordType.UNK,                  // å®šæœŸç”³è´­ä¿®æ”¹ï¼ˆæ— æ˜ç¡®å¯¹åº”ï¼‰
+            "78" => TransferRecordType.UNK,                  // å®šæœŸèµå›ä¿®æ”¹ï¼ˆæ— æ˜ç¡®å¯¹åº”ï¼‰
+            "81" => TransferRecordType.UNK,                  // åŸºé‡‘å¼€æˆ·ï¼ˆéäº¤æ˜“è®°å½•ï¼‰
+            "82" => TransferRecordType.UNK,                  // åŸºé‡‘é”€æˆ·ï¼ˆéäº¤æ˜“è®°å½•ï¼‰
+            "83" => TransferRecordType.UNK,                  // è´¦æˆ·ä¿®æ”¹ï¼ˆéäº¤æ˜“è®°å½•ï¼‰
+            "84" => TransferRecordType.Frozen,               // è´¦æˆ·å†»ç»“ï¼ˆä¸ä»½é¢å†»ç»“ç±»ä¼¼ï¼‰
+            "85" => TransferRecordType.Thawed,               // è´¦æˆ·è§£å†»ï¼ˆä¸ä»½é¢è§£å†»ç±»ä¼¼ï¼‰
+            "88" => TransferRecordType.UNK,                  // è´¦æˆ·ç™»è®°ï¼ˆéäº¤æ˜“è®°å½•ï¼‰
+            "89" => TransferRecordType.UNK,                  // å–æ¶ˆç™»è®°ï¼ˆéäº¤æ˜“è®°å½•ï¼‰
+            "90" => TransferRecordType.UNK,                  // å®šæœŸç”³è´­åè®®ï¼ˆéäº¤æ˜“è®°å½•ï¼‰
+            "91" => TransferRecordType.UNK,                  // å®šæœŸèµå›åè®®ï¼ˆéäº¤æ˜“è®°å½•ï¼‰
+            "92" => TransferRecordType.UNK,                  // æ‰¿è¯ºä¼˜æƒ åè®®ï¼ˆéäº¤æ˜“è®°å½•ï¼‰
+            "93" => TransferRecordType.UNK,                  // å®šæœŸç”³è´­å–æ¶ˆï¼ˆéäº¤æ˜“è®°å½•ï¼‰
+            "94" => TransferRecordType.UNK,                  // å®šæœŸèµå›å–æ¶ˆï¼ˆéäº¤æ˜“è®°å½•ï¼‰
+            "96" => TransferRecordType.UNK,                  // é”€äº¤æ˜“è´¦å·ï¼ˆéäº¤æ˜“è®°å½•ï¼‰
+            "97" => TransferRecordType.TransferOut,          // å†…éƒ¨è½¬æ‰˜ç®¡ï¼ˆè½¬å‡ºï¼‰
+            "98" => TransferRecordType.TransferIn,           // å†…éƒ¨æ‰˜ç®¡è½¬å…¥ï¼ˆè½¬å…¥ï¼‰
+            "99" => TransferRecordType.TransferOut,          // å†…éƒ¨æ‰˜ç®¡è½¬å‡ºï¼ˆè½¬å‡ºï¼‰
 
             _ => TransferRecordType.UNK
         };
@@ -283,4 +283,4 @@ internal class TransferRecordJson : JsonBase
 
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

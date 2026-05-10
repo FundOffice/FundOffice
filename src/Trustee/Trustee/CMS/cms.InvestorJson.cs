@@ -6,97 +6,97 @@ namespace FMO.Trustee.JsonCMS;
 
 
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class InvestorJson : JsonBase
 {
 
     /// <summary>
-    /// ¿Í»§Ãû³Æ£¬×î´ó³¤¶È200
+    /// å®¢æˆ·åç§°ï¼Œæœ€å¤§é•¿åº¦200
     /// </summary>
     [JsonPropertyName("custName")]
     public string CustName { get; set; }
 
     /// <summary>
-    /// ¿Í»§ÀàĞÍ£¬×î´ó³¤¶È30
+    /// å®¢æˆ·ç±»å‹ï¼Œæœ€å¤§é•¿åº¦30
     /// </summary>
     [JsonPropertyName("custType")]
     public string CustType { get; set; }
 
     /// <summary>
-    /// Ö¤¼şÀàĞÍ£¬×î´ó³¤¶È50
+    /// è¯ä»¶ç±»å‹ï¼Œæœ€å¤§é•¿åº¦50
     /// </summary>
     [JsonPropertyName("certificateType")]
     public string CertificateType { get; set; }
 
     /// <summary>
-    /// Ö¤¼şºÅÂë£¬×î´ó³¤¶È30
+    /// è¯ä»¶å·ç ï¼Œæœ€å¤§é•¿åº¦30
     /// </summary>
     [JsonPropertyName("certificateNo")]
     public string CertificateNo { get; set; }
 
     /// <summary>
-    /// »ù½ğÕËºÅ£¬×î´ó³¤¶È20
+    /// åŸºé‡‘è´¦å·ï¼Œæœ€å¤§é•¿åº¦20
     /// </summary>
     [JsonPropertyName("taAccountId")]
     public string TaAccountId { get; set; }
 
     /// <summary>
-    /// ½»Ò×ÕËºÅ£¬×î´ó³¤¶È30
+    /// äº¤æ˜“è´¦å·ï¼Œæœ€å¤§é•¿åº¦30
     /// </summary>
     [JsonPropertyName("transactionAccountId")]
     public string TransactionAccountId { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÕË»§Ãû³Æ£¬×î´ó³¤¶È300
+    /// é“¶è¡Œè´¦æˆ·åç§°ï¼Œæœ€å¤§é•¿åº¦300
     /// </summary>
     [JsonPropertyName("acctName")]
     public string AcctName { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÕËºÅ£¬×î´ó³¤¶È20
+    /// é“¶è¡Œè´¦å·ï¼Œæœ€å¤§é•¿åº¦20
     /// </summary>
     [JsonPropertyName("acctNo")]
     public string AcctNo { get; set; }
 
     /// <summary>
-    /// ¿ª»§ĞĞÃû³Æ£¬×î´ó³¤¶È50
+    /// å¼€æˆ·è¡Œåç§°ï¼Œæœ€å¤§é•¿åº¦50
     /// </summary>
     [JsonPropertyName("clearingAgency")]
     public string ClearingAgency { get; set; }
 
     /// <summary>
-    /// ¿ª»§ĞĞÊ¡·İ£¬×î´ó³¤¶È50
+    /// å¼€æˆ·è¡Œçœä»½ï¼Œæœ€å¤§é•¿åº¦50
     /// </summary>
     [JsonPropertyName("provinces")]
     public string Provinces { get; set; }
 
     /// <summary>
-    /// ¿ª»§ĞĞ³ÇÊĞ£¬×î´ó³¤¶È50
+    /// å¼€æˆ·è¡ŒåŸå¸‚ï¼Œæœ€å¤§é•¿åº¦50
     /// </summary>
     [JsonPropertyName("city")]
     public string City { get; set; }
 
     /// <summary>
-    /// »ù½ğÕËºÅ¿ª»§ÈÕÆÚ£¬¸ñÊ½£ºyyyymmdd
+    /// åŸºé‡‘è´¦å·å¼€æˆ·æ—¥æœŸï¼Œæ ¼å¼ï¼šyyyymmdd
     /// </summary>
     [JsonPropertyName("openDate")]
     public string OpenDate { get; set; }
 
     /// <summary>
-    /// ¿Í»§ËùÊôÏúÊÛÇşµÀ£¬×î´ó³¤¶È50
+    /// å®¢æˆ·æ‰€å±é”€å”®æ¸ é“ï¼Œæœ€å¤§é•¿åº¦50
     /// </summary>
     [JsonPropertyName("distributorName")]
     public string DistributorName { get; set; }
 
     /// <summary>
-    /// ÏúÊÛÇşµÀ´úÂë£¬×î´ó³¤¶È3
+    /// é”€å”®æ¸ é“ä»£ç ï¼Œæœ€å¤§é•¿åº¦3
     /// </summary>
     [JsonPropertyName("distributorCode")]
     public string DistributorCode { get; set; }
 
     /// <summary>
-    /// ÊÇ·ñ×¨ÒµÍ¶×Ê»ú¹¹£¬×î´ó³¤¶È10
+    /// æ˜¯å¦ä¸“ä¸šæŠ•èµ„æœºæ„ï¼Œæœ€å¤§é•¿åº¦10
     /// </summary>
     [JsonPropertyName("individualOrInstitution")]
     public string IndividualOrInstitution { get; set; }
@@ -108,9 +108,9 @@ internal class InvestorJson : JsonBase
         EntityType entityType = ParseCustomerType(CustType);
 
         if (iDType == IDType.Unknown)
-            ReportJsonUnexpected(CMS._Identifier, nameof(CMS.QueryInvestors), $"{CustName}µÄÖ¤¼şÀàĞÍ[{CertificateType}]ÎŞ·¨Ê¶±ğ");
+            ReportJsonUnexpected(CMS._Identifier, nameof(CMS.QueryInvestors), $"{CustName}çš„è¯ä»¶ç±»å‹[{CertificateType}]æ— æ³•è¯†åˆ«");
         if (entityType == EntityType.Unk)
-            ReportJsonUnexpected(CMS._Identifier, nameof(CMS.QueryInvestors), $"{CustName}µÄÊµÌåÀàĞÍ[{entityType}]ÎŞ·¨Ê¶±ğ");
+            ReportJsonUnexpected(CMS._Identifier, nameof(CMS.QueryInvestors), $"{CustName}çš„å®ä½“ç±»å‹[{entityType}]æ— æ³•è¯†åˆ«");
 
         return new Investor
         {
@@ -125,9 +125,9 @@ internal class InvestorJson : JsonBase
     {
         return custType switch
         {
-            "¸öÈË" => EntityType.Natural,
-            "»ú¹¹" => EntityType.Institution,
-            "²úÆ·" => EntityType.Product,
+            "ä¸ªäºº" => EntityType.Natural,
+            "æœºæ„" => EntityType.Institution,
+            "äº§å“" => EntityType.Product,
             _ => EntityType.Unk
         };
     }
@@ -136,48 +136,48 @@ internal class InvestorJson : JsonBase
     {
         return certificateType switch
         {
-            "0" or "Î´ÖªÖ¤¼şÀàĞÍ" or "Î´Öª" => IDType.Unknown,
-            "1" or "Éí·İÖ¤" or "¾ÓÃñÉí·İÖ¤" => IDType.IdentityCard,
-            "2" or "Éç±£¿¨" => IDType.Unknown, // ¿É¸ù¾İÊµ¼ÊÇé¿öÓ³Éä
-            "3" or "ÖĞ¹ú»¤ÕÕ" => IDType.PassportChina,
-            "4" or "¾ü¹ÙÖ¤" => IDType.OfficerID,
-            "5" or "Ê¿±øÖ¤" => IDType.SoldierID,
-            "6" or "¸Û°Ä¾ÓÃñÀ´ÍùÄÚµØÍ¨ĞĞÖ¤" => IDType.HongKongMacauPass,
-            "7" or "»§¿Ú±¾" => IDType.HouseholdRegister,
-            "8" or "Íâ¹ú»¤ÕÕ" => IDType.PassportForeign,
-            "9" or "ÆäËû" or "ÆäËûÖ¤¼ş" => IDType.Other,
-            "10" or "ÎÄÖ°Ö¤" => IDType.CivilianID,
-            "11" or "¾¯¹ÙÖ¤" => IDType.PoliceID,
-            "12" or "Ì¨°ûÖ¤" => IDType.TaiwanCompatriotsID,
-            "13" or "Íâ¹úÈËÓÀ¾Ã¾ÓÁôÉí·İÖ¤" => IDType.ForeignPermanentResidentID,
+            "0" or "æœªçŸ¥è¯ä»¶ç±»å‹" or "æœªçŸ¥" => IDType.Unknown,
+            "1" or "èº«ä»½è¯" or "å±…æ°‘èº«ä»½è¯" => IDType.IdentityCard,
+            "2" or "ç¤¾ä¿å¡" => IDType.Unknown, // å¯æ ¹æ®å®é™…æƒ…å†µæ˜ å°„
+            "3" or "ä¸­å›½æŠ¤ç…§" => IDType.PassportChina,
+            "4" or "å†›å®˜è¯" => IDType.OfficerID,
+            "5" or "å£«å…µè¯" => IDType.SoldierID,
+            "6" or "æ¸¯æ¾³å±…æ°‘æ¥å¾€å†…åœ°é€šè¡Œè¯" => IDType.HongKongMacauPass,
+            "7" or "æˆ·å£æœ¬" => IDType.HouseholdRegister,
+            "8" or "å¤–å›½æŠ¤ç…§" => IDType.PassportForeign,
+            "9" or "å…¶ä»–" or "å…¶ä»–è¯ä»¶" => IDType.Other,
+            "10" or "æ–‡èŒè¯" => IDType.CivilianID,
+            "11" or "è­¦å®˜è¯" => IDType.PoliceID,
+            "12" or "å°èƒè¯" => IDType.TaiwanCompatriotsID,
+            "13" or "å¤–å›½äººæ°¸ä¹…å±…ç•™èº«ä»½è¯" => IDType.ForeignPermanentResidentID,
             "20" => IDType.Unknown,
-            "21" or "±¸°¸Ö¤Ã÷" => IDType.ProductFilingCode, // ¿É¸ù¾İÊµ¼ÊÇé¿öÓ³Éä
-            "22" or "×éÖ¯»ú¹¹´úÂë" or "×éÖ¯»ú¹¹´úÂëÖ¤" => IDType.OrganizationCode,
-            "23" or "Éç»áÍ³Ò»ĞÅÓÃ´úÂë" or "Í³Ò»Éç»áĞÅÓÃ´úÂë" => IDType.UnifiedSocialCreditCode,
-            "24" or "¹¤ÉÌ×¢²áºÅ" or "×¢²áºÅ" => IDType.RegistrationNumber,
-            "25" or "ÓªÒµÖ´ÕÕ" or "ÓªÒµÖ´ÕÕºÅ" => IDType.BusinessLicenseNumber,
-            "26" or "ĞĞÕş»ú¹Ø" => IDType.Other, // ¿É¸ù¾İÊµ¼ÊÇé¿öÓ³Éä
-            "27" or "Éç»áÍÅÌå" => IDType.Other, // ¿É¸ù¾İÊµ¼ÊÇé¿öÓ³Éä
-            "28" or "¾ü¶Ó" => IDType.Other, // ¿É¸ù¾İÊµ¼ÊÇé¿öÓ³Éä
-            "29" or "Îä¾¯" => IDType.Other, // ¿É¸ù¾İÊµ¼ÊÇé¿öÓ³Éä
-            "30" or "ÏÂÊô»ú¹¹£¨¾ßÓĞÖ÷¹Üµ¥Î»ÅúÎÄºÅ£©" => IDType.Other, // ¿É¸ù¾İÊµ¼ÊÇé¿öÓ³Éä
-            "31" or "»ù½ğ»á" => IDType.Other, // ¿É¸ù¾İÊµ¼ÊÇé¿öÓ³Éä
-            "32" or "µÇ¼ÇÖ¤Êé" => IDType.Other, // ¿É¸ù¾İÊµ¼ÊÇé¿öÓ³Éä
-            "33" or "ÅúÎÄ" => IDType.Other, // ¿É¸ù¾İÊµ¼ÊÇé¿öÓ³Éä
-            "34" or "ÆäËü" => IDType.Other,
-            "40" => IDType.Other, // ¿É¸ù¾İÊµ¼ÊÇé¿öÓ³Éä
+            "21" or "å¤‡æ¡ˆè¯æ˜" => IDType.ProductFilingCode, // å¯æ ¹æ®å®é™…æƒ…å†µæ˜ å°„
+            "22" or "ç»„ç»‡æœºæ„ä»£ç " or "ç»„ç»‡æœºæ„ä»£ç è¯" => IDType.OrganizationCode,
+            "23" or "ç¤¾ä¼šç»Ÿä¸€ä¿¡ç”¨ä»£ç " or "ç»Ÿä¸€ç¤¾ä¼šä¿¡ç”¨ä»£ç " => IDType.UnifiedSocialCreditCode,
+            "24" or "å·¥å•†æ³¨å†Œå·" or "æ³¨å†Œå·" => IDType.RegistrationNumber,
+            "25" or "è¥ä¸šæ‰§ç…§" or "è¥ä¸šæ‰§ç…§å·" => IDType.BusinessLicenseNumber,
+            "26" or "è¡Œæ”¿æœºå…³" => IDType.Other, // å¯æ ¹æ®å®é™…æƒ…å†µæ˜ å°„
+            "27" or "ç¤¾ä¼šå›¢ä½“" => IDType.Other, // å¯æ ¹æ®å®é™…æƒ…å†µæ˜ å°„
+            "28" or "å†›é˜Ÿ" => IDType.Other, // å¯æ ¹æ®å®é™…æƒ…å†µæ˜ å°„
+            "29" or "æ­¦è­¦" => IDType.Other, // å¯æ ¹æ®å®é™…æƒ…å†µæ˜ å°„
+            "30" or "ä¸‹å±æœºæ„ï¼ˆå…·æœ‰ä¸»ç®¡å•ä½æ‰¹æ–‡å·ï¼‰" => IDType.Other, // å¯æ ¹æ®å®é™…æƒ…å†µæ˜ å°„
+            "31" or "åŸºé‡‘ä¼š" => IDType.Other, // å¯æ ¹æ®å®é™…æƒ…å†µæ˜ å°„
+            "32" or "ç™»è®°è¯ä¹¦" => IDType.Other, // å¯æ ¹æ®å®é™…æƒ…å†µæ˜ å°„
+            "33" or "æ‰¹æ–‡" => IDType.Other, // å¯æ ¹æ®å®é™…æƒ…å†µæ˜ å°„
+            "34" or "å…¶å®ƒ" => IDType.Other,
+            "40" => IDType.Other, // å¯æ ¹æ®å®é™…æƒ…å†µæ˜ å°„
             "41" => IDType.BusinessLicenseNumber,
-            "42" => IDType.Other, // ¿É¸ù¾İÊµ¼ÊÇé¿öÓ³Éä
+            "42" => IDType.Other, // å¯æ ¹æ®å®é™…æƒ…å†µæ˜ å°„
             "43" => IDType.Other,
-            "¹ÜÀíÈËµÇ¼Ç±àÂë" => IDType.ManagerRegistrationCode,
-            "²úÆ·±¸°¸±àÂë" => IDType.ProductFilingCode,
-            "Ö¤È¯ÒµÎñĞí¿ÉÖ¤" => IDType.SecuritiesBusinessLicense,
-            "²úÆ·µÇ¼Ç±àÂë" => IDType.ProductRegistrationCode,
-            "¸Û°ÄÌ¨¾ÓÃñ¾Ó×¡Ö¤" => IDType.ResidencePermitForHongKongMacaoAndTaiwanResidents,
-            "ĞÅÍĞµÇ¼ÇÏµÍ³²úÆ·±àÂë" => IDType.TrustRegistrationSystemProductCode,
+            "ç®¡ç†äººç™»è®°ç¼–ç " => IDType.ManagerRegistrationCode,
+            "äº§å“å¤‡æ¡ˆç¼–ç " => IDType.ProductFilingCode,
+            "è¯åˆ¸ä¸šåŠ¡è®¸å¯è¯" => IDType.SecuritiesBusinessLicense,
+            "äº§å“ç™»è®°ç¼–ç " => IDType.ProductRegistrationCode,
+            "æ¸¯æ¾³å°å±…æ°‘å±…ä½è¯" => IDType.ResidencePermitForHongKongMacaoAndTaiwanResidents,
+            "ä¿¡æ‰˜ç™»è®°ç³»ç»Ÿäº§å“ç¼–ç " => IDType.TrustRegistrationSystemProductCode,
             _ => IDType.Unknown,
         };
     }
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

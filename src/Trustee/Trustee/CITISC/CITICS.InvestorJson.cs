@@ -3,54 +3,54 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee.JsonCITICS;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class InvestorJson : JsonBase
 {
     [JsonPropertyName("custName")]
-    public string CustName { get; set; } // Í¶×ÊÕßÃû³Æ
+    public string CustName { get; set; } // æŠ•èµ„è€…åç§°
 
     [JsonPropertyName("fundAcco")]
-    public string FundAcco { get; set; } // »ù½ğÕËºÅ
+    public string FundAcco { get; set; } // åŸºé‡‘è´¦å·
 
     [JsonPropertyName("tradeAcco")]
-    public string TradeAcco { get; set; } // ½»Ò×ÕËºÅ
+    public string TradeAcco { get; set; } // äº¤æ˜“è´¦å·
 
     [JsonPropertyName("custType")]
-    public string CustType { get; set; } // ¿Í»§ÀàĞÍ£¨²Î¼û¸½Â¼4£©
+    public string CustType { get; set; } // å®¢æˆ·ç±»å‹ï¼ˆå‚è§é™„å½•4ï¼‰
 
     [JsonPropertyName("certiType")]
-    public string CertiType { get; set; } // Ö¤¼şÀàĞÍ£¨²Î¼û¸½Â¼4£©
+    public string CertiType { get; set; } // è¯ä»¶ç±»å‹ï¼ˆå‚è§é™„å½•4ï¼‰
 
     [JsonPropertyName("certiNo")]
-    public string CertiNo { get; set; } // Ö¤¼şºÅ
+    public string CertiNo { get; set; } // è¯ä»¶å·
 
     [JsonPropertyName("bankNo")]
-    public string? BankNo { get; set; } // ÒøĞĞ±àºÅ
+    public string? BankNo { get; set; } // é“¶è¡Œç¼–å·
 
     [JsonPropertyName("bankAccount")]
-    public string? BankAccount { get; set; } // ÒøĞĞÕËºÅ
+    public string? BankAccount { get; set; } // é“¶è¡Œè´¦å·
 
     [JsonPropertyName("bankOpenName")]
-    public string? BankOpenName { get; set; } // ¿ª»§ĞĞÃû³Æ
+    public string? BankOpenName { get; set; } // å¼€æˆ·è¡Œåç§°
 
     [JsonPropertyName("bankAccountName")]
-    public string? BankAccountName { get; set; } // ÒøĞĞ»§Ãû
+    public string? BankAccountName { get; set; } // é“¶è¡Œæˆ·å
 
     [JsonPropertyName("address")]
-    public string? Address { get; set; } // Í¨Ñ¶µØÖ·
+    public string? Address { get; set; } // é€šè®¯åœ°å€
 
     [JsonPropertyName("tel")]
-    public string? Tel { get; set; } // ÁªÏµµç»°
+    public string? Tel { get; set; } // è”ç³»ç”µè¯
 
     [JsonPropertyName("zipCode")]
-    public string? ZipCode { get; set; } // ÓÊ±à
+    public string? ZipCode { get; set; } // é‚®ç¼–
 
     [JsonPropertyName("agencyNo")]
-    public string? AgencyNo { get; set; } // ÏúÊÛÉÌ´úÂë£¬ZX6±íÊ¾Ö±Ïú
+    public string? AgencyNo { get; set; } // é”€å”®å•†ä»£ç ï¼ŒZX6è¡¨ç¤ºç›´é”€
 
     [JsonPropertyName("email")]
-    public string? Email { get; set; } // ÓÊÏä
+    public string? Email { get; set; } // é‚®ç®±
 
     public Investor ToObject()
     {
@@ -70,52 +70,52 @@ internal class InvestorJson : JsonBase
         if (string.IsNullOrEmpty(custType) || string.IsNullOrEmpty(certiType))
             return IDType.Unknown;
 
-        // ´¦Àí¿Í»§ÀàĞÍ£º0=»ú¹¹£¬1=¸öÈË£¬2=²úÆ·
+        // å¤„ç†å®¢æˆ·ç±»å‹ï¼š0=æœºæ„ï¼Œ1=ä¸ªäººï¼Œ2=äº§å“
         switch (custType)
         {
-            case "0": // »ú¹¹
+            case "0": // æœºæ„
                 return certiType.ToUpper() switch
                 {
-                    "0" => IDType.OrganizationCode, // ×éÖ¯»ú¹¹´úÂëÖ¤
-                    "1" => IDType.BusinessLicenseNumber,      // ÓªÒµÖ´ÕÕ
-                    "2" => IDType.RegistrationNumber,         // ĞĞÕş»ú¹Ø
-                    "3" => IDType.OrganizationCode,           // Éç»áÍÅÌå
-                    "4" => IDType.Other,                     // ¾ü¶Ó
-                    "5" => IDType.Other,                     // Îä¾¯
-                    "6" => IDType.Other,                     // ÏÂÊô»ú¹¹
-                    "7" => IDType.Other,                     // »ù½ğ»á
-                    "8" => IDType.Other,                     // ÆäËû»ú¹¹
-                    "9" => IDType.ProductFilingCode,         // µÇ¼ÇÖ¤Êé
-                    "A" => IDType.ManagerRegistrationCode,   // ÅúÎÄ
+                    "0" => IDType.OrganizationCode, // ç»„ç»‡æœºæ„ä»£ç è¯
+                    "1" => IDType.BusinessLicenseNumber,      // è¥ä¸šæ‰§ç…§
+                    "2" => IDType.RegistrationNumber,         // è¡Œæ”¿æœºå…³
+                    "3" => IDType.OrganizationCode,           // ç¤¾ä¼šå›¢ä½“
+                    "4" => IDType.Other,                     // å†›é˜Ÿ
+                    "5" => IDType.Other,                     // æ­¦è­¦
+                    "6" => IDType.Other,                     // ä¸‹å±æœºæ„
+                    "7" => IDType.Other,                     // åŸºé‡‘ä¼š
+                    "8" => IDType.Other,                     // å…¶ä»–æœºæ„
+                    "9" => IDType.ProductFilingCode,         // ç™»è®°è¯ä¹¦
+                    "A" => IDType.ManagerRegistrationCode,   // æ‰¹æ–‡
                     _ => IDType.Unknown
                 };
 
-            case "1": // ¸öÈË
+            case "1": // ä¸ªäºº
                 return certiType.ToUpper() switch
                 {
-                    "0" => IDType.IdentityCard,                    // Éí·İÖ¤
-                    "1" => IDType.PassportChina,                   // ÖĞ¹ú»¤ÕÕ
-                    "2" => IDType.OfficerID,                       // ¾ü¹ÙÖ¤
-                    "3" => IDType.SoldierID,                       // Ê¿±øÖ¤
-                    "4" => IDType.HongKongMacauPass,               // ¸Û°Ä¾ÓÃñÀ´ÍùÄÚµØÍ¨ĞĞÖ¤
-                    "5" => IDType.HouseholdRegister,               // »§¿Ú±¾
-                    "6" => IDType.PassportForeign,                 // Íâ¼®»¤ÕÕ
-                    "7" => IDType.Other,                           // ÆäËû
-                    "8" => IDType.CivilianID,                      // ÎÄÖ°Ö¤
-                    "9" => IDType.PoliceID,                        // ¾¯¹ÙÖ¤
-                    "A" => IDType.TaiwanCompatriotsID,             // Ì¨°ûÖ¤
-                    "B" => IDType.ForeignPermanentResidentID,      // Íâ¹úÈËÓÀ¾Ã¾ÓÁôÉí·İÖ¤
-                    "C" => IDType.ResidencePermitForHongKongMacaoAndTaiwanResidents, // ¸Û°ÄÌ¨¾ÓÃñ¾Ó×¡Ö¤
+                    "0" => IDType.IdentityCard,                    // èº«ä»½è¯
+                    "1" => IDType.PassportChina,                   // ä¸­å›½æŠ¤ç…§
+                    "2" => IDType.OfficerID,                       // å†›å®˜è¯
+                    "3" => IDType.SoldierID,                       // å£«å…µè¯
+                    "4" => IDType.HongKongMacauPass,               // æ¸¯æ¾³å±…æ°‘æ¥å¾€å†…åœ°é€šè¡Œè¯
+                    "5" => IDType.HouseholdRegister,               // æˆ·å£æœ¬
+                    "6" => IDType.PassportForeign,                 // å¤–ç±æŠ¤ç…§
+                    "7" => IDType.Other,                           // å…¶ä»–
+                    "8" => IDType.CivilianID,                      // æ–‡èŒè¯
+                    "9" => IDType.PoliceID,                        // è­¦å®˜è¯
+                    "A" => IDType.TaiwanCompatriotsID,             // å°èƒè¯
+                    "B" => IDType.ForeignPermanentResidentID,      // å¤–å›½äººæ°¸ä¹…å±…ç•™èº«ä»½è¯
+                    "C" => IDType.ResidencePermitForHongKongMacaoAndTaiwanResidents, // æ¸¯æ¾³å°å±…æ°‘å±…ä½è¯
                     _ => IDType.Unknown
                 };
 
-            case "2": // ²úÆ·
+            case "2": // äº§å“
                 return certiType.ToUpper() switch
                 {
-                    "1" => IDType.BusinessLicenseNumber, // ÓªÒµÖ´ÕÕ£¨Ö±Ïú½Ó¿Ú²»ÔÊĞíÊ¹ÓÃ£©
-                    "8" => IDType.Other,                 // ÆäËû
-                    "9" => IDType.ProductFilingCode,     // µÇ¼ÇÖ¤Êé£¨Ö±Ïú½Ó¿Ú²»ÔÊĞíÊ¹ÓÃ£©
-                    "A" => IDType.ManagerRegistrationCode, // ÅúÎÄ
+                    "1" => IDType.BusinessLicenseNumber, // è¥ä¸šæ‰§ç…§ï¼ˆç›´é”€æ¥å£ä¸å…è®¸ä½¿ç”¨ï¼‰
+                    "8" => IDType.Other,                 // å…¶ä»–
+                    "9" => IDType.ProductFilingCode,     // ç™»è®°è¯ä¹¦ï¼ˆç›´é”€æ¥å£ä¸å…è®¸ä½¿ç”¨ï¼‰
+                    "A" => IDType.ManagerRegistrationCode, // æ‰¹æ–‡
                     _ => IDType.Unknown
                 };
 
@@ -127,4 +127,4 @@ internal class InvestorJson : JsonBase
 
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

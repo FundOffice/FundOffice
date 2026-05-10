@@ -4,108 +4,108 @@ using System.Text.Json.Serialization;
 namespace FMO.Trustee;
 
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class RaisingBankTransactionJson : JsonBase
 {
     /// <summary>
-    /// ½»Ò×ÈÕÆÚ£¬¸ñÊ½£ºYYYY-MM-DD
+    /// äº¤æ˜“æ—¥æœŸï¼Œæ ¼å¼ï¼šYYYY-MM-DD
     /// </summary>
     [JsonPropertyName("tradeDate")]
 
     public string TradeDate { get; set; }
 
     /// <summary>
-    /// »ù½ğ´úÂë
+    /// åŸºé‡‘ä»£ç 
     /// </summary>
     [JsonPropertyName("fundCode")]
 
     public string FundCode { get; set; }
 
     /// <summary>
-    /// »ù½ğÃû³Æ
+    /// åŸºé‡‘åç§°
     /// </summary>
     [JsonPropertyName("fundName")]
 
     public string FundName { get; set; }
 
     /// <summary>
-    /// ½»Ò×Ê±¼ä£¬¸ñÊ½£ºHHMMSS
+    /// äº¤æ˜“æ—¶é—´ï¼Œæ ¼å¼ï¼šHHMMSS
     /// </summary>
     [JsonPropertyName("tradeTime")]
 
     public string TradeTime { get; set; }
 
     /// <summary>
-    /// ½»Ò×½ğ¶î£¬¸ñÊ½£ºĞ¡ÊıµãºóÁ½Î»
+    /// äº¤æ˜“é‡‘é¢ï¼Œæ ¼å¼ï¼šå°æ•°ç‚¹åä¸¤ä½
     /// </summary>
     [JsonPropertyName("amt")]
 
     public string Amount { get; set; }
 
     /// <summary>
-    /// ½è´û±êÊ¶£º1-½è£¬2-´û
+    /// å€Ÿè´·æ ‡è¯†ï¼š1-å€Ÿï¼Œ2-è´·
     /// </summary>
     [JsonPropertyName("transferInOut")]
     public string TransferType { get; set; }
 
     /// <summary>
-    /// ÕË»§Óà¶î£¬¸ñÊ½£ºĞ¡ÊıµãºóÁ½Î»
+    /// è´¦æˆ·ä½™é¢ï¼Œæ ¼å¼ï¼šå°æ•°ç‚¹åä¸¤ä½
     /// </summary>
     [JsonPropertyName("balance")]
 
     public string Balance { get; set; }
 
     /// <summary>
-    /// ¶Ô·½ÕËºÅ
+    /// å¯¹æ–¹è´¦å·
     /// </summary>
     [JsonPropertyName("optBankAcco")]
 
     public string CounterpartyAccount { get; set; }
 
     /// <summary>
-    /// ¶Ô·½»§Ãû
+    /// å¯¹æ–¹æˆ·å
     /// </summary>
     [JsonPropertyName("optAccName")]
 
     public string CounterpartyName { get; set; }
 
     /// <summary>
-    /// ¶Ô·½¿ª»§ĞĞÃû³Æ
+    /// å¯¹æ–¹å¼€æˆ·è¡Œåç§°
     /// </summary>
     [JsonPropertyName("optOpenBankName")]
 
     public string CounterpartyBank { get; set; }
 
     /// <summary>
-    /// ±¾·½ÕËºÅ
+    /// æœ¬æ–¹è´¦å·
     /// </summary>
     [JsonPropertyName("bankAcco")]
     public string OurAccount { get; set; }
 
     /// <summary>
-    /// ½»Ò×ÕªÒª
+    /// äº¤æ˜“æ‘˜è¦
     /// </summary>
     [JsonPropertyName("digest")]
 
     public string Summary { get; set; }
 
     /// <summary>
-    /// ±í¼ÇÂ¼ID
+    /// è¡¨è®°å½•ID
     /// </summary>
     [JsonPropertyName("id")]
     public string RecordId { get; set; }
 
     /// <summary>
-    /// ½»Ò×Á÷Ë®ºÅ
+    /// äº¤æ˜“æµæ°´å·
     /// </summary>
     [JsonPropertyName("serialNo")]
 
     public string TransactionNo { get; set; }
 
     /// <summary>
-    /// Á÷Ë®ÏêÏ¸×´Ì¬
-    /// 0-ÎŞ¹ØÁª¶©µ¥£¬1-ÒÑÏÂµ¥ÓĞÓà¿î£¬2-ÒÑÏÂµ¥»òÒÑÍË¿î£¬3-ÍË¿îÖĞ£¬5-ÒÑÏÂµ¥¶àÓà¿îÏîÍË¿îÖĞ£¬¿Õ-ÆäËû×´Ì¬
+    /// æµæ°´è¯¦ç»†çŠ¶æ€
+    /// 0-æ— å…³è”è®¢å•ï¼Œ1-å·²ä¸‹å•æœ‰ä½™æ¬¾ï¼Œ2-å·²ä¸‹å•æˆ–å·²é€€æ¬¾ï¼Œ3-é€€æ¬¾ä¸­ï¼Œ5-å·²ä¸‹å•å¤šä½™æ¬¾é¡¹é€€æ¬¾ä¸­ï¼Œç©º-å…¶ä»–çŠ¶æ€
     /// </summary>
     [JsonPropertyName("detailStatus")]
 
@@ -121,9 +121,9 @@ internal class RaisingBankTransactionJson : JsonBase
             Time = DateTime.ParseExact(TradeDate + TradeTime, "yyyyMMddHHmmss", null),
             Amount = ParseDecimal(Amount),
             AccountNo = OurAccount,
-            // ´ËÊôĞÔÈ±Ê§
+            // æ­¤å±æ€§ç¼ºå¤±
             AccountBank = "unset",
-            AccountName = $"{FundName}Ä¼¼¯»§",//"unset",
+            AccountName = $"{FundName}å‹Ÿé›†æˆ·",//"unset",
             Direction = TransferType == "1" ? TransctionDirection.Pay : TransctionDirection.Receive,
             CounterBank = CounterpartyBank,
             CounterName = CounterpartyName,
@@ -137,4 +137,4 @@ internal class RaisingBankTransactionJson : JsonBase
 
 
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

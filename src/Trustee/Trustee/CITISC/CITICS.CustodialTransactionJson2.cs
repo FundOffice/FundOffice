@@ -3,75 +3,75 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee.JsonCITICS;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class CustodialTransactionJson2 : JsonBase
 {
     /// <summary>
-    /// ¸¶·½ÕËºÅ
+    /// ä»˜æ–¹è´¦å·
     /// </summary>
     [JsonPropertyName("fpayerAcctCode")]
     public string PayerAccountCode { get; set; }
 
     /// <summary>
-    /// ¸¶·½»§Ãû
+    /// ä»˜æ–¹æˆ·å
     /// </summary>
     [JsonPropertyName("fpayerName")]
     public string PayerName { get; set; }
 
     /// <summary>
-    /// ¸¶·½¿ª»§ĞĞ
+    /// ä»˜æ–¹å¼€æˆ·è¡Œ
     /// </summary>
     [JsonPropertyName("fpayerBank")]
     public string PayerBank { get; set; }
 
     /// <summary>
-    /// ÊÕ¿î·½ÕËºÅ
+    /// æ”¶æ¬¾æ–¹è´¦å·
     /// </summary>
     [JsonPropertyName("fpayeeAcctCode")]
     public string PayeeAccountCode { get; set; }
 
     /// <summary>
-    /// ÊÕ¿î·½»§Ãû
+    /// æ”¶æ¬¾æ–¹æˆ·å
     /// </summary>
     [JsonPropertyName("fpayeeName")]
     public string PayeeName { get; set; }
 
     /// <summary>
-    /// ÊÕ¿î·½¿ª»§ĞĞ
+    /// æ”¶æ¬¾æ–¹å¼€æˆ·è¡Œ
     /// </summary>
     [JsonPropertyName("fpayeeBank")]
     public string PayeeBank { get; set; }
 
     /// <summary>
-    /// ·¢ÉúÈÕÆÚ£¨¸ñÊ½£ºyyyy-MM-dd£©
+    /// å‘ç”Ÿæ—¥æœŸï¼ˆæ ¼å¼ï¼šyyyy-MM-ddï¼‰
     /// </summary>
     [JsonPropertyName("date")]
     public string OccurDate { get; set; }
 
     /// <summary>
-    /// ÊÕ¿î·½Ïò´úÂë£º
-    /// SFKFX001: ³ö¿î
-    /// SFKFX002: Èë¿î
-    /// SFKFX003: µ÷²¦
+    /// æ”¶æ¬¾æ–¹å‘ä»£ç ï¼š
+    /// SFKFX001: å‡ºæ¬¾
+    /// SFKFX002: å…¥æ¬¾
+    /// SFKFX003: è°ƒæ‹¨
     /// </summary>
     [JsonPropertyName("fway")]
     public string DirectionCode { get; set; }
 
     /// <summary>
-    /// ÊÕ¿î·½ÏòÃû³Æ£¨SFKFX001£º³ö¿î£»SFKFX002£ºÈë¿î£»SFKFX003£ºµ÷²¦£©
+    /// æ”¶æ¬¾æ–¹å‘åç§°ï¼ˆSFKFX001ï¼šå‡ºæ¬¾ï¼›SFKFX002ï¼šå…¥æ¬¾ï¼›SFKFX003ï¼šè°ƒæ‹¨ï¼‰
     /// </summary>
     [JsonPropertyName("fwayName")]
     public string DirectionName { get; set; }
 
     /// <summary>
-    /// ·¢Éú½ğ¶î£¨×Ö·û´®ÀàĞÍ£¬±£ÁôÁ½Î»Ğ¡Êı£©
+    /// å‘ç”Ÿé‡‘é¢ï¼ˆå­—ç¬¦ä¸²ç±»å‹ï¼Œä¿ç•™ä¸¤ä½å°æ•°ï¼‰
     /// </summary>
     [JsonPropertyName("famount")]
     public decimal Amount { get; set; }
 
     /// <summary>
-    /// ±¸×¢
+    /// å¤‡æ³¨
     /// </summary>
     [JsonPropertyName("fsummary")]
     public string Summary { get; set; }
@@ -98,4 +98,4 @@ internal class CustodialTransactionJson2 : JsonBase
     }
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

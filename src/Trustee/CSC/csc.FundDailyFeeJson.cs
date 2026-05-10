@@ -4,168 +4,168 @@ using System.Text.Json.Serialization;
 namespace FMO.Trustee.JsonCSC;
 
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 public class FundDailyFeeJson : JsonBase
 {
 
     /// <summary>
-    /// ·ÑÓÃ¼ÆËãÈÕÆÚ
+    /// è´¹ç”¨è®¡ç®—æ—¥æœŸ
     /// </summary>
     [JsonPropertyName("confDate")]
     public string ConfDate { get; set; }
 
     /// <summary>
-    /// »ù½ğ´úÂë
+    /// åŸºé‡‘ä»£ç 
     /// </summary>
     [JsonPropertyName("fundCode")]
     public string FundCode { get; set; }
 
     /// <summary>
-    /// »ù½ğÃû³Æ
+    /// åŸºé‡‘åç§°
     /// </summary>
     [JsonPropertyName("fundName")]
     public string FundName { get; set; }
 
-    #region ·ÑÓÃ¼ÆÌá
+    #region è´¹ç”¨è®¡æ
     /// <summary>
-    /// ¹ÜÀí·Ñ
+    /// ç®¡ç†è´¹
     /// </summary>
     [JsonPropertyName("managementFee")]
     public string ManagementFee { get; set; }
 
     /// <summary>
-    /// Í¶¹Ë·Ñ
+    /// æŠ•é¡¾è´¹
     /// </summary>
     [JsonPropertyName("investmentFee")]
     public string InvestmentFee { get; set; }
 
     /// <summary>
-    /// ÏúÊÛ·şÎñ·Ñ
+    /// é”€å”®æœåŠ¡è´¹
     /// </summary>
     [JsonPropertyName("salesFee")]
     public string SalesFee { get; set; }
 
     /// <summary>
-    /// ÍĞ¹Ü·Ñ
+    /// æ‰˜ç®¡è´¹
     /// </summary>
     [JsonPropertyName("custodianFee")]
     public string CustodianFee { get; set; }
 
     /// <summary>
-    /// Íâ°ü·şÎñ·Ñ
+    /// å¤–åŒ…æœåŠ¡è´¹
     /// </summary>
     [JsonPropertyName("outsourcingFee")]
     public string OutsourcingFee { get; set; }
 
     /// <summary>
-    /// Òµ¼¨±¨³ê¼ÆÌá
+    /// ä¸šç»©æŠ¥é…¬è®¡æ
     /// </summary>
     [JsonPropertyName("reward")]
     public string Reward { get; set; }
 
     /// <summary>
-    /// ÔöÖµË°¼ÆÌá
+    /// å¢å€¼ç¨è®¡æ
     /// </summary>
     [JsonPropertyName("addedTax")]
     public string AddedTax { get; set; }
 
     /// <summary>
-    /// ¸½¼ÓË°¼ÆÌá
+    /// é™„åŠ ç¨è®¡æ
     /// </summary>
     [JsonPropertyName("surTax")]
     public string SurTax { get; set; }
 
     /// <summary>
-    /// ÔöÖµË°¼°¸½¼ÓË°¼ÆÌá
+    /// å¢å€¼ç¨åŠé™„åŠ ç¨è®¡æ
     /// </summary>
     [JsonPropertyName("addedSurTax")]
     public string AddedSurTax { get; set; }
     #endregion
 
-    #region ·ÑÓÃÖ§¸¶
+    #region è´¹ç”¨æ”¯ä»˜
     /// <summary>
-    /// ¹ÜÀí·ÑÖ§¸¶
+    /// ç®¡ç†è´¹æ”¯ä»˜
     /// </summary>
     [JsonPropertyName("managementFeePay")]
     public string ManagementFeePay { get; set; }
 
     /// <summary>
-    /// Í¶¹Ë·ÑÖ§¸¶
+    /// æŠ•é¡¾è´¹æ”¯ä»˜
     /// </summary>
     [JsonPropertyName("investmentFeePay")]
     public string InvestmentFeePay { get; set; }
 
     /// <summary>
-    /// ÏúÊÛ·şÎñ·ÑÖ§¸¶
+    /// é”€å”®æœåŠ¡è´¹æ”¯ä»˜
     /// </summary>
     [JsonPropertyName("salesFeePay")]
     public string SalesFeePay { get; set; }
 
     /// <summary>
-    /// ÍĞ¹Ü·ÑÖ§¸¶
+    /// æ‰˜ç®¡è´¹æ”¯ä»˜
     /// </summary>
     [JsonPropertyName("custodianFeePay")]
     public string CustodianFeePay { get; set; }
 
     /// <summary>
-    /// Íâ°ü·şÎñ·ÑÖ§¸¶
+    /// å¤–åŒ…æœåŠ¡è´¹æ”¯ä»˜
     /// </summary>
     [JsonPropertyName("outsourcingFeePay")]
     public string OutsourcingFeePay { get; set; }
 
     /// <summary>
-    /// Òµ¼¨±¨³êÖ§¸¶
+    /// ä¸šç»©æŠ¥é…¬æ”¯ä»˜
     /// </summary>
     [JsonPropertyName("rewardPay")]
     public string RewardPay { get; set; }
 
     /// <summary>
-    /// ÔöÖµË°¼°¸½¼ÓË°Ö§¸¶
+    /// å¢å€¼ç¨åŠé™„åŠ ç¨æ”¯ä»˜
     /// </summary>
     [JsonPropertyName("addedSurTaxPay")]
     public string AddedSurTaxPay { get; set; }
     #endregion
 
-    #region ·ÑÓÃÓà¶î
+    #region è´¹ç”¨ä½™é¢
     /// <summary>
-    /// ¹ÜÀí·ÑÓà¶î
+    /// ç®¡ç†è´¹ä½™é¢
     /// </summary>
     [JsonPropertyName("managementFeeBalance")]
     public string ManagementFeeBalance { get; set; }
 
     /// <summary>
-    /// Í¶¹Ë·ÑÓà¶î
+    /// æŠ•é¡¾è´¹ä½™é¢
     /// </summary>
     [JsonPropertyName("investmentFeeBalance")]
     public string InvestmentFeeBalance { get; set; }
 
     /// <summary>
-    /// ÏúÊÛ·şÎñ·ÑÓà¶î
+    /// é”€å”®æœåŠ¡è´¹ä½™é¢
     /// </summary>
     [JsonPropertyName("salesFeeBalance")]
     public string SalesFeeBalance { get; set; }
 
     /// <summary>
-    /// ÍĞ¹Ü·ÑÓà¶î
+    /// æ‰˜ç®¡è´¹ä½™é¢
     /// </summary>
     [JsonPropertyName("custodianFeeBalance")]
     public string CustodianFeeBalance { get; set; }
 
     /// <summary>
-    /// Íâ°ü·şÎñ·ÑÓà¶î
+    /// å¤–åŒ…æœåŠ¡è´¹ä½™é¢
     /// </summary>
     [JsonPropertyName("outsourcingFeeBalance")]
     public string OutsourcingFeeBalance { get; set; }
 
     /// <summary>
-    /// Òµ¼¨±¨³êÓà¶î
+    /// ä¸šç»©æŠ¥é…¬ä½™é¢
     /// </summary>
     [JsonPropertyName("rewardBalance")]
     public string RewardBalance { get; set; }
 
     /// <summary>
-    /// ÔöÖµË°¼°¸½¼ÓË°Óà¶î
+    /// å¢å€¼ç¨åŠé™„åŠ ç¨ä½™é¢
     /// </summary>
     [JsonPropertyName("addedSurTaxBalance")]
     public string AddedSurTaxBalance { get; set; }
@@ -205,4 +205,4 @@ public class FundDailyFeeJson : JsonBase
 }
 
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

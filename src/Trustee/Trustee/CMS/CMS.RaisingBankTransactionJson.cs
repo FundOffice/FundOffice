@@ -4,105 +4,105 @@ using System.Text.Json.Serialization;
 namespace FMO.Trustee.JsonCMS;
 
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class RaisingBankTransactionJson :JsonBase
 {
     /// <summary>
-    /// ±¾·½ÕË»§ºÅ
+    /// æœ¬æ–¹è´¦æˆ·å·
     /// </summary>
     [JsonPropertyName("bfzhh")]
     public string OurAccountNumber { get; set; }
 
     /// <summary>
-    /// ±¾·½ÕË»§Ãû
+    /// æœ¬æ–¹è´¦æˆ·å
     /// </summary>
     [JsonPropertyName("bfzhmc")]
     public string OurAccountName { get; set; }
 
     /// <summary>
-    /// ±ÒÖÖ
+    /// å¸ç§
     /// </summary>
     [JsonPropertyName("bz")]
     public string Currency { get; set; }
 
     /// <summary>
-    /// ²úÆ·´úÂë
+    /// äº§å“ä»£ç 
     /// </summary>
     [JsonPropertyName("cpdm")]
     public string ProductCode { get; set; }
 
     /// <summary>
-    /// ²úÆ·Ãû³Æ
+    /// äº§å“åç§°
     /// </summary>
     [JsonPropertyName("cpmc")]
     public string ProductName { get; set; }
 
     /// <summary>
-    /// ¶ÔÊÖ·½¿ª»§ĞĞÃû³Æ
+    /// å¯¹æ‰‹æ–¹å¼€æˆ·è¡Œåç§°
     /// </summary>
     [JsonPropertyName("dsfkhhmc")]
     public string CounterpartyBankName { get; set; }
 
     /// <summary>
-    /// ¶Ô·½ÕË»§ºÅ
+    /// å¯¹æ–¹è´¦æˆ·å·
     /// </summary>
     [JsonPropertyName("dsfzhh")]
     public string CounterpartyAccountNumber { get; set; }
 
     /// <summary>
-    /// ¶Ô·½ÕË»§Ãû
+    /// å¯¹æ–¹è´¦æˆ·å
     /// </summary>
     [JsonPropertyName("dsfzhmc")]
     public string CounterpartyAccountName { get; set; }
 
     /// <summary>
-    /// ½»Ò×½ğ¶î
+    /// äº¤æ˜“é‡‘é¢
     /// </summary>
     [JsonPropertyName("jyje")]
     public string TransactionAmount { get; set; }
 
     /// <summary>
-    /// ½»Ò×ÈÕÆÚ
+    /// äº¤æ˜“æ—¥æœŸ
     /// </summary>
     [JsonPropertyName("jyrq")]
     public string TransactionDate { get; set; }
 
     /// <summary>
-    /// ½»Ò×Ê±¼ä
+    /// äº¤æ˜“æ—¶é—´
     /// </summary>
     [JsonPropertyName("jysj")]
     public string TransactionTime { get; set; }
 
     /// <summary>
-    /// Á÷Ë®ºÅ
+    /// æµæ°´å·
     /// </summary>
     [JsonPropertyName("lsh")]
     public string TransactionId { get; set; }
 
     /// <summary>
-    /// Ä¼¼¯»§¿ª»§ĞĞ
+    /// å‹Ÿé›†æˆ·å¼€æˆ·è¡Œ
     /// </summary>
     [JsonPropertyName("mjhyh")]
     public string CollectionBank { get; set; }
 
     /// <summary>
-    /// ÊÕ¸¶·½Ïò£¨ÊÕ¡¢¸¶£©
+    /// æ”¶ä»˜æ–¹å‘ï¼ˆæ”¶ã€ä»˜ï¼‰
     /// </summary>
     [JsonPropertyName("sffx")]
     public string TransactionType { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÕªÒª
+    /// é“¶è¡Œæ‘˜è¦
     /// </summary>
     [JsonPropertyName("yhbz")]
     public string BankMemo { get; set; }
 
     internal RaisingBankTransaction ToObject()
     {
-        // ÅĞ¶Ï OurAccountName ÖĞÊÇ·ñÓĞ»ù½ğÃû 
-        if (OurAccountName == "ÕĞÉÌÖ¤È¯¹É·İÓĞÏŞ¹«Ë¾»ù½ğÔËÓªÍâ°ü·şÎñÄ¼¼¯×¨»§")
-            OurAccountName = $"{ProductName}Ä¼¼¯×¨»§";
+        // åˆ¤æ–­ OurAccountName ä¸­æ˜¯å¦æœ‰åŸºé‡‘å 
+        if (OurAccountName == "æ‹›å•†è¯åˆ¸è‚¡ä»½æœ‰é™å…¬å¸åŸºé‡‘è¿è¥å¤–åŒ…æœåŠ¡å‹Ÿé›†ä¸“æˆ·")
+            OurAccountName = $"{ProductName}å‹Ÿé›†ä¸“æˆ·";
 
         return new RaisingBankTransaction
         {
@@ -116,7 +116,7 @@ internal class RaisingBankTransactionJson :JsonBase
             CounterName = CounterpartyAccountName,
             CounterNo = CounterpartyAccountNumber,
             Amount = ParseDecimal(TransactionAmount),
-            Direction = TransactionType == "¸¶" ? TransctionDirection.Pay : TransctionDirection.Receive,
+            Direction = TransactionType == "ä»˜" ? TransctionDirection.Pay : TransctionDirection.Receive,
             Remark = BankMemo,
             Time = DateTime.ParseExact(TransactionDate + TransactionTime, "yyyyMMddHH:mm:ss", null)
         };
@@ -125,4 +125,4 @@ internal class RaisingBankTransactionJson :JsonBase
 
 
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

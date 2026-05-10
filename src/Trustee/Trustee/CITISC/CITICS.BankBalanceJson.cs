@@ -3,66 +3,66 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee.JsonCITICS;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class BankBalanceJson : JsonBase
 {
     /// <summary>
-    /// ÕËºÅ
+    /// è´¦å·
     /// </summary>
     [JsonPropertyName("YHZH")]
     public string AccountNumber { get; set; }
 
     /// <summary>
-    /// ÕË»§Óà¶î
+    /// è´¦æˆ·ä½™é¢
     /// </summary>
     [JsonPropertyName("ZHYE")]
     public string AccountBalance { get; set; }
 
     /// <summary>
-    /// ÕË»§Ãû³Æ
+    /// è´¦æˆ·åç§°
     /// </summary>
     [JsonPropertyName("KHHM")]
     public string AccountHolderName { get; set; }
 
     /// <summary>
-    /// »õ±ÒÖÖÀà£º
-    /// HKD-¸Û±Ò£»
-    /// RMB-ÈËÃñ±Ò£»
-    /// USD-ÃÀÔª
+    /// è´§å¸ç§ç±»ï¼š
+    /// HKD-æ¸¯å¸ï¼›
+    /// RMB-äººæ°‘å¸ï¼›
+    /// USD-ç¾å…ƒ
     /// </summary>
     [JsonPropertyName("JSBZ")]
     public string CurrencyType { get; set; }
 
     /// <summary>
-    /// Óà¶î²éÑ¯Ê±¼ä£¬¸ñÊ½£ºYYYY-MM-DD HH:MM:SS
+    /// ä½™é¢æŸ¥è¯¢æ—¶é—´ï¼Œæ ¼å¼ï¼šYYYY-MM-DD HH:MM:SS
     /// </summary>
     [JsonPropertyName("CXSJ")]
     public string QueryTime { get; set; }
 
     /// <summary>
-    /// ÕË»§¿ÉÓÃÓà¶î
+    /// è´¦æˆ·å¯ç”¨ä½™é¢
     /// </summary>
     [JsonPropertyName("ZHKYYE")]
     public string AvailableBalance { get; set; }
 
     /// <summary>
-    /// ´¦Àí½á¹û£º
-    /// 0-³É¹¦£»
-    /// -2-´¦ÀíÖĞ£»
-    /// ÆäËûÖµ´ú±íÊ§°Ü
+    /// å¤„ç†ç»“æœï¼š
+    /// 0-æˆåŠŸï¼›
+    /// -2-å¤„ç†ä¸­ï¼›
+    /// å…¶ä»–å€¼ä»£è¡¨å¤±è´¥
     /// </summary>
     [JsonPropertyName("CLJG")]
     public string ProcessingResult { get; set; }
 
     /// <summary>
-    /// ´¦ÀíËµÃ÷
+    /// å¤„ç†è¯´æ˜
     /// </summary>
     [JsonPropertyName("CLSM")]
     public string ProcessingDescription { get; set; }
 
     /// <summary>
-    /// ¿ª»§ĞĞ
+    /// å¼€æˆ·è¡Œ
     /// </summary>
     [JsonPropertyName("KHYH")]
     public string OpeningBank { get; set; }
@@ -82,4 +82,4 @@ internal class BankBalanceJson : JsonBase
 }
 
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

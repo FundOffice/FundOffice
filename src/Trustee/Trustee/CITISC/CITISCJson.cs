@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee.JsonCITICS;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class RootJson
 {
@@ -51,13 +51,13 @@ internal class ReturnJsonRoot<T>
 public class QueryRoot<T>
 {
     /// <summary>
-    /// µ±Ç°Ò³
+    /// å½“å‰é¡µ
     /// </summary>
     [JsonPropertyName("pageNum")]
     public int PageNum { get; set; }
 
     /// <summary>
-    /// µ±Ç°Ò³µÄÊıÁ¿
+    /// å½“å‰é¡µçš„æ•°é‡
     /// </summary>
     [JsonPropertyName("size")]
     public int Size { get; set; }
@@ -66,13 +66,13 @@ public class QueryRoot<T>
     public int Total { get; set; }
 
     /// <summary>
-    /// ½á¹û
+    /// ç»“æœ
     /// </summary>
     [JsonPropertyName("list")]
     public List<T>? List { get; set; }
 
     /// <summary>
-    /// ÏÂÒ»Ò³
+    /// ä¸‹ä¸€é¡µ
     /// </summary>
     [JsonPropertyName("hasNextPage")]
     public bool HasNextPage { get; set; }
@@ -95,13 +95,13 @@ public class QueryRoot<T>
 public class QueryRoot 
 {
     /// <summary>
-    /// µ±Ç°Ò³
+    /// å½“å‰é¡µ
     /// </summary>
     [JsonPropertyName("pageNum")]
     public int PageNum { get; set; }
 
     /// <summary>
-    /// µ±Ç°Ò³µÄÊıÁ¿
+    /// å½“å‰é¡µçš„æ•°é‡
     /// </summary>
     [JsonPropertyName("size")]
     public int Size { get; set; }
@@ -110,13 +110,13 @@ public class QueryRoot
     public int Total { get; set; }
 
     /// <summary>
-    /// ½á¹û
+    /// ç»“æœ
     /// </summary>
     [JsonPropertyName("list")]
     public List<JsonElement>? List { get; set; }
 
     /// <summary>
-    /// ÏÂÒ»Ò³
+    /// ä¸‹ä¸€é¡µ
     /// </summary>
     [JsonPropertyName("hasNextPage")]
     public bool HasNextPage { get; set; }
@@ -150,4 +150,4 @@ public class InvestorAccountMapping
     public string Indentity { get; set; }
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

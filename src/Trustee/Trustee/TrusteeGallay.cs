@@ -46,7 +46,7 @@ public static class TrusteeGallay
 
 
     /// <summary>
-    /// ·Åµ½Ê×Ò³ÖÐ
+    /// æ”¾åˆ°é¦–é¡µä¸­
     /// </summary>
     public static void Initialize()
     {

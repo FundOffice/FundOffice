@@ -79,6 +79,6 @@ public abstract partial class TrusteeViewModelBase<T> : TrusteeViewModelBase, IT
         SaveConfigOverride();
         ShowConfigSetting = false;
 
-        Task.Run(async () => { var r = await Assist.VerifyConfig(); WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"{Assist.Title}配置校验{(r ? "成功" : "失败")}")); });
+        Task.Run(async () => { var r = await Assist.VerifyConfig(); WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"{Assist.Title}閰嶇疆鏍￠獙{(r ? "鎴愬姛" : "澶辫触")}")); });
     }
 }

@@ -14,40 +14,40 @@ namespace FMO.Trustee;
 public class SignatureUtils
 {
     /// <summary>
-    /// »ñÈ¡¹ÜÀíÇ©Ãû
+    /// è·å–ç®¡ç†ç­¾å
     /// </summary>
     //private static string GetManagerSignature(string companyId, string timestamp, string certPath, string password)
     //{
-    //    // ¹¹Ôì´ıÇ©Ãû×Ö·û´®£¨Ä£Äâ MD5£©
-    //    string waitSignStr = "20250101010101"; // ¿ÉÌæ»»ÎªÕæÕıµÄ MD5(companyId + timestamp)
+    //    // æ„é€ å¾…ç­¾åå­—ç¬¦ä¸²ï¼ˆæ¨¡æ‹Ÿ MD5ï¼‰
+    //    string waitSignStr = "20250101010101"; // å¯æ›¿æ¢ä¸ºçœŸæ­£çš„ MD5(companyId + timestamp)
     //    byte[] sourceData = Encoding.UTF8.GetBytes(waitSignStr);
 
-    //    // ¼ÓÔØ PFX Ö¤ÊéºÍË½Ô¿
+    //    // åŠ è½½ PFX è¯ä¹¦å’Œç§é’¥
     //    var pfxCert = X509CertificateLoader.LoadPkcs12FromFile(certPath, password, X509KeyStorageFlags.Exportable);
     //    var bcCert = DotNetUtilities.FromX509Certificate(pfxCert);
     //    RSA? rSA = pfxCert.GetRSAPrivateKey();
     //    byte[] privateKeyInfoData = rSA.ExportPkcs8PrivateKey();
     //    var privateKey = (RsaPrivateCrtKeyParameters)PrivateKeyFactory.CreateKey(privateKeyInfoData);
 
-    //    // µ÷ÓÃÇ©Ãû·½·¨
+    //    // è°ƒç”¨ç­¾åæ–¹æ³•
     //    byte[] signedBytes = P7SignMessageDetach("SHA256WITHRSA", sourceData, privateKey, bcCert);
     //    return Convert.ToBase64String(signedBytes);
     //}
 
     public static string GetManagerSignature(string companyId, string timestamp, X509Certificate2 pfxCert)
     {
-        // ¹¹Ôì´ıÇ©Ãû×Ö·û´®£¨Ä£Äâ MD5£©
+        // æ„é€ å¾…ç­¾åå­—ç¬¦ä¸²ï¼ˆæ¨¡æ‹Ÿ MD5ï¼‰
         string waitSignStr = GetMD5String(companyId + timestamp);
         byte[] sourceData = Encoding.UTF8.GetBytes(waitSignStr);
 
-        // ¼ÓÔØ PFX Ö¤ÊéºÍË½Ô¿
+        // åŠ è½½ PFX è¯ä¹¦å’Œç§é’¥
         // var pfxCert = X509CertificateLoader.LoadPkcs12FromFile(certPath, password, X509KeyStorageFlags.Exportable);
         var bcCert = DotNetUtilities.FromX509Certificate(pfxCert);
         RSA? rSA = pfxCert.GetRSAPrivateKey();
         byte[] privateKeyInfoData = rSA!.ExportPkcs8PrivateKey();
         var privateKey = (RsaPrivateCrtKeyParameters)PrivateKeyFactory.CreateKey(privateKeyInfoData);
 
-        // µ÷ÓÃÇ©Ãû·½·¨
+        // è°ƒç”¨ç­¾åæ–¹æ³•
         byte[] signedBytes = P7SignMessageDetach("SHA256WITHRSA", sourceData, privateKey, bcCert);
         return Convert.ToBase64String(signedBytes);
     }
@@ -59,11 +59,11 @@ public class SignatureUtils
             byte[] inputBytes = Encoding.UTF8.GetBytes(data);
             byte[] hashBytes = md5.ComputeHash(inputBytes);
 
-            // ×ª»»Îª 16 ½øÖÆ×Ö·û´®£¨´óĞ´£©
+            // è½¬æ¢ä¸º 16 è¿›åˆ¶å­—ç¬¦ä¸²ï¼ˆå¤§å†™ï¼‰
             StringBuilder sb = new StringBuilder();
             foreach (byte b in hashBytes)
             {
-                sb.Append(b.ToString("X2")); // "X2" ±íÊ¾ 2 Î»´óĞ´Ê®Áù½øÖÆ
+                sb.Append(b.ToString("X2")); // "X2" è¡¨ç¤º 2 ä½å¤§å†™åå…­è¿›åˆ¶
             }
             return sb.ToString();
         }
@@ -71,11 +71,11 @@ public class SignatureUtils
 
 
     /// <summary>
-    /// Ç©Ãû²¢Éú³É PKCS#7 detached signature
+    /// ç­¾åå¹¶ç”Ÿæˆ PKCS#7 detached signature
     /// </summary>
     public static byte[] P7SignMessageDetach(string signAlg, byte[] sourceData, RsaPrivateCrtKeyParameters privateKey, X509Certificate cert)
     {
-        bool isDetached = false; // ²»¸½¼ÓÔ­ÎÄÊı¾İ
+        bool isDetached = false; // ä¸é™„åŠ åŸæ–‡æ•°æ®
         string? contentType = null;
         X509Certificate[] certs = new[] { cert };
 
@@ -83,27 +83,27 @@ public class SignatureUtils
     }
 
     /// <summary>
-    /// ¹¹½¨ PKCS#7 SignedData ½á¹¹
+    /// æ„å»º PKCS#7 SignedData ç»“æ„
     /// </summary>
     public static byte[] PackageRSASignedData(bool ifAttach, string? contentType, byte[] sourceData, string signAlgName, RsaPrivateCrtKeyParameters privateKey, X509Certificate[] certs)
     {
         if (certs == null || certs.Length == 0)
-            throw new ArgumentException("Ö¤Êé²»ÄÜÎª¿Õ");
+            throw new ArgumentException("è¯ä¹¦ä¸èƒ½ä¸ºç©º");
 
-        // 1. ½âÎöÕªÒªËã·¨
+        // 1. è§£ææ‘˜è¦ç®—æ³•
         var digestOid = ResolveDigestAlgorithm(signAlgName);
         var digestAlgIdentifier = new AlgorithmIdentifier(digestOid, DerNull.Instance);
 
-        // 2. »ñÈ¡Ç©·¢ÕßĞÅÏ¢
+        // 2. è·å–ç­¾å‘è€…ä¿¡æ¯
         var signerCert = certs[0];
         var issuer = (X509Name)signerCert.IssuerDN;
         var serialNumber = signerCert.SerialNumber;
         var issuerAndSn = new IssuerAndSerialNumber(issuer, serialNumber);
 
-        // 3. Ç©ÃûËã·¨±êÊ¶·û
+        // 3. ç­¾åç®—æ³•æ ‡è¯†ç¬¦
         var sigAlgIdentifier = new AlgorithmIdentifier(PkcsObjectIdentifiers.IdRsaEncryption, DerNull.Instance);
 
-        // 4. ¼ÆËãÇ©ÃûÖµ
+        // 4. è®¡ç®—ç­¾åå€¼
         ISigner signer = SignerUtilities.GetSigner(signAlgName);
         signer.Init(true, new ParametersWithRandom(privateKey));
         signer.BlockUpdate(sourceData, 0, sourceData.Length);
@@ -111,7 +111,7 @@ public class SignatureUtils
 
         var encryptedData = new DerOctetString(signature);
 
-        // 5. ¹¹½¨ SignerInfo
+        // 5. æ„å»º SignerInfo
         var signerInfo = new SignerInfo(
             new DerInteger(1),
             issuerAndSn,
@@ -121,7 +121,7 @@ public class SignatureUtils
             encryptedData,
             null);
 
-        // 6. ¹¹½¨ ContentInfo
+        // 6. æ„å»º ContentInfo
         ContentInfo contentInfo;
         if (ifAttach)
         {
@@ -135,31 +135,31 @@ public class SignatureUtils
             contentInfo = new ContentInfo(oid, null);
         }
 
-        // 7. ¹¹½¨ DigestAlgorithms
+        // 7. æ„å»º DigestAlgorithms
         var derV = new Asn1EncodableVector();
         derV.Add(digestAlgIdentifier);
         var digestAlgorithmSets = new BerSet(derV);
 
-        // 8. ¹¹½¨ SignerInfos
+        // 8. æ„å»º SignerInfos
         var signerInfosVec = new Asn1EncodableVector();
         signerInfosVec.Add(signerInfo);
         var signerInfos = new DerSet(signerInfosVec);
 
-        // 9. ¹¹½¨ Certificates  
+        // 9. æ„å»º Certificates  
         var certList = new Asn1EncodableVector();
         foreach (var cert in certs)
         {
-            // Ö±½Ó½âÎöÖ¤ÊéµÄ DER ±àÂëÎª ASN.1 ¶ÔÏó
+            // ç›´æ¥è§£æè¯ä¹¦çš„ DER ç¼–ç ä¸º ASN.1 å¯¹è±¡
 
             byte[] encoded = cert.GetEncoded();
             Asn1Object asn1Cert = Asn1Object.FromByteArray(encoded);
-            certList.Add(asn1Cert); // Ç¿×ªÎª Asn1Sequence
+            certList.Add(asn1Cert); // å¼ºè½¬ä¸º Asn1Sequence
         }
 
 
         var setCert = new BerSet(certList);
 
-        // 10. ¹¹½¨ SignedData
+        // 10. æ„å»º SignedData
         var signedData = new SignedData(
             new DerInteger(1),
             digestAlgorithmSets,
@@ -170,12 +170,12 @@ public class SignatureUtils
 
         var contentInfoTemp = new ContentInfo(PkcsObjectIdentifiers.SignedData, signedData);
 
-        // 11. ·µ»Ø DER ±àÂë×Ö½Ú
+        // 11. è¿”å› DER ç¼–ç å­—èŠ‚
         return contentInfoTemp.GetDerEncoded();
     }
 
     /// <summary>
-    /// ½«Ç©ÃûËã·¨Ãû³ÆÓ³Éäµ½ OID
+    /// å°†ç­¾åç®—æ³•åç§°æ˜ å°„åˆ° OID
     /// </summary>
     private static DerObjectIdentifier ResolveDigestAlgorithm(string algName)
     {
@@ -186,20 +186,20 @@ public class SignatureUtils
             case "SHA1WITHRSA":
                 return PkcsObjectIdentifiers.IdSha1;
             default:
-                throw new NotSupportedException($"²»Ö§³ÖµÄÇ©ÃûËã·¨: {algName}");
+                throw new NotSupportedException($"ä¸æ”¯æŒçš„ç­¾åç®—æ³•: {algName}");
         }
     }
 }
 public static class PkcsObjectIdentifiers
 {
-    // PKCS#7 / CMS ÄÚÈİÀàĞÍ
+    // PKCS#7 / CMS å†…å®¹ç±»å‹
     public static readonly DerObjectIdentifier Data = new DerObjectIdentifier("1.2.840.113549.1.7.1");
     public static readonly DerObjectIdentifier SignedData = new DerObjectIdentifier("1.2.840.113549.1.7.2");
 
-    // ÕªÒªËã·¨ OID
+    // æ‘˜è¦ç®—æ³• OID
     public static readonly DerObjectIdentifier IdSha1 = new DerObjectIdentifier("1.3.14.3.2.26");
     public static readonly DerObjectIdentifier IdSha256 = new DerObjectIdentifier("2.16.840.1.101.3.4.2.1");
 
-    // Ç©ÃûËã·¨±êÊ¶·û£¨RSA£©
+    // ç­¾åç®—æ³•æ ‡è¯†ç¬¦ï¼ˆRSAï¼‰
     public static readonly DerObjectIdentifier IdRsaEncryption = new DerObjectIdentifier("1.2.840.113549.1.1.1");
 }

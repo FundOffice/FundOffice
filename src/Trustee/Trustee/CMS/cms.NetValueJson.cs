@@ -4,68 +4,68 @@ using System.Text.Json.Serialization;
 namespace FMO.Trustee.JsonCMS;
 
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 internal class NetValueJson : JsonBase
 {
 
     /// <summary>
-    /// ²úÆ·´úÂë£¬×î´ó³¤¶È 6
+    /// äº§å“ä»£ç ï¼Œæœ€å¤§é•¿åº¦ 6
     /// </summary>
     [JsonPropertyName("fundCode")]
     public string FundCode { get; set; } // String(6)
 
     /// <summary>
-    /// ²úÆ·Ãû³Æ£¬×î´ó³¤¶È 300
+    /// äº§å“åç§°ï¼Œæœ€å¤§é•¿åº¦ 300
     /// </summary>
     [JsonPropertyName("fundName")]
     public string FundName { get; set; } // String(300)
 
     /// <summary>
-    /// ¾»ÖµÈÕÆÚ£¬¸ñÊ½£ºyyyymmdd£¬×î´ó³¤¶È 8
+    /// å‡€å€¼æ—¥æœŸï¼Œæ ¼å¼ï¼šyyyymmddï¼Œæœ€å¤§é•¿åº¦ 8
     /// </summary>
     [JsonPropertyName("navDate")]
-    public string NavDate { get; set; } // String(8)£¬¸ñÊ½£ºyyyyMMdd
+    public string NavDate { get; set; } // String(8)ï¼Œæ ¼å¼ï¼šyyyyMMdd
 
     /// <summary>
-    /// ×Ê²ú·İ¶î£¬±£ÁôÁ½Î»Ğ¡Êı
+    /// èµ„äº§ä»½é¢ï¼Œä¿ç•™ä¸¤ä½å°æ•°
     /// </summary>
     [JsonPropertyName("assetVol")]
-    public string AssetVol { get; set; } // ±£ÁôÁ½Î»Ğ¡Êı
+    public string AssetVol { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     /// <summary>
-    /// ×Ê²ú¾»Öµ£¬±£ÁôÁ½Î»Ğ¡Êı
+    /// èµ„äº§å‡€å€¼ï¼Œä¿ç•™ä¸¤ä½å°æ•°
     /// </summary>
     [JsonPropertyName("assetNav")]
-    public string AssetNav { get; set; } // ±£ÁôÁ½Î»Ğ¡Êı
+    public string AssetNav { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     /// <summary>
-    /// ×Ê²ú×ÜÖµ£¬±£ÁôÁ½Î»Ğ¡Êı
+    /// èµ„äº§æ€»å€¼ï¼Œä¿ç•™ä¸¤ä½å°æ•°
     /// </summary>
     [JsonPropertyName("totalAsset")]
-    public string TotalAsset { get; set; } // ±£ÁôÁ½Î»Ğ¡Êı
+    public string TotalAsset { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     /// <summary>
-    /// µ¥Î»¾»Öµ£¬±£ÁôËÄÎ»Ğ¡Êı£¨ÇåÅÌÈÕ±£Áô8Î»£©
-    /// ×¢Òâ£ºÊµ¼Ê´¦ÀíÊ±Ğè¸ù¾İÊÇ·ñÇåÅÌ¶¯Ì¬¿ØÖÆĞ¡ÊıÎ»Êı
+    /// å•ä½å‡€å€¼ï¼Œä¿ç•™å››ä½å°æ•°ï¼ˆæ¸…ç›˜æ—¥ä¿ç•™8ä½ï¼‰
+    /// æ³¨æ„ï¼šå®é™…å¤„ç†æ—¶éœ€æ ¹æ®æ˜¯å¦æ¸…ç›˜åŠ¨æ€æ§åˆ¶å°æ•°ä½æ•°
     /// </summary>
     [JsonPropertyName("nav")]
-    public string Nav { get; set; } // Í¨³£±£ÁôËÄÎ»£¬ÇåÅÌÊ±8Î»
+    public string Nav { get; set; } // é€šå¸¸ä¿ç•™å››ä½ï¼Œæ¸…ç›˜æ—¶8ä½
 
     /// <summary>
-    /// ÀÛ¼Æµ¥Î»¾»Öµ£¬±£ÁôËÄÎ»Ğ¡Êı£¨ÇåÅÌÈÕ±£Áô8Î»£©
-    /// ×¢Òâ£ºÊµ¼Ê´¦ÀíÊ±Ğè¸ù¾İÊÇ·ñÇåÅÌ¶¯Ì¬¿ØÖÆĞ¡ÊıÎ»Êı
+    /// ç´¯è®¡å•ä½å‡€å€¼ï¼Œä¿ç•™å››ä½å°æ•°ï¼ˆæ¸…ç›˜æ—¥ä¿ç•™8ä½ï¼‰
+    /// æ³¨æ„ï¼šå®é™…å¤„ç†æ—¶éœ€æ ¹æ®æ˜¯å¦æ¸…ç›˜åŠ¨æ€æ§åˆ¶å°æ•°ä½æ•°
     /// </summary>
     [JsonPropertyName("accumulativeNav")]
-    public string AccumulativeNav { get; set; } // Í¨³£±£ÁôËÄÎ»£¬ÇåÅÌÊ±8Î»
+    public string AccumulativeNav { get; set; } // é€šå¸¸ä¿ç•™å››ä½ï¼Œæ¸…ç›˜æ—¶8ä½
 
     /// <summary>
-    /// Ô¤Áô×Ö¶Î1£¬×î´ó³¤¶È 500
+    /// é¢„ç•™å­—æ®µ1ï¼Œæœ€å¤§é•¿åº¦ 500
     /// </summary>
     [JsonPropertyName("remark1")]
     public string Remark1 { get; set; } // String(500)
 
     /// <summary>
-    /// Ô¤Áô×Ö¶Î2£¬×î´ó³¤¶È 500
+    /// é¢„ç•™å­—æ®µ2ï¼Œæœ€å¤§é•¿åº¦ 500
     /// </summary>
     [JsonPropertyName("remark2")]
     public string Remark2 { get; set; } // String(500)
@@ -74,4 +74,4 @@ internal class NetValueJson : JsonBase
     
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

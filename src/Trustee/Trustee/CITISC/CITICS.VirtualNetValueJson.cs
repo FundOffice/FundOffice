@@ -2,91 +2,91 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee.JsonCITICS;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class VirtualNetValueJson : JsonBase
 {
     /// <summary>
-    /// ÒµÎñÈÕÆÚ£¬¸ñÊ½£ºYYYY-MM-DD
+    /// ä¸šåŠ¡æ—¥æœŸï¼Œæ ¼å¼ï¼šYYYY-MM-DD
     /// </summary>
     [JsonPropertyName("date")]
     public string BusinessDate { get; set; }
 
     /// <summary>
-    /// ¿Í»§Ãû³Æ
+    /// å®¢æˆ·åç§°
     /// </summary>
     [JsonPropertyName("custName")]
     public string CustomerName { get; set; }
 
     /// <summary>
-    /// »ù½ğÕËºÅ
+    /// åŸºé‡‘è´¦å·
     /// </summary>
     [JsonPropertyName("fundAcco")]
     public string FundAccount { get; set; }
 
     /// <summary>
-    /// ²úÆ·´úÂë
+    /// äº§å“ä»£ç 
     /// </summary>
     [JsonPropertyName("fundCode")]
     public string FundCode { get; set; }
 
     /// <summary>
-    /// ²úÆ·Ãû³Æ
+    /// äº§å“åç§°
     /// </summary>
     [JsonPropertyName("fundName")]
     public string FundName { get; set; }
 
     /// <summary>
-    /// ³Ö²Ö·İ¶î
+    /// æŒä»“ä»½é¢
     /// </summary>
     [JsonPropertyName("shares")]
     public decimal Shares { get; set; }
 
     /// <summary>
-    /// ¼ÆÌá·½Ê½£º1-¹ÀÖµ¼ÆÌá£»2-TA¼ÆÌá
+    /// è®¡ææ–¹å¼ï¼š1-ä¼°å€¼è®¡æï¼›2-TAè®¡æ
     /// </summary>
     [JsonPropertyName("flag")]
     public string AccrualMethod { get; set; }
 
     /// <summary>
-    /// ĞéÄâÒµ¼¨±¨³ê½ğ¶î
+    /// è™šæ‹Ÿä¸šç»©æŠ¥é…¬é‡‘é¢
     /// </summary>
     [JsonPropertyName("virtualBalance")]
     public decimal VirtualPerformanceFee { get; set; }
 
     /// <summary>
-    /// ĞéÄâ¾»Öµ
+    /// è™šæ‹Ÿå‡€å€¼
     /// </summary>
     [JsonPropertyName("virtualAssetVal")]
     public string VirtualNetAssetValue { get; set; }
 
     /// <summary>
-    /// Êµ¼Ê¾»Öµ
+    /// å®é™…å‡€å€¼
     /// </summary>
     [JsonPropertyName("netAssetVal")]
     public string ActualNetAssetValue { get; set; }
 
     /// <summary>
-    /// ÀÛ¼Æ¾»Öµ
+    /// ç´¯è®¡å‡€å€¼
     /// </summary>
     [JsonPropertyName("totalAssetVal")]
     public string TotalNetAssetValue { get; set; }
 
     /// <summary>
-    /// ĞéÄâ¿Û¼õ·İ¶î
+    /// è™šæ‹Ÿæ‰£å‡ä»½é¢
     /// </summary>
     [JsonPropertyName("virtualDeductionShare")]
     public decimal VirtualDeductionShare { get; set; }
 
     /// <summary>
-    /// ¾»ÖµºË¶Ô×´Ì¬£º
-    /// 0-Ò»ÖÂ£¬ÍĞ¹Ü¸´ºËÒ»ÖÂ£»
-    /// 1-²»Ò»ÖÂ£¬Î´¾­ÍĞ¹ÜÈ·ÈÏ£»
-    /// 2-´¦ÀíÖĞ£»
-    /// 3-ÎŞÍĞ¹Ü·½²úÆ·£¬ÎŞÍĞ¹Ü·½¸´ºË
+    /// å‡€å€¼æ ¸å¯¹çŠ¶æ€ï¼š
+    /// 0-ä¸€è‡´ï¼Œæ‰˜ç®¡å¤æ ¸ä¸€è‡´ï¼›
+    /// 1-ä¸ä¸€è‡´ï¼Œæœªç»æ‰˜ç®¡ç¡®è®¤ï¼›
+    /// 2-å¤„ç†ä¸­ï¼›
+    /// 3-æ— æ‰˜ç®¡æ–¹äº§å“ï¼Œæ— æ‰˜ç®¡æ–¹å¤æ ¸
     /// </summary>
     [JsonPropertyName("checkStatus")]
     public string NetValueCheckStatus { get; set; }
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

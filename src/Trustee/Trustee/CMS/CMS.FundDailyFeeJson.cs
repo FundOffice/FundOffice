@@ -4,42 +4,42 @@ using System.Text.Json.Serialization;
 namespace FMO.Trustee.JsonCMS;
 
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 /// <summary>
-/// »ù½ğ·ÑÓÃĞÅÏ¢ÊµÌåÀà
+/// åŸºé‡‘è´¹ç”¨ä¿¡æ¯å®ä½“ç±»
 /// </summary>
 internal class FundDailyFeeJson : JsonBase
 {
     /// <summary>
-    /// ²úÆ·Ãû³Æ£¨±ØÌî£¬×î´ó³¤¶È300£©
+    /// äº§å“åç§°ï¼ˆå¿…å¡«ï¼Œæœ€å¤§é•¿åº¦300ï¼‰
     /// </summary>
     [JsonPropertyName("fundName")]
     public string FundName { get; set; }
 
     /// <summary>
-    /// ²úÆ·´úÂë£¨±ØÌî£¬×î´ó³¤¶È6£©
+    /// äº§å“ä»£ç ï¼ˆå¿…å¡«ï¼Œæœ€å¤§é•¿åº¦6ï¼‰
     /// </summary>
     [JsonPropertyName("fundCode")]
     public string FundCode { get; set; }
 
     /// <summary>
-    /// ·ÑÓÃÈÕÆÚ£¨¸ñÊ½£ºyyyyMMdd£¬±ØÌî£©
+    /// è´¹ç”¨æ—¥æœŸï¼ˆæ ¼å¼ï¼šyyyyMMddï¼Œå¿…å¡«ï¼‰
     /// </summary>
     [JsonPropertyName("busiDate")]
     public string BusiDate { get; set; }
 
-    // ÍĞ¹Ü·Ñ
+    // æ‰˜ç®¡è´¹
     [JsonPropertyName("custodianFeeJt")]
-    public string CustodianFeeJt { get; set; } // ¼ÆÌá
+    public string CustodianFeeJt { get; set; } // è®¡æ
 
     [JsonPropertyName("custodianFeeZf")]
-    public string CustodianFeeZf { get; set; } // Ö§¸¶
+    public string CustodianFeeZf { get; set; } // æ”¯ä»˜
 
     [JsonPropertyName("custodianFeeYe")]
-    public string CustodianFeeYe { get; set; } // Óà¶î
+    public string CustodianFeeYe { get; set; } // ä½™é¢
 
-    // ÔËÓª·şÎñ·Ñ
+    // è¿è¥æœåŠ¡è´¹
     [JsonPropertyName("operationServiceFeeJt")]
     public string OperationServiceFeeJt { get; set; }
 
@@ -49,7 +49,7 @@ internal class FundDailyFeeJson : JsonBase
     [JsonPropertyName("operationServiceFeeYe")]
     public string OperationServiceFeeYe { get; set; }
 
-    // ¹ÜÀí·Ñ
+    // ç®¡ç†è´¹
     [JsonPropertyName("managementFeeJt")]
     public string ManagementFeeJt { get; set; }
 
@@ -59,7 +59,7 @@ internal class FundDailyFeeJson : JsonBase
     [JsonPropertyName("managementFeeYe")]
     public string ManagementFeeYe { get; set; }
 
-    // Òµ¼¨±¨³ê·Ñ
+    // ä¸šç»©æŠ¥é…¬è´¹
     [JsonPropertyName("performanceFeeJt")]
     public string PerformanceFeeJt { get; set; }
 
@@ -69,7 +69,7 @@ internal class FundDailyFeeJson : JsonBase
     [JsonPropertyName("performanceFeeYe")]
     public string PerformanceFeeYe { get; set; }
 
-    // ÏúÊÛ·şÎñ·Ñ
+    // é”€å”®æœåŠ¡è´¹
     [JsonPropertyName("salesandServiceFeesJt")]
     public string SalesAndServiceFeesJt { get; set; }
 
@@ -79,7 +79,7 @@ internal class FundDailyFeeJson : JsonBase
     [JsonPropertyName("salesandServiceFeesYe")]
     public string SalesAndServiceFeesYe { get; set; }
 
-    // Í¶×Ê¹ËÎÊ·Ñ
+    // æŠ•èµ„é¡¾é—®è´¹
     [JsonPropertyName("investmentConsultantFeeJt")]
     public string InvestmentConsultantFeeJt { get; set; }
 
@@ -89,7 +89,7 @@ internal class FundDailyFeeJson : JsonBase
     [JsonPropertyName("investmentConsultantFeeYe")]
     public string InvestmentConsultantFeeYe { get; set; }
 
-    // ¿Í»§·şÎñ·Ñ
+    // å®¢æˆ·æœåŠ¡è´¹
     [JsonPropertyName("customerServiceFeeJt")]
     public string CustomerServiceFeeJt { get; set; }
 
@@ -105,32 +105,32 @@ internal class FundDailyFeeJson : JsonBase
         {
             FundCode = FundCode,
             Date = DateOnly.ParseExact(BusiDate, "yyyyMMdd"),
-            // ¹ÜÀí·Ñ
+            // ç®¡ç†è´¹
             ManagerFeeAccrued = ParseDecimal(ManagementFeeJt),
             ManagerFeePaid = ParseDecimal(ManagementFeeZf),
             ManagerFeeBalance = ParseDecimal(ManagementFeeYe),
 
-            // ÍĞ¹Ü·Ñ
+            // æ‰˜ç®¡è´¹
             CustodianFeeAccrued = ParseDecimal(CustodianFeeJt),
             CustodianFeePaid = ParseDecimal(CustodianFeeZf),
             CustodianFeeBalance = ParseDecimal(CustodianFeeYe),
 
-            // Íâ°üÔËÓª·şÎñ·Ñ£¨OperationServiceFee£©
+            // å¤–åŒ…è¿è¥æœåŠ¡è´¹ï¼ˆOperationServiceFeeï¼‰
             OutsourcingFeeAccrued = ParseDecimal(OperationServiceFeeJt),
             OutsourcingFeePaid = ParseDecimal(OperationServiceFeeZf),
             OutsourcingFeeBalance = ParseDecimal(OperationServiceFeeYe),
 
-            // Òµ¼¨±¨³ê·Ñ
+            // ä¸šç»©æŠ¥é…¬è´¹
             PerformanceFeeAccrued = ParseDecimal(PerformanceFeeJt),
             PerformanceFeePaid = ParseDecimal(PerformanceFeeZf),
             PerformanceFeeBalance = ParseDecimal(PerformanceFeeYe),
 
-            // ÏúÊÛ·şÎñ·Ñ
+            // é”€å”®æœåŠ¡è´¹
             SalesFeeAccrued = ParseDecimal(SalesAndServiceFeesJt),
             SalesFeePaid = ParseDecimal(SalesAndServiceFeesZf),
             SalesFeeBalance = ParseDecimal(SalesAndServiceFeesYe),
 
-            // Í¶×Ê¹ËÎÊ·Ñ
+            // æŠ•èµ„é¡¾é—®è´¹
             ConsultantFeeAccrued = ParseDecimal(InvestmentConsultantFeeJt),
             ConsultantFeePaid = ParseDecimal(InvestmentConsultantFeeZf),
             ConsultantFeeBalance = ParseDecimal(InvestmentConsultantFeeYe)
@@ -143,4 +143,4 @@ internal class FundDailyFeeJson : JsonBase
 
 
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

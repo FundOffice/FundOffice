@@ -26,7 +26,7 @@ public class JsonBase
         if (decimal.TryParse(value, out var result))
             return result;
 
-        throw new FormatException($"ÎŞ·¨½« '{value}' ½âÎöÎªdecimalÀàĞÍ");
+        throw new FormatException($"æ— æ³•å°† '{value}' è§£æä¸ºdecimalç±»å‹");
     }
 
     public static void ReportJsonUnexpected(string identifier, string method, string info)
@@ -54,23 +54,23 @@ public class JsonBase
         switch (currencyCode)
         {
             case "156":
-                return "CNY"; // ÈËÃñ±Ò
+                return "CNY"; // äººæ°‘å¸
             case "250":
-                return "CHF"; // ÈğÊ¿·¨ÀÉ
+                return "CHF"; // ç‘å£«æ³•éƒ
             case "280":
-                return "DEM"; // µÂ¹úÂí¿Ë£¨ÒÑÍ£ÓÃ£©
+                return "DEM"; // å¾·å›½é©¬å…‹ï¼ˆå·²åœç”¨ï¼‰
             case "344":
-                return "HKD"; // ¸ÛÔª
+                return "HKD"; // æ¸¯å…ƒ
             case "392":
-                return "JPY"; // ÈÕÔª
+                return "JPY"; // æ—¥å…ƒ
             case "826":
-                return "GBP"; // Ó¢°÷
+                return "GBP"; // è‹±é•‘
             case "840":
-                return "USD"; // ÃÀÔª
+                return "USD"; // ç¾å…ƒ
             case "954":
-                return "EUR"; // Å·Ôª
+                return "EUR"; // æ¬§å…ƒ
             default:
-                return "";  // »òÕßÅ×³öÒì³££¬¸ù¾İĞèÒª´¦ÀíÎŞĞ§±àÂë
+                return "";  // æˆ–è€…æŠ›å‡ºå¼‚å¸¸ï¼Œæ ¹æ®éœ€è¦å¤„ç†æ— æ•ˆç¼–ç 
         }
     }
 }

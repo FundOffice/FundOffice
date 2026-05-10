@@ -1,7 +1,7 @@
 namespace FMO.Trustee;
 
 /// <summary>
-/// Í³Ò»µÄÅäÖÃ
+/// ç»Ÿä¸€çš„é…ç½®
 /// </summary>
 public class TrusteeUnifiedConfig
 {

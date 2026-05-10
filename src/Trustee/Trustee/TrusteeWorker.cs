@@ -16,7 +16,7 @@ internal record FundTrusteePair(int FundId, ITrustee Trustee, bool IsCleared);
 
 
 /// <summary>
-/// Ö´ĞĞ½á¹û
+/// æ‰§è¡Œç»“æœ
 /// </summary>
 /// <param name="Method"></param>
 /// <param name="Returns"></param>
@@ -26,7 +26,7 @@ public record TrusteeWorkResult(string Method, IList<TrusteeWorker.WorkReturn> R
 //public record TrusteeWorkRecord(string Identifier, string Method, DateOnly Begin, DateOnly End, int Count);
 
 /// <summary>
-/// ²úÆ·¶ÔÓ¦api
+/// äº§å“å¯¹åº”api
 /// </summary>
 /// <param name="FundId"></param>
 /// <param name="Identifier"></param>
@@ -49,12 +49,12 @@ public partial class TrusteeWorker : ObservableObject
         public required string Id { get; set; }
 
         /// <summary>
-        /// ¼ä¸ôÊ±¼ä ·Ö
+        /// é—´éš”æ—¶é—´ åˆ†
         /// </summary>
         public int Interval { get; set; } = 15;
 
         /// <summary>
-        /// ÉÏ´ÎÖ´ĞĞÊ±¼ä
+        /// ä¸Šæ¬¡æ‰§è¡Œæ—¶é—´
         /// </summary>
         public DateTime Last { get; set; }
 
@@ -72,7 +72,7 @@ public partial class TrusteeWorker : ObservableObject
     public const string TableRaisingBalance = "api_raising_balance";
 
     /// <summary>
-    /// Ã¿Ìì¼ì²éÒ»´ÎLog£¬Ì«´ó¾ÍÇåÀí
+    /// æ¯å¤©æ£€æŸ¥ä¸€æ¬¡Logï¼Œå¤ªå¤§å°±æ¸…ç†
     /// </summary>
     private DateTime _clearLogTime = default;
 
@@ -115,11 +115,11 @@ public partial class TrusteeWorker : ObservableObject
             maps = db.GetCollection<TrusteeApiMap>().FindAll().ToArray();
         }
         RaisingBalanceConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryRaisingBalance)) ?? new(nameof(ITrustee.QueryRaisingBalance));
-        TransferRecordConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryTransferRecords)) ?? new(nameof(ITrustee.QueryTransferRecords)) { Interval = 60 }; // Ã¿6¸öĞ¡Ê±
+        TransferRecordConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryTransferRecords)) ?? new(nameof(ITrustee.QueryTransferRecords)) { Interval = 60 }; // æ¯6ä¸ªå°æ—¶
         TransferRequestConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryTransferRequests)) ?? new(nameof(ITrustee.QueryTransferRequests));
-        DailyFeeConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryFundDailyFee)) ?? new(nameof(ITrustee.QueryFundDailyFee)) { Interval = 60 * 12 }; // Ã¿ÌìÒ»´Î
+        DailyFeeConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryFundDailyFee)) ?? new(nameof(ITrustee.QueryFundDailyFee)) { Interval = 60 * 12 }; // æ¯å¤©ä¸€æ¬¡
         RaisingAccountTransctionConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryRaisingAccountTransction)) ?? new(nameof(ITrustee.QueryRaisingAccountTransction));
-        NetValueConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryNetValue)) ?? new(nameof(ITrustee.QueryNetValue)) { Interval = 30 }; // Ã¿¸öĞ¡Ê±
+        NetValueConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryNetValue)) ?? new(nameof(ITrustee.QueryNetValue)) { Interval = 30 }; // æ¯ä¸ªå°æ—¶
 
 
         RaisingBalanceConfig.Interval = 15;
@@ -130,7 +130,7 @@ public partial class TrusteeWorker : ObservableObject
         NetValueConfig.Interval = 30;
 
 
-        // »ù½ğÓ³Éä
+        // åŸºé‡‘æ˜ å°„
         using (var db = DbHelper.Base())
         {
             var funds = db.GetCollection<Fund>().Query().Select(x => new { x.Id, x.SetupDate, x.Trustee, x.Status }).ToList();
@@ -142,9 +142,9 @@ public partial class TrusteeWorker : ObservableObject
             }
 
 
-            // ËùÓĞÈÎÎñµÄ×îĞ¡ÈÕÆÚ
+            // æ‰€æœ‰ä»»åŠ¡çš„æœ€å°æ—¥æœŸ
             StartOfAny = db.GetCollection<Manager>().Query().First().SetupDate;
-            // ·ÀÖ¹¿Õ¼¯ºÏ
+            // é˜²æ­¢ç©ºé›†åˆ
             try { StartOfAny = funds.Where(x => x.SetupDate.Year > 1970).Min(x => x.SetupDate); } catch { }
 
         }
@@ -157,29 +157,29 @@ public partial class TrusteeWorker : ObservableObject
 
 
         tasks = [
-                // Ä¼¼¯Óà¶î²éÑ¯ÈÎÎñ£º
-                // Ê¹ÓÃ RaisingBalanceConfig ÅäÖÃ£¨ÈçÖ´ĞĞ¼ä¸ô¡¢ÉÏ´ÎÔËĞĞÊ±¼äµÈ£©
-                // ´¥·¢ QueryRaisingBalanceOnceCommand ÃüÁîÖ´ĞĞµ¥´Î²éÑ¯
+                // å‹Ÿé›†ä½™é¢æŸ¥è¯¢ä»»åŠ¡ï¼š
+                // ä½¿ç”¨ RaisingBalanceConfig é…ç½®ï¼ˆå¦‚æ‰§è¡Œé—´éš”ã€ä¸Šæ¬¡è¿è¡Œæ—¶é—´ç­‰ï¼‰
+                // è§¦å‘ QueryRaisingBalanceOnceCommand å‘½ä»¤æ‰§è¡Œå•æ¬¡æŸ¥è¯¢
                 (Config: RaisingBalanceConfig, Command: QueryRaisingBalanceOnce),
 
-                // Ä¼¼¯»§Á÷Ë®²éÑ¯ÈÎÎñ£º
-                // Ê¹ÓÃ RaisingAccountTransctionConfig ÅäÖÃ
-                // ´¥·¢ QueryRaisingAccountTransctionOnceCommand ÃüÁîÖ´ĞĞµ¥´Î²éÑ¯
+                // å‹Ÿé›†æˆ·æµæ°´æŸ¥è¯¢ä»»åŠ¡ï¼š
+                // ä½¿ç”¨ RaisingAccountTransctionConfig é…ç½®
+                // è§¦å‘ QueryRaisingAccountTransctionOnceCommand å‘½ä»¤æ‰§è¡Œå•æ¬¡æŸ¥è¯¢
                 (Config: RaisingAccountTransctionConfig, Command: QueryRaisingAccountTransctionOnce),
 
-                // ½»Ò×ÉêÇë²éÑ¯ÈÎÎñ£º
-                // Ê¹ÓÃ TransferRequestConfig ÅäÖÃ
-                // ´¥·¢ QueryTransferRequestOnceCommand ÃüÁîÖ´ĞĞµ¥´Î²éÑ¯
+                // äº¤æ˜“ç”³è¯·æŸ¥è¯¢ä»»åŠ¡ï¼š
+                // ä½¿ç”¨ TransferRequestConfig é…ç½®
+                // è§¦å‘ QueryTransferRequestOnceCommand å‘½ä»¤æ‰§è¡Œå•æ¬¡æŸ¥è¯¢
                 (Config: TransferRequestConfig, Command: QueryTransferRequestOnce),
 
-                // ½»Ò×È·ÈÏ²éÑ¯ÈÎÎñ£º
-                // Ê¹ÓÃ TransferRecordConfig ÅäÖÃ
-                // ´¥·¢ QueryTransferRecordOnceCommand ÃüÁîÖ´ĞĞµ¥´Î²éÑ¯
+                // äº¤æ˜“ç¡®è®¤æŸ¥è¯¢ä»»åŠ¡ï¼š
+                // ä½¿ç”¨ TransferRecordConfig é…ç½®
+                // è§¦å‘ QueryTransferRecordOnceCommand å‘½ä»¤æ‰§è¡Œå•æ¬¡æŸ¥è¯¢
                 (Config: TransferRecordConfig, Command: QueryTransferRecordOnce),
 
-                // ÈÕ³£·ÑÓÃ²éÑ¯ÈÎÎñ£º
-                // Ê¹ÓÃ DailyFeeConfig ÅäÖÃ
-                // ´¥·¢ QueryDailyFeeOnceCommand ÃüÁîÖ´ĞĞµ¥´Î²éÑ¯
+                // æ—¥å¸¸è´¹ç”¨æŸ¥è¯¢ä»»åŠ¡ï¼š
+                // ä½¿ç”¨ DailyFeeConfig é…ç½®
+                // è§¦å‘ QueryDailyFeeOnceCommand å‘½ä»¤æ‰§è¡Œå•æ¬¡æŸ¥è¯¢
                 (Config: DailyFeeConfig, Command: QueryDailyFeeOnce),
 
                 (Config: NetValueConfig, Command: QueryNetValueOnce),
@@ -192,17 +192,17 @@ public partial class TrusteeWorker : ObservableObject
     #region Impl
 
     /// <summary>
-    /// »ñÈ¡Ä¼¼¯»§Óà¶î
+    /// è·å–å‹Ÿé›†æˆ·ä½™é¢
     /// </summary>
     /// <returns></returns>
     private async Task QueryRaisingBalanceImpl(IEnumerable<ITrustee>? trustees = null)
     {
         try
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"¿ªÊ¼Í¬²½ Ä¼¼¯»§Óà¶î"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"å¼€å§‹åŒæ­¥ å‹Ÿé›†æˆ·ä½™é¢"));
             if (trustees is null || trustees.Any()) trustees = Trustees;
             List<WorkReturn> ret = new();
-            // ±£´æÊı¾İ¿â
+            // ä¿å­˜æ•°æ®åº“
             using var db = DbHelper.Base();
 
             foreach (var tr in trustees)
@@ -218,7 +218,7 @@ public partial class TrusteeWorker : ObservableObject
                     var rc = await tr.QueryRaisingBalance();
 
                     ///
-                    // ±£´æÊı¾İ¿â 
+                    // ä¿å­˜æ•°æ®åº“ 
                     if (rc.Data is not null)
                         db.GetCollection<FundBankBalance>().Upsert(rc.Data);
 
@@ -231,7 +231,7 @@ public partial class TrusteeWorker : ObservableObject
                 }
             }
 
-            // ±£´æret£¬³ÌĞò¼ÓÔØÊ±»Ö¸´£¬²¢Éú³ÉÏûÏ¢
+            // ä¿å­˜retï¼Œç¨‹åºåŠ è½½æ—¶æ¢å¤ï¼Œå¹¶ç”Ÿæˆæ¶ˆæ¯
             db.DropCollection(TableRaisingBalance);
             db.GetCollection<WorkReturn>(TableRaisingBalance).Insert(ret);
 
@@ -248,9 +248,9 @@ public partial class TrusteeWorker : ObservableObject
 
 
     /// <summary>
-    /// »ñÈ¡½»Ò×ÉêÇë¼ÇÂ¼
+    /// è·å–äº¤æ˜“ç”³è¯·è®°å½•
     /// 
-    /// ÖĞĞÅ²»·µ»Øµ±ÈÕÊı¾İ
+    /// ä¸­ä¿¡ä¸è¿”å›å½“æ—¥æ•°æ®
     /// 
     /// </summary>
     /// <returns></returns>
@@ -258,11 +258,11 @@ public partial class TrusteeWorker : ObservableObject
     {
         try
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"¿ªÊ¼Í¬²½ ½»Ò×ÉêÇë"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"å¼€å§‹åŒæ­¥ äº¤æ˜“ç”³è¯·"));
             if (trustees is null || trustees.Any()) trustees = Trustees;
 
             List<WorkReturn> ret = new();
-            // ±£´æÊı¾İ¿â
+            // ä¿å­˜æ•°æ®åº“
             var method = nameof(ITrustee.QueryTransferRequests);
 
             foreach (var tr in trustees)
@@ -275,7 +275,7 @@ public partial class TrusteeWorker : ObservableObject
 
                 try
                 {
-                    // »ñÈ¡ÀúÊ·Çø¼ä
+                    // è·å–å†å²åŒºé—´
                     var range = GetWorkedRange(tr.Identifier, method);
 
                     DateOnly begin = range.End, end = DateOnly.FromDateTime(DateTime.Now);
@@ -284,30 +284,30 @@ public partial class TrusteeWorker : ObservableObject
                     var rc = await tr.QueryTransferRequests(begin, end);
                     if (rc.Code != ReturnCode.Success && rc.Code != ReturnCode.TrafficLimit)
                     {
-                        LogEx.Error($"{rc.Code} {rc.Data?.Count} {tr.Title} »ñÈ¡µÄ½»Ò×ÉêÇë¼ÇÂ¼Êı¾İÒì³£");
-                        WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"{tr.Title} »ñÈ¡µÄ½»Ò×ÉêÇë¼ÇÂ¼Êı¾İÒì³£"));
+                        LogEx.Error($"{rc.Code} {rc.Data?.Count} {tr.Title} è·å–çš„äº¤æ˜“ç”³è¯·è®°å½•æ•°æ®å¼‚å¸¸");
+                        WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"{tr.Title} è·å–çš„äº¤æ˜“ç”³è¯·è®°å½•æ•°æ®å¼‚å¸¸"));
                     }
                     ///
-                    // ±£´æÊı¾İ¿â£¬²¿·Ö³É¹¦µÄÒ²±£´æ
+                    // ä¿å­˜æ•°æ®åº“ï¼Œéƒ¨åˆ†æˆåŠŸçš„ä¹Ÿä¿å­˜
                     if (rc.Data?.Count > 0)
                     {
-                        // Èç¹û·µ»ØÓĞÊ§°ÜµÄ£¬¸üĞÂend
+                        // å¦‚æœè¿”å›æœ‰å¤±è´¥çš„ï¼Œæ›´æ–°end
                         if (rc.Code != ReturnCode.Success)
                             end = rc.Data.Max(x => x.RequestDate);
 
-                        // Í³Ò»¸üĞÂ´¦Àí
+                        // ç»Ÿä¸€æ›´æ–°å¤„ç†
                         DataTracker.OnBatchTransferRequest(rc.Data);
 
-                        // Èç¹ûÓĞunset£¬±íÊ¾Êı¾İÒì³££¬²»±£´æ½ø¶È
+                        // å¦‚æœæœ‰unsetï¼Œè¡¨ç¤ºæ•°æ®å¼‚å¸¸ï¼Œä¸ä¿å­˜è¿›åº¦
                         if (rc.Data?.Any(x => x.InvestorName == "unset" || x.FundName == "unset" || x.InvestorIdentity == "unset") ?? false)
                         {
                             ret.Add(new(tr.Title, ReturnCode.DataIsNotWellFormed, rc.Data));
-                            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"{tr.Title} »ñÈ¡µÄ½»Ò×ÉêÇë¼ÇÂ¼´æÔÚÎ´Ê¶±ğµÄÖ÷Ìå"));
+                            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"{tr.Title} è·å–çš„äº¤æ˜“ç”³è¯·è®°å½•å­˜åœ¨æœªè¯†åˆ«çš„ä¸»ä½“"));
                             break;
                         }
                     }
 
-                    // ¸üĞÂ½ø¶È
+                    // æ›´æ–°è¿›åº¦
                     UpdateWorkedRange(range, begin, end);
                 }
                 catch (Exception e)
@@ -318,7 +318,7 @@ public partial class TrusteeWorker : ObservableObject
                 }
             }
 
-            // ±£´æret£¬³ÌĞò¼ÓÔØÊ±»Ö¸´£¬²¢Éú³ÉÏûÏ¢
+            // ä¿å­˜retï¼Œç¨‹åºåŠ è½½æ—¶æ¢å¤ï¼Œå¹¶ç”Ÿæˆæ¶ˆæ¯
             //db.DropCollection(TableRaisingBalance);
             //db.GetCollection<WorkReturn>(TableRaisingBalance).Insert(ret);
 
@@ -335,18 +335,18 @@ public partial class TrusteeWorker : ObservableObject
 
 
     /// <summary>
-    /// »ñÈ¡½»Ò×È·ÈÏ¼ÇÂ¼
+    /// è·å–äº¤æ˜“ç¡®è®¤è®°å½•
     /// </summary>
     /// <returns></returns>
     private async Task QueryTransferRecordImpl(IEnumerable<ITrustee>? trustees = null)
     {
         try
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"¿ªÊ¼Í¬²½ ½»Ò×È·ÈÏ"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"å¼€å§‹åŒæ­¥ äº¤æ˜“ç¡®è®¤"));
             if (trustees is null || trustees.Any()) trustees = Trustees;
 
             List<WorkReturn> ret = new();
-            // ±£´æÊı¾İ¿â
+            // ä¿å­˜æ•°æ®åº“
             using var db = DbHelper.Base();
             var funds = db.GetCollection<Fund>().FindAll().ToArray();
             var method = nameof(ITrustee.QueryTransferRecords);
@@ -362,7 +362,7 @@ public partial class TrusteeWorker : ObservableObject
 
                 try
                 {
-                    // »ñÈ¡ÀúÊ·Çø¼ä
+                    // è·å–å†å²åŒºé—´
                     var range = GetWorkedRange(tr.Identifier, method);
 
                     DateOnly begin = range.End, end = DateOnly.FromDateTime(DateTime.Now);
@@ -371,20 +371,20 @@ public partial class TrusteeWorker : ObservableObject
                     var rc = await tr.QueryTransferRecords(begin, end);
 
                     ///
-                    // ±£´æÊı¾İ¿â 
+                    // ä¿å­˜æ•°æ®åº“ 
                     if (rc.Data?.Count > 0)
                     {
                         DataTracker.OnBatchTransferRecord(rc.Data);
                     }
 
-                    // Èç¹ûÓĞunset£¬±íÊ¾Êı¾İÒì³££¬²»±£´æ½ø¶È
+                    // å¦‚æœæœ‰unsetï¼Œè¡¨ç¤ºæ•°æ®å¼‚å¸¸ï¼Œä¸ä¿å­˜è¿›åº¦
                     if (rc.Data?.Any(x => x.InvestorName == "unset" || x.FundName == "unset" || x.InvestorIdentity == "unset") ?? false)
                         break;
 
-                    // ¸üĞÂ½ø¶È
+                    // æ›´æ–°è¿›åº¦
                     UpdateWorkedRange(range, begin, end);
 
-                    // ºÏ²¢¼ÇÂ¼
+                    // åˆå¹¶è®°å½•
                     ret.Add(new(tr.Title, rc.Code, rc.Data));
 
                 }
@@ -396,7 +396,7 @@ public partial class TrusteeWorker : ObservableObject
                 }
             }
 
-            // ±£´æret£¬³ÌĞò¼ÓÔØÊ±»Ö¸´£¬²¢Éú³ÉÏûÏ¢
+            // ä¿å­˜retï¼Œç¨‹åºåŠ è½½æ—¶æ¢å¤ï¼Œå¹¶ç”Ÿæˆæ¶ˆæ¯
             //db.DropCollection(TableRaisingBalance);
             //db.GetCollection<WorkReturn>(TableRaisingBalance).Insert(ret);
 
@@ -411,7 +411,7 @@ public partial class TrusteeWorker : ObservableObject
     }
 
     /// <summary>
-    /// »ñÈ¡Ã¿ÈÕ·ÑÓÃÃ÷Ï¸
+    /// è·å–æ¯æ—¥è´¹ç”¨æ˜ç»†
     /// </summary>
     /// <returns></returns>
     private async Task QueryDailyFeeImpl(IEnumerable<ITrustee>? trustees = null)
@@ -421,7 +421,7 @@ public partial class TrusteeWorker : ObservableObject
             if (trustees is null || trustees.Any()) trustees = Trustees;
 
             List<WorkReturn> ret = new();
-            // ±£´æÊı¾İ¿â
+            // ä¿å­˜æ•°æ®åº“
             using var db = DbHelper.Base();
 
             var method = nameof(ITrustee.QueryFundDailyFee);
@@ -436,7 +436,7 @@ public partial class TrusteeWorker : ObservableObject
 
                 try
                 {
-                    // »ñÈ¡ÀúÊ·Çø¼ä
+                    // è·å–å†å²åŒºé—´
                     var range = GetWorkedRange(tr.Identifier, method);
                     DateOnly begin = range.End, end = DateOnly.FromDateTime(DateTime.Now);
                     if (begin == end) begin = begin.AddDays(-5);
@@ -445,10 +445,10 @@ public partial class TrusteeWorker : ObservableObject
                     var rc = await tr.QueryFundDailyFee(begin, end);
 
                     ///
-                    // ±£´æÊı¾İ¿â 
+                    // ä¿å­˜æ•°æ®åº“ 
                     if (rc.Data is not null)
                     {
-                        // ¶ÔÆëFund
+                        // å¯¹é½Fund
                         foreach (var fs in rc.Data.GroupBy(x => x.FundCode))
                         {
                             var (f, c) = db.FindFundByCode(fs.Key);
@@ -463,10 +463,10 @@ public partial class TrusteeWorker : ObservableObject
                         db.GetCollection<FundDailyFee>().Upsert(rc.Data);
                     }
 
-                    // ¸üĞÂ½ø¶È
+                    // æ›´æ–°è¿›åº¦
                     UpdateWorkedRange(range, begin, end);
 
-                    // ºÏ²¢¼ÇÂ¼
+                    // åˆå¹¶è®°å½•
                     ret.Add(new(tr.Title, rc.Code, rc.Data));
 
                 }
@@ -477,7 +477,7 @@ public partial class TrusteeWorker : ObservableObject
                 }
             }
 
-            // ±£´æret£¬³ÌĞò¼ÓÔØÊ±»Ö¸´£¬²¢Éú³ÉÏûÏ¢
+            // ä¿å­˜retï¼Œç¨‹åºåŠ è½½æ—¶æ¢å¤ï¼Œå¹¶ç”Ÿæˆæ¶ˆæ¯
             //db.DropCollection(TableRaisingBalance);
             //db.GetCollection<WorkReturn>(TableRaisingBalance).Insert(ret);
 
@@ -493,16 +493,16 @@ public partial class TrusteeWorker : ObservableObject
 
 
     /// <summary>
-    /// »ñÈ¡Ä¼¼¯»§Á÷Ë®
+    /// è·å–å‹Ÿé›†æˆ·æµæ°´
     /// </summary>
     /// <returns></returns>
     private async Task QueryRaisingAccountTransctionImpl(IEnumerable<ITrustee>? trustees = null)
     {
-        WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"¿ªÊ¼Í¬²½ Ä¼¼¯»§Á÷Ë®"));
+        WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"å¼€å§‹åŒæ­¥ å‹Ÿé›†æˆ·æµæ°´"));
         if (trustees is null || trustees.Any()) trustees = Trustees;
 
         List<WorkReturn> ret = new();
-        // ±£´æÊı¾İ¿â 
+        // ä¿å­˜æ•°æ®åº“ 
         var method = nameof(ITrustee.QueryRaisingAccountTransction);
 
         foreach (var tr in trustees)
@@ -515,7 +515,7 @@ public partial class TrusteeWorker : ObservableObject
 
             try
             {
-                // »ñÈ¡ÀúÊ·Çø¼ä
+                // è·å–å†å²åŒºé—´
                 var range = GetWorkedRange(tr.Identifier, method);
 
                 DateOnly begin = range.End, end = DateOnly.FromDateTime(DateTime.Now);
@@ -524,17 +524,17 @@ public partial class TrusteeWorker : ObservableObject
                 var rc = await tr.QueryRaisingAccountTransction(begin, end);
 
                 ///
-                // ±£´æÊı¾İ¿â 
+                // ä¿å­˜æ•°æ®åº“ 
                 if (rc.Data is not null)
                 {
                     DataTracker.OnRaisingBankTransaction(rc.Data);
                 }
 
-                // ºÏ²¢¼ÇÂ¼
+                // åˆå¹¶è®°å½•
                 ret.Add(new(tr.Title, rc.Code, rc.Data));
 
 
-                // ¸üĞÂ½ø¶È
+                // æ›´æ–°è¿›åº¦
                 UpdateWorkedRange(range, begin, end);
             }
             catch (Exception e)
@@ -544,7 +544,7 @@ public partial class TrusteeWorker : ObservableObject
             }
         }
 
-        // ±£´æret£¬³ÌĞò¼ÓÔØÊ±»Ö¸´£¬²¢Éú³ÉÏûÏ¢
+        // ä¿å­˜retï¼Œç¨‹åºåŠ è½½æ—¶æ¢å¤ï¼Œå¹¶ç”Ÿæˆæ¶ˆæ¯
         //db.DropCollection(TableRaisingBalance);
         //db.GetCollection<WorkReturn>(TableRaisingBalance).Insert(ret);
 
@@ -556,7 +556,7 @@ public partial class TrusteeWorker : ObservableObject
 
 
     /// <summary>
-    /// ²éÑ¯¾»Öµ
+    /// æŸ¥è¯¢å‡€å€¼
     /// </summary>
     /// <returns></returns>
 
@@ -577,7 +577,7 @@ public partial class TrusteeWorker : ObservableObject
 
             try
             {
-                // »ñÈ¡ÀúÊ·Çø¼ä
+                // è·å–å†å²åŒºé—´
                 var range = GetWorkedRange(tr.Identifier, method);
 
                 DateOnly begin = range.End, end = DateOnly.FromDateTime(DateTime.Now);
@@ -586,17 +586,17 @@ public partial class TrusteeWorker : ObservableObject
                 var rc = await tr.QueryNetValue(begin, end);
 
                 ///
-                // ±£´æÊı¾İ¿â 
+                // ä¿å­˜æ•°æ®åº“ 
                 if (rc.Data is not null)
                 {
                     DataTracker.OnDailyValue(rc.Data);
                 }
 
-                // ºÏ²¢¼ÇÂ¼
+                // åˆå¹¶è®°å½•
                 ret.Add(new(tr.Title, rc.Code, rc.Data));
 
 
-                // ¸üĞÂ½ø¶È
+                // æ›´æ–°è¿›åº¦
                 UpdateWorkedRange(range, begin, end);
             }
             catch (Exception e)
@@ -613,41 +613,41 @@ public partial class TrusteeWorker : ObservableObject
     #endregion
 
     /// <summary>
-    /// »ñÈ¡Ä¼¼¯»§Á÷Ë®
+    /// è·å–å‹Ÿé›†æˆ·æµæ°´
     /// </summary>
     /// <returns></returns>
     public async Task QueryRaisingAccountTransctionOnce(IEnumerable<ITrustee>? trustees = null) => await RunTask(QueryRaisingAccountTransctionImpl(trustees));
 
     /// <summary>
-    /// »ñÈ¡½»Ò×È·ÈÏ¼ÇÂ¼
+    /// è·å–äº¤æ˜“ç¡®è®¤è®°å½•
     /// </summary>
     /// <returns></returns>
     public async Task QueryTransferRecordOnce(IEnumerable<ITrustee>? trustees = null) => await RunTask(QueryTransferRecordImpl(trustees));
 
     /// <summary>
-    /// »ñÈ¡Ã¿ÈÕ·ÑÓÃÃ÷Ï¸
+    /// è·å–æ¯æ—¥è´¹ç”¨æ˜ç»†
     /// </summary>
     /// <returns></returns>
     public async Task QueryDailyFeeOnce(IEnumerable<ITrustee>? trustees = null) => await RunTask(QueryDailyFeeImpl(trustees));
 
     /// <summary>
-    /// »ñÈ¡½»Ò×ÉêÇë¼ÇÂ¼
+    /// è·å–äº¤æ˜“ç”³è¯·è®°å½•
     /// 
-    /// ÖĞĞÅ²»·µ»Øµ±ÈÕÊı¾İ
+    /// ä¸­ä¿¡ä¸è¿”å›å½“æ—¥æ•°æ®
     /// 
     /// </summary>
     /// <returns></returns>
     public async Task QueryTransferRequestOnce(IEnumerable<ITrustee>? trustees = null) => await RunTask(QueryTransferRequestImpl(trustees));
 
     /// <summary>
-    /// »ñÈ¡Ä¼¼¯»§Óà¶î
+    /// è·å–å‹Ÿé›†æˆ·ä½™é¢
     /// </summary>
     /// <returns></returns>
     public async Task QueryRaisingBalanceOnce(IEnumerable<ITrustee>? trustees = null) => await RunTask(QueryRaisingBalanceImpl(trustees));
 
 
     /// <summary>
-    /// ²éÑ¯¾»Öµ
+    /// æŸ¥è¯¢å‡€å€¼
     /// </summary>
     /// <returns></returns>
     public async Task QueryNetValueOnce(IEnumerable<ITrustee>? trustees = null) => await RunTask(QueryNetValueImpl());
@@ -659,13 +659,13 @@ public partial class TrusteeWorker : ObservableObject
             var rc = await pair.Trustee.QueryNetValue(begin, end, code);
 
             ///
-            // ±£´æÊı¾İ¿â 
+            // ä¿å­˜æ•°æ®åº“ 
             if (rc.Data is not null)
             {
                 DataTracker.OnDailyValue(rc.Data);
             }
         }
-        else WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "Î´·¢ÏÖ¶ÔÓ¦µÄAPI"));
+        else WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "æœªå‘ç°å¯¹åº”çš„API"));
     }
 
 
@@ -682,7 +682,7 @@ public partial class TrusteeWorker : ObservableObject
     [RelayCommand]
     public void Rebuild(string method)
     {
-        using (var pdf = DbHelper.Platform()) //É¾³ı¼ÇÂ¼
+        using (var pdf = DbHelper.Platform()) //åˆ é™¤è®°å½•
             pdf.GetCollection("TrusteeMethodShotRange").Delete(method);
     }
 
@@ -708,14 +708,14 @@ public partial class TrusteeWorker : ObservableObject
     //{
     //    var t = DateTime.Now;
 
-    //    // ·ÖÖÓÎ»
+    //    // åˆ†é’Ÿä½
     //    var minute = t.Ticks / TimeSpan.TicksPerMinute; //  new DateTime(t.Year, t.Month, t.Day, t.Hour, t.Minute, 0);
     //    if (minute % RaisingBalanceConfig.Interval == 0)
     //    {
     //        await RaisingBalanceConfig.Semaphore.WaitAsync();
     //        try
     //        {
-    //            // ¼ìÑéÊÇ·ñÓëÉÏ´ÎÔËĞĞÊ±¼ä²»Ò»Ñù
+    //            // æ£€éªŒæ˜¯å¦ä¸ä¸Šæ¬¡è¿è¡Œæ—¶é—´ä¸ä¸€æ ·
     //            //if (t.Hour != RaisingBalanceConfig.Last.Hour || t.Minute != RaisingBalanceConfig.Last.Minute)
     //            if (minute / RaisingBalanceConfig.Interval != RaisingBalanceConfig.GetLastRunIndex())
     //                await QueryRaisingBalanceOnceCommand.ExecuteAsync(null);
@@ -724,7 +724,7 @@ public partial class TrusteeWorker : ObservableObject
     //        finally { RaisingBalanceConfig.Semaphore.Release(); }
     //    }
 
-    //    // Ä¼¼¯»§Á÷Ë®
+    //    // å‹Ÿé›†æˆ·æµæ°´
     //    if (minute % RaisingAccountTransctionConfig.Interval == 0)
     //    {
     //        await RaisingAccountTransctionConfig.Semaphore.WaitAsync();
@@ -737,7 +737,7 @@ public partial class TrusteeWorker : ObservableObject
     //        finally { RaisingAccountTransctionConfig.Semaphore.Release(); }
     //    }
 
-    //    // ½»Ò×ÉêÇë 
+    //    // äº¤æ˜“ç”³è¯· 
     //    if (minute % TransferRequestConfig.Interval == 0)
     //    {
     //        await TransferRequestConfig.Semaphore.WaitAsync();
@@ -750,7 +750,7 @@ public partial class TrusteeWorker : ObservableObject
     //        finally { TransferRequestConfig.Semaphore.Release(); }
     //    }
 
-    //    // ½»Ò×È·ÈÏ
+    //    // äº¤æ˜“ç¡®è®¤
     //    if (minute % TransferRecordConfig.Interval == 0)
     //    {
     //        await TransferRecordConfig.Semaphore.WaitAsync();
@@ -764,7 +764,7 @@ public partial class TrusteeWorker : ObservableObject
     //    }
 
 
-    //    // ·ÑÓÃ
+    //    // è´¹ç”¨
     //    if (minute % DailyFeeConfig.Interval == 0)
     //    {
     //        await DailyFeeConfig.Semaphore.WaitAsync();
@@ -783,14 +783,14 @@ public partial class TrusteeWorker : ObservableObject
         var now = DateTime.Now;
         var minuteIndex = now.Ticks / TimeSpan.TicksPerMinute;
 
-        /// Ã¿Ìì¼ì²éÇåÀílog
+        /// æ¯å¤©æ£€æŸ¥æ¸…ç†log
         if ((now - _clearLogTime).Days > 1)
         {
             ClearLog();
             _clearLogTime = now;
         }
 
-        // ÊÇ·ñ·Ç¹¤×÷Ê±¼ä 8-19µã
+        // æ˜¯å¦éå·¥ä½œæ—¶é—´ 8-19ç‚¹
         bool offwork = (now.Hour < 8 || now.Hour >= 19);
 
         if (offwork) return;
@@ -846,7 +846,7 @@ public partial class TrusteeWorker : ObservableObject
         if (fs.Length > 1024 * 1024 * 500)
         {
             var db = new LiteDatabase(@$"FileName=data\platformlog.db;Connection=Shared");
-            // ÌõÄ¿
+            // æ¡ç›®
             var total = db.GetCollection<TrusteeCallHistory>().Count();
             var mid = db.GetCollection<TrusteeCallHistory>().Query().Skip(total / 2).Limit(1).FirstOrDefault();
             if (mid is not null)

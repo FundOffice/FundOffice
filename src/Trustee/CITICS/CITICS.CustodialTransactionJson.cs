@@ -3,119 +3,119 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class CustodialTransactionJson : JsonBase
 {
     /// <summary>
-    /// ÒøĞĞ´úÂë
+    /// é“¶è¡Œä»£ç 
     /// </summary>
     [JsonPropertyName("YHDM")]
     public string BankCode { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÃû³Æ
+    /// é“¶è¡Œåç§°
     /// </summary>
     [JsonPropertyName("YHMC")]
     public string BankName { get; set; }
 
     /// <summary>
-    /// ¸¶·½ÕËºÅ£¨CLJGÎª-1Ê±Ìî²éÑ¯ÕÊºÅ£©
+    /// ä»˜æ–¹è´¦å·ï¼ˆCLJGä¸º-1æ—¶å¡«æŸ¥è¯¢å¸å·ï¼‰
     /// </summary>
     [JsonPropertyName("FKFZH")]
     public string PayerAccountNo { get; set; }
 
     /// <summary>
-    /// ¸¶·½»§Ãû
+    /// ä»˜æ–¹æˆ·å
     /// </summary>
     [JsonPropertyName("FKFHM")]
     public string PayerAccountName { get; set; }
 
     /// <summary>
-    /// ÊÕ·½ÕËºÅ£¨CLJGÎª-1Ê±Ìî²éÑ¯ÕÊºÅ£©
+    /// æ”¶æ–¹è´¦å·ï¼ˆCLJGä¸º-1æ—¶å¡«æŸ¥è¯¢å¸å·ï¼‰
     /// </summary>
     [JsonPropertyName("SKFZH")]
     public string PayeeAccountNo { get; set; }
 
     /// <summary>
-    /// ÊÕ·½»§Ãû
+    /// æ”¶æ–¹æˆ·å
     /// </summary>
     [JsonPropertyName("SKFHM")]
     public string PayeeAccountName { get; set; }
 
     /// <summary>
-    /// ·¢Éú½ğ¶î
+    /// å‘ç”Ÿé‡‘é¢
     /// </summary>
     [JsonPropertyName("FSJE")]
     public decimal Amount { get; set; }
 
     /// <summary>
-    /// ½áËã±ÒÖÖ
-    /// HKD: ¸Û±Ò, RMB: ÈËÃñ±Ò, USD: ÃÀÔª
+    /// ç»“ç®—å¸ç§
+    /// HKD: æ¸¯å¸, RMB: äººæ°‘å¸, USD: ç¾å…ƒ
     /// </summary>
     [JsonPropertyName("JSBZ")]
     public string Currency { get; set; }
 
     /// <summary>
-    /// ½è´û±êÖ¾£º
-    /// ½è¡¢´û¡¢¸¶¿î=½è¡¢¿Û¿î=½è¡¢ÊÕ¿î=´û¡¢¿Û¿î³·Ïú¡¢ÊÕ¿î³·Ïú
+    /// å€Ÿè´·æ ‡å¿—ï¼š
+    /// å€Ÿã€è´·ã€ä»˜æ¬¾=å€Ÿã€æ‰£æ¬¾=å€Ÿã€æ”¶æ¬¾=è´·ã€æ‰£æ¬¾æ’¤é”€ã€æ”¶æ¬¾æ’¤é”€
     /// </summary>
     [JsonPropertyName("JDBZ")]
     public string DebitCreditFlag { get; set; }
 
     /// <summary>
-    /// ÕªÒªÃû³Æ
+    /// æ‘˜è¦åç§°
     /// </summary>
     [JsonPropertyName("ZYMC")]
     public string Summary { get; set; }
 
     /// <summary>
-    /// ·¢ÉúÊ±¼ä£¬¸ñÊ½ yyyy-MM-dd HH:mm:ss
+    /// å‘ç”Ÿæ—¶é—´ï¼Œæ ¼å¼ yyyy-MM-dd HH:mm:ss
     /// </summary>
     [JsonPropertyName("FSSJ")]
     public string OccurTime { get; set; }
 
     /// <summary>
-    /// ·µ»ØĞÅÏ¢
+    /// è¿”å›ä¿¡æ¯
     /// </summary>
     [JsonPropertyName("FHXX")]
     public string ReturnInfo { get; set; }
 
     /// <summary>
-    /// ±¸ÓÃ×Ö¶Î
+    /// å¤‡ç”¨å­—æ®µ
     /// </summary>
     [JsonPropertyName("BYZD")]
     public string ReservedField { get; set; }
 
     /// <summary>
-    /// ÕË»§Óà¶î
+    /// è´¦æˆ·ä½™é¢
     /// </summary>
     [JsonPropertyName("ZHYE")]
     public decimal AccountBalance { get; set; }
 
     /// <summary>
-    /// ¿ÉÓÃÓà¶î
+    /// å¯ç”¨ä½™é¢
     /// </summary>
     [JsonPropertyName("KYYE")]
     public decimal AvailableBalance { get; set; }
 
     /// <summary>
-    /// Á÷Ë®ºÅ
+    /// æµæ°´å·
     /// </summary>
     [JsonPropertyName("LSH")]
     public string SerialNumber { get; set; }
 
     /// <summary>
-    /// ´¦Àí½á¹û
-    /// 0 - ³É¹¦
-    /// -2 - ´¦ÀíÖĞ
-    /// ÆäËûÖµ´ú±íÊ§°Ü
+    /// å¤„ç†ç»“æœ
+    /// 0 - æˆåŠŸ
+    /// -2 - å¤„ç†ä¸­
+    /// å…¶ä»–å€¼ä»£è¡¨å¤±è´¥
     /// </summary>
     [JsonPropertyName("CLJG")]
     public string ProcessResult { get; set; }
 
     /// <summary>
-    /// ´¦ÀíËµÃ÷
+    /// å¤„ç†è¯´æ˜
     /// </summary>
     [JsonPropertyName("CLSM")]
     public string ProcessDescription { get; set; }
@@ -136,7 +136,7 @@ internal class CustodialTransactionJson : JsonBase
             Amount = Amount,
             Balance = AccountBalance,
             Currency = Currency,
-            Direction = DebitCreditFlag switch { string s when s.Contains("³·Ïú") => TransctionDirection.Cancel, "½è" or "½è¿î" or "¿Û¿î" => TransctionDirection.Pay, _ => TransctionDirection.Receive },
+            Direction = DebitCreditFlag switch { string s when s.Contains("æ’¤é”€") => TransctionDirection.Cancel, "å€Ÿ" or "å€Ÿæ¬¾" or "æ‰£æ¬¾" => TransctionDirection.Pay, _ => TransctionDirection.Receive },
             Remark = Summary,
             Time = DateTime.ParseExact(OccurTime, "yyyy-MM-dd HH:mm:ss", null)
         };
@@ -145,4 +145,4 @@ internal class CustodialTransactionJson : JsonBase
 }
 
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

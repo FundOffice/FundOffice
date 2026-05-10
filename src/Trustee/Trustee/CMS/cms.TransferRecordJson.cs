@@ -35,34 +35,34 @@ internal class TransferRecordJson : JsonBase
     public required string BusinessCode { get; set; }
 
     [JsonPropertyName("applicationAmount")]
-    public required string ApplicationAmount { get; set; } // ±£ÁôÁ½Î»Ð¡Êý
+    public required string ApplicationAmount { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     [JsonPropertyName("applicationVol")]
-    public required string ApplicationVol { get; set; } // ±£ÁôÁ½Î»Ð¡Êý
+    public required string ApplicationVol { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     [JsonPropertyName("transactionDate")]
-    public required string TransactionDate { get; set; } // ¸ñÊ½£ºyyyymmdd
+    public required string TransactionDate { get; set; } // æ ¼å¼ï¼šyyyymmdd
 
     [JsonPropertyName("nav")]
-    public required string Nav { get; set; } // ÇåÅÌÈÕ¿É±£Áô8Î»Ð¡Êý
+    public required string Nav { get; set; } // æ¸…ç›˜æ—¥å¯ä¿ç•™8ä½å°æ•°
 
     [JsonPropertyName("transactionCfmDate")]
-    public required string TransactionCfmDate { get; set; } // ¸ñÊ½£ºyyyymmdd
+    public required string TransactionCfmDate { get; set; } // æ ¼å¼ï¼šyyyymmdd
 
     [JsonPropertyName("confirmedVol")]
-    public required string ConfirmedVol { get; set; } // ±£ÁôÁ½Î»Ð¡Êý
+    public required string ConfirmedVol { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     [JsonPropertyName("confirmedAmount")]
-    public required string ConfirmedAmount { get; set; } // ±£ÁôÁ½Î»Ð¡Êý
+    public required string ConfirmedAmount { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     [JsonPropertyName("confirmedNavVol")]
-    public required string ConfirmedNavVol { get; set; } // ±£ÁôÁ½Î»Ð¡Êý
+    public required string ConfirmedNavVol { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     [JsonPropertyName("charge")]
-    public required string Charge { get; set; } // ±£ÁôÁ½Î»Ð¡Êý
+    public required string Charge { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     [JsonPropertyName("performance")]
-    public required string Performance { get; set; } // ±£ÁôÁ½Î»Ð¡Êý
+    public required string Performance { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     [JsonPropertyName("distributorCode")]
     public required string DistributorCode { get; set; }
@@ -86,16 +86,16 @@ internal class TransferRecordJson : JsonBase
     public required string ShareBonusType { get; set; }
 
     [JsonPropertyName("attributionManagerFee")]
-    public required string AttributionManagerFee { get; set; } // ±£ÁôÁ½Î»Ð¡Êý
+    public required string AttributionManagerFee { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     [JsonPropertyName("attributionFundAssetFee")]
-    public required string AttributionFundAssetFee { get; set; } // ±£ÁôÁ½Î»Ð¡Êý
+    public required string AttributionFundAssetFee { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     [JsonPropertyName("interest")]
-    public required string Interest { get; set; } // ±£ÁôÁ½Î»Ð¡Êý
+    public required string Interest { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     [JsonPropertyName("attributionSellAgencyFee")]
-    public required string AttributionSellAgencyFee { get; set; } // ±£ÁôÁ½Î»Ð¡Êý
+    public required string AttributionSellAgencyFee { get; set; } // ä¿ç•™ä¸¤ä½å°æ•°
 
     [JsonPropertyName("applyNo")]
     public required string ApplyNo { get; set; }
@@ -104,7 +104,7 @@ internal class TransferRecordJson : JsonBase
     {
         TransferRecordType transferRecordType = Translate(BusinessCode);
         if (transferRecordType == TransferRecordType.UNK && BusinessCode switch { "120" => false, _ => true })
-            ReportJsonUnexpected(CMS._Identifier, nameof(CMS.QueryTransferRecords), $"TA[{ApplyNo}] {TransactionCfmDate} ·Ý¶î£º{ConfirmedNavVol} ½ð¶î£º{ConfirmedAmount} µÄÒµÎñÀàÐÍ[{BusinessCode}]ÎÞ·¨Ê¶±ð");
+            ReportJsonUnexpected(CMS._Identifier, nameof(CMS.QueryTransferRecords), $"TA[{ApplyNo}] {TransactionCfmDate} ä»½é¢ï¼š{ConfirmedNavVol} é‡‘é¢ï¼š{ConfirmedAmount} çš„ä¸šåŠ¡ç±»åž‹[{BusinessCode}]æ— æ³•è¯†åˆ«");
 
         return new TransferRecord
         {
@@ -136,30 +136,30 @@ internal class TransferRecordJson : JsonBase
     {
         return c switch
         {
-            //"120" => TARecordType.Subscription, //"ÈÏ¹ºÈ·ÈÏ" ´ËÏîÃ»ÓÐ·Ý¶îÊý¾Ý, ÓÃÈÏ¹º½á¹û
-            "122" => TransferRecordType.Purchase,     //"Éê¹ºÈ·ÈÏ",
-            "124" => TransferRecordType.Redemption,// "Êê»ØÈ·ÈÏ",
-            "126" => TransferRecordType.MoveIn,   //"×ªÍÐÈ·ÈÏ",
-            "127" => TransferRecordType.MoveIn,   //"×ªÏúÊÛÈË/»ú¹¹×ªÈë",
-            "128" => TransferRecordType.MoveOut,  //"×ªÏúÊÛÈË/»ú¹¹×ª³ö",
-            "129" => TransferRecordType.BonusType,//"·Öºì·½Ê½",
-            "130" => TransferRecordType.Subscription, // "ÈÏ¹º½á¹û",
-            "131" => TransferRecordType.Frozen,       //"»ù½ð·ÝÊý¶³½á",
-            "132" => TransferRecordType.Thawed,       //"»ù½ð·ÝÊý½â¶³",
-                                                      //"133" => TARecordType.TransferIn,   //"·Ç½»Ò×¹ý»§",
-            "134" => TransferRecordType.TransferIn,   //"·Ç½»Ò×¹ý»§×ªÈë",
-            "135" => TransferRecordType.TransferOut,  //"·Ç½»Ò×¹ý»§×ª³ö",
-                                                      //"136" => TARecordType.SwitchIn,     //"»ù½ð×ª»»",
-            "137" => TransferRecordType.SwitchIn,     //"»ù½ð×ª»»×ªÈë",
-            "138" => TransferRecordType.SwitchOut,    //"»ù½ð×ª»»×ª³ö",
+            //"120" => TARecordType.Subscription, //"è®¤è´­ç¡®è®¤" æ­¤é¡¹æ²¡æœ‰ä»½é¢æ•°æ®, ç”¨è®¤è´­ç»“æžœ
+            "122" => TransferRecordType.Purchase,     //"ç”³è´­ç¡®è®¤",
+            "124" => TransferRecordType.Redemption,// "èµŽå›žç¡®è®¤",
+            "126" => TransferRecordType.MoveIn,   //"è½¬æ‰˜ç¡®è®¤",
+            "127" => TransferRecordType.MoveIn,   //"è½¬é”€å”®äºº/æœºæž„è½¬å…¥",
+            "128" => TransferRecordType.MoveOut,  //"è½¬é”€å”®äºº/æœºæž„è½¬å‡º",
+            "129" => TransferRecordType.BonusType,//"åˆ†çº¢æ–¹å¼",
+            "130" => TransferRecordType.Subscription, // "è®¤è´­ç»“æžœ",
+            "131" => TransferRecordType.Frozen,       //"åŸºé‡‘ä»½æ•°å†»ç»“",
+            "132" => TransferRecordType.Thawed,       //"åŸºé‡‘ä»½æ•°è§£å†»",
+                                                      //"133" => TARecordType.TransferIn,   //"éžäº¤æ˜“è¿‡æˆ·",
+            "134" => TransferRecordType.TransferIn,   //"éžäº¤æ˜“è¿‡æˆ·è½¬å…¥",
+            "135" => TransferRecordType.TransferOut,  //"éžäº¤æ˜“è¿‡æˆ·è½¬å‡º",
+                                                      //"136" => TARecordType.SwitchIn,     //"åŸºé‡‘è½¬æ¢",
+            "137" => TransferRecordType.SwitchIn,     //"åŸºé‡‘è½¬æ¢è½¬å…¥",
+            "138" => TransferRecordType.SwitchOut,    //"åŸºé‡‘è½¬æ¢è½¬å‡º",
 
 
-            "139" => TransferRecordType.Purchase,     //"¶¨Ê±¶¨¶îÉê¹º",
-            "142" => TransferRecordType.ForceRedemption,//"Ç¿ÖÆÊê»Ø",
-            "143" => TransferRecordType.Distribution,     //"·ÖºìÈ·ÈÏ",
-            "144" => TransferRecordType.Increase,     //"Ç¿ÐÐµ÷Ôö",
-            "145" => TransferRecordType.Decrease,     //"Ç¿ÐÐµ÷¼õ",
-            _ => TransferRecordType.UNK,              //"Î´ÖªÒµÎñÀàÐÍ"
+            "139" => TransferRecordType.Purchase,     //"å®šæ—¶å®šé¢ç”³è´­",
+            "142" => TransferRecordType.ForceRedemption,//"å¼ºåˆ¶èµŽå›ž",
+            "143" => TransferRecordType.Distribution,     //"åˆ†çº¢ç¡®è®¤",
+            "144" => TransferRecordType.Increase,     //"å¼ºè¡Œè°ƒå¢ž",
+            "145" => TransferRecordType.Decrease,     //"å¼ºè¡Œè°ƒå‡",
+            _ => TransferRecordType.UNK,              //"æœªçŸ¥ä¸šåŠ¡ç±»åž‹"
         };
     }
 }

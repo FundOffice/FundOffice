@@ -1,7 +1,7 @@
 namespace FMO.Models;
 
 /// <summary>
-/// ×Ó²úÆ·Ó³Éä
+/// å­äº§å“æ˜ å°„
 /// </summary>
 public class SubjectFundMapping
 {
@@ -12,22 +12,22 @@ public class SubjectFundMapping
     public required string FundCode { get; set; }
 
     /// <summary>
-    /// Ö÷²úÆ·
+    /// ä¸»äº§å“
     /// </summary>
     public string? MasterName { get; set; }
 
     /// <summary>
-    /// Ö÷²úÆ·
+    /// ä¸»äº§å“
     /// </summary>
     public string? MasterCode { get; set; }
 
     /// <summary>
-    /// Ğ­»á
+    /// åä¼š
     /// </summary>
     public string? AmacCode { get; set; }
 
     /// <summary>
-    /// ·İ¶îÃû
+    /// ä»½é¢å
     /// </summary>
     public string? ShareClass { get; set; }
 

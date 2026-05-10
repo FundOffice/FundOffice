@@ -3,85 +3,85 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee.JsonCITICS;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class RaisingBalanceJson : JsonBase
 {
     /// <summary>
-    /// ·¢ÉúÊ±¼ä£¨¸ñÊ½£ºYYYY-MM-DD HH:mm:ss£©
+    /// å‘ç”Ÿæ—¶é—´ï¼ˆæ ¼å¼ï¼šYYYY-MM-DD HH:mm:ssï¼‰
     /// </summary>
     [JsonPropertyName("occurTime")]
     public string OccurTime { get; set; }
 
     /// <summary>
-    /// »ù½ğ´úÂë
+    /// åŸºé‡‘ä»£ç 
     /// </summary>
     [JsonPropertyName("fundCode")]
     public string FundCode { get; set; }
 
     /// <summary>
-    /// »ù½ğÃû³Æ
+    /// åŸºé‡‘åç§°
     /// </summary>
     [JsonPropertyName("fundName")]
     public string FundName { get; set; }
 
     /// <summary>
-    /// ÕË»§ÀàĞÍ
-    /// 02 - Ä¼¼¯»§
+    /// è´¦æˆ·ç±»å‹
+    /// 02 - å‹Ÿé›†æˆ·
     /// </summary>
     [JsonPropertyName("accoType")]
     public string AccountType { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÕËºÅ
+    /// é“¶è¡Œè´¦å·
     /// </summary>
     [JsonPropertyName("bankAcco")]
     public string BankAccountNo { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÕË»§Ãû³Æ
+    /// é“¶è¡Œè´¦æˆ·åç§°
     /// </summary>
     [JsonPropertyName("accName")]
     public string BankAccountName { get; set; }
 
     /// <summary>
-    /// ÒøĞĞ¿ª»§ĞĞÃû³Æ
+    /// é“¶è¡Œå¼€æˆ·è¡Œåç§°
     /// </summary>
     [JsonPropertyName("openBankName")]
     public string OpenBankName { get; set; }
 
     /// <summary>
-    /// ÒøĞĞ±àºÅ£¨ÒÔÈËĞĞ´ó¶î¸¶¿îÂëÇ°ÈıÎ»Îª±ê×¼£©
+    /// é“¶è¡Œç¼–å·ï¼ˆä»¥äººè¡Œå¤§é¢ä»˜æ¬¾ç å‰ä¸‰ä½ä¸ºæ ‡å‡†ï¼‰
     /// </summary>
     [JsonPropertyName("bankNo")]
     public string BankNumber { get; set; }
 
     /// <summary>
-    /// ±ÒÖÖ
+    /// å¸ç§
     /// </summary>
     [JsonPropertyName("curType")]
     public string Currency { get; set; }
 
     /// <summary>
-    /// ÕË»§Óà¶î
+    /// è´¦æˆ·ä½™é¢
     /// </summary>
     [JsonPropertyName("acctBal")]
     public string AccountBalance { get; set; }
 
     /// <summary>
-    /// ÒøĞĞ·µ»Ø´úÂë
+    /// é“¶è¡Œè¿”å›ä»£ç 
     /// </summary>
     [JsonPropertyName("bankRetCode")]
     public string BankReturnCode { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÕªÒª
+    /// é“¶è¡Œæ‘˜è¦
     /// </summary>
     [JsonPropertyName("bankNote")]
     public string BankSummary { get; set; }
 
     /// <summary>
-    /// CNAPS ´ó¶îÖ§¸¶ºÅ
+    /// CNAPS å¤§é¢æ”¯ä»˜å·
     /// </summary>
     [JsonPropertyName("cnapsCode")]
     public string CNAPSCode { get; set; }
@@ -103,4 +103,4 @@ internal class RaisingBalanceJson : JsonBase
     }
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

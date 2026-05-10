@@ -4,60 +4,60 @@ using System.Text.Json.Serialization;
 namespace FMO.Trustee;
 
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class SubjectFundMappingJson : JsonBase
 {
     /// <summary>
-    /// ²úÆ·±àÂë£¨±ØÌî£¬×î´ó³¤¶È32£©
+    /// äº§å“ç¼–ç ï¼ˆå¿…å¡«ï¼Œæœ€å¤§é•¿åº¦32ï¼‰
     /// </summary>
     [JsonPropertyName("productNo")]
     public string ProductNo { get; set; }
 
     /// <summary>
-    /// ²úÆ·Ãû³Æ£¨±ØÌî£¬×î´ó³¤¶È250£©
+    /// äº§å“åç§°ï¼ˆå¿…å¡«ï¼Œæœ€å¤§é•¿åº¦250ï¼‰
     /// </summary>
     [JsonPropertyName("productName")]
     public string ProductName { get; set; }
 
     /// <summary>
-    /// ¹«Ë¾Ãû³Æ£¨±ØÌî£¬×î´ó³¤¶È128£©
+    /// å…¬å¸åç§°ï¼ˆå¿…å¡«ï¼Œæœ€å¤§é•¿åº¦128ï¼‰
     /// </summary>
     [JsonPropertyName("companyName")]
     public string CompanyName { get; set; }
 
     /// <summary>
-    /// ²úÆ·×´Ì¬£¨±ØÌî£¬×Öµä¼û¸½Â¼3.4£¬×î´ó³¤¶È2£©
+    /// äº§å“çŠ¶æ€ï¼ˆå¿…å¡«ï¼Œå­—å…¸è§é™„å½•3.4ï¼Œæœ€å¤§é•¿åº¦2ï¼‰
     /// </summary>
     [JsonPropertyName("status")]
     public string Status { get; set; }
 
     /// <summary>
-    /// ³ÉÁ¢Ê±¼ä£¨±ØÌî£¬¸ñÊ½yyyyMMdd£©
+    /// æˆç«‹æ—¶é—´ï¼ˆå¿…å¡«ï¼Œæ ¼å¼yyyyMMddï¼‰
     /// </summary>
     [JsonPropertyName("publishDate")]
     public string PublishDate { get; set; }
 
     /// <summary>
-    /// ÍĞ¹Ü»ú¹¹£¨·Ç±ØÌî£¬×î´ó³¤¶È128£©
+    /// æ‰˜ç®¡æœºæ„ï¼ˆéå¿…å¡«ï¼Œæœ€å¤§é•¿åº¦128ï¼‰
     /// </summary>
     [JsonPropertyName("custodianOrg")]
     public string CustodianOrg { get; set; }
 
     /// <summary>
-    /// Íâ°ü»ú¹¹£¨·Ç±ØÌî£¬×î´ó³¤¶È128£©
+    /// å¤–åŒ…æœºæ„ï¼ˆéå¿…å¡«ï¼Œæœ€å¤§é•¿åº¦128ï¼‰
     /// </summary>
     [JsonPropertyName("outsourcingOrg")]
     public string OutsourcingOrg { get; set; }
 
     /// <summary>
-    /// Ä¸²úÆ·´úÂë£¨·Ç±ØÌî£¬½ö×Ó²úÆ··µ»Ø£¬×î´ó³¤¶È32£©
+    /// æ¯äº§å“ä»£ç ï¼ˆéå¿…å¡«ï¼Œä»…å­äº§å“è¿”å›ï¼Œæœ€å¤§é•¿åº¦32ï¼‰
     /// </summary>
     [JsonPropertyName("parentProductNo")]
     public string ParentProductNo { get; set; }
 
     /// <summary>
-    /// Ä¸²úÆ·Ãû³Æ£¨·Ç±ØÌî£¬½ö×Ó²úÆ··µ»Ø£¬×î´ó³¤¶È250£©
+    /// æ¯äº§å“åç§°ï¼ˆéå¿…å¡«ï¼Œä»…å­äº§å“è¿”å›ï¼Œæœ€å¤§é•¿åº¦250ï¼‰
     /// </summary>
     [JsonPropertyName("parentProductName")]
     public string ParentProductName { get; set; }
@@ -93,4 +93,4 @@ internal class SubjectFundMappingJson : JsonBase
 
 
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

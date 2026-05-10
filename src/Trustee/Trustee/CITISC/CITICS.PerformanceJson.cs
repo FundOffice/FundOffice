@@ -2,105 +2,105 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee.JsonCITICS;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class PerformanceJson : JsonBase
 {
     [JsonPropertyName("fundAcco")]
-    public string FundAccount { get; set; } // »ù½ğÕËºÅ
+    public string FundAccount { get; set; } // åŸºé‡‘è´¦å·
 
     [JsonPropertyName("custName")]
-    public string CustomerName { get; set; } // ¿Í»§Ãû³Æ
+    public string CustomerName { get; set; } // å®¢æˆ·åç§°
 
     [JsonPropertyName("custType")]
-    public string CustomerType { get; set; } // ¿Í»§ÀàĞÍ
+    public string CustomerType { get; set; } // å®¢æˆ·ç±»å‹
 
     [JsonPropertyName("agencyNo")]
-    public string AgencyCode { get; set; } // ÏúÊÛÉÌ´úÂë
+    public string AgencyCode { get; set; } // é”€å”®å•†ä»£ç 
 
     [JsonPropertyName("agencyName")]
-    public string AgencyName { get; set; } // ÏúÊÛÉÌÃû³Æ
+    public string AgencyName { get; set; } // é”€å”®å•†åç§°
 
     [JsonPropertyName("tradeAcco")]
-    public string TradeAccount { get; set; } // ½»Ò×ÕËºÅ
+    public string TradeAccount { get; set; } // äº¤æ˜“è´¦å·
 
     [JsonPropertyName("businFlag")]
-    public string BusinessType { get; set; } // ÒµÎñÀàĞÍ£¨²Î¿¼Ó³Éä±í£©
+    public string BusinessType { get; set; } // ä¸šåŠ¡ç±»å‹ï¼ˆå‚è€ƒæ˜ å°„è¡¨ï¼‰
 
     [JsonPropertyName("sortFlag")]
-    public string SortFlag { get; set; } // ´¦ÀíÀàĞÍ: 0-±£µ×´¦Àí 1-Òµ¼¨Ìá³É
+    public string SortFlag { get; set; } // å¤„ç†ç±»å‹: 0-ä¿åº•å¤„ç† 1-ä¸šç»©ææˆ
 
     [JsonPropertyName("requestDate")]
-    public string RequestDate { get; set; } // ÉêÇëÈÕÆÚ
+    public string RequestDate { get; set; } // ç”³è¯·æ—¥æœŸ
 
     [JsonPropertyName("confirmDate")]
-    public string ConfirmDate { get; set; } // È·ÈÏÈÕÆÚ
+    public string ConfirmDate { get; set; } // ç¡®è®¤æ—¥æœŸ
 
     [JsonPropertyName("fundCode")]
-    public string FundCode { get; set; } // »ù½ğ´úÂë
+    public string FundCode { get; set; } // åŸºé‡‘ä»£ç 
 
     [JsonPropertyName("shareTypeCn")]
-    public string ShareTypeName { get; set; } // ·İ¶îÀà±ğ
+    public string ShareTypeName { get; set; } // ä»½é¢ç±»åˆ«
 
     [JsonPropertyName("cserialNo")]
-    public string TaConfirmNo { get; set; } // TAÈ·ÈÏºÅ
+    public string TaConfirmNo { get; set; } // TAç¡®è®¤å·
 
     [JsonPropertyName("registDate")]
-    public string RegisterDate { get; set; } // ·İ¶î×¢²áÈÕÆÚ
+    public string RegisterDate { get; set; } // ä»½é¢æ³¨å†Œæ—¥æœŸ
 
     [JsonPropertyName("shares")]
-    public string Shares { get; set; } // ·¢Éú·İ¶î
+    public string Shares { get; set; } // å‘ç”Ÿä»½é¢
 
     [JsonPropertyName("beginDate")]
-    public string BeginDate { get; set; } // ÆÚ³õÈÕÆÚ
+    public string BeginDate { get; set; } // æœŸåˆæ—¥æœŸ
 
     [JsonPropertyName("oriNav")]
-    public string OriNav { get; set; } // ÆÚ³õµ¥Î»¾»Öµ
+    public string OriNav { get; set; } // æœŸåˆå•ä½å‡€å€¼
 
     [JsonPropertyName("oriTotalNav")]
-    public string OriTotalNav { get; set; } // ÆÚ³õÀÛ¼Æ¾»Öµ
+    public string OriTotalNav { get; set; } // æœŸåˆç´¯è®¡å‡€å€¼
 
     [JsonPropertyName("nav")]
-    public string Nav { get; set; } // ÆÚÄ©µ¥Î»¾»Öµ
+    public string Nav { get; set; } // æœŸæœ«å•ä½å‡€å€¼
 
     [JsonPropertyName("totalNav")]
-    public string TotalNav { get; set; } // ÆÚÄ©ÀÛ¼Æ¾»Öµ
+    public string TotalNav { get; set; } // æœŸæœ«ç´¯è®¡å‡€å€¼
 
     [JsonPropertyName("currRatio")]
-    public string CurrentRatio { get; set; } // µ±Ç°ÊÕÒæÂÊ
+    public string CurrentRatio { get; set; } // å½“å‰æ”¶ç›Šç‡
 
     [JsonPropertyName("yearRatio")]
-    public string YearRatio { get; set; } // Äê»¯ÊÕÒæÂÊ
+    public string YearRatio { get; set; } // å¹´åŒ–æ”¶ç›Šç‡
 
     [JsonPropertyName("oriBalance")]
-    public string OriBalance { get; set; } // Ó¦Ìá³É/±£µ×½ğ¶î
+    public string OriBalance { get; set; } // åº”ææˆ/ä¿åº•é‡‘é¢
 
     [JsonPropertyName("factBalance")]
-    public string FactBalance { get; set; } // Êµ¼ÊÌá³É/±£µ×½ğ¶î
+    public string FactBalance { get; set; } // å®é™…ææˆ/ä¿åº•é‡‘é¢
 
     [JsonPropertyName("factShares")]
-    public string FactShares { get; set; } // Êµ¼ÊÌá³É/±£µ×·İ¶î
+    public string FactShares { get; set; } // å®é™…ææˆ/ä¿åº•ä»½é¢
 
     [JsonPropertyName("bonusBalance")]
-    public string BonusBalance { get; set; } // ·Öºì×Ü½ğ¶î
+    public string BonusBalance { get; set; } // åˆ†çº¢æ€»é‡‘é¢
 
     [JsonPropertyName("oriCserialNo")]
-    public string OriginalTaConfirmNo { get; set; } // Ô­È·ÈÏµ¥ºÅ
+    public string OriginalTaConfirmNo { get; set; } // åŸç¡®è®¤å•å·
 
     [JsonPropertyName("hold")]
-    public string HoldDays { get; set; } // ³ÖÓĞÌìÊı
+    public string HoldDays { get; set; } // æŒæœ‰å¤©æ•°
 
     [JsonPropertyName("indexYearRatio")]
-    public string IndexYearRatio { get; set; } // Ö¤È¯Ö¸ÊıÄê»¯ÊÕÒæÂÊ
+    public string IndexYearRatio { get; set; } // è¯åˆ¸æŒ‡æ•°å¹´åŒ–æ”¶ç›Šç‡
 
     [JsonPropertyName("beginIndexPrice")]
-    public string BeginIndexPrice { get; set; } // ÆÚ³õÖ¸Êı¼Û¸ñ
+    public string BeginIndexPrice { get; set; } // æœŸåˆæŒ‡æ•°ä»·æ ¼
 
     [JsonPropertyName("endIndexPrice")]
-    public string EndIndexPrice { get; set; } // ÆÚÄ©Ö¸Êı¼Û¸ñ
+    public string EndIndexPrice { get; set; } // æœŸæœ«æŒ‡æ•°ä»·æ ¼
 
     [JsonPropertyName("calcFlag")]
-    public string CalcFlag { get; set; } // ÊÔËã±êÊ¶£º0-¼ÆÌá£¬1-ÊÔËã
+    public string CalcFlag { get; set; } // è¯•ç®—æ ‡è¯†ï¼š0-è®¡æï¼Œ1-è¯•ç®—
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

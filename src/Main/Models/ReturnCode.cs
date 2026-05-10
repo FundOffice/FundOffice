@@ -11,7 +11,7 @@ public enum ReturnCode
 
 
     /// <summary>
-    /// ³É¹¦£¬µ«»¹ÓĞÊı¾İ
+    /// æˆåŠŸï¼Œä½†è¿˜æœ‰æ•°æ®
     /// </summary>
     //NotFinished,
 
@@ -22,181 +22,181 @@ public enum ReturnCode
     NoFund,
 
     /// <summary>
-    /// ·µ»ØÊÇ¿Õ°×µÄ
+    /// è¿”å›æ˜¯ç©ºç™½çš„
     /// </summary>
     EmptyResponse,
 
     /// <summary>
-    /// Êı¾İÒì³£
+    /// æ•°æ®å¼‚å¸¸
     /// </summary>
     DataIsNotWellFormed,
 
     /// <summary>
-    /// ToObjectÓĞÎÊÌâ
+    /// ToObjectæœ‰é—®é¢˜
     /// </summary>
     ObjectTransformError,
 
 
     /// <summary>
-    /// ·µ»ØµÄjsonÎŞ·¨Õı³£½âÎö³É¶ÔÓ¦µÄÀà
+    /// è¿”å›çš„jsonæ— æ³•æ­£å¸¸è§£ææˆå¯¹åº”çš„ç±»
     /// </summary>
     JsonNotPairToEntity,
 
 
     /// <summary>
-    /// Î´ÊµÏÖµÄ½Ó¿Ú
+    /// æœªå®ç°çš„æ¥å£
     /// </summary>
     NotImplemented,
 
     /// <summary>
-    /// ÍøÂçÎÊÌâ
+    /// ç½‘ç»œé—®é¢˜
     /// </summary>
     Network,
 
     /// </summary>
-    [Description("ÎŞĞ§µÄÅäÖÃÎÄ¼ş")]
+    [Description("æ— æ•ˆçš„é…ç½®æ–‡ä»¶")]
     ConfigInvalid,
 
     /// <summary>
-    /// ³¬Ê±
+    /// è¶…æ—¶
     /// </summary>
-    [Description("³¬Ê±")]
+    [Description("è¶…æ—¶")]
     TimeOut,
 
     /// <summary>
-    /// ½Ó¿Ú²»¿ÉÓÃ
+    /// æ¥å£ä¸å¯ç”¨
     /// </summary>
-    [Description("½Ó¿Ú²»¿ÉÓÃ")]
+    [Description("æ¥å£ä¸å¯ç”¨")]
     InterfaceUnavailable,
 
     /// <summary>
-    /// ÎŞÈ¨·ÃÎÊ
+    /// æ— æƒè®¿é—®
     /// </summary>
-    [Description("ÎŞÈ¨·ÃÎÊ")]
+    [Description("æ— æƒè®¿é—®")]
     AccessDenied,
 
     /// <summary>
-    /// ip ²»ÔÚ°×Ãûµ¥ÄÚ
+    /// ip ä¸åœ¨ç™½åå•å†…
     /// </summary>
-    [Description("´ËIPÎŞ·¨·ÃÎÊ")]InvalidIP,
+    [Description("æ­¤IPæ— æ³•è®¿é—®")]InvalidIP,
 
     /// <summary>
-    /// ²ÎÊı²»ºÏ·¨
+    /// å‚æ•°ä¸åˆæ³•
     /// </summary>
-    [Description("²ÎÊı²»ºÏ·¨")]
+    [Description("å‚æ•°ä¸åˆæ³•")]
     ParameterInvalid,
 
 
     /// <summary>
-    /// Éí·İÈÏÖ¤Ê§°Ü
+    /// èº«ä»½è®¤è¯å¤±è´¥
     /// </summary>
-    [Description("Éí·İÈÏÖ¤Ê§°Ü")] 
+    [Description("èº«ä»½è®¤è¯å¤±è´¥")] 
     IdentitifyFailed,
 
 
     /// <summary>
-    /// Á÷Á¿ÏŞÖÆ
+    /// æµé‡é™åˆ¶
     /// </summary>
-    [Description("Á÷Á¿ÏŞÖÆ")]TrafficLimit,
+    [Description("æµé‡é™åˆ¶")]TrafficLimit,
 
 
 
 
 
-    #region ÖĞĞÅ½¨Í¶ÌØ¶¨
+    #region ä¸­ä¿¡å»ºæŠ•ç‰¹å®š
     CSCBegin = 1000,
 
     /// <summary>
-    /// CSC Ç©Ãû²»ºÏ·¨
+    /// CSC ç­¾åä¸åˆæ³•
     /// </summary>
-    [Description("Ç©Ãû²»ºÏ·¨")]
+    [Description("ç­¾åä¸åˆæ³•")]
     CSC_IlligalSign,
 
     /// <summary>
-    /// CSC Ç©Ãû¹ıÆÚ
+    /// CSC ç­¾åè¿‡æœŸ
     /// </summary>
-    [Description("Ç©Ãû¹ıÆÚ")]
+    [Description("ç­¾åè¿‡æœŸ")]
     CSC_SignExpired,
 
     /// <summary>
-    /// È±ÉÙ²ÎÊıapikey
+    /// ç¼ºå°‘å‚æ•°apikey
     /// </summary>
-    [Description("È±ÉÙ²ÎÊıapikey")]
+    [Description("ç¼ºå°‘å‚æ•°apikey")]
     CSC_APIKEY,
 
     /// <summary>
-    /// ²ÎÊıbody¼ÓÃÜ´íÎó
+    /// å‚æ•°bodyåŠ å¯†é”™è¯¯
     /// </summary>
-    [Description("²ÎÊıbody¼ÓÃÜ´íÎó")]
+    [Description("å‚æ•°bodyåŠ å¯†é”™è¯¯")]
     CSC_BodyEncrypt,
     /// <summary>
-    /// ÒµÎñ´¦ÀíÊ§°Ü
+    /// ä¸šåŠ¡å¤„ç†å¤±è´¥
     /// </summary>
-    [Description("ÒµÎñ´¦ÀíÊ§°Ü")]
+    [Description("ä¸šåŠ¡å¤„ç†å¤±è´¥")]
     CSC_BusinessFailed,
 
     /// <summary>
-    /// ÏµÍ³ÄÚ²¿´íÎó
+    /// ç³»ç»Ÿå†…éƒ¨é”™è¯¯
     /// </summary>
-    [Description("ÏµÍ³ÄÚ²¿´íÎó")]
+    [Description("ç³»ç»Ÿå†…éƒ¨é”™è¯¯")]
     CSC_InternalServerError,
 
     /// <summary>
-    /// µÚÈı·½Á÷Ë®ºÅÎª¿Õ
+    /// ç¬¬ä¸‰æ–¹æµæ°´å·ä¸ºç©º
     /// </summary>
-    [Description("µÚÈı·½Á÷Ë®ºÅÎª¿Õ")]
+    [Description("ç¬¬ä¸‰æ–¹æµæ°´å·ä¸ºç©º")]
     CSC_ThirdPartySerialNumberEmpty,
 
     /// <summary>
-    /// ²ÎÊıÎª¿Õ
+    /// å‚æ•°ä¸ºç©º
     /// </summary>
-    [Description("²ÎÊıÎª¿Õ")]
+    [Description("å‚æ•°ä¸ºç©º")]
     CSC_ParameterEmpty,
 
 
     /// <summary>
-    /// ÒµÎñĞ£Ñé²»Í¨¹ı
+    /// ä¸šåŠ¡æ ¡éªŒä¸é€šè¿‡
     /// </summary>
-    [Description("ÒµÎñĞ£Ñé²»Í¨¹ı")]
+    [Description("ä¸šåŠ¡æ ¡éªŒä¸é€šè¿‡")]
     CSC_BusinessValidationFailed,
     #endregion
 
 
-    #region ÖĞĞÅ
+    #region ä¸­ä¿¡
     /// <summary>
-    /// Auth/Token Îª¿Õ
+    /// Auth/Token ä¸ºç©º
     /// </summary> 
-    [Description("Token Îª¿Õ")] CITICS_NoTokenOrAuth,
+    [Description("Token ä¸ºç©º")] CITICS_NoTokenOrAuth,
 
 
 
     /// <summary>
-    /// ¿ÚÁîÖµ²»ºÏ·¨
+    /// å£ä»¤å€¼ä¸åˆæ³•
     /// </summary> 
-    [Description("¿ÚÁîÖµ²»ºÏ·¨")] CITICS_Credentials,
+    [Description("å£ä»¤å€¼ä¸åˆæ³•")] CITICS_Credentials,
 
 
 
     /// <summary>
-    /// Token ¹ıÆÚ
+    /// Token è¿‡æœŸ
     /// </summary> 
-    [Description("Token ¹ıÆÚ")] CITICS_Token,
+    [Description("Token è¿‡æœŸ")] CITICS_Token,
 
 
     /// <summary>
-    /// Á÷Á¿ÊÜÏŞ
+    /// æµé‡å—é™
     /// </summary>
-    [Description("Á÷Á¿ÊÜÏŞ")] CITICS_Limited,
+    [Description("æµé‡å—é™")] CITICS_Limited,
 
-    [Description("ÎŞ·¨Æ¥ÅäÍ¶×ÊÈËĞÅÏ¢")] CITICS_Investor,
+    [Description("æ— æ³•åŒ¹é…æŠ•èµ„äººä¿¡æ¯")] CITICS_Investor,
 
     #endregion
 
 
     /// <summary>
-    /// ¿ªÊ¼µ½½áÊø²»ÄÜ³¬¹ıÒ»¸öÔÂ
+    /// å¼€å§‹åˆ°ç»“æŸä¸èƒ½è¶…è¿‡ä¸€ä¸ªæœˆ
     /// </summary>
-    [Description("¿ªÊ¼µ½½áÊø²»ÄÜ³¬¹ıÒ»¸öÔÂ")]
+    [Description("å¼€å§‹åˆ°ç»“æŸä¸èƒ½è¶…è¿‡ä¸€ä¸ªæœˆ")]
     CMS_DateRangeLimitOneMonth,
 
 

@@ -18,7 +18,7 @@ public interface IAPIConfig
 public abstract class TrusteeApiBase : ITrustee
 {
     /// <summary>
-    /// Î¨Ò»±êÊ¶
+    /// å”¯ä¸€æ ‡è¯†
     /// </summary>
     public abstract string Identifier { get; }
 
@@ -33,14 +33,14 @@ public abstract class TrusteeApiBase : ITrustee
 
 
     /// <summary>
-    /// Á¬Ğø´íÎó´ÎÊı
-    /// Èç¹û³¬¹ı5´Î£¬Ó¦¸ÃÉèÖÃinvalid
+    /// è¿ç»­é”™è¯¯æ¬¡æ•°
+    /// å¦‚æœè¶…è¿‡5æ¬¡ï¼Œåº”è¯¥è®¾ç½®invalid
     /// </summary>
     protected int ConsecutiveErrorCount { get; set; }
 
 
     /// <summary>
-    /// ËùÓĞAPI Í³Ò»client£¬·½±ãÇĞ»»ÊÇ·ñÓÃproxy : TrusteeApiBase.SetProxy
+    /// æ‰€æœ‰API ç»Ÿä¸€clientï¼Œæ–¹ä¾¿åˆ‡æ¢æ˜¯å¦ç”¨proxy : TrusteeApiBase.SetProxy
     /// </summary>
     protected static HttpClient _client { get; private set; } = new();
 
@@ -67,13 +67,13 @@ public abstract class TrusteeApiBase : ITrustee
 
 
     /// <summary>
-    /// Ó³Éä×Ó»ù½ğ¹ØÏµ
+    /// æ˜ å°„å­åŸºé‡‘å…³ç³»
     /// </summary>
     /// <returns></returns>
     public abstract Task<ReturnWrap<SubjectFundMapping>> QuerySubjectFundMappings();
 
     /// <summary>
-    /// Í¬²½½»Ò×È·ÈÏ
+    /// åŒæ­¥äº¤æ˜“ç¡®è®¤
     /// </summary>
     /// <param name="begin"></param>
     /// <param name="end"></param>
@@ -107,7 +107,7 @@ public abstract class TrusteeApiBase : ITrustee
     public abstract bool Prepare();
 
     /// <summary>
-    /// ·ÃÎÊÇ°ÑéÖ¤
+    /// è®¿é—®å‰éªŒè¯
     /// </summary>
     /// <returns></returns>
     protected abstract ReturnCode CheckBreforeSync();
@@ -126,7 +126,7 @@ public abstract class TrusteeApiBase : ITrustee
             if (db.GetCollection<IAPIConfig>().FindById(Identifier) is IAPIConfig config) 
                 return LoadConfigOverride(config);
         }
-        catch/*(Exception e) */{ WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"¼ÓÔØ{Title}µÄÅäÖÃÎÄ¼ş³ö´í")); }
+        catch/*(Exception e) */{ WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"åŠ è½½{Title}çš„é…ç½®æ–‡ä»¶å‡ºé”™")); }
 
 
         IsValid = db.GetCollection<TrusteeStatus>().FindById(Identifier)?.Status ?? false;
@@ -183,14 +183,14 @@ public abstract class TrusteeApiBase : ITrustee
 
 
     /// <summary>
-    /// ±¨¸æÊ¾Ê¶±ğµÄjson Êı¾İ
+    /// æŠ¥å‘Šç¤ºè¯†åˆ«çš„json æ•°æ®
     /// </summary>
     /// <param name="identifier"></param>
     /// <param name="method"></param>
     /// <param name="info"></param>
     //public static void ReportJsonUnexpected(string identifier, string method, string info)
     //{
-    //    _db.GetCollection<LogInfo>().Insert(new LogInfo { Identifier = identifier, Log = info, Method = method, Content = "½âÎöÒì³£", Time = DateTime.Now });
+    //    _db.GetCollection<LogInfo>().Insert(new LogInfo { Identifier = identifier, Log = info, Method = method, Content = "è§£æå¼‚å¸¸", Time = DateTime.Now });
     //}
 
 
@@ -274,11 +274,11 @@ public abstract class TrusteeApiBase : ITrustee
         if (decimal.TryParse(value, out var result))
             return result;
 
-        throw new FormatException($"ÎŞ·¨½« '{value}' ½âÎöÎªdecimalÀàĞÍ");
+        throw new FormatException($"æ— æ³•å°† '{value}' è§£æä¸ºdecimalç±»å‹");
     }
 
     /// <summary>
-    /// Èç¹û¼ä¸ô³¬¹ıdays£¬·Ö¸ô
+    /// å¦‚æœé—´éš”è¶…è¿‡daysï¼Œåˆ†éš”
     /// </summary>
     /// <param name="begin"></param>
     /// <param name="end"></param>
@@ -309,7 +309,7 @@ public abstract class TrusteeApiBase : ITrustee
     }
 
     /// <summary>
-    /// ÉèÖÃ²»¿ÉÓÃ
+    /// è®¾ç½®ä¸å¯ç”¨
     /// </summary>
     protected void SetStatus(bool status = false)
     {
@@ -341,7 +341,7 @@ public abstract class TrusteeApiBase : ITrustee
         public string? Method { get; set; }
 
         /// <summary>
-        /// ·µ»ØµÄ±¨ÎÄ
+        /// è¿”å›çš„æŠ¥æ–‡
         /// </summary>
         public string? Content { get; set; }
 

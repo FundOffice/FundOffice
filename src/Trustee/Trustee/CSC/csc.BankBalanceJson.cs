@@ -4,79 +4,79 @@ using System.Text.Json.Serialization;
 namespace FMO.Trustee;
 
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class BankBalanceJson : JsonBase
 {  /// <summary>
-   /// ±ÒÖÖ
+   /// å¸ç§
    /// </summary>
     [JsonPropertyName("curType")]
     public string Currency { get; set; }
 
     /// <summary>
-    /// »ù½ğ´úÂë£¨×î´ó³¤¶È32£©
+    /// åŸºé‡‘ä»£ç ï¼ˆæœ€å¤§é•¿åº¦32ï¼‰
     /// </summary>
     [JsonPropertyName("fundCode")]
     public string FundCode { get; set; }
 
     /// <summary>
-    /// »ù½ğÃû³Æ£¨×î´ó³¤¶È250£©
+    /// åŸºé‡‘åç§°ï¼ˆæœ€å¤§é•¿åº¦250ï¼‰
     /// </summary>
     [JsonPropertyName("fundName")]
     public string FundName { get; set; }
 
     /// <summary>
-    /// ÕË»§ÀàĞÍ£¨×î´ó³¤¶È2£©
+    /// è´¦æˆ·ç±»å‹ï¼ˆæœ€å¤§é•¿åº¦2ï¼‰
     /// </summary>
     [JsonPropertyName("accType")]
     public string AccountType { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÕËºÅ£¨×î´ó³¤¶È32£©
+    /// é“¶è¡Œè´¦å·ï¼ˆæœ€å¤§é•¿åº¦32ï¼‰
     /// </summary>
     [JsonPropertyName("bankAcco")]
     public string BankAccountNo { get; set; }
 
     /// <summary>
-    /// ÕË»§Ãû³Æ£¨×î´ó³¤¶È64£©
+    /// è´¦æˆ·åç§°ï¼ˆæœ€å¤§é•¿åº¦64ï¼‰
     /// </summary>
     [JsonPropertyName("accName")]
     public string AccountName { get; set; }
 
     /// <summary>
-    /// ÒøĞĞ±àºÅ£¨×î´ó³¤¶È6£¬Í¨³£ÎªÈËĞĞ´ó¶îÖ§¸¶ÂëÇ°ÈıÎ»£©
+    /// é“¶è¡Œç¼–å·ï¼ˆæœ€å¤§é•¿åº¦6ï¼Œé€šå¸¸ä¸ºäººè¡Œå¤§é¢æ”¯ä»˜ç å‰ä¸‰ä½ï¼‰
     /// </summary>
     [JsonPropertyName("bankNo")]
     public string BankNumber { get; set; }
 
     /// <summary>
-    /// ¿ª»§ĞĞÃû³Æ£¨×î´ó³¤¶È250£©
+    /// å¼€æˆ·è¡Œåç§°ï¼ˆæœ€å¤§é•¿åº¦250ï¼‰
     /// </summary>
     [JsonPropertyName("openBankName")]
     public string OpenBankName { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÓà¶î£¨×î´ó³¤¶È20£¬±£ÁôÁ½Î»Ğ¡Êı£©
+    /// é“¶è¡Œä½™é¢ï¼ˆæœ€å¤§é•¿åº¦20ï¼Œä¿ç•™ä¸¤ä½å°æ•°ï¼‰
     /// </summary>
     [JsonPropertyName("acctBal")]
     public string AccountBalance { get; set; }
 
     /// <summary>
-    /// ÍĞ¹Ü»§ÕË»§×´Ì¬£¨½öÍĞ¹Ü»§ÓĞĞ§£¬Ä¼¼¯»§ÎŞÒâÒå£©
-    /// ²Î¼û 3.16 ÍĞ¹ÜÕË»§×´Ì¬
+    /// æ‰˜ç®¡æˆ·è´¦æˆ·çŠ¶æ€ï¼ˆä»…æ‰˜ç®¡æˆ·æœ‰æ•ˆï¼Œå‹Ÿé›†æˆ·æ— æ„ä¹‰ï¼‰
+    /// å‚è§ 3.16 æ‰˜ç®¡è´¦æˆ·çŠ¶æ€
     /// </summary>
     [JsonPropertyName("acctStatus")]
     public string CustodialStatus { get; set; }
 
     /// <summary>
-    /// Ä¼¼¯»§ÕË»§×´Ì¬£¨½öÄ¼¼¯»§ÓĞĞ§£¬ÍĞ¹Ü»§ÎŞÒâÒå£©
-    /// ²Î¼û 3.23 Ä¼¼¯»§ÕË»§×´Ì¬
+    /// å‹Ÿé›†æˆ·è´¦æˆ·çŠ¶æ€ï¼ˆä»…å‹Ÿé›†æˆ·æœ‰æ•ˆï¼Œæ‰˜ç®¡æˆ·æ— æ„ä¹‰ï¼‰
+    /// å‚è§ 3.23 å‹Ÿé›†æˆ·è´¦æˆ·çŠ¶æ€
     /// </summary>
     [JsonPropertyName("raiseStatus")]
     public string RaiseStatus { get; set; }
 
     /// <summary>
-    /// ×îºó¸üĞÂÊ±¼ä£¨¸ñÊ½£ºYYYY-MM-dd HH:mm:ss£©
+    /// æœ€åæ›´æ–°æ—¶é—´ï¼ˆæ ¼å¼ï¼šYYYY-MM-dd HH:mm:ssï¼‰
     /// </summary>
     [JsonPropertyName("retTime")]
     public string LastUpdateTime { get; set; }
@@ -100,4 +100,4 @@ internal class BankBalanceJson : JsonBase
 
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

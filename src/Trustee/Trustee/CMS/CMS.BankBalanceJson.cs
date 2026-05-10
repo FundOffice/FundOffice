@@ -4,66 +4,66 @@ using System.Text.Json.Serialization;
 namespace FMO.Trustee.JsonCMS;
 
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class BankBalanceJson : JsonBase
 {
     /// <summary>
-    /// ±ÒÖÖ
+    /// å¸ç§
     /// </summary>
     [JsonPropertyName("bz")]
     public string Currency { get; set; }
 
     /// <summary>
-    /// ËµÃ÷
+    /// è¯´æ˜
     /// </summary>
     [JsonPropertyName("clsm")]
     public string Description { get; set; }
 
     /// <summary>
-    /// ²úÆ·´úÂë
+    /// äº§å“ä»£ç 
     /// </summary>
     [JsonPropertyName("cpdm")]
     public string ProductCode { get; set; }
 
     /// <summary>
-    /// ²úÆ·Ãû³Æ
+    /// äº§å“åç§°
     /// </summary>
     [JsonPropertyName("cpmc")]
     public string ProductName { get; set; }
 
     /// <summary>
-    /// ¸üĞÂÊ±¼ä£¨¸ñÊ½½¨Òé£ºyyyyMMddHHmmss£©
+    /// æ›´æ–°æ—¶é—´ï¼ˆæ ¼å¼å»ºè®®ï¼šyyyyMMddHHmmssï¼‰
     /// </summary>
     [JsonPropertyName("gxsj")]
     public string UpdateTime { get; set; }
 
     /// <summary>
-    /// ¿ª»§ĞĞ
+    /// å¼€æˆ·è¡Œ
     /// </summary>
     [JsonPropertyName("khzh")]
     public string BankName { get; set; }
 
     /// <summary>
-    /// ¿ÉÓÃÓà¶î
+    /// å¯ç”¨ä½™é¢
     /// </summary>
     [JsonPropertyName("kyye")]
     public string AvailableBalance { get; set; }
 
     /// <summary>
-    /// ÕËºÅ
+    /// è´¦å·
     /// </summary>
     [JsonPropertyName("zhh")]
     public string AccountNo { get; set; }
 
     /// <summary>
-    /// ÕËºÅÃû³Æ
+    /// è´¦å·åç§°
     /// </summary>
     [JsonPropertyName("zhmc")]
     public string AccountName { get; set; }
 
     /// <summary>
-    /// ÕËºÅÓà¶î
+    /// è´¦å·ä½™é¢
     /// </summary>
     [JsonPropertyName("zhye")]
     public string AccountBalance { get; set; }
@@ -86,4 +86,4 @@ internal class BankBalanceJson : JsonBase
 
 
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

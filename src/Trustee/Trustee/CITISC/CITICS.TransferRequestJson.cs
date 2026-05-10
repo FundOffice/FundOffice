@@ -3,149 +3,149 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee.JsonCITICS;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class TransferRequestJson : JsonBase
 {
     /// <summary>
-    /// ÉêÇë±àºÅ
+    /// ç”³è¯·ç¼–å·
     /// </summary>
     [JsonPropertyName("requestNo")]
     public string RequestNo { get; set; }
 
     /// <summary>
-    /// ÉêÇëÈÕÆÚ£¨¸ñÊ½£ºYYYYMMDD£©
+    /// ç”³è¯·æ—¥æœŸï¼ˆæ ¼å¼ï¼šYYYYMMDDï¼‰
     /// </summary>
     [JsonPropertyName("requestDate")]
     public string RequestDate { get; set; }
 
     /// <summary>
-    /// ÉêÇëÊ±¼ä£¨¸ñÊ½£ºHHMMSS£©
-    /// ¿ÉÄÜÎªnull
+    /// ç”³è¯·æ—¶é—´ï¼ˆæ ¼å¼ï¼šHHMMSSï¼‰
+    /// å¯èƒ½ä¸ºnull
     /// </summary>
     [JsonPropertyName("requestTime")]
     public string RequestTime { get; set; }
 
     /// <summary>
-    /// »ù½ğ´úÂë
+    /// åŸºé‡‘ä»£ç 
     /// </summary>
     [JsonPropertyName("fundCode")]
     public string FundCode { get; set; }
 
     /// <summary>
-    /// ÒµÎñÀàĞÍ
-    /// ²ÎÕÕ BusinFlagEnum Ã¶¾Ù¶¨Òå
+    /// ä¸šåŠ¡ç±»å‹
+    /// å‚ç…§ BusinFlagEnum æšä¸¾å®šä¹‰
     /// </summary>
     [JsonPropertyName("businFlag")]
     public string BusinFlag { get; set; }
 
     /// <summary>
-    /// ½»Ò×ÕËºÅ
+    /// äº¤æ˜“è´¦å·
     /// </summary>
     [JsonPropertyName("tradeAcco")]
     public string TradeAccount { get; set; }
 
     /// <summary>
-    /// »ù½ğÕÊºÅ
+    /// åŸºé‡‘å¸å·
     /// </summary>
     [JsonPropertyName("fundAcco")]
     public string FundAccount { get; set; }
 
     /// <summary>
-    /// ÏúÊÛÉÌ´úÂë
+    /// é”€å”®å•†ä»£ç 
     /// </summary>
     [JsonPropertyName("agencyNo")]
     public string AgencyCode { get; set; }
 
     /// <summary>
-    /// ÏúÊÛÉÌÃû³Æ
+    /// é”€å”®å•†åç§°
     /// </summary>
     [JsonPropertyName("agencyName")]
     public string AgencyName { get; set; }
 
     /// <summary>
-    /// ÉêÇë½ğ¶î
+    /// ç”³è¯·é‡‘é¢
     /// </summary>
     [JsonPropertyName("balance")]
     public decimal? ApplyAmount { get; set; }
 
     /// <summary>
-    /// ÉêÇë·İ¶î
+    /// ç”³è¯·ä»½é¢
     /// </summary>
     [JsonPropertyName("shares")]
     public decimal? ApplyShares { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÕËºÅ
+    /// é“¶è¡Œè´¦å·
     /// </summary>
     [JsonPropertyName("bankAcco")]
     public string BankAccountNo { get; set; }
 
     /// <summary>
-    /// ÒøĞĞ¿ª»§ĞĞ
+    /// é“¶è¡Œå¼€æˆ·è¡Œ
     /// </summary>
     [JsonPropertyName("bankName")]
     public string BankName { get; set; }
 
     /// <summary>
-    /// ÒøĞĞ»§Ãû
+    /// é“¶è¡Œæˆ·å
     /// </summary>
     [JsonPropertyName("nameInBank")]
     public string BankAccountName { get; set; }
 
     /// <summary>
-    /// Íøµã´úÂë
+    /// ç½‘ç‚¹ä»£ç 
     /// </summary>
     [JsonPropertyName("netNo")]
     public string BranchCode { get; set; }
 
     /// <summary>
-    /// Ö¸¶¨·ÑÓÃ
+    /// æŒ‡å®šè´¹ç”¨
     /// </summary>
     [JsonPropertyName("definedFee")]
     public decimal? DefinedFee { get; set; }
 
     /// <summary>
-    /// ÕÛ¿Û
+    /// æŠ˜æ‰£
     /// </summary>
     [JsonPropertyName("agio")]
     public string DiscountRate { get; set; }
 
     /// <summary>
-    /// ¾Ş¶îÊê»Ø·½Ê½£º
-    /// 0 - È¡Ïû
-    /// 1 - Ë³ÑÓ
-    /// null - Ä¬ÈÏË³ÑÓ
+    /// å·¨é¢èµå›æ–¹å¼ï¼š
+    /// 0 - å–æ¶ˆ
+    /// 1 - é¡ºå»¶
+    /// null - é»˜è®¤é¡ºå»¶
     /// </summary>
     [JsonPropertyName("exceedFlag")]
     public string? ExceedFlag { get; set; }
 
     /// <summary>
-    /// ±ÒÖÖ£ºÈËÃñ±Ò£¨Ä¬ÈÏÖµ£©
+    /// å¸ç§ï¼šäººæ°‘å¸ï¼ˆé»˜è®¤å€¼ï¼‰
     /// </summary>
     [JsonPropertyName("moneyTypeCn")]
-    public string Currency { get; set; } = "ÈËÃñ±Ò";
+    public string Currency { get; set; } = "äººæ°‘å¸";
 
     /// <summary>
-    /// Í¶×ÊÕßÃû³Æ
+    /// æŠ•èµ„è€…åç§°
     /// </summary>
     [JsonPropertyName("custName")]
     public string CustomerName { get; set; }
 
     /// <summary>
-    /// ¿Í»§ÀàĞÍ£¨²Î¿¼¸½Â¼4£©
+    /// å®¢æˆ·ç±»å‹ï¼ˆå‚è€ƒé™„å½•4ï¼‰
     /// </summary>
     [JsonPropertyName("custType")]
     public string CustomerType { get; set; }
 
     /// <summary>
-    /// Ö¤¼şÀàĞÍ£¨²Î¿¼¸½Â¼4£©
+    /// è¯ä»¶ç±»å‹ï¼ˆå‚è€ƒé™„å½•4ï¼‰
     /// </summary>
     [JsonPropertyName("certiType")]
     public string CertificateType { get; set; }
 
     /// <summary>
-    /// Ö¤¼şºÅ
+    /// è¯ä»¶å·
     /// </summary>
     [JsonPropertyName("certiNo")]
     public string CertificateNumber { get; set; }
@@ -176,32 +176,32 @@ internal class TransferRequestJson : JsonBase
 
 
     /// <summary>
-    /// 01-ÈÏ¹º	50-»ù½ğ³ÉÁ¢
-    ///02-Éê¹º	51-»ù½ğÖÕÖ¹
-    ///03-Êê»Ø	52-»ù½ğÇåÅÌ
-    ///04-×ªÍĞ¹Ü	54-·¢ĞĞÊ§°Ü
-    ///05-ÍĞ¹Ü×ªÈë	70-Ç¿ÖÆµ÷Ôö
-    ///06-ÍĞ¹Ü×ª³ö	71-Ç¿ÖÆµ÷¼õ
-    ///07-ĞŞ¸Ä·Öºì·½Ê½	74-ºìÀû·¢·Å
-    ///10-·İ¶î¶³½á	77-¶¨ÆÚÉê¹ºĞŞ¸Ä
-    ///11-·İ¶î½â¶³	78-¶¨ÆÚÊê»ØĞŞ¸Ä
-    ///12-·Ç½»Ò×¹ı»§	81-»ù½ğ¿ª»§
-    ///13-»ù½ğ×ª»»(³ö)  82-»ù½ğÏú»§
-    ///14-·Ç½»Ò×¹ı»§³ö	83-ÕË»§ĞŞ¸Ä
-    ///15-·Ç½»Ò×¹ı»§Èë	84-ÕË»§¶³½á
-    ///16-»ù½ğ×ª»»Èë	85-ÕË»§½â¶³
-    ///17-³·µ¥	88-ÕË»§µÇ¼Ç
-    ///20-ÄÚ²¿×ªÍĞ¹Ü	89-È¡ÏûµÇ¼Ç
-    ///21-ÄÚ²¿×ªÍĞ¹ÜÈë	90-¶¨ÆÚÉê¹ºĞ­Òé
-    ///22-ÄÚ²¿×ªÍĞ¹Ü³ö	91-¶¨ÆÚÊê»ØĞ­Òé
-    ///31-Ôö¿ª½»Ò×ÕËºÅ	92-³ĞÅµÓÅ»İĞ­Òé
-    ///32-±ä¸ü½»Ò×ÕËºÅ	93-¶¨ÆÚÉê¹ºÈ¡Ïû
-    ///41-ÂòÈë	94-¶¨ÆÚÊê»ØÈ¡Ïû
-    ///42-Âô³ö	96-Ïú½»Ò×ÕËºÅ
-    ///46-ÁªÃû¿¨²éÑ¯	97-ÄÚ²¿×ªÍĞ¹Ü
-    ///47-ÁªÃû¿¨¿ªÍ¨	98-ÄÚ²¿ÍĞ¹Ü×ªÈë
-    ///48-ÁªÃû¿¨È¡Ïû	99-ÄÚ²¿ÍĞ¹Ü×ª³ö
-    ///49-ÁªÃû¿¨»¹¿î
+    /// 01-è®¤è´­	50-åŸºé‡‘æˆç«‹
+    ///02-ç”³è´­	51-åŸºé‡‘ç»ˆæ­¢
+    ///03-èµå›	52-åŸºé‡‘æ¸…ç›˜
+    ///04-è½¬æ‰˜ç®¡	54-å‘è¡Œå¤±è´¥
+    ///05-æ‰˜ç®¡è½¬å…¥	70-å¼ºåˆ¶è°ƒå¢
+    ///06-æ‰˜ç®¡è½¬å‡º	71-å¼ºåˆ¶è°ƒå‡
+    ///07-ä¿®æ”¹åˆ†çº¢æ–¹å¼	74-çº¢åˆ©å‘æ”¾
+    ///10-ä»½é¢å†»ç»“	77-å®šæœŸç”³è´­ä¿®æ”¹
+    ///11-ä»½é¢è§£å†»	78-å®šæœŸèµå›ä¿®æ”¹
+    ///12-éäº¤æ˜“è¿‡æˆ·	81-åŸºé‡‘å¼€æˆ·
+    ///13-åŸºé‡‘è½¬æ¢(å‡º)  82-åŸºé‡‘é”€æˆ·
+    ///14-éäº¤æ˜“è¿‡æˆ·å‡º	83-è´¦æˆ·ä¿®æ”¹
+    ///15-éäº¤æ˜“è¿‡æˆ·å…¥	84-è´¦æˆ·å†»ç»“
+    ///16-åŸºé‡‘è½¬æ¢å…¥	85-è´¦æˆ·è§£å†»
+    ///17-æ’¤å•	88-è´¦æˆ·ç™»è®°
+    ///20-å†…éƒ¨è½¬æ‰˜ç®¡	89-å–æ¶ˆç™»è®°
+    ///21-å†…éƒ¨è½¬æ‰˜ç®¡å…¥	90-å®šæœŸç”³è´­åè®®
+    ///22-å†…éƒ¨è½¬æ‰˜ç®¡å‡º	91-å®šæœŸèµå›åè®®
+    ///31-å¢å¼€äº¤æ˜“è´¦å·	92-æ‰¿è¯ºä¼˜æƒ åè®®
+    ///32-å˜æ›´äº¤æ˜“è´¦å·	93-å®šæœŸç”³è´­å–æ¶ˆ
+    ///41-ä¹°å…¥	94-å®šæœŸèµå›å–æ¶ˆ
+    ///42-å–å‡º	96-é”€äº¤æ˜“è´¦å·
+    ///46-è”åå¡æŸ¥è¯¢	97-å†…éƒ¨è½¬æ‰˜ç®¡
+    ///47-è”åå¡å¼€é€š	98-å†…éƒ¨æ‰˜ç®¡è½¬å…¥
+    ///48-è”åå¡å–æ¶ˆ	99-å†…éƒ¨æ‰˜ç®¡è½¬å‡º
+    ///49-è”åå¡è¿˜æ¬¾
     /// </summary>
     /// <param name="str"></param>
     /// <returns></returns>
@@ -227,11 +227,11 @@ internal class TransferRequestJson : JsonBase
             case "22":
             case "42":
                 return TransferRequestType.Decrease;
-            default: // ÆäËüÀàĞÍºöÂÔ
+            default: // å…¶å®ƒç±»å‹å¿½ç•¥
                 return TransferRequestType.UNK;
         }
     }
 }
 
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

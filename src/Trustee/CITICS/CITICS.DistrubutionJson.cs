@@ -3,158 +3,158 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class DistrubutionJson : JsonBase
 {
     /// <summary>
-    /// »ù½ğÕËºÅ
+    /// åŸºé‡‘è´¦å·
     /// </summary>
     [JsonPropertyName("fundAcco")]
     public string FundAccount { get; set; }
 
     /// <summary>
-    /// ¿Í»§Ãû³Æ
+    /// å®¢æˆ·åç§°
     /// </summary>
     [JsonPropertyName("custName")]
     public string InvestorName { get; set; }
 
     /// <summary>
-    /// ÏúÊÛÉÌ´úÂë£¨ZX6 ±íÊ¾Ö±Ïú£©
+    /// é”€å”®å•†ä»£ç ï¼ˆZX6 è¡¨ç¤ºç›´é”€ï¼‰
     /// </summary>
     [JsonPropertyName("agencyNo")]
     public string AgencyCode { get; set; }
 
     /// <summary>
-    /// ÏúÊÛÉÌÃû³Æ
+    /// é”€å”®å•†åç§°
     /// </summary>
     [JsonPropertyName("agencyName")]
     public string AgencyName { get; set; }
 
     /// <summary>
-    /// ½»Ò×ÕËºÅ
+    /// äº¤æ˜“è´¦å·
     /// </summary>
     [JsonPropertyName("tradeAcco")]
     public string TradeAccount { get; set; }
 
     /// <summary>
-    /// È·ÈÏÈÕÆÚ£¨¸ñÊ½£ºYYYYMMDD£©
+    /// ç¡®è®¤æ—¥æœŸï¼ˆæ ¼å¼ï¼šYYYYMMDDï¼‰
     /// </summary>
     [JsonPropertyName("confirmDate")]
     public string ConfirmDate { get; set; }
 
     /// <summary>
-    /// TAÈ·ÈÏºÅ
+    /// TAç¡®è®¤å·
     /// </summary>
     [JsonPropertyName("cserialNo")]
     public string TaConfirmNo { get; set; }
 
     /// <summary>
-    /// ·ÖºìµÇ¼ÇÈÕÆÚ
+    /// åˆ†çº¢ç™»è®°æ—¥æœŸ
     /// </summary>
     [JsonPropertyName("regDate")]
     public string RegisterDate { get; set; }
 
     /// <summary>
-    /// ºìÀû·¢·ÅÈÕÆÚ
+    /// çº¢åˆ©å‘æ”¾æ—¥æœŸ
     /// </summary>
     [JsonPropertyName("date")]
     public string DividendDate { get; set; }
 
     /// <summary>
-    /// »ù½ğÃû³Æ
+    /// åŸºé‡‘åç§°
     /// </summary>
     [JsonPropertyName("fundName")]
     public string FundName { get; set; }
 
     /// <summary>
-    /// »ù½ğ´úÂë
+    /// åŸºé‡‘ä»£ç 
     /// </summary>
     [JsonPropertyName("fundCode")]
     public string FundCode { get; set; }
 
     /// <summary>
-    /// ·Öºì»ùÊı·İ¶î
+    /// åˆ†çº¢åŸºæ•°ä»½é¢
     /// </summary>
     [JsonPropertyName("totalShare")]
     public string TotalShares { get; set; }
 
     /// <summary>
-    /// Ã¿µ¥Î»·Öºì½ğ¶î
+    /// æ¯å•ä½åˆ†çº¢é‡‘é¢
     /// </summary>
     [JsonPropertyName("unitProfit")]
     public string UnitProfit { get; set; }
 
     /// <summary>
-    /// ºìÀû×Ü¶î
+    /// çº¢åˆ©æ€»é¢
     /// </summary>
     [JsonPropertyName("totalProfit")]
     public string TotalProfit { get; set; }
 
     /// <summary>
-    /// ·Öºì·½Ê½£º
-    /// 0 - ºìÀûÔÙÍ¶×Ê
-    /// 1 - ÏÖ½ğºìÀû
+    /// åˆ†çº¢æ–¹å¼ï¼š
+    /// 0 - çº¢åˆ©å†æŠ•èµ„
+    /// 1 - ç°é‡‘çº¢åˆ©
     /// </summary>
     [JsonPropertyName("flag")]
     public string DividendType { get; set; }
 
     /// <summary>
-    /// Êµ·¢ÏÖ½ğºìÀû
+    /// å®å‘ç°é‡‘çº¢åˆ©
     /// </summary>
     [JsonPropertyName("realBalance")]
     public string RealCashDividend { get; set; }
 
     /// <summary>
-    /// ÔÙÍ¶×ÊºìÀû½ğ¶î
+    /// å†æŠ•èµ„çº¢åˆ©é‡‘é¢
     /// </summary>
     [JsonPropertyName("reinvestBalance")]
     public string ReinvestAmount { get; set; }
 
     /// <summary>
-    /// ÔÙÍ¶×Ê·İ¶î
+    /// å†æŠ•èµ„ä»½é¢
     /// </summary>
     [JsonPropertyName("realShares")]
     public string ReinvestShares { get; set; }
 
     /// <summary>
-    /// ÔÙÍ¶×ÊÈÕÆÚ
+    /// å†æŠ•èµ„æ—¥æœŸ
     /// </summary>
     [JsonPropertyName("lastDate")]
     public string ReinvestDate { get; set; }
 
     /// <summary>
-    /// ÔÙÍ¶×Êµ¥Î»¾»Öµ
+    /// å†æŠ•èµ„å•ä½å‡€å€¼
     /// </summary>
     [JsonPropertyName("netValue")]
     public string NetValue { get; set; }
 
     /// <summary>
-    /// Êµ¼ÊÒµ¼¨Ìá³É½ğ¶î
+    /// å®é™…ä¸šç»©ææˆé‡‘é¢
     /// </summary>
     [JsonPropertyName("deductBalance")]
     public string PerformanceFee { get; set; }
 
     /// <summary>
-    /// ¿Í»§ÀàĞÍ£¨²Î¼û¸½Â¼4£©
+    /// å®¢æˆ·ç±»å‹ï¼ˆå‚è§é™„å½•4ï¼‰
     /// </summary>
     [JsonPropertyName("custType")]
     public string CustomerType { get; set; }
 
     /// <summary>
-    /// Ö¤¼şÀàĞÍ£¨²Î¼û¸½Â¼4£©
+    /// è¯ä»¶ç±»å‹ï¼ˆå‚è§é™„å½•4ï¼‰
     /// </summary>
     [JsonPropertyName("certiType")]
     public string CertificateType { get; set; }
 
     /// <summary>
-    /// Ö¤¼şºÅÂë
+    /// è¯ä»¶å·ç 
     /// </summary>
     [JsonPropertyName("certiNo")]
     public string CertificateNumber { get; set; }
 
     /// <summary>
-    /// ³ıÈ¨³ıÏ¢ÈÕ
+    /// é™¤æƒé™¤æ¯æ—¥
     /// </summary>
     [JsonPropertyName("exDividendDate")]
     public string ExDividendDate { get; set; }
@@ -186,4 +186,4 @@ internal class DistrubutionJson : JsonBase
 }
 
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

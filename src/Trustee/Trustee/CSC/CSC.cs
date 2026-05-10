@@ -15,7 +15,7 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 namespace FMO.Trustee;
 
 /// <summary>
-/// ÖĞĞÅ½¨Í¶Ö¤È¯
+/// ä¸­ä¿¡å»ºæŠ•è¯åˆ¸
 /// </summary>
 public partial class CSC : TrusteeApiBase
 {
@@ -25,7 +25,7 @@ public partial class CSC : TrusteeApiBase
 
     public override string Identifier => "trustee_csc";
 
-    public override string Title => "ÖĞĞÅ½¨Í¶Ö¤È¯";
+    public override string Title => "ä¸­ä¿¡å»ºæŠ•è¯åˆ¸";
 
     public override string TestDomain { get; } = "https://zsjg.csc108.com:443/rest";
 
@@ -43,11 +43,11 @@ public partial class CSC : TrusteeApiBase
     private SM4? Decoder { get; set; }
 
 
-    // ²úÆ·ÁĞ±í
+    // äº§å“åˆ—è¡¨
     private List<SubjectFundMapping> FundsInfo { get; set; } = new();
 
 
-    public override bool IsSuit(string? company) => string.IsNullOrWhiteSpace(company) ? false : Regex.IsMatch(company, $"ÖĞĞÅ½¨Í¶Ö¤È¯|ÖĞĞÅ½¨Í¶Ö¤È¯¹É·İÓĞÏŞ¹«Ë¾|{_Identifier}");
+    public override bool IsSuit(string? company) => string.IsNullOrWhiteSpace(company) ? false : Regex.IsMatch(company, $"ä¸­ä¿¡å»ºæŠ•è¯åˆ¸|ä¸­ä¿¡å»ºæŠ•è¯åˆ¸è‚¡ä»½æœ‰é™å…¬å¸|{_Identifier}");
 
     public override async Task<ReturnWrap<TransferRequest>> QueryTransferRequests(DateOnly begin, DateOnly end)
     {
@@ -55,7 +55,7 @@ public partial class CSC : TrusteeApiBase
         var data = await SyncWork<TransferRequest, TransferRequestJson>(part, new { beginDate = begin.ToString("yyyyMMdd"), endDate = end.ToString("yyyyMMdd") }, x => x.ToObject());
 
 
-        // ×Ó²úÆ· Ó³Éä
+        // å­äº§å“ æ˜ å°„
         if (FundsInfo is null)
             await QuerySubjectFundMappings();
 
@@ -95,7 +95,7 @@ public partial class CSC : TrusteeApiBase
         var data = await SyncWork<TransferRecord, TransferRecordJson>(part, new { beginDate = begin.ToString("yyyyMMdd"), endDate = end.ToString("yyyyMMdd") }, x => x.ToObject());
 
 
-        // ×Ó²úÆ· Ó³Éä
+        // å­äº§å“ æ˜ å°„
         if (FundsInfo is null)
             await QuerySubjectFundMappings();
 
@@ -127,7 +127,7 @@ public partial class CSC : TrusteeApiBase
     {
         var part = "/institution/tgpt/erp/product/query/findDailyFeeList";
 
-        // ĞèÒª´«FundCode
+        // éœ€è¦ä¼ FundCode
         if (FundsInfo.Count == 0)
             await QuerySubjectFundMappings();
 
@@ -146,8 +146,8 @@ public partial class CSC : TrusteeApiBase
     }
 
     /// <summary>
-    /// ÖĞĞÅ½¨Í¶²»·µ»Ø ±¾·½»§ÃûºÍÒøĞĞÃû
-    /// ÊÖ¶¯¸ù¾İ²úÆ·ÃûÉèÖÃ
+    /// ä¸­ä¿¡å»ºæŠ•ä¸è¿”å› æœ¬æ–¹æˆ·åå’Œé“¶è¡Œå
+    /// æ‰‹åŠ¨æ ¹æ®äº§å“åè®¾ç½®
     /// </summary>
     /// <param name="begin"></param>
     /// <param name="end"></param>
@@ -163,7 +163,7 @@ public partial class CSC : TrusteeApiBase
 
 
     /// <summary>
-    /// 02	Ä¼¼¯»§ 04	ÍĞ¹Ü»§
+    /// 02	å‹Ÿé›†æˆ· 04	æ‰˜ç®¡æˆ·
     /// </summary>
     /// <returns></returns>
     public override async Task<ReturnWrap<FundBankBalance>> QueryRaisingBalance()
@@ -240,7 +240,7 @@ public partial class CSC : TrusteeApiBase
 
     protected override ReturnCode CheckBreforeSync()
     {
-        // ¼ìÑé¿ÉÓÃĞÔ 
+        // æ£€éªŒå¯ç”¨æ€§ 
         if (!IsValid) return ReturnCode.ConfigInvalid;
 
         if (string.IsNullOrWhiteSpace(APIKey) || string.IsNullOrWhiteSpace(APISecret) || Encoder is null || Decoder is null)
@@ -253,7 +253,7 @@ public partial class CSC : TrusteeApiBase
     }
 
 
-    #region ÅäÖÃ
+    #region é…ç½®
     protected override bool LoadConfigOverride(IAPIConfig config)
     {
         if (config is not APIConfig c)
@@ -291,24 +291,24 @@ public partial class CSC : TrusteeApiBase
 
     #endregion
 
-    #region Í¨ÓÃ´¦Àí 
+    #region é€šç”¨å¤„ç† 
 
 
 
 
     /// <summary>
-    /// ÓĞ²Î
+    /// æœ‰å‚
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="func"></param>
-    /// <param name="param">object »ò Dictionary<string, object></param>
+    /// <param name="param">object æˆ– Dictionary<string, object></param>
     /// <returns></returns>
     protected async Task<ReturnWrap<TEntity>> SyncWork<TEntity, TJSON>(string part, object? param, Func<TJSON, TEntity> transfer, [CallerMemberName] string? caller = null) where TJSON : JsonBase
     {
-        // Ğ£Ñé
+        // æ ¡éªŒ
         if (CheckBreforeSync() is ReturnCode rc && rc != ReturnCode.Success) return new(rc, null);
 
-        // ·Çdict ×ª³Édict ·½±ãĞŞ¸Äpage
+        // édict è½¬æˆdict æ–¹ä¾¿ä¿®æ”¹page
         Dictionary<string, object> formatedParams;
         if (param is null) formatedParams = new();
         if (param is Dictionary<string, object> pp) formatedParams = pp;
@@ -317,10 +317,10 @@ public partial class CSC : TrusteeApiBase
         List<TJSON> list = new();
 
         int total = 0;
-        // »ñÈ¡ËùÓĞ½á¹û
+        // è·å–æ‰€æœ‰ç»“æœ
         try
         {
-            for (int i = 0; i < 19; i++) // ·ÀÖ¹ÎŞÏŞÑ­»·£¬×î¶à99´Î 
+            for (int i = 0; i < 19; i++) // é˜²æ­¢æ— é™å¾ªç¯ï¼Œæœ€å¤š99æ¬¡ 
             {
                 var json = await Query(part, formatedParams);
                 LogRun(caller, formatedParams, json);
@@ -332,19 +332,19 @@ public partial class CSC : TrusteeApiBase
 
                     int.TryParse(ret!.Code, out var code);
 
-                    // ÓĞ´íÎó
+                    // æœ‰é”™è¯¯
                     if (code != 0)
                     {
                         Log(caller, json, ret.Msg);
                         return new(TransferReturnCode(code, ret.Msg), null);
                     }
 
-                    // ½âÎöÊµ¼ÊÊı¾İ
+                    // è§£æå®é™…æ•°æ®
                     var data = JsonSerializer.Deserialize<RetJson<JsonElement>>(json);
                     //if(data.Data.RowCount != data.Data.Data.Length)
                     //    return new(ReturnCode., null);
 
-                    // ¼ÇÂ¼·µ»ØµÄÀàĞÍ£¬ÓÃÓÚdebug
+                    // è®°å½•è¿”å›çš„ç±»å‹ï¼Œç”¨äºdebug
                     //CacheJson(caller, data!.Data.Data);
 
                     total += data!.Data.Data.Count;
@@ -353,18 +353,18 @@ public partial class CSC : TrusteeApiBase
                         try { return x.Deserialize<TJSON>()!; }
                         catch (Exception ex)
                         {
-                            // ¼ÇÂ¼¾ßÌåÄÄ¸öÔªËØ·´ĞòÁĞ»¯Ê§°Ü
+                            // è®°å½•å…·ä½“å“ªä¸ªå…ƒç´ ååºåˆ—åŒ–å¤±è´¥
                             JsonBase.ReportJsonUnexpected(Identifier, caller!, $"Failed to deserialize item. Error: {ex.Message}: {x}");
                             throw;
                         }
                     }));
 
 
-                    // Êı¾İ»ñÈ¡È«
+                    // æ•°æ®è·å–å…¨
                     if (data!.Data.TotalCount >= total)
                         break;
 
-                    // ÏÂÒ»Ò³
+                    // ä¸‹ä¸€é¡µ
                     var page = (int)formatedParams["reqPageno"];
                     formatedParams["reqPageno"] = page + 1;
                 }
@@ -402,52 +402,52 @@ public partial class CSC : TrusteeApiBase
 
 
     /// <summary>
-    /// Ö÷Èë¿Ú
+    /// ä¸»å…¥å£
     /// </summary>
     /// <param name="part"></param>
     /// <param name="param"></param>
     /// <returns>
-    /// ÏìÓ¦Âë	ÏìÓ¦ĞÅÏ¢
-    ///10000	³¬Ê±ÁË
-    ///10002	¸Ã·şÎñ²»¿ÉÓÃ£¨ËµÃ÷·şÎñÃ»ÓĞÆô¶¯£©
-    ///10003	Ç©Ãû²»ºÏ·¨£¨signÇ©ÃûÓĞÎÊÌâ£©
-    ///10004	Ç©Ãû¹ıÆÚ
-    ///10005	ÎŞÈ¨·ÃÎÊ
-    ///10007	È±ÉÙ²ÎÊıapikey
-    ///10019	²ÎÊıbody¼ÓÃÜ´íÎó
-    ///ERPÏìÓ¦Âë  ÏìÓ¦ĞÅÏ¢
-    ///0000	³É¹¦
-    ///0001	ÒµÎñ´¦ÀíÊ§°Ü
-    ///1001	ÏµÍ³ÄÚ²¿´íÎó
-    ///1002	µÚÈı·½Á÷Ë®ºÅÎª¿Õ
-    ///1003	²ÎÊıÎª¿Õ
-    ///1005	²ÎÊı²»ºÏ·¨
-    ///1006	ÒµÎñĞ£Ñé²»Í¨¹ı
+    /// å“åº”ç 	å“åº”ä¿¡æ¯
+    ///10000	è¶…æ—¶äº†
+    ///10002	è¯¥æœåŠ¡ä¸å¯ç”¨ï¼ˆè¯´æ˜æœåŠ¡æ²¡æœ‰å¯åŠ¨ï¼‰
+    ///10003	ç­¾åä¸åˆæ³•ï¼ˆsignç­¾åæœ‰é—®é¢˜ï¼‰
+    ///10004	ç­¾åè¿‡æœŸ
+    ///10005	æ— æƒè®¿é—®
+    ///10007	ç¼ºå°‘å‚æ•°apikey
+    ///10019	å‚æ•°bodyåŠ å¯†é”™è¯¯
+    ///ERPå“åº”ç   å“åº”ä¿¡æ¯
+    ///0000	æˆåŠŸ
+    ///0001	ä¸šåŠ¡å¤„ç†å¤±è´¥
+    ///1001	ç³»ç»Ÿå†…éƒ¨é”™è¯¯
+    ///1002	ç¬¬ä¸‰æ–¹æµæ°´å·ä¸ºç©º
+    ///1003	å‚æ•°ä¸ºç©º
+    ///1005	å‚æ•°ä¸åˆæ³•
+    ///1006	ä¸šåŠ¡æ ¡éªŒä¸é€šè¿‡
     /// </returns>
     public async Task<string?> Query(string part, object? param)
     {
-        // ´´½¨request
+        // åˆ›å»ºrequest
         var request = Build(part, param);
         var response = await _client.SendAsync(request);
         var content = await response.Content.ReadAsStringAsync();
 
-        //{"errcode":"10005","errmsg":"ÎŞÈ¨·ÃÎÊ¸Ã·şÎñ:ÎŞapi·ÃÎÊÈ¨ÏŞ"}
+        //{"errcode":"10005","errmsg":"æ— æƒè®¿é—®è¯¥æœåŠ¡:æ— apiè®¿é—®æƒé™"}
         if (content.Contains("errcode"))
         {
-            // ¶ÔÆëµ½ RetJson
+            // å¯¹é½åˆ° RetJson
             content = content.Replace("errcode", "retCode");
             content = content.Replace("errmsg", "retMsg");
             return content;
         }
 
-        // ½âÃÜ
+        // è§£å¯†
         var dec = Decoder!.Handle(Convert.FromBase64String(content));
         var json = Encoding.UTF8.GetString(dec!);
         return json;
     }
 
     /// <summary>
-    /// Éú³Érequest
+    /// ç”Ÿæˆrequest
     /// </summary>
     /// <param name="part"></param>
     /// <param name="param"></param>
@@ -459,7 +459,7 @@ public partial class CSC : TrusteeApiBase
         // json
         var paramsStr = param is null ? "" : JsonSerializer.Serialize(param);
 
-        // ¼ÓÃÜ
+        // åŠ å¯†
         byte[]? encrypted = Encoder!.Handle(Encoding.UTF8.GetBytes(paramsStr));
 
         var body = encrypted is null ? "" : Convert.ToBase64String(encrypted);
@@ -479,10 +479,10 @@ public partial class CSC : TrusteeApiBase
         request.RequestUri = new Uri(requrl);
         request.Method = HttpMethod.Post;
 
-        // Éú³É msgId
+        // ç”Ÿæˆ msgId
         request.Headers.Add("msgId", Guid.NewGuid().ToString());
 
-        // ÉèÖÃ Content-Type Îª application/json 
+        // è®¾ç½® Content-Type ä¸º application/json 
         request.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
 
@@ -531,7 +531,7 @@ public partial class CSC : TrusteeApiBase
 
 
     /// <summary>
-    /// »ñÈ¡×Ö·û´®µÄ MD5 Öµ ºÍ ³£¹æµÄ²»Ò»Ñù
+    /// è·å–å­—ç¬¦ä¸²çš„ MD5 å€¼ å’Œ å¸¸è§„çš„ä¸ä¸€æ ·
     /// sb.Append((b & 0xFF).ToString("x2"));
     /// </summary>
     private static string CalcMD5(string input)
@@ -541,7 +541,7 @@ public partial class CSC : TrusteeApiBase
             byte[] inputBytes = Encoding.UTF8.GetBytes(input);
             byte[] hashBytes = md5.ComputeHash(inputBytes);
 
-            // ½«×Ö½ÚÊı×é×ª»»ÎªÊ®Áù½øÖÆ×Ö·û´®
+            // å°†å­—èŠ‚æ•°ç»„è½¬æ¢ä¸ºåå…­è¿›åˆ¶å­—ç¬¦ä¸²
             StringBuilder sb = new StringBuilder();
             foreach (byte b in hashBytes)
                 sb.Append((b & 0xFF).ToString("x2"));

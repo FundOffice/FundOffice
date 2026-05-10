@@ -3,7 +3,7 @@ using System.IO;
 namespace FMO.Trustee;
 
 
-#pragma warning disable CS8600 // ½« null ×ÖÃæÁ¿»ò¿ÉÄÜÎª null µÄÖµ×ª»»Îª·Ç null ÀàĞÍ¡£
+#pragma warning disable CS8600 // å°† null å­—é¢é‡æˆ–å¯èƒ½ä¸º null çš„å€¼è½¬æ¢ä¸ºé null ç±»å‹ã€‚
 public class SM4
 {
     public const int SM4_ENCRYPT = 1;
@@ -388,4 +388,4 @@ public class SM4
         }
     }
 }
-#pragma warning restore CS8600 // ½« null ×ÖÃæÁ¿»ò¿ÉÄÜÎª null µÄÖµ×ª»»Îª·Ç null ÀàĞÍ¡£
+#pragma warning restore CS8600 // å°† null å­—é¢é‡æˆ–å¯èƒ½ä¸º null çš„å€¼è½¬æ¢ä¸ºé null ç±»å‹ã€‚

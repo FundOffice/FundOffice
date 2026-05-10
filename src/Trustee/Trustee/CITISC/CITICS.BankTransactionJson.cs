@@ -3,121 +3,121 @@ using System.Text.Json.Serialization;
 
 namespace FMO.Trustee.JsonCITICS;
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class BankTransactionJson : JsonBase
 {
 
     /// <summary>
-    /// ½»Ò×·¢ÉúÊ±¼ä£¬¸ñÊ½Îª YYYY-MM-DD HH:MM:SS
+    /// äº¤æ˜“å‘ç”Ÿæ—¶é—´ï¼Œæ ¼å¼ä¸º YYYY-MM-DD HH:MM:SS
     /// </summary>
     [JsonPropertyName("occurTime")]
     public string OccurTime { get; set; }
 
     /// <summary>
-    /// »ù½ğ´úÂë
+    /// åŸºé‡‘ä»£ç 
     /// </summary>
     [JsonPropertyName("fundCode")]
     public string FundCode { get; set; }
 
     /// <summary>
-    /// »ù½ğÃû³Æ
+    /// åŸºé‡‘åç§°
     /// </summary>
     [JsonPropertyName("fundName")]
     public string FundName { get; set; }
 
     /// <summary>
-    /// ÕË»§ÀàĞÍ£¬ÀıÈç "02-Ä¼¼¯»§"
+    /// è´¦æˆ·ç±»å‹ï¼Œä¾‹å¦‚ "02-å‹Ÿé›†æˆ·"
     /// </summary>
     [JsonPropertyName("accoType")]
     public string AccoType { get; set; }
 
     /// <summary>
-    /// ±¾·½ÕËºÅ
+    /// æœ¬æ–¹è´¦å·
     /// </summary>
     [JsonPropertyName("bankAcco")]
     public string BankAcco { get; set; }
 
     /// <summary>
-    /// ±¾·½ÕË»§Ãû³Æ
+    /// æœ¬æ–¹è´¦æˆ·åç§°
     /// </summary>
     [JsonPropertyName("accName")]
     public string AccName { get; set; }
 
     /// <summary>
-    /// ±¾·½¿ª»§ĞĞÃû³Æ
+    /// æœ¬æ–¹å¼€æˆ·è¡Œåç§°
     /// </summary>
     [JsonPropertyName("openBankName")]
     public string OpenBankName { get; set; }
 
     /// <summary>
-    /// ±¾·½ÒøĞĞ±àºÅ£¬ÒÔÈËĞĞ´ó¶î¸¶¿îÂëÇ°ÈıÎ»Îª±ê×¼£¨¼û¸½Â¼2£©
+    /// æœ¬æ–¹é“¶è¡Œç¼–å·ï¼Œä»¥äººè¡Œå¤§é¢ä»˜æ¬¾ç å‰ä¸‰ä½ä¸ºæ ‡å‡†ï¼ˆè§é™„å½•2ï¼‰
     /// </summary>
     [JsonPropertyName("bankNo")]
     public string BankNo { get; set; }
 
     /// <summary>
-    /// ¶Ô·½ÕËºÅ
+    /// å¯¹æ–¹è´¦å·
     /// </summary>
     [JsonPropertyName("othBankAcco")]
     public string OthBankAcco { get; set; }
 
     /// <summary>
-    /// ¶Ô·½ÕË»§Ãû³Æ
+    /// å¯¹æ–¹è´¦æˆ·åç§°
     /// </summary>
     [JsonPropertyName("othAccName")]
     public string OthAccName { get; set; }
 
     /// <summary>
-    /// ¶Ô·½¿ª»§ĞĞÃû³Æ
+    /// å¯¹æ–¹å¼€æˆ·è¡Œåç§°
     /// </summary>
     [JsonPropertyName("othOpenBankName")]
     public string OthOpenBankName { get; set; }
 
     /// <summary>
-    /// ¶Ô·½ÒøĞĞ±àºÅ£¬ÒÔÈËĞĞ´ó¶î¸¶¿îÂëÇ°ÈıÎ»Îª±ê×¼£¨¼û¸½Â¼2£©
+    /// å¯¹æ–¹é“¶è¡Œç¼–å·ï¼Œä»¥äººè¡Œå¤§é¢ä»˜æ¬¾ç å‰ä¸‰ä½ä¸ºæ ‡å‡†ï¼ˆè§é™„å½•2ï¼‰
     /// </summary>
     [JsonPropertyName("othBankNo")]
     public string OthBankNo { get; set; }
 
     /// <summary>
-    /// ±ÒÖÖ
+    /// å¸ç§
     /// </summary>
     [JsonPropertyName("curType")]
     public string CurType { get; set; }
 
     /// <summary>
-    /// ÊÕ¸¶·½Ïò£¬1±íÊ¾ÊÕ¿î£¬2±íÊ¾¸¶¿î
+    /// æ”¶ä»˜æ–¹å‘ï¼Œ1è¡¨ç¤ºæ”¶æ¬¾ï¼Œ2è¡¨ç¤ºä»˜æ¬¾
     /// </summary>
     [JsonPropertyName("directFlag")]
     public string DirectFlag { get; set; }
 
     /// <summary>
-    /// ·¢Éú½ğ¶î
+    /// å‘ç”Ÿé‡‘é¢
     /// </summary>
     [JsonPropertyName("occurAmt")]
     public string OccurAmt { get; set; }
 
     /// <summary>
-    /// ÕË»§Óà¶î
+    /// è´¦æˆ·ä½™é¢
     /// </summary>
     [JsonPropertyName("acctBal")]
     public string AcctBal { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÁ÷Ë®ºÅ
+    /// é“¶è¡Œæµæ°´å·
     /// </summary>
     [JsonPropertyName("bankJour")]
     public string BankJour { get; set; }
 
     /// <summary>
-    /// ÒøĞĞ·µ»Ø´úÂë
+    /// é“¶è¡Œè¿”å›ä»£ç 
     /// </summary>
     [JsonPropertyName("bankRetCode")]
     public string BankRetCode { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÕªÒª
+    /// é“¶è¡Œæ‘˜è¦
     /// </summary>
     [JsonPropertyName("bankNote")]
     public string BankNote { get; set; }
@@ -139,11 +139,11 @@ internal class BankTransactionJson : JsonBase
             CounterNo = OthBankAcco,
             Amount = ParseDecimal(OccurAmt),
             Balance = ParseDecimal(AcctBal),
-            Direction = DirectFlag == "¸¶¿î" ? TransctionDirection.Pay : TransctionDirection.Receive,
+            Direction = DirectFlag == "ä»˜æ¬¾" ? TransctionDirection.Pay : TransctionDirection.Receive,
             Remark = BankNote,
             Serial = BankJour,
         };
     }
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

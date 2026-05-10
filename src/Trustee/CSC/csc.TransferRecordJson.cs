@@ -4,210 +4,210 @@ using System.Text.Json.Serialization;
 namespace FMO.Trustee.JsonCSC;
 
 
-#pragma warning disable CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning disable CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚
 
 internal class TransferRecordJson : JsonBase
 {
     /// <summary>
-    /// ½»Ò×È·ÈÏÈÕÆÚ (¸ñÊ½: YYYYMMDD, 8Î»)
+    /// äº¤æ˜“ç¡®è®¤æ—¥æœŸ (æ ¼å¼: YYYYMMDD, 8ä½)
     /// </summary>
     [JsonPropertyName("confDate")]
     public string ConfDate { get; set; }
 
     /// <summary>
-    /// ÉêÇëÈÕÆÚ (¸ñÊ½: YYYYMMDD, 8Î»)
+    /// ç”³è¯·æ—¥æœŸ (æ ¼å¼: YYYYMMDD, 8ä½)
     /// </summary>
     [JsonPropertyName("applyDate")]
     public string ApplyDate { get; set; }
 
     /// <summary>
-    /// »ù½ğ´úÂë (32Î»)
+    /// åŸºé‡‘ä»£ç  (32ä½)
     /// </summary>
     [JsonPropertyName("fundCode")]
     public string FundCode { get; set; }
 
     /// <summary>
-    /// »ù½ğÃû³Æ (250×Ö·û)
+    /// åŸºé‡‘åç§° (250å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("fundName")]
     public string FundName { get; set; }
 
     /// <summary>
-    /// ÏúÊÛÉÌ´úÂë (6Î»)
+    /// é”€å”®å•†ä»£ç  (6ä½)
     /// </summary>
     [JsonPropertyName("agencyNo")]
     public string AgencyNo { get; set; }
 
     /// <summary>
-    /// ÏúÊÛÉÌÃû³Æ (64×Ö·û)
+    /// é”€å”®å•†åç§° (64å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("agencyName")]
     public string AgencyName { get; set; }
 
     /// <summary>
-    /// Í¶×ÊÕßÃû³Æ (64×Ö·û)
+    /// æŠ•èµ„è€…åç§° (64å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("custName")]
     public string CustName { get; set; }
 
     /// <summary>
-    /// »ù½ğÕËºÅ (20×Ö·û)
+    /// åŸºé‡‘è´¦å· (20å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("fundAcco")]
     public string FundAcco { get; set; }
 
     /// <summary>
-    /// ½»Ò×ÕËºÅ (16×Ö·û)
+    /// äº¤æ˜“è´¦å· (16å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("tradeAcco")]
     public string TradeAcco { get; set; }
 
     /// <summary>
-    /// ÒøĞĞÕËºÅ (32×Ö·û)
+    /// é“¶è¡Œè´¦å· (32å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("bankAcco")]
     public string BankAcco { get; set; }
 
     /// <summary>
-    /// ÒøĞĞ±àºÅ (6×Ö·û)
+    /// é“¶è¡Œç¼–å· (6å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("bankNo")]
     public string BankNo { get; set; }
 
     /// <summary>
-    /// ¿ª»§ĞĞÃû³Æ (250×Ö·û)
+    /// å¼€æˆ·è¡Œåç§° (250å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("openBankName")]
     public string OpenBankName { get; set; }
 
     /// <summary>
-    /// ÒøĞĞ»§Ãû (64×Ö·û)
+    /// é“¶è¡Œæˆ·å (64å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("nameInBank")]
     public string NameInBank { get; set; }
 
     /// <summary>
-    /// ¿Í»§ÀàĞÍ (6×Ö·û)
+    /// å®¢æˆ·ç±»å‹ (6å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("custType")]
     public string CustType { get; set; }
 
     /// <summary>
-    /// Ö¤¼şÀàĞÍ (3×Ö·û)
+    /// è¯ä»¶ç±»å‹ (3å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("certiType")]
     public string CertiType { get; set; }
 
     /// <summary>
-    /// Ö¤¼şºÅ (32×Ö·û)
+    /// è¯ä»¶å· (32å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("certiNo")]
     public string CertiNo { get; set; }
 
     /// <summary>
-    /// TA·¢Æğ±êÖ¾ (2×Ö·û)
+    /// TAå‘èµ·æ ‡å¿— (2å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("taFlag")]
     public string TaFlag { get; set; }
 
     /// <summary>
-    /// È·ÈÏ×´Ì¬ (2×Ö·û)
+    /// ç¡®è®¤çŠ¶æ€ (2å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("confStatus")]
     public string ConfStatus { get; set; }
 
     /// <summary>
-    /// È·ÈÏ½á¹ûÃèÊö (250×Ö·û)
+    /// ç¡®è®¤ç»“æœæè¿° (250å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("describe")]
     public string Describe { get; set; }
 
     /// <summary>
-    /// ·Öºì·½Ê½ (2×Ö·û)
+    /// åˆ†çº¢æ–¹å¼ (2å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("bonusType")]
     public string BonusType { get; set; }
 
     /// <summary>
-    /// ÉêÇë½ğ¶î (20×Ö·û)
+    /// ç”³è¯·é‡‘é¢ (20å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("balance")]
     public string Balance { get; set; }
 
     /// <summary>
-    /// ÉêÇë·İ¶î (20×Ö·û)
+    /// ç”³è¯·ä»½é¢ (20å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("shares")]
     public string Shares { get; set; }
 
     /// <summary>
-    /// µ¥Î»¾»Öµ (10×Ö·û)
+    /// å•ä½å‡€å€¼ (10å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("netValue")]
     public string NetValue { get; set; }
 
     /// <summary>
-    /// È·ÈÏ½ğ¶î (20×Ö·û)
+    /// ç¡®è®¤é‡‘é¢ (20å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("confBalance")]
     public string ConfBalance { get; set; }
 
     /// <summary>
-    /// È·ÈÏ·İ¶î (20×Ö·û)
+    /// ç¡®è®¤ä»½é¢ (20å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("confShares")]
     public string ConfShares { get; set; }
 
     /// <summary>
-    /// ÊÖĞø·Ñ (20×Ö·û)
+    /// æ‰‹ç»­è´¹ (20å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("charge")]
     public string Charge { get; set; }
 
     /// <summary>
-    /// ¹é¹ÜÀíÈËÊÖĞø·Ñ (20×Ö·û)
+    /// å½’ç®¡ç†äººæ‰‹ç»­è´¹ (20å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("managerCharge")]
     public string ManagerCharge { get; set; }
 
     /// <summary>
-    /// ¹éÏúÊÛÉÌÊÖĞø·Ñ (20×Ö·û)
+    /// å½’é”€å”®å•†æ‰‹ç»­è´¹ (20å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("distributorCharge")]
     public string DistributorCharge { get; set; }
 
     /// <summary>
-    /// ¹é²úÆ·ÊÖĞø·Ñ (20×Ö·û)
+    /// å½’äº§å“æ‰‹ç»­è´¹ (20å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("fundcharge")]
     public string Fundcharge { get; set; }
 
     /// <summary>
-    /// Òµ¼¨±¨³ê (20×Ö·û)
+    /// ä¸šç»©æŠ¥é…¬ (20å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("achievementPay")]
     public string AchievementPay { get; set; }
 
     /// <summary>
-    /// TAÈ·ÈÏ±àºÅ (32×Ö·û)
+    /// TAç¡®è®¤ç¼–å· (32å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("cserialNo")]
     public string CserialNo { get; set; }
 
     /// <summary>
-    /// È·ÈÏÒµÎñÀàĞÍ (6×Ö·û)
+    /// ç¡®è®¤ä¸šåŠ¡ç±»å‹ (6å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("busiFlag")]
     public string BusiFlag { get; set; }
 
     /// <summary>
-    /// Ô­Íâ²¿ÏµÍ³µÄÉêÇëÁ÷Ë®ºÅ (32×Ö·û)
+    /// åŸå¤–éƒ¨ç³»ç»Ÿçš„ç”³è¯·æµæ°´å· (32å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("originalNo")]
     public string OriginalNo { get; set; }
 
     /// <summary>
-    /// ²Ù×÷·½Ê½ (1×Ö·û)
+    /// æ“ä½œæ–¹å¼ (1å­—ç¬¦)
     /// </summary>
     [JsonPropertyName("operWayNew")]
     public string OperWayNew { get; set; }
@@ -240,7 +240,7 @@ internal class TransferRecordJson : JsonBase
             Type = ParseType(BusiFlag),
             Source = "api",
         };
-        // ¾»¶î
+        // å‡€é¢
         r.ConfirmedNetAmount = r.ConfirmedAmount - r.Fee;
 
         if (r.Type == TransferRecordType.UNK)
@@ -249,64 +249,64 @@ internal class TransferRecordJson : JsonBase
     }
 
 
-    /// 120	ÈÏ¹º
-    //122	Éê¹º
-    //124	Êê»Ø
-    //126	×ªÏúÊÛ»ú¹¹
-    //127	×ªÏúÊÛ»ú¹¹Èë
-    //129	ÉèÖÃ·Öºì·½Ê½
-    //131	·İ¶î¶³½á
-    //132	·İ¶î½â¶³
-    //133	×ªÈÃ
-    //134	ÊÜÈÃ
-    //136	·İ¶î×ª»»
-    //137	·İ¶î×ª»»Èë
-    //142	Ç¿ĞĞÊê»Ø
-    //143	ºìÀû·¢·Å
-    //144	Ç¿ĞĞµ÷Ôö
-    //145	Ç¿ĞĞµ÷¼õ
-    //149	Ä¼¼¯Ê§°Ü
-    //150	»ù½ğÇåÅÌ
+    /// 120	è®¤è´­
+    //122	ç”³è´­
+    //124	èµå›
+    //126	è½¬é”€å”®æœºæ„
+    //127	è½¬é”€å”®æœºæ„å…¥
+    //129	è®¾ç½®åˆ†çº¢æ–¹å¼
+    //131	ä»½é¢å†»ç»“
+    //132	ä»½é¢è§£å†»
+    //133	è½¬è®©
+    //134	å—è®©
+    //136	ä»½é¢è½¬æ¢
+    //137	ä»½é¢è½¬æ¢å…¥
+    //142	å¼ºè¡Œèµå›
+    //143	çº¢åˆ©å‘æ”¾
+    //144	å¼ºè¡Œè°ƒå¢
+    //145	å¼ºè¡Œè°ƒå‡
+    //149	å‹Ÿé›†å¤±è´¥
+    //150	åŸºé‡‘æ¸…ç›˜
     private TransferRecordType ParseType(string str)
     {
         switch (str)
         {
-            case "120": // ÈÏ¹º 
+            case "120": // è®¤è´­ 
                 return TransferRecordType.Subscription;
-            case "122": // Éê¹º 
+            case "122": // ç”³è´­ 
                 return TransferRecordType.Purchase;
-            case "124": // Êê»Ø 
+            case "124": // èµå› 
                 return TransferRecordType.Redemption;
-            case "126": // ×ªÏúÊÛ»ú¹¹ 
+            case "126": // è½¬é”€å”®æœºæ„ 
                 return TransferRecordType.MoveIn;
-            case "127": // ×ªÏúÊÛ»ú¹¹Èë 
+            case "127": // è½¬é”€å”®æœºæ„å…¥ 
                 return TransferRecordType.MoveIn;
-            case "129": // ÉèÖÃ·Öºì·½Ê½ 
+            case "129": // è®¾ç½®åˆ†çº¢æ–¹å¼ 
                 return TransferRecordType.BonusType; 
-            case "131": // ·İ¶î¶³½á 
+            case "131": // ä»½é¢å†»ç»“ 
                 return TransferRecordType.Frozen;
-            case "132": // ·İ¶î½â¶³ 
+            case "132": // ä»½é¢è§£å†» 
                 return TransferRecordType.Thawed;
-            case "133": // ×ªÈÃ 
+            case "133": // è½¬è®© 
                 return TransferRecordType.TransferOut;
-            case "134": // ÊÜÈÃ 
+            case "134": // å—è®© 
                 return TransferRecordType.TransferIn;
-            case "136": // ·İ¶î×ª»» 
+            case "136": // ä»½é¢è½¬æ¢ 
                 return TransferRecordType.SwitchOut;
-            case "137": // ·İ¶î×ª»»Èë 
+            case "137": // ä»½é¢è½¬æ¢å…¥ 
                 return TransferRecordType.SwitchIn;
 
-            case "142": // Ç¿ĞĞÊê»Ø 
+            case "142": // å¼ºè¡Œèµå› 
                 return TransferRecordType.ForceRedemption;
-            case "143": // ºìÀû·¢·Å 
+            case "143": // çº¢åˆ©å‘æ”¾ 
                 return TransferRecordType.Distribution;
-            case "144": // Ç¿ĞĞµ÷Ôö 
+            case "144": // å¼ºè¡Œè°ƒå¢ 
                 return TransferRecordType.Increase;
-            case "145": // Ç¿ĞĞµ÷¼õ 
+            case "145": // å¼ºè¡Œè°ƒå‡ 
                 return TransferRecordType.Decrease;
-            case "149": // Ä¼¼¯Ê§°Ü 
+            case "149": // å‹Ÿé›†å¤±è´¥ 
                 return TransferRecordType.RaisingFailed;
-            case "150": // »ù½ğÇåÅÌ 
+            case "150": // åŸºé‡‘æ¸…ç›˜ 
                 return TransferRecordType.Clear;
 
             default: 
@@ -316,4 +316,4 @@ internal class TransferRecordJson : JsonBase
 
 }
 
-#pragma warning restore CS8618 // ÔÚÍË³ö¹¹Ôìº¯ÊıÊ±£¬²»¿ÉÎª null µÄ×Ö¶Î±ØĞë°üº¬·Ç null Öµ¡£Çë¿¼ÂÇÌí¼Ó "required" ĞŞÊÎ·û»òÉùÃ÷Îª¿ÉÎª null¡£
+#pragma warning restore CS8618 // åœ¨é€€å‡ºæ„é€ å‡½æ•°æ—¶ï¼Œä¸å¯ä¸º null çš„å­—æ®µå¿…é¡»åŒ…å«é null å€¼ã€‚è¯·è€ƒè™‘æ·»åŠ  "required" ä¿®é¥°ç¬¦æˆ–å£°æ˜ä¸ºå¯ä¸º nullã€‚

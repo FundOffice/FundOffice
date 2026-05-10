@@ -17,7 +17,7 @@ public partial class CMS : TrusteeApiBase
 
     public override string Identifier => "trustee_cms";
 
-    public override string Title => "ÕĞÉÌÖ¤È¯";
+    public override string Title => "æ‹›å•†è¯åˆ¸";
 
     public override string TestDomain => "http://210.21.237.135:27011/v1/request";
 
@@ -43,7 +43,7 @@ public partial class CMS : TrusteeApiBase
     private SubjectFundMapping[]? FundsInfo { get; set; }
 
 
-    public override bool IsSuit(string? company) => string.IsNullOrWhiteSpace(company) ? false : Regex.IsMatch(company, $"ÕĞÉÌÖ¤È¯|ÕĞÉÌÖ¤È¯¹É·İÓĞÏŞ¹«Ë¾|{_Identifier}");
+    public override bool IsSuit(string? company) => string.IsNullOrWhiteSpace(company) ? false : Regex.IsMatch(company, $"æ‹›å•†è¯åˆ¸|æ‹›å•†è¯åˆ¸è‚¡ä»½æœ‰é™å…¬å¸|{_Identifier}");
 
 
 
@@ -62,10 +62,10 @@ public partial class CMS : TrusteeApiBase
     {
         var data = await SyncWork<TransferRequest, TransferRequestJson>(1006, new { beginDate = $"{begin:yyyyMMdd}", endDate = $"{end:yyyyMMdd}" }, x => x.ToObject());
 
-        // ÎŞÊı¾İ·µ»Ø
+        // æ— æ•°æ®è¿”å›
         if (data.Data?.Length == 0) return data;
 
-        // ×Ó²úÆ· Ó³Éä
+        // å­äº§å“ æ˜ å°„
         if (FundsInfo is null)
             await QuerySubjectFundMappings();
 
@@ -91,7 +91,7 @@ public partial class CMS : TrusteeApiBase
     {
         var data = await SyncWork<TransferRecord, TransferRecordJson>(1006, new { beginDate = $"{begin:yyyyMMdd}", endDate = $"{end:yyyyMMdd}" }, x => x.ToObject());
 
-        // ×Ó²úÆ· Ó³Éä
+        // å­äº§å“ æ˜ å°„
         if (FundsInfo is null)
             await QuerySubjectFundMappings();
 
@@ -114,7 +114,7 @@ public partial class CMS : TrusteeApiBase
 
     public override async Task<ReturnWrap<FundDailyFee>> QueryFundDailyFee(DateOnly begin, DateOnly end)
     {
-        // ²éÑ¯Çø¼ä´óÓÚ1¸öÔÂ£¬ĞèÒª¶à´Î²éÑ¯ 
+        // æŸ¥è¯¢åŒºé—´å¤§äº1ä¸ªæœˆï¼Œéœ€è¦å¤šæ¬¡æŸ¥è¯¢ 
         var ts = Split(begin, end, 31);
 
         List<FundDailyFee> transactions = new();
@@ -148,7 +148,7 @@ public partial class CMS : TrusteeApiBase
 
     public override async Task<ReturnWrap<RaisingBankTransaction>> QueryRaisingAccountTransction(DateOnly begin, DateOnly end)
     {
-        // ²éÑ¯Çø¼ä´óÓÚ1¸öÔÂ£¬ĞèÒª¶à´Î²éÑ¯ 
+        // æŸ¥è¯¢åŒºé—´å¤§äº1ä¸ªæœˆï¼Œéœ€è¦å¤šæ¬¡æŸ¥è¯¢ 
         var ts = Split(begin, end, 30);
 
         List<RaisingBankTransaction> transactions = new();
@@ -163,13 +163,13 @@ public partial class CMS : TrusteeApiBase
                 transactions.AddRange(data.Data);
         }
 
-        // ¶ÔÆëµ½»ù½ğ
+        // å¯¹é½åˆ°åŸºé‡‘
         using var db = DbHelper.Base();
         foreach (var item in transactions)
             item.FundId = db.FindFund(item.FundCode)?.Id ?? 0;
 
         if (transactions.Any(x => x.FundId == 0))
-            Serilog.Log.Error($"Ä¼×ÊÁ÷Ë® {string.Join(',', transactions.Where(x => x.FundId == 0).Select(x => $"{x.AccountName}-{x.FundCode}"))} Î´ÕÒµ½¶ÔÓ¦»ù½ğ");
+            Serilog.Log.Error($"å‹Ÿèµ„æµæ°´ {string.Join(',', transactions.Where(x => x.FundId == 0).Select(x => $"{x.AccountName}-{x.FundCode}"))} æœªæ‰¾åˆ°å¯¹åº”åŸºé‡‘");
 
         return new(ReturnCode.Success, transactions.ToArray());
     }
@@ -273,7 +273,7 @@ public partial class CMS : TrusteeApiBase
 
     public async Task<string?> Query(int interfaceId, Dictionary<string, object> param)
     {
-        // ´´½¨request
+        // åˆ›å»ºrequest
         var request = Build(interfaceId, param);
         var response = await _client.SendAsync(request);
         var content = await response.Content.ReadAsStringAsync();
@@ -283,10 +283,10 @@ public partial class CMS : TrusteeApiBase
 
     protected async Task<ReturnWrap<TEntity>> SyncWork<TEntity, TJSON>(int interfaceId, object? param, Func<TJSON, TEntity> transfer, [CallerMemberName] string? caller = null) where TJSON : JsonBase
     {
-        // Ğ£Ñé
+        // æ ¡éªŒ
         if (CheckBreforeSync() is ReturnCode rc && rc != ReturnCode.Success) return new(rc, null);
 
-        // ·Çdict ×ª³Édict ·½±ãĞŞ¸Äpage
+        // édict è½¬æˆdict æ–¹ä¾¿ä¿®æ”¹page
         Dictionary<string, object> formatedParams;
         if (param is null) formatedParams = new();
         if (param is Dictionary<string, object> pp) formatedParams = pp;
@@ -294,10 +294,10 @@ public partial class CMS : TrusteeApiBase
 
         List<TJSON> list = new();
 
-        // »ñÈ¡ËùÓĞ½á¹û
+        // è·å–æ‰€æœ‰ç»“æœ
         try
         {
-            for (int i = 0; i < 19; i++) // ·ÀÖ¹ÎŞÏŞÑ­»·£¬×î¶à99´Î 
+            for (int i = 0; i < 19; i++) // é˜²æ­¢æ— é™å¾ªç¯ï¼Œæœ€å¤š99æ¬¡ 
             {
 
                 var json = await Query(interfaceId, formatedParams);
@@ -309,21 +309,21 @@ public partial class CMS : TrusteeApiBase
 
                     var code = int.Parse(ret!.Code);
 
-                    // ÓĞ´íÎó
+                    // æœ‰é”™è¯¯
                     if (code != 10000)
                     {
                         Log(caller, json, ret.Msg);
                         return new(TransferReturnCode(code, ret.Msg), null);
                     }
 
-                    // µ÷ÓÃ³É¹¦£¬Êµ¼ÊÎŞÊı¾İ
+                    // è°ƒç”¨æˆåŠŸï¼Œå®é™…æ— æ•°æ®
                     if (string.IsNullOrWhiteSpace(ret.Data))
                         break;// return new(ReturnCode.Success, []);
 
-                    // ½âÎöÊµ¼ÊÊı¾İ
+                    // è§£æå®é™…æ•°æ®
                     var data = JsonSerializer.Deserialize<List<JsonElement>>(ret.Data);
 
-                    // ¼ÇÂ¼·µ»ØµÄÀàĞÍ£¬ÓÃÓÚdebug
+                    // è®°å½•è¿”å›çš„ç±»å‹ï¼Œç”¨äºdebug
                     //CacheJson(caller, data!);
                     var options = new JsonSerializerOptions
                     {
@@ -335,19 +335,19 @@ public partial class CMS : TrusteeApiBase
                             try { return x.Deserialize<TJSON>(options)!; }
                             catch (Exception ex)
                             {
-                                // ¼ÇÂ¼¾ßÌåÄÄ¸öÔªËØ·´ĞòÁĞ»¯Ê§°Ü
+                                // è®°å½•å…·ä½“å“ªä¸ªå…ƒç´ ååºåˆ—åŒ–å¤±è´¥
                                 JsonBase.ReportJsonUnexpected(Identifier, caller!, $"Failed to deserialize item Error: {ex.Message}: {x}.");
                                 throw;
                             }
                         }));
 
 
-                    // Êı¾İ»ñÈ¡ÊÇ·ñÆëÈ«
+                    // æ•°æ®è·å–æ˜¯å¦é½å…¨
                     var pi = JsonSerializer.Deserialize<PaginationInfo>(ret.Page!)!;
                     if (pi.PageNumber >= pi.PageCount)
                         break;
 
-                    // ÏÂÒ»Ò³
+                    // ä¸‹ä¸€é¡µ
                     var page = (int)formatedParams["pageNumber"];
                     formatedParams["pageNumber"] = page + 1;
                 }
@@ -398,7 +398,7 @@ public partial class CMS : TrusteeApiBase
 
     protected override ReturnCode CheckBreforeSync()
     {
-        // ¼ìÑé¿ÉÓÃĞÔ 
+        // æ£€éªŒå¯ç”¨æ€§ 
         if (!IsValid) return ReturnCode.ConfigInvalid;
 
         if (string.IsNullOrWhiteSpace(LicenceKey) || string.IsNullOrWhiteSpace(UserNo) || Certificate is null || ServerType is null)
@@ -419,23 +419,23 @@ public partial class CMS : TrusteeApiBase
             case 10000:
                 return ReturnCode.Success;
 
-            case 10001://£¨ÇëÇó²ÎÊıÎŞĞ§£© 
+            case 10001://ï¼ˆè¯·æ±‚å‚æ•°æ— æ•ˆï¼‰ 
                 return ReturnCode.ParameterInvalid;
 
-            case 10002://£¨Éí·İÈÏÖ¤Ê§°Ü£© 
+            case 10002://ï¼ˆèº«ä»½è®¤è¯å¤±è´¥ï¼‰ 
                 return ReturnCode.IdentitifyFailed;
 
-            case 10003://£¨·Ç·¨IP£© 
+            case 10003://ï¼ˆéæ³•IPï¼‰ 
                 return ReturnCode.InvalidIP;
 
-            case 10004://£¨½Ó¿Ú²»¿ÉÓÃ£© 
+            case 10004://ï¼ˆæ¥å£ä¸å¯ç”¨ï¼‰ 
                 return ReturnCode.InterfaceUnavailable;
 
 
             case 10005:
                 switch (message)
                 {
-                    case string s when s.Contains("²»ÄÜ³¬¹ıÒ»¸öÔÂ"):
+                    case string s when s.Contains("ä¸èƒ½è¶…è¿‡ä¸€ä¸ªæœˆ"):
                         return ReturnCode.CMS_DateRangeLimitOneMonth;
                     default:
                         return ReturnCode.Unknown;

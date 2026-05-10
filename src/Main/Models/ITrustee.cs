@@ -40,7 +40,7 @@ public interface ITrustee
     Task<ReturnWrap<TransferRequest>> QueryTransferRequests(DateOnly begin, DateOnly end, string? fundCode = null);
 
     /// <summary>
-    /// »ñÈ¡½»Ò×È·ÈÏ¼ÇÂ¼
+    /// è·å–äº¤æ˜“ç¡®è®¤è®°å½•
     /// </summary>
     /// <param name="begin"></param>
     /// <param name="end"></param>
@@ -48,7 +48,7 @@ public interface ITrustee
     Task<ReturnWrap<TransferRecord>> QueryTransferRecords(DateOnly begin, DateOnly end, string? fundCode = null);
 
     /// <summary>
-    /// »ñÈ¡»ù½ğ¹Ì¶¨·ÑÓÃ
+    /// è·å–åŸºé‡‘å›ºå®šè´¹ç”¨
     /// </summary>
     /// <param name="begin"></param>
     /// <param name="end"></param>
@@ -57,7 +57,7 @@ public interface ITrustee
 
 
     /// <summary>
-    /// ÍĞ¹Ü»§Á÷Ë®
+    /// æ‰˜ç®¡æˆ·æµæ°´
     /// </summary>
     /// <param name="begin"></param>
     /// <param name="end"></param>
@@ -66,7 +66,7 @@ public interface ITrustee
 
 
     /// <summary>
-    /// Ä¼¼¯»§Á÷Ë®
+    /// å‹Ÿé›†æˆ·æµæ°´
     /// </summary>
     /// <param name="begin"></param>
     /// <param name="end"></param>
@@ -76,14 +76,14 @@ public interface ITrustee
 
 
     /// <summary>
-    /// »ñÈ¡·Ö¼¶²úÆ·Ó³Éä¹ØÏµ
+    /// è·å–åˆ†çº§äº§å“æ˜ å°„å…³ç³»
     /// </summary>
     /// <returns></returns>
     Task<ReturnWrap<SubjectFundMapping>> QuerySubjectFundMappings();
 
 
     /// <summary>
-    /// »ñÈ¡Ä¼¼¯»§Óà¶î
+    /// è·å–å‹Ÿé›†æˆ·ä½™é¢
     /// </summary>
     /// <param name="fundCode"></param>
     /// <returns></returns>
