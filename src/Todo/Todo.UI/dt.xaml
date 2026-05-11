@@ -84,19 +84,21 @@
 
 
     <DataTemplate DataType="{x:Type local:PeriodicalUnreportedTodoViewModel}">
-        <DockPanel>
-            <DockPanel DockPanel.Dock="Top">
+        <StackPanel>
+            <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+
+                <TextBlock VerticalAlignment="Center" Text="以下定期报告未报送" />
                 <Button
+                    Margin="5,0"
                     Command="{Binding OpenCommand}"
                     Content="查看"
-                    DockPanel.Dock="Right"
                     Style="{StaticResource ButtonDashedPrimary.Small}" />
 
-                <TextBlock Text="以下报告未报送，今日报送的也会显示，不必紧张" />
             </DockPanel>
 
+            <TextBlock Foreground="Orange" Text="今日报送的也会显示，不必紧张" />
             <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
-        </DockPanel>
+        </StackPanel>
     </DataTemplate>
 
 

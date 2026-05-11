@@ -34,33 +34,17 @@ public partial class PeriodicalUnreportedMonitor : ITracker<NewDay>
             var fundinfos = await AmacHtml.CrawleManagerInfo(mid);
             if (fundinfos == null || !fundinfos.Any()) return;
 
-            var messages = new List<string>();
-
-            // 💡 注意：请根据实际业务确认“未报送”的判断条件（此处假设 == 0 为未报送）
-            // 💡 请将 x.Code 替换为实际的基金代码/名称属性（如 x.FundCode 或 x.Name）
-            var monthly = string.Join("、", fundinfos.Where(x => x.Monthly == 0).Select(x => x.Name));
-            if (!string.IsNullOrEmpty(monthly)) messages.Add($"月报：{monthly}");
-
-            var quarterly = string.Join("、", fundinfos.Where(x => x.Quarterly == 0).Select(x => x.Name));
-            if (!string.IsNullOrEmpty(quarterly)) messages.Add($"季报：{quarterly}");
-
-            var semiAnnally = string.Join("、", fundinfos.Where(x => x.SemiAnnually == 0).Select(x => x.Name));
-            if (!string.IsNullOrEmpty(semiAnnally)) messages.Add($"半年报：{semiAnnally}");
-
-            var annally = string.Join("、", fundinfos.Where(x => x.Annually == 0).Select(x => x.Name));
-            if (!string.IsNullOrEmpty(annally)) messages.Add($"年报：{annally}");
-
-            // 仅当存在未报送记录时触发通知
-            if (messages.Count > 0)
+            var todo = new PeriodicalUnreportedTodo
             {
-                TodoService.Register(new PeriodicalUnreportedTodo
-                {
-                    Monthly = fundinfos.Where(x => x.Monthly > 0).Select(x => x.Name!).ToArray(),
-                    Quarterly = fundinfos.Where(x => x.Quarterly > 0).Select(x => x.Name!).ToArray(),
-                    SemiAnnually = fundinfos.Where(x => x.SemiAnnually > 0).Select(x => x.Name!).ToArray(),
-                    Annually = fundinfos.Where(x => x.Annually > 0).Select(x => x.Name!).ToArray(),
-                });
-            }
+                Monthly = fundinfos.Where(x => x.Monthly > 0).Select(x => x.Name!).ToArray(),
+                Quarterly = fundinfos.Where(x => x.Quarterly > 0).Select(x => x.Name!).ToArray(),
+                SemiAnnually = fundinfos.Where(x => x.SemiAnnually > 0).Select(x => x.Name!).ToArray(),
+                Annually = fundinfos.Where(x => x.Annually > 0).Select(x => x.Name!).ToArray(),
+            };
+            // 仅当存在未报送记录时触发通知
+            if (todo.Monthly.Length > 0 || todo.Quarterly.Length > 0 || todo.SemiAnnually.Length > 0 || todo.Annually.Length > 0)
+                TodoService.Register(todo);
+            else TodoService.Unregister(nameof(PeriodicalUnreportedTodo));
         }
         catch (Exception ex)
         {

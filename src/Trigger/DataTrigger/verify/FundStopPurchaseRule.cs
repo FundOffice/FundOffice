@@ -116,7 +116,7 @@ public partial class FundStopPurchaseRule : VerifyRule, ITracker<IEnumerable<Dai
                     // 历史年度
                     if (date.Year != currentYear)
                     {
-                        var avg = limit.TotalAsset / limit.DaysThisYear;
+                        var avg = limit.DaysThisYear == 0? 0: limit.TotalAsset / limit.DaysThisYear;
                         if (avg < Threshold)
                         {
                             limit.PurchaseLimited = true;
@@ -147,7 +147,7 @@ public partial class FundStopPurchaseRule : VerifyRule, ITracker<IEnumerable<Dai
         // 更新年度平均
 
         var remaindays = Days.CountTradingDays(dates.Last(), new DateOnly(currentYear, 12, 31));
-        limit.EstimatedDailyAssets = (limit.TotalAsset + assets.Last(x => x != 0) * remaindays) / (limit.DaysThisYear + remaindays) / 10000;
+        limit.EstimatedDailyAssets = (limit.TotalAsset + assets.LastOrDefault(x => x != 0) * remaindays) / (limit.DaysThisYear + remaindays) / 10000;
 
 
         limit.CheckDate = dates.Last();
