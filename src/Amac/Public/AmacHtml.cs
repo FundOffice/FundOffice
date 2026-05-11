@@ -285,8 +285,8 @@ public class AmacHtml
                 IsAdvisor = isAdv,
                 Monthly = GetUndisclosedCount(cells[2]),
                 Quarterly = GetUndisclosedCount(cells[3]),
-                SemiAnnally = GetUndisclosedCount(cells[4]),
-                Annally = GetUndisclosedCount(cells[5]),
+                SemiAnnually = GetUndisclosedCount(cells[4]),
+                Annually = GetUndisclosedCount(cells[5]),
                 InvestorAccountRate = ExtractDouble(cells[6].TextContent)
             });
         }

@@ -119,35 +119,49 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
             {
                 if (member is IPropertySymbol prop &&
                     prop.DeclaredAccessibility == Accessibility.Public &&
-                    !prop.IsStatic &&
-                    prop.Type is INamedTypeSymbol propNamedType)
+                    !prop.IsStatic)
                 {
+                    // 🔹 支持命名类型和数组类型
+                    ITypeSymbol propType = prop.Type;
+                    string propTypeString = propType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+                    // 如果是数组，获取元素类型用于嵌套检查（可选）
+                    INamedTypeSymbol? propNamedType = propType switch
+                    {
+                        INamedTypeSymbol named => named,
+                        IArrayTypeSymbol array when array.ElementType is INamedTypeSymbol elem => elem,
+                        _ => null
+                    };
+
+                    if (propNamedType == null) continue; // 跳过不支持的类型（如泛型、元组等）
+
                     if (viewModelDeclaredProperties.Contains(prop.Name))
                     {
                         logs.Add($"  ⏭️ Skip {prop.Name} (VM already declares)");
                         continue;
                     }
 
-                    bool isNullable = prop.Type.IsReferenceType;
-                    bool isWritable = prop.SetMethod != null;//&& !prop.SetMethod.IsInitOnly;
+                    bool isNullable = propType.IsReferenceType ||
+                                     (propType is IArrayTypeSymbol) ||
+                                     prop.NullableAnnotation == NullableAnnotation.Annotated;
+                    bool isWritable = prop.SetMethod != null;
 
-                    // 🔍 检查嵌套模式
-                    var (isNested, vmType) = CheckNestedViewModelPattern(targetClass, prop.Name, propNamedType);
-                    logs.Add($"  📦 {prop.Name}: SrcType={propNamedType.Name} | Nested={isNested} | VMType={vmType?.Name ?? "null"}");
+                    // 🔍 嵌套检查只对非数组类型生效
+                    var (isNested, vmType) = propType is IArrayTypeSymbol
+                        ? (false, null)
+                        : CheckNestedViewModelPattern(targetClass, prop.Name, propNamedType);
 
-                    if (isNested && vmType != null)
-                    {
-                        bool hasCtor = HasConstructorWithSourceType(vmType, propNamedType);
-                        logs.Add($"     🔑 HasCtor({propNamedType.Name}): {hasCtor}");
-                    }
-
-                    var vmTypeName = isNested
-                        ? vmType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        : propNamedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                    var vmTypeName = isNested && vmType != null
+                        ? vmType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                        : propTypeString; // ✅ 使用完整类型字符串，支持数组
 
                     var propInfo = new PropertyInfo(
-                        propNamedType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                        prop.Name, isNullable, isWritable, isNested, vmTypeName);
+                        propTypeString,      // 源类型（含数组）
+                        prop.Name,
+                        isNullable,
+                        isWritable,
+                        isNested,
+                        vmTypeName);
 
                     if (existingInHierarchy.Contains(prop.Name))
                     {
@@ -240,7 +254,7 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
             var backingField = $"_{char.ToLowerInvariant(prop.Name[0])}{prop.Name.Substring(1)}";
 
             return $$"""
-        //private {{typeName}} {{backingField}};
+
         public {{typeName}} {{prop.Name}} { get => field; set => SetProperty(ref field, value); }
   
 """;
@@ -439,28 +453,31 @@ using System.Runtime.CompilerServices;
         {
             if (IsNestedViewModel)
             {
-                if(ViewModelTypeName.EndsWith("FileViewModel"))
-                    return $"{Name} = new {ViewModelTypeName}({sourceVar}.{Name});";
-
-                // a = val.A != null ? new ClassAViewModel(val.A) : null;
                 return IsNullable
                     ? $"{Name} = {sourceVar}.{Name} != null ? new {ViewModelTypeName}({sourceVar}.{Name}) : null;"
                     : $"{Name} = new {ViewModelTypeName}({sourceVar}.{Name});";
             }
+            // ✅ 数组/普通类型都直接赋值
             return $"{Name} = {sourceVar}.{Name};";
         }
 
-        // 🔹 获取 Build 中的初始化表达式
         public string GetBuildInitializer()
         {
             if (IsNestedViewModel)
             {
-                // A = A?.Build()
                 return IsNullable
                     ? $"{Name} = {Name}?.Build(),"
                     : $"{Name} = {Name}!.Build(),";
             }
-            return IsWritable ? $"{Name} = {Name}!," : string.Empty;
+            // ✅ 只处理可写属性
+            if (!IsWritable)
+                return string.Empty;
+
+            // 🔹 可空类型：不为 null 时赋值，否则赋 default
+            // 🔹 非可空类型：直接赋值
+            return IsNullable
+                ? $"{Name} = {Name} != null ? {Name} : default,"
+                : $"{Name} = {Name},";
         }
     }
 }

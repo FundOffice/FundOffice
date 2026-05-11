@@ -28,9 +28,9 @@ public class FundBasicInfo
 
     public int Quarterly { get; set; }
 
-    public int SemiAnnally { get; set; }
+    public int SemiAnnually { get; set; }
 
-    public int Annally { get; set; }
+    public int Annually { get; set; }
 
     public double InvestorAccountRate { get; set; }
 }
