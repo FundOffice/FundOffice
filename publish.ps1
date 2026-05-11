@@ -18,7 +18,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # 需要保留的文件夹列表
-$foldersToKeep = @("esign", "mission", "runtimes", "trigger", "trustee")
+$foldersToKeep = @(".ck", "esign", "mission", "runtimes", "trigger", "trustee")
 
 # 清理并发布目录
 if (Test-Path $publishDir) {
