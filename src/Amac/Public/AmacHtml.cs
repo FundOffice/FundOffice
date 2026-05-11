@@ -3,6 +3,7 @@ using AngleSharp.Dom;
 using FMO.Logging;
 using FMO.Models;
 using System.Globalization;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace FMO.AMAC;
@@ -91,6 +92,62 @@ public class AmacHtml
     }
 
 
+    /// <summary>
+    /// 通过关键字获取在AMAC中的管理人名称
+    /// </summary>
+    /// <param name="search"></param>
+    /// <returns></returns>
+    public static async Task<ManagerInfo[]?> GetInstitutionInfoFromAmac(string search)
+    {
+
+        try
+        {
+            using HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0");
+
+            var resp = await client.GetAsync("https://gs.amac.org.cn/amac-infodisc/res/pof/manager/managerList.html");
+            if (!resp.IsSuccessStatusCode)
+            {
+                LogEx.Warning("请检查网络");
+                return null;
+            }
+
+            StringContent content = new StringContent("{\"keyword\":\"sssss\",\"regiProvinceFsc\":\"province\",\"offiProvinceFsc\":\"province\",\"establishDate\":{\"from\":\"1900-01-01\",\"to\":\"9999-01-01\"},\"registerDate\":{\"from\":\"1900-01-01\",\"to\":\"9999-01-01\"}}".
+                Replace("sssss", search), Encoding.UTF8, "application/json");
+
+
+            var request = new HttpRequestMessage();
+            request.RequestUri = new Uri("https://gs.amac.org.cn/amac-infodisc/api/pof/manager/query?&page=0&size=20");
+            request.Headers.Add("Accept", "application/json, text/javascript, */*; q=0.01");
+            request.Headers.Add("Accept-Encoding", "gzip, deflate, br, zstd");
+            request.Headers.Add("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6");
+            request.Headers.Add("Origin", "https://gs.amac.org.cn");
+            request.Headers.Add("Referer", "https://gs.amac.org.cn/amac-infodisc/res/pof/manager/managerList.html");
+            request.Method = HttpMethod.Post;
+            request.Content = content;
+
+
+            resp = await client.SendAsync(request); ;// await client.PostAsync("https://gs.amac.org.cn/amac-infodisc/api/pof/manager/query?&page=0&size=20", content);
+            if (resp.IsSuccessStatusCode)
+            {
+                var s = await resp.Content.ReadAsStringAsync();
+                s = Regex.Replace(s, "</*em>", "");
+
+                var root = System.Text.Json.JsonSerializer.Deserialize<QueryManagers>(s);// await resp.Content.ReadFromJsonAsync<AmacQuery.QueryManagers>();
+
+                return root?.Content?.ToArray();
+            }
+
+            LogEx.Error($"GetInstitutionInfoFromAmac Net Error {resp.StatusCode}");
+            return null;
+        }
+        catch (Exception e)
+        {
+            LogEx.Error(e, $"GetInstitutionInfoFromAmac");
+
+            return null;
+        }
+    }
 
 
 

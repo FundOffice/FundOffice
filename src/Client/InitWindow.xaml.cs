@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.IO.AMAC;
+using FMO.AMAC;
 using FMO.Models;
 using FMO.Trustee;
 using FMO.Utilities;
@@ -41,7 +41,7 @@ public partial class InitWindow : Window
 }
 
 
-public partial class InitWindowViewModel : ObservableRecipient, IRecipient<InitStep2Info>
+public partial class InitWindowViewModel : ObservableRecipient
 {
     [ObservableProperty]
     public partial ManagerInfo[]? ManagerOptions { get; set; }
@@ -118,7 +118,15 @@ public partial class InitWindowViewModel : ObservableRecipient, IRecipient<InitS
         ShowStep2 = true;
         ShowProgress = true;
         List<FundBasicInfo> funds = new List<FundBasicInfo>();
-        await AmacAssist.CrawleManagerInfo(Manager, funds, new System.Net.Http.HttpClient());
+        await AmacHtml.CrawleManagerInfo(Manager, funds);
+
+
+        CurrentScale = Manager.ScaleRange;
+        PreNewRuleFundCount = funds.Count(x => x.IsPreRule);
+        NormalFundCount = funds.Count(x => !x.IsPreRule && !x.IsAdvisor);
+        AdviseFundCount = funds.Count(x => x.IsAdvisor);
+
+
 
         ///保存数据库
         Manager.IsMaster = true;
@@ -181,7 +189,7 @@ public partial class InitWindowViewModel : ObservableRecipient, IRecipient<InitS
 
                 // 检查是否有数据
                 var hasdb = File.Exists(Path.Combine(dialog.FolderName, "data", "base.db"));
-                if(hasdb)
+                if (hasdb)
                 {
                     // 判断能否解开
                     try
@@ -244,7 +252,7 @@ public partial class InitWindowViewModel : ObservableRecipient, IRecipient<InitS
         }
 
         Manager = null;
-        ManagerOptions = await AmacAssist.GetInstitutionInfoFromAmac(value);
+        ManagerOptions = await AmacHtml.GetInstitutionInfoFromAmac(value);
 
         ///如果是复制的全称
         sel = ManagerOptions?.FirstOrDefault(x => x.ManagerName == value);
@@ -289,23 +297,7 @@ public partial class InitWindowViewModel : ObservableRecipient, IRecipient<InitS
             InitProgress = d;
 
     }
-    public void Receive(InitStep2Info message)
-    {
-        InitProgress = message.Progress;
 
-        if (message.CurrentScale is not null)
-            CurrentScale = message.CurrentScale;
-
-        if (message.PreRuleCount is not null)
-            PreNewRuleFundCount = message.PreRuleCount.Value;
-
-        if (message.NormalCount is not null)
-            NormalFundCount = message.NormalCount.Value;
-
-        if (message.AdviseCount is not null)
-            AdviseFundCount = message.AdviseCount.Value;
-
-    }
 
     public InitWindowViewModel()
     {
@@ -329,10 +321,7 @@ public partial class InitWindowViewModel : ObservableRecipient, IRecipient<InitS
         IsNetworkDisconnected = !NetworkInterface.GetIsNetworkAvailable();
     }
 
-    protected override void OnActivated()
-    {
-        WeakReferenceMessenger.Default.Register<InitStep2Info, string>(this, AmacAssist.MessageToken);
-    }
+ 
 
 
 }

@@ -1,5 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 
+
+namespace FMO.AMAC;
+
 public class SortItem
 {
     /// <summary>

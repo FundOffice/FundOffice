@@ -42,6 +42,13 @@ public partial class App : Application
         Log.Logger = new LoggerConfiguration().WriteTo.LiteDB(@"logs.db", "logex").CreateLogger();
         LogEx.Information($"System Start {DateTime.Now}");
 
+
+    }
+
+
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
         if (CheckIsFirstRun())
         {
             _firstRun = true;
@@ -50,12 +57,6 @@ public partial class App : Application
         }
 
 
-    }
-
-
-
-    protected override void OnStartup(StartupEventArgs e)
-    {
         AssemblyLoadContext.Default.Resolving += Default_Resolving;
 
         ResourceModuleInitializer.Initialize();
@@ -105,19 +106,19 @@ public partial class App : Application
     private bool CheckIsFirstRun()
     {
 #if RELEASE
-        using (var key = Registry.CurrentUser.OpenSubKey(@$"Software\Nexus"))       
+        using (var key = Registry.CurrentUser.CreateSubKey(@$"Software\Nexus"))       
 #else
-        using (var key = Registry.CurrentUser.OpenSubKey(@$"Software\Nexus\Debug"))
+        using (var key = Registry.CurrentUser.CreateSubKey(@$"Software\Nexus\Debug"))
 #endif
         {
-            if (key?.GetValue("WorkingFolder") is not string dir || !Directory.Exists(dir))
+            if (key.GetValue("WorkingFolder") is not string dir || !Directory.Exists(dir))
                 return true;
 
             Directory.SetCurrentDirectory(dir);
 
             try
             {
-                if (!File.Exists(@"data\base.db")) 
+                if (!File.Exists(@"data\base.db"))
                     return true;
 
                 DbHelper.Init();
@@ -126,7 +127,16 @@ public partial class App : Application
 
                 return manager is null;
             }
-            catch (Exception ex) { LogEx.Error(ex); return false; }
+            catch (LiteDB.LiteException)
+            {
+                if (HandyControl.Controls.MessageBox.Show("是：作为新用户使用\n否：请联系管理员尝试恢复", "无法打开数据库", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                    App.Current.Shutdown();
+                else
+                    key.DeleteValue("WorkingFolder");
+
+                return true;
+            }
+            catch (Exception ex) { LogEx.Error(ex); return true; }
         }
     }
 

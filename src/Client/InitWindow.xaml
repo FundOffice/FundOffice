@@ -141,7 +141,7 @@
                 </Grid>
 
                 <!--  Step2  -->
-                <UniformGrid
+                <!--<UniformGrid
                     Height="100"
                     HorizontalAlignment="Center"
                     DockPanel.Dock="Bottom"
@@ -173,7 +173,7 @@
                         <TextBlock Text="投资顾问类产品" />
                         <TextBlock Text="{Binding AdviseFundCount}" />
                     </StackPanel>
-                </UniformGrid>
+                </UniformGrid>-->
 
 
                 <hc:SimplePanel>
@@ -192,8 +192,8 @@
                         <ProgressBar
                             Height="12"
                             DockPanel.Dock="Bottom"
-                            Visibility="{Binding ShowProgress, Converter={StaticResource Boolean2VisibilityConverter}}"
-                            Value="{Binding InitProgress}" />
+                            IsIndeterminate="True"
+                            Visibility="{Binding ShowProgress, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
                         <hc:TransitioningContentControl>
                             <hc:AutoCompleteTextBox

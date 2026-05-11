@@ -117,6 +117,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Amac\Direct\Amac.Direct.csproj" />
+    <ProjectReference Include="..\Amac\Public\Amac.Public.csproj" />
     <ProjectReference Include="..\Amac\RPA\Amac.RPA.csproj" />
     <ProjectReference Include="..\Disclosure\Disclosure.UI\Disclosure.UI.csproj" />
     <ProjectReference Include="..\Disclosure\Disclosure\Disclosure.csproj" />
