@@ -1,16 +1,17 @@
 ﻿using FMO.Models;
 using LiteDB;
-using System.Configuration;
+using Microsoft.Win32;
 using System.Security.Cryptography;
 using System.Text;
+using Utilities;
 namespace FMO.Utilities;
 
 
 
 public class BaseDatabase : LiteDatabase
 {
- 
-     
+
+
     public BaseDatabase(string con) : base(con, null) { }
 
     public Fund? FindFund(string? fundCode)
@@ -79,19 +80,36 @@ public class BaseDatabase : LiteDatabase
 
 public static class DbHelper
 {
-    private static string _password;
+    private static string _password ="";
 
 
     private const string _dbfolder = "data";
 
     private readonly static string _exeFolder;
 
-
     static DbHelper()
+    { 
+        _exeFolder = AppDomain.CurrentDomain.BaseDirectory;
+    }
+
+    public static void Init()
     {
         Directory.CreateDirectory(_dbfolder);
 
-        _password = ConfigurationManager.AppSettings["dbpw"] ?? "fjd32890f5djflds";
+
+#pragma warning disable CA1416 // 验证平台兼容性
+#if RELEASE
+        using (var key = Registry.CurrentUser.OpenSubKey(@$"Software\Nexus"))       
+#else
+        using (var key = Registry.CurrentUser.OpenSubKey(@$"Software\Nexus\Debug"))
+#endif        
+        {
+            if (key is not null && key.GetValue("Code") is string s)
+                _password = AesHelper.Decrypt(s);
+            else _password = "";// DateTime.Now.Ticks.ToString();//"fjd32890f5djflds";
+        }
+#pragma warning restore CA1416 // 验证平台兼容性
+
         _password += "jgkfld9024039284jrwe";
 
         using (MD5 sha256 = MD5.Create())
@@ -100,8 +118,6 @@ public static class DbHelper
             byte[] hashBytes = sha256.ComputeHash(bytes);
             _password = Convert.ToHexString(hashBytes).ToLowerInvariant();
         }
-
-        _exeFolder = AppDomain.CurrentDomain.BaseDirectory;
     }
 
 
@@ -190,7 +206,7 @@ public static class DbHelper
 
 
 }
- 
+
 
 public static class Settings
 {

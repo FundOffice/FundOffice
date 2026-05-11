@@ -8,13 +8,11 @@ namespace FMO;
 
 
 public static class SecurityHelper
-{
-    // 🔒 硬编码信任公钥（发布后不可更改，篡改此常量会导致验证失败）
+{ 
     private const string TrustedPublicKeyBase64 = "MIIBCgKCAQEA4auJpRb3diltGvsVig3Zg+gpFgAGWAMr0loyDoUCD4PgN6Vvg8RLIU7iI2IahxDPBwfHvEx54/MBfIzKEJ6v4kY83vPeaE+s3iDlDncqzTUdZrY8sF6Xg/MbPboEyoLjB26PgSfhJxKWLqplmbgSnqqPZXPevIOYHnuLJravRseWlIguUdOUNnGC+/DGxkCfNPNI2eejYrnUSXaPHfqfaacEDPUPO2sdZfovIMpz2AL+3kkNT3wA2hJg4xIlDM6/ToN/Lx4VRpYPIucaxhJOzk424+rh9h3pH/GJ23PZ5sqQU35MREK7hccbea1QLLj0gEPJFaDEB3zAy9tznzyJvQIDAQAB";
 
-    /// <summary>
-    /// 验证单个 DLL 是否为你本人签名
-    /// </summary>
+
+     
     public static bool IsAuthorSigned(string dllPath)
     {
         try

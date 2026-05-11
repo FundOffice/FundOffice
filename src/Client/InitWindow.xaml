@@ -176,33 +176,57 @@
                 </UniformGrid>
 
 
-                <!--  请输入管理人名称  -->
-                <DockPanel Margin="40,0" VerticalAlignment="Center">
-                    <TextBlock
-                        Margin="8"
+                <hc:SimplePanel>
+                    <!--  请输入管理人名称  -->
+                    <DockPanel
+                        Margin="40,0"
+                        VerticalAlignment="Center"
+                        Visibility="{Binding ShowSetManager, Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <TextBlock
+                            Margin="8"
+                            HorizontalAlignment="Center"
+                            DockPanel.Dock="Top"
+                            FontSize="24"
+                            Text="请输入管理人名称" />
+
+                        <ProgressBar
+                            Height="12"
+                            DockPanel.Dock="Bottom"
+                            Visibility="{Binding ShowProgress, Converter={StaticResource Boolean2VisibilityConverter}}"
+                            Value="{Binding InitProgress}" />
+
+                        <hc:TransitioningContentControl>
+                            <hc:AutoCompleteTextBox
+                                VerticalAlignment="Center"
+                                HorizontalContentAlignment="Center"
+                                hc:DropDownElement.ConsistentWidth="True"
+                                DisplayMemberPath="ManagerName"
+                                ItemsSource="{Binding ManagerOptions}"
+                                Text="{Binding ManagerName, UpdateSourceTrigger=PropertyChanged, Delay=100}" />
+                        </hc:TransitioningContentControl>
+                    </DockPanel>
+                    <!--  请输入管理人名称  -->
+
+                    <DockPanel
                         HorizontalAlignment="Center"
-                        DockPanel.Dock="Top"
-                        FontSize="24"
-                        Text="请输入管理人名称" />
-
-                    <ProgressBar
-                        Height="12"
-                        DockPanel.Dock="Bottom"
-                        Visibility="{Binding ShowProgress, Converter={StaticResource Boolean2VisibilityConverter}}"
-                        Value="{Binding InitProgress}" />
-
-                    <hc:TransitioningContentControl>
-                        <hc:AutoCompleteTextBox
+                        VerticalAlignment="Center"
+                        LastChildFill="False"
+                        Visibility="{Binding ShowSetManager, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                        <TextBlock
                             VerticalAlignment="Center"
-                            HorizontalContentAlignment="Center"
-                            hc:DropDownElement.ConsistentWidth="True"
-                            DisplayMemberPath="ManagerName"
-                            ItemsSource="{Binding ManagerOptions}"
-                            Text="{Binding ManagerName, UpdateSourceTrigger=PropertyChanged, Delay=100}" />
-                    </hc:TransitioningContentControl>
-                </DockPanel>
-                <!--  请输入管理人名称  -->
-
+                            FontSize="24"
+                            Foreground="RoyalBlue"
+                            Text="请选择数据存放文件夹" />
+                        <Button
+                            Margin="20,0"
+                            hc:IconElement.Geometry="{StaticResource G.Folder.Filled}"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            Command="{Binding ChooseFolderCommand}"
+                            Style="{StaticResource ButtonIcon}"
+                            ToolTip="设置数据文件夹" />
+                    </DockPanel>
+                </hc:SimplePanel>
             </DockPanel>
 
 

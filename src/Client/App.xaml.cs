@@ -1,7 +1,6 @@
 ﻿using FMO.Logging;
 using FMO.Models;
 using FMO.Plugin;
-using FMO.Todo;
 using FMO.Utilities;
 using Microsoft.Win32;
 using Serilog;
@@ -17,6 +16,8 @@ namespace FMO;
 /// </summary>
 public partial class App : Application
 {
+    private bool _firstRun = false;
+
 #if RELEASE
     Mutex mutex;
 #endif
@@ -38,45 +39,27 @@ public partial class App : Application
 
         System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-#if RELEASE
-        // 设置工作目录
-        
-        //if (!string.IsNullOrWhiteSpace(Config.Default.WorkFolder))
-        //{
-        //    var di = new DirectoryInfo(Config.Default.WorkFolder);
-        //    if (di.Exists)
-        //        Directory.SetCurrentDirectory(di.FullName);
-        //}
-      // 从注册表读取
-        using (var key = Registry.CurrentUser.OpenSubKey(@$"Software\Nexus"))       
-#else
-        using (var key = Registry.CurrentUser.OpenSubKey(@$"Software\Nexus\Debug"))
-#endif        
+        Log.Logger = new LoggerConfiguration().WriteTo.LiteDB(@"logs.db", "logex").CreateLogger();
+        LogEx.Information($"System Start {DateTime.Now}");
+
+        if (CheckIsFirstRun())
         {
-            if (key != null)
-            {
-                var workFolder = key.GetValue("WorkingFolder") as string;
-                if (!string.IsNullOrWhiteSpace(workFolder))
-                {
-                    var di = new DirectoryInfo(workFolder);
-                    if (di.Exists)
-                        Directory.SetCurrentDirectory(di.FullName);
-                }
-            }
+            _firstRun = true;
+            StartupUri = new Uri("InitWindow.xaml", UriKind.Relative);
+            return;
         }
 
-        //Task.Run(async () =>
-        //{
-        //    await Task.Delay(1000 * 10);
 
-        //    DataTracker.OnDailyValue([new DailyValue { FundId = 5 }]);
-        //});
+    }
+
+
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        AssemblyLoadContext.Default.Resolving += Default_Resolving;
+
         ResourceModuleInitializer.Initialize();
 
-
-        Log.Logger = new LoggerConfiguration().WriteTo.LiteDB(@"logs.db", "logex").CreateLogger();
-        //Log.Logger = new LoggerConfiguration().WriteTo.LiteDB(@"logs.db", formatter:new MessageTemplateTextFormatter("{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {ClassName}.{MethodName}({LineNumber}) - {Message:lj}{NewLine}{Exception}")).CreateLogger();
-        LogEx.Information($"System Start {DateTime.Now}");
         // 处理所有 AppDomain 的未处理异常（包括非 UI 线程）
         AppDomain.CurrentDomain.UnhandledException += (s, args) =>
         {
@@ -106,37 +89,45 @@ public partial class App : Application
         Directory.CreateDirectory("files\\accounts\\fund");
         Directory.CreateDirectory("files\\accounts\\other");
 
+        if (_firstRun) return;
 
-        //Log.Logger = new LoggerConfiguration().WriteTo.File("log.txt", outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] ({SourceContext}.{Method}) {Message}{NewLine}{Exception}").CreateLogger();
+        StartupUri = new Uri("MainWindow.xaml", UriKind.Relative);
 
-
-        if (CheckIsFirstRun())
-            StartupUri = new Uri("InitWindow.xaml", UriKind.Relative);
-        else
-            StartupUri = new Uri("MainWindow.xaml", UriKind.Relative);
-
-
+        DbHelper.Init();
         //加载插件
         PluginManager.Init();
-    }
-
- 
-
-    protected override void OnStartup(StartupEventArgs e)
-    {
-        AssemblyLoadContext.Default.Resolving += Default_Resolving;
 
         Task.Run(() => DelayLoader.Load());
-         
+
     }
 
 
     private bool CheckIsFirstRun()
     {
-        using var db = DbHelper.Base();
-        var manager = db.GetCollection<Manager>().FindOne(x => x.IsMaster);
+#if RELEASE
+        using (var key = Registry.CurrentUser.OpenSubKey(@$"Software\Nexus"))       
+#else
+        using (var key = Registry.CurrentUser.OpenSubKey(@$"Software\Nexus\Debug"))
+#endif
+        {
+            if (key?.GetValue("WorkingFolder") is not string dir || !Directory.Exists(dir))
+                return true;
 
-        return (manager is null);
+            Directory.SetCurrentDirectory(dir);
+
+            try
+            {
+                if (!File.Exists(@"data\base.db")) 
+                    return true;
+
+                DbHelper.Init();
+                using var db = DbHelper.Base();
+                var manager = db.GetCollection<Manager>().FindOne(x => x.IsMaster);
+
+                return manager is null;
+            }
+            catch (Exception ex) { LogEx.Error(ex); return false; }
+        }
     }
 
 

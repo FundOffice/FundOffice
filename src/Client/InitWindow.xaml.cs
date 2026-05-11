@@ -6,11 +6,13 @@ using FMO.Models;
 using FMO.Trustee;
 using FMO.Utilities;
 using Microsoft.Win32;
+using System.IO;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
+using Utilities;
 
 namespace FMO;
 
@@ -57,6 +59,10 @@ public partial class InitWindowViewModel : ObservableRecipient, IRecipient<InitS
 
     [ObservableProperty]
     public partial double InitProgress { get; set; }
+
+
+    [ObservableProperty]
+    public partial bool ShowSetManager { get; set; }
 
 
     [ObservableProperty]
@@ -117,8 +123,22 @@ public partial class InitWindowViewModel : ObservableRecipient, IRecipient<InitS
         ///保存数据库
         Manager.IsMaster = true;
 
-        var db = DbHelper.Base();
+#if RELEASE
+        using (var key = Registry.CurrentUser.CreateSubKey(@$"Software\Nexus"))       
+#else
+        using (var key = Registry.CurrentUser.CreateSubKey(@$"Software\Nexus\Debug"))
+#endif        
+        {
+            key.SetValue("Cap", AesHelper.Encrypt(Manager.Name));
+            key.SetValue("Code", AesHelper.Encrypt(Manager.Identity?.Id ?? ""));
+        }
+
+        //首次运行，记录Patch，以防错误运行
+
+        DbHelper.Init();
+        using var db = DbHelper.Base();
         db.GetCollection<Manager>().Insert(Manager);
+        DatabaseAssist.InitPatch();
 
         db.GetCollection<FundBasicInfo>().InsertBulk(funds);
 
@@ -154,10 +174,37 @@ public partial class InitWindowViewModel : ObservableRecipient, IRecipient<InitS
             using (var key = Registry.CurrentUser.CreateSubKey(@$"Software\Nexus\Debug"))
 #endif
             {
-                if (key != null)
-                    key.SetValue("WorkingFolder", dialog.FolderName);
+                key.SetValue("WorkingFolder", dialog.FolderName);
+
+                // 设置工作目录
+                Directory.SetCurrentDirectory(dialog.FolderName);
+
+                // 检查是否有数据
+                var hasdb = File.Exists(Path.Combine(dialog.FolderName, "data", "base.db"));
+                if(hasdb)
+                {
+                    // 判断能否解开
+                    try
+                    {
+                        DbHelper.Init();
+                        using var db = DbHelper.Base();
+                        var manager = db.GetCollection<Manager>().FindOne(x => x.IsMaster);
+
+                        Restart();
+                    }
+                    catch
+                    {
+                        //出错的
+                        Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+                        DbHelper.Init();
+
+                        HandyControl.Controls.MessageBox.Warning("文件夹中存在数据，但无法打开，请重新选择文件夹");
+                    }
+                }
+                else
+                    ShowSetManager = true;
             }
-            Restart();
+
         }
     }
 
@@ -264,8 +311,13 @@ public partial class InitWindowViewModel : ObservableRecipient, IRecipient<InitS
     {
         IsActive = true;
 
-        //首次运行，记录Patch，以防错误运行
-        DatabaseAssist.InitPatch();
+#if RELEASE
+        using (var key = Registry.CurrentUser.OpenSubKey(@$"Software\Nexus"))       
+#else
+        using (var key = Registry.CurrentUser.OpenSubKey(@$"Software\Nexus\Debug"))
+#endif
+            ShowSetManager = key?.GetValue("WorkingFolder") is string dir && Directory.Exists(dir);
+
 
         IsNetworkDisconnected = !NetworkInterface.GetIsNetworkAvailable();
         NetworkChange.NetworkAvailabilityChanged += NetworkChange_NetworkAvailabilityChanged;
