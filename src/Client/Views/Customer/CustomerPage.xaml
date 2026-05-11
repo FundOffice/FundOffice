@@ -301,6 +301,95 @@
             </hc:UniformSpacingPanel>
         </DockPanel>
 
+
+        <Border DockPanel.Dock="Top">
+            <Border.Resources>
+                <Style TargetType="Viewbox">
+                    <Setter Property="Height" Value="12" />
+                </Style>
+            </Border.Resources>
+            <hc:UniformSpacingPanel Margin="2" HorizontalSpacing="5">
+
+                <DockPanel>
+                    <Viewbox>
+                        <Path Data="{StaticResource f.web-awesome}" Fill="Green" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="当前持有产品" />
+
+                    <Viewbox>
+                        <Path Data="{StaticResource f.web-awesome}" Fill="DarkGray" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="曾经持有产品" />
+                </DockPanel>
+
+                <DockPanel>
+                    <Viewbox>
+                        <Path Data="{StaticResource f.umbrella}" Fill="Red" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="风险测评过期" />
+                </DockPanel>
+
+                <DockPanel>
+                    <Viewbox>
+                        <Path Data="{StaticResource f.triangle-exclamation}" Fill="Red" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="没有合格投资者认定" />
+
+                    <Viewbox>
+                        <Path Data="{StaticResource f.triangle-exclamation}" Fill="Gray" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="合格投资者认定资料不全" />
+                </DockPanel>
+
+                <DockPanel>
+                    <Viewbox>
+                        <Path Data="{StaticResource f.credit-card}" Fill="Red" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="没有银行账户" />
+                </DockPanel>
+
+
+
+                <DockPanel>
+                    <Viewbox>
+                        <Path Data="{StaticResource f.envelope}" Fill="Red" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="没有填写Email" />
+                </DockPanel>
+                <DockPanel>
+                    <Viewbox>
+                        <Path Data="{StaticResource f.mobile-retro}" Fill="Red" />
+                    </Viewbox>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="没有填写手机号" />
+                </DockPanel>
+
+            </hc:UniformSpacingPanel>
+        </Border>
+
         <local:CustomerView
             Margin="10,0,0,0"
             DataContext="{Binding Detail}"
@@ -354,7 +443,7 @@
                                 </Viewbox>
 
 
-                                <Viewbox
+                                <!--<Viewbox
                                     Width="12"
                                     Height="12"
                                     VerticalAlignment="Center"
@@ -363,7 +452,7 @@
                                         x:Name="qual"
                                         Data="{StaticResource f.triangle-exclamation}"
                                         Fill="Transparent" />
-                                </Viewbox>
+                                </Viewbox>-->
 
 
                                 <Viewbox
@@ -406,9 +495,7 @@
                                 <DataTrigger Binding="{Binding Holding}" Value="Current">
                                     <Setter TargetName="posi" Property="Fill" Value="Green" />
                                 </DataTrigger>
-                                <DataTrigger Binding="{Binding QualificationAbnormal}" Value="True">
-                                    <Setter TargetName="qual" Property="Fill" Value="Red" />
-                                </DataTrigger>
+
 
                                 <DataTrigger Binding="{Binding HasBankAccount}" Value="False">
                                     <Setter TargetName="bank" Property="Fill" Value="Red" />
@@ -418,13 +505,6 @@
                                     <Setter TargetName="riske" Property="Fill" Value="DarkGray" />
                                 </DataTrigger>
 
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding QualificationAbnormal}" Value="True" />
-                                        <Condition Binding="{Binding QualificationSettled}" Value="True" />
-                                    </MultiDataTrigger.Conditions>
-                                    <Setter TargetName="qual" Property="Fill" Value="Gray" />
-                                </MultiDataTrigger>
                             </DataTemplate.Triggers>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -501,15 +581,18 @@
                 <DataGridTemplateColumn Header="合格投资者认定">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <DockPanel>
-                                <TextBlock Text="{Binding QualificationDate, StringFormat=yyyy-MM-dd}" />
+                            <hc:SimplePanel>
+                                <TextBlock
+                                    Width="auto"
+                                    Text="{Binding QualificationDate, StringFormat=yyyy-MM-dd}"
+                                    Visibility="{Binding QualificationAbnormal, Converter={StaticResource Boolean2VisibilityReConverter}}" />
                                 <Viewbox Width="16" Visibility="{Binding QualificationAbnormal, Converter={StaticResource Boolean2VisibilityConverter}}">
                                     <Path
                                         x:Name="qual"
                                         Data="{StaticResource f.triangle-exclamation}"
                                         Fill="Red" />
                                 </Viewbox>
-                            </DockPanel>
+                            </hc:SimplePanel>
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding QualificationSettled}" Value="True">
                                     <Setter TargetName="qual" Property="Fill" Value="Gray" />
