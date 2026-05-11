@@ -23,5 +23,16 @@
         /// /fund/.....html
         /// </summary>
         public string? Url { get; set; }
+
+
+        public int Monthly { get; set; }
+
+        public int Quarterly { get; set; }
+
+        public int SemiAnnally { get; set; }
+
+        public int Annally { get; set; }
+         
+        public double InvestorAccountRate { get; set; }
     }
 }

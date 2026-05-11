@@ -140,7 +140,7 @@ public partial class InitWindowViewModel : ObservableRecipient, IRecipient<InitS
         db.GetCollection<Manager>().Insert(Manager);
         DatabaseAssist.InitPatch();
 
-        db.GetCollection<FundBasicInfo>().InsertBulk(funds);
+        //db.GetCollection<FundBasicInfo>().InsertBulk(funds);
 
         db.GetCollection<Fund>().InsertBulk(funds.Select(x => new Fund
         {
