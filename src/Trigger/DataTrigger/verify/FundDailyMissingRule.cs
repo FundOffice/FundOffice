@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using FMO.Logging;
 using FMO.Models;
+using FMO.Settings;
 using FMO.Utilities;
 using System.Collections.Concurrent;
 
@@ -12,7 +13,7 @@ public record FundDailyMissingContext(string FundName, int Count, IEnumerable<Da
 /// <summary>
 /// 基金净值缺失校验
 /// </summary>
-[VerifySettingUnit("提示基金净值缺失", "基金净值不全")]
+[AbilityUnit(SettingSections.FundMonitor, "基金净值缺失", "基金净值不全")]
 public partial class FundDailyMissingRule : VerifyRule, ITracker<IEnumerable<DailyValue>>, ITracker<EntityChanged<Fund, DateOnly>>
 {
 

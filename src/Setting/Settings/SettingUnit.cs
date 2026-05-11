@@ -1,5 +1,4 @@
-﻿using FMO.Trigger;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 
 namespace FMO.Settings;
 
@@ -22,13 +21,31 @@ public class SettingUnit
 
 public static class SettingSections
 {
-    public const string VerifyRule = "VerifyRule";
+    public const string VerifyRule = "Monitor.VerifyRule";
+
+    /// <summary>
+    /// TA
+    /// </summary>
+    public const string TransferMonitor = "Monitor.Transfer";
+
+
+    /// <summary>
+    /// 基金流程
+    /// </summary>
+    public const string FundflowMonitor = "Monitor.Fundflow";
+
+
+    /// <summary>
+    /// 基金流程
+    /// </summary>
+    public const string FundMonitor = "Monitor.Fund";
+
 }
 
   
 
 
-public class VerifyRuleUnit : SettingUnit
+public class AbilityUnit : SettingUnit
 {
     public bool IsEnabled { get; set; }
 

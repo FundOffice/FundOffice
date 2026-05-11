@@ -13,4 +13,10 @@
     <ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer"  ReferenceOutputAssembly="false" />
   </ItemGroup>
 
+
+	<ItemGroup>
+
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+	</ItemGroup>
+
 </Project>

@@ -1,5 +1,6 @@
 ﻿using FMO.Logging;
 using FMO.Models;
+using FMO.Settings;
 using FMO.Utilities;
 using System.Collections.Concurrent;
 
@@ -12,7 +13,7 @@ public record FundStopPurchaseContext(string FundName, bool PurchaseLimited, dec
 
 
 
-[VerifySettingUnit("基金停止申购预警", "提醒基金未来触发停止申购时间")]
+[AbilityUnit(SettingSections.FundMonitor, "基金停止申购预警", "提醒基金未来触发停止申购时间")]
 public partial class FundStopPurchaseRule : VerifyRule, ITracker<IEnumerable<DailyValue>>
 {
     public List<DailyValue> DailyValues { get; set; } = [];

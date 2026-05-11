@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FMO.Models;
+﻿namespace FMO.Models;
 
 
 public interface ITracker<T>
@@ -12,13 +8,21 @@ public interface ITracker<T>
 
 }
 
+
+public interface ISettingFunction : IDisposable
+{
+    void Start();
+
+    void Stop();
+}
+
 /// <summary>
 /// 数据监视器
 /// 下有
 /// VerifyRule 检验数据是否异常
 /// Trigger 检验数据并触发相应操作
 /// </summary>
-public abstract class DataObserver : IDisposable
+public abstract class DataObserver : ISettingFunction
 {
 
     protected SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1);

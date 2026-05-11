@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 
 using FMO.Utilities;
 using LiteDB;
+using FMO.Settings;
 
 namespace FMO.Trigger;
 public record FundOverdueContext(string FundName, DateOnly SetupDate, DateOnly Expire, int ExpiredDays);
@@ -12,7 +13,7 @@ public record FundOverdueContext(string FundName, DateOnly SetupDate, DateOnly E
 /// 基金超期
 /// </summary>
 
-[VerifySettingUnit("基金超期运行", "提醒基金到期后仍未清算")]
+[AbilityUnit(SettingSections.FundMonitor, "基金超期运行", "提醒基金到期后仍未清算")]
 public partial class FundOverdueRule : VerifyRule, ITracker<NewDay>,ITracker<EntityChanged<FundElements, DateOnly, int>>
 {
 

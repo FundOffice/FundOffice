@@ -1,4 +1,5 @@
 ﻿using FMO.Models;
+using FMO.Settings;
 using FMO.Utilities;
 using System.Collections.Concurrent;
 
@@ -10,7 +11,7 @@ public record FundScaleWarningContext(string FundName, int Count, DateOnly Date,
 /// 连续N交易日净资产低于500万
 /// </summary>
 
-[VerifySettingUnit("基金规模低于500万提醒", "连续N交易日净资产低于500万")]
+[AbilityUnit(SettingSections.FundMonitor, "基金规模低于500万提醒", "连续N交易日净资产低于500万")]
 public partial class FundScaleWarnRule : VerifyRule, ITracker<IEnumerable<DailyValue>>, ITracker<NewDay>
 {
     public List<int> FundIds { get; set; } = [];

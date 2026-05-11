@@ -1,15 +1,15 @@
 ﻿using FMO.Logging;
 using FMO.Models;
-using FMO.Schedule;
+using FMO.Settings;
 using FMO.Todo;
 using FMO.Utilities;
-using Schedule;
 
 namespace FMO.Trigger;
 
 /// <summary>
 /// 赎回监控是否发生了巨额赎回
 /// </summary>
+[AbilityUnit(SettingSections.TransferMonitor, "巨额赎回赎回监控", "如果发生巨额赎回，就添加公告待办（可确认生成公告）")]
 public partial class HugeRedemptionMonitor : ITracker<IEnumerable<TransferRequest>>
 {
 
@@ -76,34 +76,6 @@ public partial class HugeRedemptionMonitor : ITracker<IEnumerable<TransferReques
 
 
 
-    /// <summary>
-    /// 监控基金交收情况
-    /// </summary>
-    /// <param name="tr"></param>
-    [HookData]
-    public static void SettlementMonitor(IEnumerable<TransferRequest> tr)
-    {
-        foreach (var fv in tr.GroupBy(x => x.FundId))
-        {
-            var fid = fv.Key;
-            foreach (var day in fv.GroupBy(x => x.RequestDate))
-            {
-                var openDay = day.Key;
 
-                var gos = Days.TradingDaysBetween(openDay, DateOnly.FromDateTime(DateTime.Now));
-
-                if (gos.Count > 5) continue;
-
-                MissionSchedule.Register(new SettlementMonitorMission
-                {
-                    Name = "交收监控",
-                    Description = $"监控{fv.First().FundName}-{openDay}的交收情况",
-                    FundId = fid,
-                    OpenDay = openDay,
-                });
-            }
-        }
-
-    }
 
 }

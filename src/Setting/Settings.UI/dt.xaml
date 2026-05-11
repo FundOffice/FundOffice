@@ -4,7 +4,7 @@
     xmlns:local="clr-namespace:FMO.Settings">
 
 
-    <DataTemplate DataType="{x:Type local:VerifyRuleUnitViewModel}">
+    <DataTemplate DataType="{x:Type local:AbilityUnitViewModel}">
         <CheckBox
             Margin="2"
             Content="{Binding Title}"

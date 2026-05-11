@@ -1,8 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using FMO.Logging;
 using FMO.Models;
-using FMO.Utilities;
-using System.Collections.Concurrent;
 
 namespace FMO.Trigger;
 
@@ -18,7 +16,7 @@ namespace FMO.Trigger;
 /// 注册 Start
 /// 取消 Stop
 /// </summary>
-public abstract class VerifyRule : DataObserver
+public abstract class VerifyRule : DataObserver, IVerifyRule
 {
     protected Debouncer debouncer;
 

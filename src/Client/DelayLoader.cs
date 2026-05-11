@@ -397,7 +397,7 @@ internal class DelayLoader
                 {
                     if (type.IsClass && type.IsAbstract && type.IsSealed)
                     {
-                        var method = type.GetMethod("InitHooks", BindingFlags.Public | BindingFlags.Static, null, Type.EmptyTypes, null);
+                        var method = type.GetMethod("ModuleInitialize", BindingFlags.Public | BindingFlags.Static, null, Type.EmptyTypes, null);
                         if (method is not null) method.Invoke(null, null);
                     }
                 }

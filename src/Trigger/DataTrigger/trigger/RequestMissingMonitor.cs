@@ -1,5 +1,6 @@
 ﻿using FMO.Models;
 using FMO.Schedule;
+using FMO.Settings;
 using FMO.Utilities;
 using Schedule;
 
@@ -8,6 +9,7 @@ namespace FMO.Trigger;
 /// <summary>
 /// 监控订单是否忘了录单
 /// </summary>
+[AbilityUnit(SettingSections.TransferMonitor, "漏录单监管", "监控订单是否忘了录单，需要接入托管API")]
 public partial class RequestMissingMonitor : ITracker<IEnumerable<TransferOrder>>
 {
     private partial void OnDataArrival(IEnumerable<TransferOrder> obj)

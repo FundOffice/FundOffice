@@ -1,4 +1,5 @@
 ﻿using FMO.Models;
+using FMO.Settings;
 using FMO.Utilities;
 using LiteDB;
 using System.Collections.Concurrent;
@@ -11,7 +12,7 @@ public record FundClearNotFinishedContext(string FundName, string? Code, DateOnl
 /// <summary>
 /// 基金长期未结束清盘
 /// </summary>
-[VerifySettingUnit("提示基金清盘超期", "基金清盘已提交，但长期未了结")]
+[AbilityUnit(SettingSections.FundflowMonitor, "基金清盘超期", "基金清盘已提交，但长期未了结")]
 public partial class FundClearNotFinishedRule : VerifyRule, ITracker<FundFlow>, ITracker<EntityRemoved<FundFlow, int>>, ITracker<EntityChanged<Fund, DateOnly>>
 {
     private ConcurrentDictionary<int, DataTip> Tips { get; } = [];

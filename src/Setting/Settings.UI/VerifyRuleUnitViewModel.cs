@@ -7,8 +7,8 @@ namespace FMO.Settings;
 
 
 
-[AutoViewModel(typeof(VerifyRuleUnit))]
-public partial class VerifyRuleUnitViewModel : ObservableObject
+[AutoViewModel(typeof(AbilityUnit))]
+public partial class AbilityUnitViewModel : ObservableObject
 {
 
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
@@ -18,9 +18,9 @@ public partial class VerifyRuleUnitViewModel : ObservableObject
         if(e.PropertyName == nameof(IsEnabled) && !string.IsNullOrWhiteSpace(Name))
         {
             if (IsEnabled)
-                SettingService.EnableVerify(Name);
+                SettingService.EnableAbility($"{Section}.{Name}");
             else 
-                SettingService.DisableVerify(Name);
+                SettingService.DisableAbility($"{Section}.{Name}");
         }
     }
    

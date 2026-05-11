@@ -1,9 +1,8 @@
 ﻿using FMO.Models;
+using FMO.Settings;
+using FMO.Utilities;
 using LiteDB;
 using System.Collections.Concurrent;
-
-
-using FMO.Utilities;
 
 namespace FMO.Trigger;
 
@@ -20,7 +19,7 @@ public record FundSharePairContext(string FundName, int ByDailyCount, int ByTran
 
 
 
-[VerifySettingUnit("基金份额异常监控", "基金交易确认的份额与净值中的不一致")]
+[AbilityUnit(SettingSections.TransferMonitor, "基金份额异常监控", "基金交易确认的份额与净值中的不一致")]
 public partial class FundSharePairRule : VerifyRule, ITracker<IEnumerable<FundShareRecordByDaily>>, ITracker<IEnumerable<FundShareRecordByTransfer>>
 {
 

@@ -1,5 +1,6 @@
 ﻿using FMO.Logging;
 using FMO.Models;
+using FMO.Settings;
 using FMO.Todo;
 using FMO.Utilities;
 using System.Data;
@@ -9,6 +10,7 @@ namespace FMO.Trigger;
 /// <summary>
 /// 监控订单的数据
 /// </summary>
+[AbilityUnit(SettingSections.TransferMonitor,"检测交易订单数据是否正常", "检测金额异常（<10000）\n检测是否符合合同约定")]
 public partial class OrderValueIsWellMonitor: ITracker<IEnumerable<TransferOrder>>
 {
 
