@@ -31,7 +31,7 @@ public sealed class TestEmail
         channel.SendMail(new ManagerDisclosureNotice
         {
             Name = "Test Disclosure",
-            File = new SimpleFile
+            Pdf  = new SimpleFile
             {
                 File = new FileMeta("406eb8fe-2549-4d6b-a235-0cbc8e47fe25", "a.txt", DateTime.Now, "fdslfjdkslfjeri"),
             }

@@ -4,6 +4,7 @@
   </Folder>
   <Folder Name="/Amac/">
     <Project Path="src/Amac/Direct/Amac.Direct.csproj" />
+    <Project Path="src/Amac/Public/Amac.Public.csproj" />
     <Project Path="src/Amac/RPA/Amac.RPA.csproj" />
   </Folder>
   <Folder Name="/Disclosure/">
