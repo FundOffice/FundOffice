@@ -40,7 +40,7 @@ public partial class SettingsWindowViewModel : ObservableObject
         var dic = new Dictionary<string, string>
         {
             [SettingSections.TransferMonitor] = "订单&交易",
-            [SettingSections.FundflowMonitor] = "基金运营",
+            [SettingSections.FundOperationMonitor] = "基金运营",
             [SettingSections.FundMonitor] = "基金信息"
         };
 

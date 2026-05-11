@@ -32,7 +32,7 @@ public static class SettingSections
     /// <summary>
     /// 基金流程
     /// </summary>
-    public const string FundflowMonitor = "Monitor.Fundflow";
+    public const string FundOperationMonitor = "Monitor.FundOperation";
 
 
     /// <summary>
