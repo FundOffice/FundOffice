@@ -12,7 +12,6 @@ using FMO.Utilities;
 using LiteDB;
 using Microsoft.Playwright;
 using Microsoft.Win32;
-using Serilog;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
@@ -82,7 +81,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         InitFlows(fund);
 
-        
+
 
         using var db = DbHelper.Base();
         FundElements ele = db.GetCollection<FundElements>().FindById(FundId);
@@ -97,7 +96,9 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
             ele.RemoveInvalidFlow(Flows?.Select(x => x.FlowId).ToArray());
         }
 
-        CheckAndTodo(ele);
+        // 如果已定稿
+        if (Flows?.Any(x => x is ContractFinalizeFlowViewModel f && f.IsReadOnly) ?? false)
+            CheckAndTodo(ele);
 
 
         CollectionAccount = ele.CollectionAccount.Value?.ToString();
@@ -177,8 +178,8 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         {
             missingList.Add("运作方式");
         }
-        
-        if(ele.FundModeInfo?.Value?.Data == FundMode.Open)
+
+        if (ele.FundModeInfo?.Value?.Data == FundMode.Open)
         {
             if (ele.SealingRule?.Changes is null || ele.SealingRule.Changes.Count == 0)
             {
@@ -216,10 +217,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         {
             missingList.Add("托管账户");
         }
-        if (ele.ShareClasses?.Changes is null || ele.ShareClasses.Changes.Count == 0)
-        {
-            missingList.Add("份额类别");
-        }
+
         //if (ele.StopLine?.Changes is null || ele.StopLine.Changes.Count == 0)
         //{
         //    missingList.Add("止损线");
@@ -228,7 +226,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         //{
         //    missingList.Add("预警线");
         //}
-      
+
         if (ele.TrusteeInfo?.Changes is null || ele.TrusteeInfo.Changes.Count == 0)
         {
             missingList.Add("托管机构");
@@ -763,7 +761,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         if (flow is LiquidationFlowViewModel)
             DataHub.Push(new EntityRemoved<FundFlow, int>(flow.FlowId));
-            //VerifyRules.OnEntityArrival([new FundEntityRemoved<int>(typeof(LiquidationFlow), flow.FlowId, flow.FundId)]);
+        //VerifyRules.OnEntityArrival([new FundEntityRemoved<int>(typeof(LiquidationFlow), flow.FlowId, flow.FundId)]);
     }
 
 
