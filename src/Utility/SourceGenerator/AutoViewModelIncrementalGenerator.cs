@@ -472,11 +472,15 @@ using System.Runtime.CompilerServices;
             // ✅ 只处理可写属性
             if (!IsWritable)
                 return string.Empty;
+             
+            // string
+            if (SourceTypeName == "string")
+                return $"{Name} = {Name} is not null ? {Name} : String.Empty,";
 
             // 🔹 可空类型：不为 null 时赋值，否则赋 default
             // 🔹 非可空类型：直接赋值
             return IsNullable
-                ? $"{Name} = {Name} != null ? {Name} : default,"
+                ? $"{Name} = {Name} is not null ? {Name} : default,"
                 : $"{Name} = {Name},";
         }
     }
