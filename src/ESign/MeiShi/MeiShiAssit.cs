@@ -2,13 +2,13 @@
 using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
-using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Media;
@@ -56,7 +56,7 @@ public partial class MeiShiAssit : ISigning
     bool isLogin;
 
     public string Id => "meishi";
-
+     
 
     public string? Token { get; set; }
 
@@ -65,6 +65,11 @@ public partial class MeiShiAssit : ISigning
 
 
     private Dictionary<string, int> _signTypeDict = new();
+
+
+    private DateTime _queryProductTime;
+
+    private EsigningFundInfo[]? _cacheProductInfo;
 
     public MeiShiAssit()
     {
@@ -707,6 +712,17 @@ public partial class MeiShiAssit : ISigning
 
     public async Task<EsigningFundInfo[]> QueryFundInfo()
     {
+        if (DateTime.Now.Subtract(_queryProductTime).TotalMinutes < 15 && _cacheProductInfo?.Length > 0)
+            return _cacheProductInfo;
+
+
+        _cacheProductInfo = await QueryFundInfoCore();
+        _queryProductTime = DateTime.Now;
+        return _cacheProductInfo;
+    }
+
+    private async Task<EsigningFundInfo[]> QueryFundInfoCore()
+    {
         if (!IsValid) return [];
         if (!isLogin) isLogin = await LoginFromEsign();
         if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return []; }
@@ -736,7 +752,7 @@ public partial class MeiShiAssit : ISigning
         {
             var data = root.data.Deserialize<FundInfoJson[]>();
 
-            return data?.Select(x => new EsigningFundInfo(x.ProductId.ToString(), x.ProductFullName, x.FundRecordNumber, x.FundRecordNumber != x.PbInternalProductCode ? x.PbInternalProductCode : "", x.SetDate??default)).ToArray() ?? [];
+            return data?.Select(x => new EsigningFundInfo(x.ProductId.ToString(), x.ProductFullName, x.FundRecordNumber, x.FundRecordNumber != x.PbInternalProductCode ? x.PbInternalProductCode : "", x.SetDate ?? default)).ToArray() ?? [];
 
         }
         catch (Exception ex)
@@ -745,7 +761,6 @@ public partial class MeiShiAssit : ISigning
             return [];
         }
     }
-
 
 
     internal async Task<string> UploadFile(string fileName, string filePath, int codeType, string id = "")
@@ -919,7 +934,7 @@ public partial class MeiShiAssit : ISigning
     public async Task<ErrorReturn> CreateTemporaryOpenDay(string fundName, string? share, DateOnly date, OpenFlag flag, bool notify)
     {
 
-        if (!IsValid) return new (false, "Invalid");
+        if (!IsValid) return new(false, "Invalid");
         if (!isLogin) isLogin = await LoginFromEsign();
         if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return new(false, "登录失败"); }
 
@@ -988,6 +1003,111 @@ public partial class MeiShiAssit : ISigning
         {
             return new(false, ex.Message);
         }
+    }
+
+    public async Task<Return<DateOnly[]>> QueryAvaliableOpenDay(int fundId, string? share, OpenFlag flag)
+    {
+        using var db = DbHelper.Base();
+        var fund = db.GetCollection<Fund>().FindById(fundId);
+        if (fund is null)
+            return new(false, [], $"未找到Fund {fundId}");
+
+
+        return await QueryAvaliableOpenDay(fund.Name, share, flag);
+    }
+
+
+    public async Task<Return<DateOnly[]>> QueryAvaliableOpenDay(string fundName, string? share, OpenFlag flag)
+    {
+        if (!IsValid) return new(false, [], "Invalid");
+        if (!isLogin) isLogin = await LoginFromEsign();
+        if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return new(false, [], "登录失败"); }
+
+
+        var funds = await QueryFundInfo();
+
+        var fund = string.IsNullOrWhiteSpace(share) ? funds.FirstOrDefault(x => x.Name == fundName) : funds.FirstOrDefault(x => x.Name!.StartsWith(fundName) && x.Class == share);
+
+        if (fund is null)
+            return new(false, [], $"易私募中未找到{fundName} {share}");
+
+
+
+
+        HttpRequestMessage request = new();
+        request.Method = HttpMethod.Get;
+        request.RequestUri = new Uri($"https://vipfunds.simu800.com/vip-manager/productDay/selectOpenDay?productId={fund.Id}&openType=3&tradeTypes={flag switch { OpenFlag.Buy => 1, _ => 2 }}&t={DateTime.Now.TimeStampByMilliseconds()}");
+        request.Headers.Add("tokenid", Token);
+
+
+        try
+        {
+            var response = await client.SendAsync(request);
+
+            var cont = await response.Content.ReadAsStringAsync();
+
+            SigningLoger.LogRun(this, nameof(QueryFundInfo), "", cont);
+            if (Regex.IsMatch(cont, "token已失效|重新登录"))
+            {
+                isLogin = false;
+                return new(false, [], "请重新登录");
+            }
+
+            var root = JsonSerializer.Deserialize<RootJson>(cont);
+            if (root?.code != 1008) return new(false, [], root?.message);
+
+            var days = root.data?["list"]?.Deserialize<ProductDayInfo[]>();
+
+            return days?.Length > 0 ? new(true, days.Select(x => DateOnly.FromDateTime(x.Date.ToLocalTime())).ToArray()) : new(true, [], "未解析到日期");
+        }
+        catch (Exception e)
+        {
+            return new(false, [], e.Message);
+        }
+
+
+    }
+
+
+    public async Task<ErrorReturn> SubmitOrder(int fundId, string? share, int investorId, TransferOrderType type, decimal number)
+    {
+        //https://vipfunds.simu800.com/vip-manager/manager/signFlowController/createOnlineFlow/chooseProduct
+        //{"productId":888110481,"tradeType":2,"period":"2026-05-18T16:00:00.000+00:00","openType":1}
+
+        //https://vipfunds.simu800.com/vip-manager/manager/signFlowController/createOnlineFlow/chooseCustomer
+        //{"formType":1,"customerReq":{"formType":1,"customerId":898419578}}
+
+
+
+
+        return new(true);
+    }
+
+
+
+
+    /// <summary>
+    /// 产品日期信息实体（帕斯卡命名）
+    /// </summary>
+    private class ProductDayInfo
+    {
+        /// <summary>
+        /// 对应JSON字段：date
+        /// </summary>
+        [JsonPropertyName("date")]
+        public DateTime Date { get; set; }
+
+        /// <summary>
+        /// 对应JSON字段：dateStr
+        /// </summary>
+        [JsonPropertyName("dateStr")]
+        public string? DateStr { get; set; }
+
+        /// <summary>
+        /// 对应JSON字段：productDayId
+        /// </summary>
+        [JsonPropertyName("productDayId")]
+        public long ProductDayId { get; set; }
     }
 
 }

@@ -13,7 +13,7 @@
                 <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml" />
                 <ResourceDictionary Source="/Themes/Generic.xaml" />
                 <ResourceDictionary Source="/HelpTemplates.xaml" />
-                <ResourceDictionary Source="/SharedUI;component/Themes/NewFileControl.xaml" />
+                <ResourceDictionary Source="/SharedUI;component/Themes/Generic.xaml" />
                 <ResourceDictionary Source="/Themes/Notice.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

@@ -22,6 +22,7 @@ public partial class FundTAView : UserControl
     {
         InitializeComponent();
     }
+
 }
 
 
@@ -61,13 +62,14 @@ public partial class FundTAViewModel : ObservableObject
         if (ta.Count > 0)
         {
             // 按投资人分
-            var cur = ta.GroupBy(x => x.InvestorId).Select(x => new { Id = x.Key, Name = x.First().InvestorName, Record = x, Share = x.Sum(y => y.ShareChange()) }).OrderByDescending(x => x.Share);
+            var cur = ta.GroupBy(x => x.InvestorId).Select(x => new { Id = x.Key, x.First().FundId, Name = x.First().InvestorName, Record = x, Share = x.Sum(y => y.ShareChange()) }).OrderByDescending(x => x.Share);
             InvestorCount = cur.Count(x => x.Share > 0);
             CurrentTotalShare = cur.Sum(x => x.Share);
             CurrentShareDate = ta.Max(x => x.ConfirmedDate);
             CurrentShares = cur.Select(x => new InvestorShareViewModel
             {
                 Id = x.Id,
+                FundId = x.FundId,
                 Name = x.Name,
                 Share = x.Share,
                 Asset = x.Share * nv,
@@ -84,7 +86,7 @@ public partial class FundTAViewModel : ObservableObject
 
         // 认购时份额
         var subscription = ta.Where(x => x.Type == TransferRecordType.Subscription);
-        InitialShares = new(subscription.Select(x => new InvestorShareViewModel { Id = x.Id, Name = x.InvestorName, Share = x.ConfirmedShare }));
+        InitialShares = new(subscription.Select(x => new InvestorShareViewModel { Id = x.Id, FundId = x.FundId, Name = x.InvestorName, Share = x.ConfirmedShare }));
         InitialTotalShare = subscription.Sum(x => x.ConfirmedShare);
     }
 
@@ -272,7 +274,7 @@ public partial class FundTAViewModel : ObservableObject
     }
 }
 
-public class InvestorShareViewModel
+public partial class InvestorShareViewModel : ObservableObject
 {
     public int Id { get; set; }
 
@@ -297,5 +299,39 @@ public class InvestorShareViewModel
 
     public decimal Profit => Asset + Withdraw - Deposit;
 
+    public required int FundId { get; set; }
+
+    /// <summary>
+    /// 申购
+    /// </summary>
+    [RelayCommand]
+    public void Purchase()
+    {
+        var wnd = new ManualApplyTradeWindow();
+        wnd.Owner = App.Current.MainWindow;
+        wnd.DataContext = new ManualApplyTradeWindowViewModel(FundId, Id, Share)
+        {
+            IsBuySealed = true,
+            OrderType = Share > 0 ? TransferOrderType.Buy : TransferOrderType.FirstTrade
+        };
+        wnd.ShowDialog();
+
+    }
+
+    /// <summary>
+    /// 赎回
+    /// </summary>
+    [RelayCommand]
+    public void Redeem()
+    {
+        var wnd = new ManualApplyTradeWindow();
+        wnd.Owner = App.Current.MainWindow;
+        wnd.DataContext = new ManualApplyTradeWindowViewModel(FundId, Id, Share)
+        {
+            IsBuy = false,
+            IsBuySealed = true,
+        };
+        wnd.ShowDialog();
+    }
 
 }

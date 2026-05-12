@@ -27,6 +27,8 @@ public interface ISigning
 {
     string Id { get; }
 
+    string Name { get; }
+
 
     /// <summary>
     /// 从托管外包机构同步客户资料，单向
@@ -74,6 +76,16 @@ public interface ISigning
     /// <param name="notify">通知投资人</param>
     /// <returns></returns>
     Task<ErrorReturn> CreateTemporaryOpenDay(string fundName, string? share, DateOnly date, OpenFlag flag, bool notify);
+
+
+    /// <summary>
+    /// 查找当前可用的基金开放日
+    /// </summary>
+    /// <param name="fundId"></param>
+    /// <param name="share"></param>
+    /// <returns></returns>
+    Task<Return<DateOnly[]>> QueryAvaliableOpenDay(int fundId, string? share, OpenFlag flag);
+
 
     /// <summary>
     /// 获取在签约平台中的基金信息

@@ -1,0 +1,242 @@
+﻿<Window
+    x:Class="FMO.ManualApplyTradeWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="发起交易订单"
+    Width="470"
+    Height="250"
+    d:DataContext="{d:DesignInstance Type=local:ManualApplyTradeWindowViewModel}"
+    SizeToContent="Height"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style
+            x:Key="SearchBox"
+            BasedOn="{StaticResource ComboBoxBaseStyle}"
+            TargetType="ComboBox">
+            <Setter Property="IsDropDownOpen" Value="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource Mode=Self}, Mode=OneWay}" />
+            <!--<Style.Triggers>
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="IsDropDownOpen" Value="True" />
+                </Trigger>
+            </Style.Triggers>-->
+        </Style>
+
+
+        <ControlTemplate x:Key="CT.Toggle.Switch" TargetType="ToggleButton">
+            <Border
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}">
+                <UniformGrid Rows="1">
+                    <Label
+                        Name="a"
+                        Background="Green"
+                        BorderThickness="0"
+                        Content="{TemplateBinding Content}"
+                        Foreground="White" />
+                    <Label
+                        Name="b"
+                        BorderThickness="0"
+                        Content="{TemplateBinding Tag}" />
+                </UniformGrid>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                    <Setter TargetName="a" Property="Background" Value="Transparent" />
+                    <Setter TargetName="a" Property="Foreground" Value="Black" />
+                    <Setter TargetName="b" Property="Background" Value="Green" />
+                    <Setter TargetName="b" Property="Foreground" Value="White" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+
+        <Style
+            x:Key="CalendarBlackStyle"
+            BasedOn="{StaticResource CalendarBaseStyle}"
+            TargetType="{x:Type Calendar}">
+            <Setter Property="Calendar.CalendarDayButtonStyle" Value="{StaticResource CalendarDayButtonBlackStyle}" />
+        </Style>
+
+
+
+    </Window.Resources>
+    <hc:UniformSpacingPanel
+        Margin="10"
+        Orientation="Vertical"
+        VerticalSpacing="10">
+        <!--  产品列表  -->
+
+        <DockPanel DockPanel.Dock="Top">
+            <TextBlock Width="60" Text="基金产品" />
+            <hc:SimplePanel>
+                <TextBlock
+                    Margin="5,2"
+                    VerticalAlignment="Center"
+                    FontWeight="Black"
+                    Text="{Binding SelectedFund.Name}" />
+                <ComboBox
+                    HorizontalContentAlignment="Center"
+                    hc:InfoElement.Placeholder="产品"
+                    DisplayMemberPath="Name"
+                    IsEditable="True"
+                    IsSynchronizedWithCurrentItem="False"
+                    IsTextSearchEnabled="False"
+                    ItemsSource="{Binding FundSource.View}"
+                    SelectedIndex="-1"
+                    SelectedItem="{Binding SelectedFund}"
+                    Style="{StaticResource SearchBox}"
+                    Text="{Binding SearchFundKey, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                    Visibility="{Binding IsFundSealed, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+            </hc:SimplePanel>
+        </DockPanel>
+
+
+        <!--  申请  -->
+        <DockPanel Visibility="{Binding SelectedFund, Converter={StaticResource Object2VisibilityConverter}}">
+
+            <TextBlock
+                Width="60"
+                VerticalAlignment="Center"
+                Text="平台" />
+
+
+            <ComboBox
+                Width="90"
+                DisplayMemberPath="Name"
+                ItemsSource="{Binding Signings}"
+                SelectedItem="{Binding SelectedSigner}" />
+
+
+            <TextBlock
+                Margin="3,0"
+                VerticalAlignment="Center"
+                Text="开放日" />
+
+            <DatePicker
+                Width="100"
+                CalendarStyle="{StaticResource CalendarBlackStyle}"
+                SelectedDate="{Binding Date}">
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="Loaded">
+                        <i:InvokeCommandAction Command="{Binding RefreshDateCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=DatePicker}}" />
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+            </DatePicker>
+
+
+            <UniformGrid
+                Margin="10,0,0,0"
+                Rows="1"
+                Visibility="{Binding IsBuySealed, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                <RadioButton
+                    Width="auto"
+                    HorizontalAlignment="Stretch"
+                    Content="申购"
+                    Foreground="Green"
+                    IsChecked="{Binding IsBuy}"
+                    Style="{StaticResource ToggleButtonDefault}" />
+                <RadioButton
+                    HorizontalAlignment="Stretch"
+                    Content="赎回"
+                    Foreground="Red"
+                    Style="{StaticResource ToggleButtonDefault}" />
+            </UniformGrid>
+
+
+        </DockPanel>
+
+        <hc:UniformSpacingPanel
+            Orientation="Vertical"
+            VerticalSpacing="10"
+            Visibility="{Binding Signings, Converter={StaticResource Object2VisibilityConverter}}">
+            <DockPanel Visibility="{Binding SelectedFund, Converter={StaticResource Object2VisibilityConverter}}">
+
+                <TextBlock Width="60" Text="交易类型" />
+
+                <ListBox
+                    BorderThickness="0"
+                    ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
+                    ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
+                    ItemsSource="{Binding OrderTypes}"
+                    SelectedItem="{Binding OrderType}"
+                    Style="{StaticResource ListBox.Small}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+
+                <!--  申请金额/份额  -->
+                <TextBox
+                    Width="auto"
+                    Margin="5,0,0,0"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    hc:InfoElement.Placeholder="金额/份额"
+                    Style="{StaticResource TextBoxExtend}"
+                    Text="{Binding Number, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+
+            </DockPanel>
+
+
+            <!--  投资人列表  -->
+            <DockPanel Visibility="{Binding OrderType, Converter={StaticResource Object2VisibilityConverter}}">
+                <Button
+                    Width="100"
+                    Margin="10,0,0,0"
+                    Command="{Binding ConfirmCommand}"
+                    Content="确认"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource ButtonSuccess}" />
+
+                <TextBlock Width="60" Text="投资人" />
+
+
+                <hc:SimplePanel>
+                    <TextBlock FontWeight="Black" Text="{Binding SelectedInvestor.Name}" />
+
+                    <ComboBox
+                        HorizontalContentAlignment="Center"
+                        DisplayMemberPath="Name"
+                        IsEditable="True"
+                        IsSynchronizedWithCurrentItem="False"
+                        IsTextSearchEnabled="False"
+                        ItemsSource="{Binding InvestorSource.View}"
+                        SelectedItem="{Binding SelectedInvestor}"
+                        Style="{StaticResource SearchBox}"
+                        Text="{Binding SearchInvestorKey, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                        Visibility="{Binding IsInvestorSealed, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                </hc:SimplePanel>
+
+            </DockPanel>
+
+            <DockPanel TextElement.Foreground="Gray" Visibility="{Binding IsBuy, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                <TextBlock>
+                    <Run Text="当前持有" />
+                    <Run FontWeight="Black" Text="{Binding HoldingShare, StringFormat=N2}" />
+                    <Run Text="份额" />
+                </TextBlock>
+
+                <TextBlock Margin="25,0,10,0" Text="{Binding HoldingDay, StringFormat=yyyy-MM-dd}" />
+                <TextBlock Text="{Binding HoldingValue, StringFormat=市值≈{0:N2}}" />
+
+                <Button
+                    Command="{Binding RedeemAllCommand}"
+                    Content="全部赎回"
+                    Style="{StaticResource ButtonDanger.Small}" />
+            </DockPanel>
+        </hc:UniformSpacingPanel>
+
+    </hc:UniformSpacingPanel>
+</Window>
