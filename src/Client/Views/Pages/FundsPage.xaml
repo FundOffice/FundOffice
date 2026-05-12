@@ -107,7 +107,8 @@
                                 <ToggleButton
                                     x:Name="tg"
                                     hc:IconElement.Geometry="{StaticResource f.cloud-arrow-down}"
-                                    Style="{StaticResource ToggleButtonIcon.Small}" />
+                                    Style="{StaticResource ToggleButtonIcon.Small}"
+                                    ToolTip="点击导入数据" />
                                 <Popup
                                     DataContext="{Binding BatchImportViewModel}"
                                     HorizontalOffset="30"
@@ -186,29 +187,31 @@
             </ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="local:FundInfoPageViewModel.FundViewModel">
-                    <DockPanel Background="Transparent">
-                        <DockPanel DockPanel.Dock="Top" LastChildFill="False">
-                            <Viewbox
-                                Width="12"
-                                Height="12"
-                                Margin="2,0"
-                                Visibility="{Binding IsCleared, Converter={StaticResource Boolean2VisibilityConverter}}">
-                                <Path Data="{StaticResource G.Archive}" Fill="OrangeRed" />
-                            </Viewbox>
-                            <TextBlock
-                                HorizontalAlignment="Center"
-                                shared:MaskService.IsMask="True"
-                                FontWeight="Bold"
-                                Text="{Binding MajorName}" />
-                            <TextBlock
-                                Margin="2,0,0,0"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Bottom"
-                                FontSize="10"
-                                Foreground="Gray"
-                                Text="{Binding SeniorName}" />
+                    <hc:SimplePanel>
 
-                            <!--<hc:Badge
+                        <DockPanel Background="Transparent">
+                            <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+                                <Viewbox
+                                    Width="12"
+                                    Height="12"
+                                    Margin="2,0"
+                                    Visibility="{Binding IsCleared, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                    <Path Data="{StaticResource G.Archive}" Fill="OrangeRed" />
+                                </Viewbox>
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    shared:MaskService.IsMask="True"
+                                    FontWeight="Bold"
+                                    Text="{Binding MajorName}" />
+                                <TextBlock
+                                    Margin="2,0,0,0"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Bottom"
+                                    FontSize="10"
+                                    Foreground="Gray"
+                                    Text="{Binding SeniorName}" />
+
+                                <!--<hc:Badge
                                 FontSize="9"
                                 Foreground="White"
                                 ShowBadge="{Binding HasTip}"
@@ -234,70 +237,94 @@
                                 </hc:Badge.ToolTip>
                             </hc:Badge>-->
 
-                            <ToggleButton
-                                Name="badge"
-                                IsChecked="{Binding ShowTips}"
-                                Style="{StaticResource ToggleButtonCustom}">
-                                <hc:Badge
-                                    FontSize="9"
-                                    Foreground="White"
-                                    ShowBadge="{Binding HasTip}"
-                                    Style="{StaticResource BadgeWarning}"
-                                    ToolTipService.InitialShowDelay="1000"
-                                    ToolTipService.ShowDuration="5000"
-                                    Value="{Binding Tips.Count}" />
-                            </ToggleButton>
+                                <ToggleButton
+                                    Name="badge"
+                                    IsChecked="{Binding ShowTips}"
+                                    Style="{StaticResource ToggleButtonCustom}">
+                                    <hc:Badge
+                                        FontSize="9"
+                                        Foreground="White"
+                                        ShowBadge="{Binding HasTip}"
+                                        Style="{StaticResource BadgeWarning}"
+                                        ToolTipService.InitialShowDelay="1000"
+                                        ToolTipService.ShowDuration="5000"
+                                        Value="{Binding Tips.Count}" />
+                                </ToggleButton>
 
-                            <Popup
-                                AllowsTransparency="True"
-                                HorizontalOffset="10"
-                                IsOpen="{Binding ShowTips}"
-                                Placement="Right"
-                                PlacementTarget="{Binding ElementName=badge}"
-                                StaysOpen="False">
-                                <Border Background="WhiteSmoke" CornerRadius="5">
-                                    <ListBox
-                                        Margin="10"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        ItemsSource="{Binding Tips}"
-                                        Style="{StaticResource ListBoxCustom}">
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Foreground="Red" Text="{Binding Tip}" />
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
-                                </Border>
-                            </Popup>
+                                <Popup
+                                    AllowsTransparency="True"
+                                    HorizontalOffset="10"
+                                    IsOpen="{Binding ShowTips}"
+                                    Placement="Right"
+                                    PlacementTarget="{Binding ElementName=badge}"
+                                    StaysOpen="False">
+                                    <Border Background="WhiteSmoke" CornerRadius="5">
+                                        <ListBox
+                                            Margin="10"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            ItemsSource="{Binding Tips}"
+                                            Style="{StaticResource ListBoxCustom}">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Foreground="Red" Text="{Binding Tip}" />
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                    </Border>
+                                </Popup>
+                            </DockPanel>
+
+                            <DockPanel Margin="2,2" TextElement.FontSize="9">
+                                <DockPanel.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Margin" Value="5,0" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                        <Setter Property="Foreground" Value="DimGray" />
+                                    </Style>
+                                </DockPanel.Resources>
+
+
+                                <TextBlock
+                                    shared:MaskService.IsMask="True"
+                                    FontSize="13"
+                                    FontWeight="Bold"
+                                    Text="{Binding Code}"
+                                    Visibility="{Binding DataContext.UiConfig.ShowCode, RelativeSource={RelativeSource AncestorType=local:FundsPage}, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                                <DockPanel Visibility="{Binding DataContext.UiConfig.ShowSetupDate, RelativeSource={RelativeSource AncestorType=local:FundsPage}, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                    <TextBlock Text="成立日期" />
+                                    <TextBlock shared:MaskService.IsMask="True" Text="{Binding SetupDate, StringFormat=yyyy-MM-dd}" />
+                                </DockPanel>
+                                <DockPanel Visibility="{Binding DataContext.UiConfig.ShowAuditDate, RelativeSource={RelativeSource AncestorType=local:FundsPage}, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                    <TextBlock Text="备案日期" />
+                                    <TextBlock shared:MaskService.IsMask="True" Text="{Binding AuditDate, StringFormat=yyyy-MM-dd}" />
+                                </DockPanel>
+
+                            </DockPanel>
+
                         </DockPanel>
-
-                        <DockPanel Margin="8,2" TextElement.FontSize="9">
-                            <DockPanel.Resources>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Margin" Value="5,0" />
-                                    <Setter Property="VerticalAlignment" Value="Center" />
-                                    <Setter Property="Foreground" Value="DimGray" />
-                                </Style>
-                            </DockPanel.Resources>
+                        <Border
+                            x:Name="id"
+                            MinWidth="30"
+                            Margin="2"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Bottom"
+                            Background="Orange"
+                            CornerRadius="8"
+                            Visibility="Collapsed">
                             <TextBlock
-                                shared:MaskService.IsMask="True"
-                                FontSize="13"
-                                FontWeight="Bold"
-                                Text="{Binding Code}"
-                                Visibility="{Binding DataContext.UiConfig.ShowCode, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-                            <DockPanel Visibility="{Binding DataContext.UiConfig.ShowSetupDate, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityConverter}}">
-                                <TextBlock Text="成立日期" />
-                                <TextBlock shared:MaskService.IsMask="True" Text="{Binding SetupDate, StringFormat=yyyy-MM-dd}" />
-                            </DockPanel>
-                            <DockPanel Visibility="{Binding DataContext.UiConfig.ShowAuditDate, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityConverter}}">
-                                <TextBlock Text="备案日期" />
-                                <TextBlock shared:MaskService.IsMask="True" Text="{Binding AuditDate, StringFormat=yyyy-MM-dd}" />
-                            </DockPanel>
-
-                        </DockPanel>
-                    </DockPanel>
+                                Margin="2,1"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Text="{Binding Id}" />
+                        </Border>
+                    </hc:SimplePanel>
+                    <DataTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="id" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </DataTemplate.Triggers>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
