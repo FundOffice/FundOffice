@@ -19,7 +19,7 @@
 	  <MinorVersion>2</MinorVersion>
 
 
-    <AssemblyName>Gnoly</AssemblyName>
+    <AssemblyName>Thor</AssemblyName>
   </PropertyGroup>
 
   <!-- 🔹 Debug配置：自动生成版本号 -->

@@ -1,8 +1,9 @@
 ﻿using FMO.Logging;
 using OpenCvSharp;
-using Sdcb.PaddleInference;
-using Sdcb.PaddleOCR;
-using Sdcb.PaddleOCR.Models.Online;
+using RapidOCRSharpOnnx;
+using RapidOCRSharpOnnx.Configurations;
+using RapidOCRSharpOnnx.Providers;
+using RapidOCRSharpOnnx.Utils;
 
 namespace FMO.OCR;
 
@@ -12,16 +13,21 @@ public static class OCRWorker
     {
         try
         {
-            var model = await OnlineFullModels.EnglishV4.DownloadAsync();
+            string modelBasePath = @"modelfiles\"; // 你的模型文件所在目录
 
-            using PaddleOcrAll all = new PaddleOcrAll(model, PaddleDevice.Mkldnn())
-            {
-                AllowRotateDetection = true, /* 允许识别有角度的文字 */
-                Enable180Classification = false, /* 允许识别旋转角度大于90度的文字 */
-            };
+            // Mobile 版本模型
+            string detectPath = Path.Combine(modelBasePath, "ch_PP-OCRv5_det_mobile.onnx");
+            string recPath = Path.Combine(modelBasePath, "ch_PP-OCRv5_rec_mobile.onnx");
+            string clsPath = Path.Combine(modelBasePath, "ch_PP-LCNet_x0_25_textline_ori_cls_mobile.onnx");
+
+
+            using RapidOCRSharp ocr = new RapidOCRSharp(new ExecutionProviderCPU(new OcrConfig(detectPath, recPath, LangRec.CH, OCRVersion.PPOCRV5, clsPath)));
+
+
+
 
             using (Mat src = Cv2.ImDecode(buf, ImreadModes.Grayscale))
-                return all.Run(src).Text;
+                return string.Join(' ', ocr.RecognizeText(src).TextBlocks);
 
         }
         catch (Exception e)
