@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+ 
+
 
       - name: 安装 .NET 10 SDK
         uses: actions/setup-dotnet@v4
@@ -51,6 +53,13 @@ jobs:
           Write-Host "开始发布 FundOffice 项目" -ForegroundColor Cyan
           Write-Host "========================================" -ForegroundColor Cyan
 
+          # 步骤开头提取版本
+          $buildVersion = if ("${{ github.ref }}" -like "refs/tags/v*") {
+                  "${{ github.ref_name }}" -replace '^v', ''
+              } else {
+                  "1.1.2.0" # 或你的默认开发版本
+              }
+
           # 准备发布目录
           if (Test-Path $publishDir) {
               Write-Host "清理发布目录..." -ForegroundColor Yellow
@@ -72,7 +81,7 @@ jobs:
           Write-Host "[2/4] 发布主解决方案: FundOffice.slnx" -ForegroundColor Cyan
           $solutionFile = Join-Path $scriptPath "FundOffice.slnx"
           if (Test-Path $solutionFile) {
-              dotnet publish $solutionFile -c Release -r win-x64 --self-contained false -o $publishDir /p:DebugSymbols=false /p:DebugType=None /p:UseAppHost=true
+              dotnet publish $solutionFile -c Release -r win-x64 --self-contained false -o $publishDir /p:DebugSymbols=false /p:DebugType=None /p:UseAppHost=true /p:Version=$buildVersion
               if ($LASTEXITCODE -ne 0) {
                   Write-Host "[FAIL] 主解决方案发布失败，终止流程" -ForegroundColor Red
                   exit 1
@@ -105,6 +114,7 @@ jobs:
                           /p:DebugSymbols=false `
                           /p:DebugType=None `
                           /p:UseAppHost=true `
+                          /p:Version=$buildVersion
                           --nologo
 
                       if ($LASTEXITCODE -eq 0) {
@@ -329,7 +339,8 @@ jobs:
         shell: powershell
 
       - name: 创建增量更新包 (Delta)
-        #if: startsWith(github.ref, 'refs/tags/v')
+        id: delta                          # 🔥 新增：赋予步骤 ID（规范做法）
+        if: startsWith(github.ref, 'refs/tags/v')  # 🔥 建议取消注释，仅 Tag 触发时计算增量
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -337,30 +348,29 @@ jobs:
           $publishDir = "./publish"
           $deltaDir = "./publish-delta"
           $currentTag = "${{ steps.version.outputs.TAG }}"
-          
+      
           # 🔹 获取上一个语义化版本标签
           $tags = git tag --sort=-version:refname | Where-Object { $_ -like "v*" -and $_ -ne $currentTag }
           if ($tags.Count -eq 0) {
               Write-Host "⚠️ 首个版本发布，跳过增量包生成" -ForegroundColor Yellow
-              echo "HAS_DELTA=false" >> $env:GITHUB_OUTPUT
+              echo "HAS_DELTA=false" >> $env:GITHUB_ENV  # 🔥 改这里
               exit 0
           }
           $prevTag = $tags[0]
           Write-Host "🔄 生成增量包: $prevTag → $currentTag" -ForegroundColor Cyan
-          
+      
           # 🔹 使用 GitHub API 获取上一个 release 的主包
           $repo = "${{ github.repository }}"
           $releaseUrl = "https://api.github.com/repos/$repo/releases/tags/$prevTag"
-          $release = Invoke-RestMethod -Uri $releaseUrl -Headers @{"Authorization" = "token $env:GITHUB_TOKEN"}
-          
-          # 查找主发布包 (排除 Trustee 专用包)
+          $release = Invoke-RestMethod -Uri $releaseUrl -Headers @{ "Authorization" = "token $env:GITHUB_TOKEN" }
+      
           $asset = $release.assets | Where-Object { 
               $_.name -like "*Win-x64.zip" -and $_.name -notlike "*Trustee*" 
           } | Select-Object -First 1
-          
+      
           if (-not $asset) {
               Write-Host "⚠️ 未找到上一个版本的发布包，跳过增量包" -ForegroundColor Yellow
-              echo "HAS_DELTA=false" >> $env:GITHUB_OUTPUT
+              echo "HAS_DELTA=false" >> $env:GITHUB_ENV  # 🔥 改这里
               exit 0
           }
           
@@ -431,18 +441,18 @@ jobs:
           > ⚠️ 如果跨多个版本更新，建议使用完整包
           "@ | Out-File (Join-Path $deltaDir "DELTA_README.md") -Encoding UTF8
           
-                    # 🔹 打包增量文件
-                    if ($stats.Changed + $stats.Added -gt 0) {
-                        $deltaZip = "./FundOffice-Delta-$currentTag.zip"
-                        Compress-Archive -Path "$deltaDir/*" -DestinationPath $deltaZip -Force
-                        Write-Host "✅ 增量包创建成功: $deltaZip" -ForegroundColor Green
-                        Write-Host "   📈 变更:$($stats.Changed) | ➕新增:$($stats.Added) | ➖删除:$($stats.Deleted)" -ForegroundColor Cyan
-                        echo "HAS_DELTA=true" >> $env:GITHUB_OUTPUT
-                        echo "DELTA_ZIP=$deltaZip" >> $env:GITHUB_OUTPUT
-                    } else {
-                        Write-Host "ℹ️  无文件变更，跳过增量包生成" -ForegroundColor Gray
-                        echo "HAS_DELTA=false" >> $env:GITHUB_OUTPUT
-                    }
+          # 🔹 打包增量文件
+          if ($stats.Changed + $stats.Added -gt 0) {
+              $deltaZip = "./FundOffice-Delta-$currentTag.zip"
+              Compress-Archive -Path "$deltaDir/*" -DestinationPath $deltaZip -Force
+              Write-Host "✅ 增量包创建成功: $deltaZip" -ForegroundColor Green
+              Write-Host "   📈 变更:$($stats.Changed) | ➕新增:$($stats.Added) | ➖删除:$($stats.Deleted)" -ForegroundColor Cyan
+              echo "HAS_DELTA=true" >> $env:GITHUB_ENV   # 🔥 改这里
+              echo "DELTA_ZIP=$deltaZip" >> $env:GITHUB_ENV # 🔥 改这里
+          } else {
+              Write-Host "ℹ️ 无文件变更，跳过增量包生成" -ForegroundColor Gray
+              echo "HAS_DELTA=false" >> $env:GITHUB_ENV  # 🔥 改这里
+          }
 
 
 

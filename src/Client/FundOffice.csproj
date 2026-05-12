@@ -39,8 +39,8 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <DebugType>full</DebugType>
 
-    <!-- ✏️ 手动修改此处版本号 -->
-    <Version>1.0.2.0</Version>
+    <!-- 手动修改此处版本号 -->
+    <Version>1.1.2.0</Version>
   </PropertyGroup>
 
   <!-- 🔹 全局应用版本属性（确保两个配置都生效）-->
