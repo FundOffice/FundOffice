@@ -58,6 +58,7 @@
     <Project Path="src/Utility/SourceGenerator/SourceGenerator.csproj" />
     <Project Path="src/Utility/Utilities/Utilities.csproj" />
   </Folder>
+  <Project Path="ESign/MeiShi.UnitTests/MeiShi.UnitTests.csproj" Id="8e8cbf3c-181f-400b-a088-1a89f0cb7064" />
   <Project Path="src/Client/FundOffice.csproj" />
   <Project Path="src/Plugin/Plugin/Plugin.csproj" />
   <Project Path="src/SharedUI/SharedUI.csproj" />

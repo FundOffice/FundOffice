@@ -2,10 +2,13 @@
   <Folder Name="/ref/">
     <Project Path="../src/Amac/Public/Amac.Public.csproj" />
     <Project Path="../src/Disclosure/Disclosure/Disclosure.csproj" />
+    <Project Path="../src/ESign/MeiShi/MeiShi.csproj" />
     <Project Path="../src/Main/Models/Models.csproj" />
     <Project Path="../src/Utility/Utilities/Utilities.csproj" />
   </Folder>
+  <Project Path="Initial/Initial.csproj" Id="53f9518e-b7d8-4b3a-9ce2-c8edc34a3121" />
   <Project Path="TestAmac/TestAmac.csproj" Id="bc7d9ffb-9e0c-436a-841c-1b886a4aa7d1" />
   <Project Path="TestDisclosureChannel/TestDisclosureChannel.csproj" Id="fea4dcc8-b991-4c6d-b2c8-2881fb951f54" />
   <Project Path="TestLitedb/TestLitedb.csproj" Id="f33e637b-ae8f-4fc1-b238-921d6e434092" />
+  <Project Path="TestMeishi/TestMeishi.csproj" Id="1627b383-c8e7-4307-acbc-d8c0d4140085" />
 </Solution>
