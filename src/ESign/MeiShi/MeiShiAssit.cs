@@ -2,10 +2,10 @@
 using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -87,7 +87,7 @@ public partial class MeiShiAssit : ISigning
         }
 
         var re = await Login(config.UserName, config.Password);
-        if(!re.Successed)
+        if (!re.Successed)
         {
             IsValid = false;
             this.SetStatus(false);
@@ -103,7 +103,7 @@ public partial class MeiShiAssit : ISigning
 
         if (config is null || string.IsNullOrWhiteSpace(config.UserName) || string.IsNullOrWhiteSpace(config.Password))
         {
-            IsValid = false; 
+            IsValid = false;
             return new(false, "登录MeiShi错误：用户名或密码为空");
         }
 
@@ -732,16 +732,18 @@ public partial class MeiShiAssit : ISigning
         var root = JsonSerializer.Deserialize<RootJson>(cont);
         if (root is null) return [];
 
-        var data = root.data.Deserialize<FundInfoJson[]>();
-
-        return data?.Select(x => new EsigningFundInfo
+        try
         {
-            Id = x.ProductId.ToString(),
-            Name = x.ProductFullName,
-            Code = x.FundRecordNumber,
-            SetupDate = x.SetDate,
-            Class = x.FundRecordNumber != x.PbInternalProductCode ? x.PbInternalProductCode : ""
-        }).ToArray() ?? [];
+            var data = root.data.Deserialize<FundInfoJson[]>();
+
+            return data?.Select(x => new EsigningFundInfo(x.ProductId.ToString(), x.ProductFullName, x.FundRecordNumber, x.FundRecordNumber != x.PbInternalProductCode ? x.PbInternalProductCode : "", x.SetDate??default)).ToArray() ?? [];
+
+        }
+        catch (Exception ex)
+        {
+            LogEx.Error(ex);
+            return [];
+        }
     }
 
 
@@ -764,7 +766,7 @@ public partial class MeiShiAssit : ISigning
         var fileContent = new StreamContent(fileStream);
         // 通用文件类型，可根据实际文件修改（如image/png、application/pdf）
         fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
-        
+
         // 第三个参数是文件名，必须正确
         formData.Add(fileContent, "file", fileName);
 
@@ -894,6 +896,98 @@ public partial class MeiShiAssit : ISigning
     public void OnConfig(ISigningConfig config)
     {
 
+    }
+
+    /// <summary>
+    /// </summary>
+    /// <param name="fundId"></param>
+    /// <param name="share">无分级=null</param>
+    /// <param name="date"></param>
+    /// <param name="notify"></param>
+    /// <returns></returns>
+    public async Task<ErrorReturn> CreateTemporaryOpenDay(int fundId, string? share, DateOnly date, OpenFlag flag, bool notify)
+    {
+        using var db = DbHelper.Base();
+        var fund = db.GetCollection<Fund>().FindById(fundId);
+        if (fund is null)
+            return new(false, $"未找到Fund {fundId}");
+
+        return await CreateTemporaryOpenDay(fund.Name, share, date, flag, notify);
+    }
+
+
+    public async Task<ErrorReturn> CreateTemporaryOpenDay(string fundName, string? share, DateOnly date, OpenFlag flag, bool notify)
+    {
+
+        if (!IsValid) return new (false, "Invalid");
+        if (!isLogin) isLogin = await LoginFromEsign();
+        if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return new(false, "登录失败"); }
+
+
+        var funds = await QueryFundInfo();
+
+        var fund = string.IsNullOrWhiteSpace(share) ? funds.FirstOrDefault(x => x.Name == fundName) : funds.FirstOrDefault(x => x.Name!.StartsWith(fundName) && x.Class == share);
+
+        if (fund is null)
+            return new(false, $"易私募中未找到{fundName} {share}");
+
+
+        TemporaryOpenDayJson obj;
+        if (flag.HasFlag(OpenFlag.Sell))
+            obj = new TemporaryOpenDayWithRedemJson()
+            {
+                ProductId = int.Parse(fund.Id!),
+                TradeTypes = flag switch { OpenFlag.Buy | OpenFlag.Sell => [1, 2], OpenFlag.Buy => [1], OpenFlag.Sell => [2], _ => [] },
+                NoticeRule = notify ? Math.Max(0, date.DayNumber - DateOnly.FromDateTime(DateTime.Now).DayNumber) : 0,
+                NotificationList = notify ? [1, 2] : [],
+                ProductName = fund.Name,
+                TimeRanges = [new(date)],
+                SigningAndRedemptionEndRulesTime = $"{date:yyyy-MM-dd}T15:59:00.000Z",
+            };
+        else obj = new()
+        {
+            ProductId = int.Parse(fund.Id!),
+            TradeTypes = flag switch { OpenFlag.Buy | OpenFlag.Sell => [1, 2], OpenFlag.Buy => [1], OpenFlag.Sell => [2], _ => [] },
+            NoticeRule = notify ? Math.Max(0, date.DayNumber - DateOnly.FromDateTime(DateTime.Now).DayNumber) : 0,
+            NotificationList = notify ? [1, 2] : [],
+            ProductName = fund.Name,
+            TimeRanges = [new(date)]
+        };
+
+
+
+        HttpRequestMessage request = new();
+        request.Method = HttpMethod.Post;
+        request.RequestUri = new Uri("https://vipfunds.simu800.com/vip-manager/productDay/createNew");
+        request.Headers.Add("tokenid", Token);
+
+
+
+        var json = JsonSerializer.Serialize(obj);
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        try
+        {
+            var response = await client.SendAsync(request);
+
+            var cont = await response.Content.ReadAsStringAsync();
+
+            SigningLoger.LogRun(this, nameof(QueryFundInfo), "", cont);
+            if (Regex.IsMatch(cont, "token已失效|重新登录"))
+            {
+                isLogin = false;
+                return new(false, "请重新登录");
+            }
+
+            var root = JsonSerializer.Deserialize<RootJson>(cont);
+
+            return root?.code == 1008 ? new(true) : new(false, root?.message ?? "未获取到返回的错误");
+
+        }
+        catch (Exception ex)
+        {
+            return new(false, ex.Message);
+        }
     }
 
 }

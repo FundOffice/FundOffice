@@ -12,6 +12,7 @@ namespace FMO.ESigning;
 public record ESigningStatus(string Id, bool IsValid);
 
 
+
 /// <summary>
 /// 在线资格认证信息
 /// </summary>
@@ -53,16 +54,26 @@ public interface ISigning
     Task<bool> QueryOrderAsync(TransferOrder order);
 
     /// <summary>
-    /// 批量上传信批文件
+    /// 创建临时开放日
     /// </summary>
-    /// <param name="filePath"></param>
+    /// <param name="fundId">Fund Id</param>
+    /// <param name="share">份额类别</param>
+    /// <param name="date">开放日</param>
+    /// <param name="flag">申购标志</param>
+    /// <param name="notify">通知投资人</param>
     /// <returns></returns>
-    //Task<bool> BatchUploadDisclosureFiles(string filePath, DateTime time, string type);
+    Task<ErrorReturn> CreateTemporaryOpenDay(int fundId, string? share, DateOnly date, OpenFlag flag, bool notify);
 
-
-    //Task<bool> UploadDisclosureFile(string fundName, string fundCode, string shareClass, DateTime time, string announceName, string file);
-
-
+    /// <summary>
+    /// 创建临时开放日
+    /// </summary>
+    /// <param name="fundName">基金名称</param>
+    /// <param name="share">份额类别</param>
+    /// <param name="date">开放日</param>
+    /// <param name="flag">申购标志</param>
+    /// <param name="notify">通知投资人</param>
+    /// <returns></returns>
+    Task<ErrorReturn> CreateTemporaryOpenDay(string fundName, string? share, DateOnly date, OpenFlag flag, bool notify);
 
     /// <summary>
     /// 获取在签约平台中的基金信息
@@ -72,8 +83,6 @@ public interface ISigning
 
 
     void OnConfig(ISigningConfig config);
-
-
 }
 
 internal static class ISigningExtensions

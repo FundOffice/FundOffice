@@ -26,7 +26,7 @@ internal class FundInfoJson
     /// 基金备案编号
     /// </summary>
     [JsonPropertyName("fundRecordNumber")]
-    public string? FundRecordNumber { get; set; }
+    public string FundRecordNumber { get; set; } = "";
 
     /// <summary>
     /// 份额备案编号
@@ -38,7 +38,7 @@ internal class FundInfoJson
     /// 内部产品代码
     /// </summary>
     [JsonPropertyName("pbInternalProductCode")]
-    public string? PbInternalProductCode { get; set; }
+    public string PbInternalProductCode { get; set; } = "";
 
     /// <summary>
     /// 风险类型
@@ -86,7 +86,7 @@ internal class FundInfoJson
     /// 产品全称
     /// </summary>
     [JsonPropertyName("productFullName")]
-    public string? ProductFullName { get; set; }
+    public string ProductFullName { get; set; } = "";
 
     /// <summary>
     /// 募集名称

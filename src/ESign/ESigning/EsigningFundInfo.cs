@@ -1,21 +1,16 @@
 ﻿namespace FMO.ESigning;
 
 
+
+
+
+
 /// <summary>
 /// 基金资料
 /// </summary>
-public class EsigningFundInfo
-{
-    public string? Name { get; set; }
-
-    public string? Code { get; set; }
-
-    public string? Id { get; set; }
-
-    /// <summary>
-    /// 份额类别
-    /// </summary>
-    public string? Class { get; set; }
-
-    public DateOnly? SetupDate { get; internal set; }
-}
+/// <param name="Name"></param>
+/// <param name="Code"></param>
+/// <param name="Id"></param>
+/// <param name="Class"> 份额类别 </param>
+/// <param name="SetupDate"></param>
+public record EsigningFundInfo(string Id, string Name, string Code, string Class, DateOnly SetupDate);
