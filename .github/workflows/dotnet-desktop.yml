@@ -141,6 +141,20 @@ jobs:
           }
           Get-ChildItem -Path $publishDir -Filter "*.pdb" -Recurse -File | Remove-Item -Force
 
+          #【新增】清理非 win-x64 的 runtime 文件夹
+          $runtimesPath = Join-Path $publishDir "runtimes"
+          if (Test-Path $runtimesPath) {
+              Write-Host "清理非 win-x64 的 runtime 文件夹..." -ForegroundColor Yellow
+              Get-ChildItem -Path $runtimesPath -Directory | ForEach-Object {
+                  # PowerShell 字符串比较默认不区分大小写，安全匹配 win-x64
+                  if ($_.Name -ne "win-x64") {
+                      Remove-Item $_.FullName -Recurse -Force
+                      Write-Host "  已移除: $($_.Name)" -ForegroundColor Gray
+                  }
+              }
+          }
+
+
           # ========================================
           # 安全清理未引用的项目 DLL（CI/CD 安全版）
           # ========================================
