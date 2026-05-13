@@ -17,6 +17,22 @@ public enum TransferOrderType
 }
 
 
+[TypeConverter(nameof(EnumDescriptionTypeConverter))]
+public enum OrderStatus
+{
+    None,
+
+    /// <summary>
+    /// 投资人签署
+    /// </summary>
+    [Description("已签署")]Signed,
+
+    /// <summary>
+    /// 管理人接受申请
+    /// </summary>
+    [Description("已受理")]Accepted
+}
+
 
 /// <summary>
 /// 交易订单
@@ -65,6 +81,9 @@ public class TransferOrder
 
 
     public DateOnly CreateDate { get; set; }
+
+
+    public OrderStatus Status { get; set; }
 
     public string? ExternalId { get; set; }
 

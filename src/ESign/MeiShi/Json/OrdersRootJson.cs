@@ -133,8 +133,11 @@ public class OrderInfoJson
     [JsonPropertyName("tradeFee")]
     public decimal? TradeFee { get; set; }
 
-    //[JsonPropertyName("signStatus")]
-    //public int SignStatus { get; set; }
+    /// <summary>
+    /// 应该是签约状态
+    /// </summary>
+    [JsonPropertyName("signStatus")]
+    public int SignStatus { get; set; }
 
     //[JsonPropertyName("signFlowEndDate")]
     //public string SignFlowEndDate { get; set; }
@@ -229,6 +232,8 @@ public class OrderInfoJson
             InvestorName = this.CustomerName,
             InvestorIdentity = this.CardNumber,
             ExternalId = SignFlowId.ToString(),
+            CreateDate = DateOnly.FromDateTime(DateTime.Now),
+            Status = SignStatus switch { 1 => OrderStatus.None, 2 => OrderStatus.Accepted , _=> OrderStatus.None  },
             Source = "meishi",
             Date = GetDate()
         };
