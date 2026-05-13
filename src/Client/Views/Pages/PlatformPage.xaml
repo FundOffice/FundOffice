@@ -143,77 +143,105 @@
                     <ControlTemplate TargetType="ListBoxItem">
                         <Border
                             x:Name="bd"
+                            Background="Transparent"
                             BorderBrush="Gray"
                             BorderThickness="1"
                             CornerRadius="8">
-                            <DockPanel MinHeight="40">
-                                <Grid DockPanel.Dock="Top">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition />
-                                        <RowDefinition x:Name="row2" Height="0" />
-                                    </Grid.RowDefinitions>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition />
-                                        <ColumnDefinition Width="50" />
-                                    </Grid.ColumnDefinitions>
+                            <hc:SimplePanel>
+                                <hc:Watermark
+                                    x:Name="water"
+                                    FontSize="15"
+                                    Mark="未启用"
+                                    MarkBrush="Pink"
+                                    MarkMargin="5"
+                                    Visibility="{Binding IsEnabled, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
-                                    <hc:SimplePanel Grid.RowSpan="2">
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontSize="24"
-                                            Text="{Binding Title}"
-                                            Visibility="{Binding ShowConfigSetting, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                                <DockPanel MinHeight="40">
+                                    <Grid DockPanel.Dock="Top">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition />
+                                            <RowDefinition x:Name="row2" Height="0" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition Width="50" />
+                                        </Grid.ColumnDefinitions>
 
-                                        <hc:SimplePanel VerticalAlignment="Center" Visibility="{Binding ShowConfigSetting, Converter={StaticResource Boolean2VisibilityConverter}}">
-                                            <hc:SimplePanel.Resources>
-                                                <Style BasedOn="{StaticResource TextBox.Small}" TargetType="TextBox">
-                                                    <Setter Property="Margin" Value="6,1,0,1" />
-                                                </Style>
-                                            </hc:SimplePanel.Resources>
-                                            <ContentPresenter
-                                                Margin="{TemplateBinding Padding}"
-                                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                        <hc:SimplePanel Grid.RowSpan="2">
+
+                                            <hc:SimplePanel x:Name="ena" Visibility="Collapsed">
+                                                <CheckBox
+                                                    Margin="10,0"
+                                                    BorderBrush="Black"
+                                                    BorderThickness="3"
+                                                    IsChecked="{Binding IsEnabled}"
+                                                    Visibility="{Binding IsAvaliable, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                            </hc:SimplePanel>
+                                            <TextBlock
+                                                Padding="8,0"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Background="White"
+                                                FontSize="24"
+                                                IsHitTestVisible="False"
+                                                Text="{Binding Title}"
+                                                Visibility="{Binding ShowConfigSetting, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                                            <hc:SimplePanel VerticalAlignment="Center" Visibility="{Binding ShowConfigSetting, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                                <hc:SimplePanel.Resources>
+                                                    <Style BasedOn="{StaticResource TextBox.Small}" TargetType="TextBox">
+                                                        <Setter Property="Margin" Value="6,1,0,1" />
+                                                    </Style>
+                                                </hc:SimplePanel.Resources>
+                                                <ContentPresenter
+                                                    Margin="{TemplateBinding Padding}"
+                                                    HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                    SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                            </hc:SimplePanel>
                                         </hc:SimplePanel>
-                                    </hc:SimplePanel>
 
-                                    <ToggleButton
-                                        Name="tog"
-                                        Grid.Column="1"
-                                        hc:IconElement.Geometry="{StaticResource f.gear}"
-                                        BorderThickness="0"
-                                        IsChecked="{Binding ShowConfigSetting}"
-                                        Style="{StaticResource ToggleButtonFlip}">
-                                        <ToggleButton.Content>
-                                            <Viewbox Width="18" Height="18">
-                                                <Path
-                                                    x:Name="pn"
-                                                    Data="{StaticResource f.gear}"
-                                                    Fill="Black" />
-                                            </Viewbox>
-                                        </ToggleButton.Content>
-                                        <hc:StatusSwitchElement.CheckedElement>
-                                            <Viewbox Width="18" Height="18">
-                                                <Path Data="{StaticResource f.reply}" Fill="Black" />
-                                            </Viewbox>
-                                        </hc:StatusSwitchElement.CheckedElement>
-                                    </ToggleButton>
+                                        <ToggleButton
+                                            Name="tog"
+                                            Grid.Column="1"
+                                            hc:IconElement.Geometry="{StaticResource f.gear}"
+                                            BorderThickness="0"
+                                            IsChecked="{Binding ShowConfigSetting}"
+                                            Style="{StaticResource ToggleButtonFlip}">
+                                            <ToggleButton.Content>
+                                                <Viewbox Width="18" Height="18">
+                                                    <Path
+                                                        x:Name="pn"
+                                                        Data="{StaticResource f.gear}"
+                                                        Fill="Black" />
+                                                </Viewbox>
+                                            </ToggleButton.Content>
+                                            <hc:StatusSwitchElement.CheckedElement>
+                                                <Viewbox Width="18" Height="18">
+                                                    <Path Data="{StaticResource f.reply}" Fill="Black" />
+                                                </Viewbox>
+                                            </hc:StatusSwitchElement.CheckedElement>
+                                        </ToggleButton>
 
-                                    <Button
-                                        Grid.Row="1"
-                                        Grid.Column="1"
-                                        hc:IconElement.Geometry="{StaticResource f.floppy-disk}"
-                                        Command="{Binding SaveConfigCommand}"
-                                        Style="{StaticResource ButtonIcon}"
-                                        Visibility="{Binding ShowConfigSetting, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                        <Button
+                                            Grid.Row="1"
+                                            Grid.Column="1"
+                                            hc:IconElement.Geometry="{StaticResource f.floppy-disk}"
+                                            Command="{Binding SaveConfigCommand}"
+                                            Style="{StaticResource ButtonIcon}"
+                                            Visibility="{Binding ShowConfigSetting, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
-                                </Grid>
-                            </DockPanel>
+                                    </Grid>
+                                </DockPanel>
+                            </hc:SimplePanel>
 
                         </Border>
                         <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ena" Property="Visibility" Value="Visible" />
+                            </Trigger>
+
+
                             <DataTrigger Binding="{Binding IsAvaliable}" Value="False">
                                 <Setter TargetName="bd" Property="BorderBrush" Value="Red" />
                             </DataTrigger>
@@ -222,6 +250,8 @@
                             </DataTrigger>
                             <DataTrigger Binding="{Binding ShowConfigSetting}" Value="True">
                                 <Setter TargetName="row2" Property="Height" Value="*" />
+                                <Setter TargetName="ena" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="water" Property="Visibility" Value="Collapsed" />
                             </DataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -478,84 +508,101 @@
                             <ControlTemplate TargetType="ListBoxItem">
                                 <Border
                                     x:Name="bd"
+                                    Background="Transparent"
                                     BorderBrush="Gray"
                                     BorderThickness="1"
                                     CornerRadius="8">
-                                    <DockPanel MinHeight="40">
-                                        <Grid DockPanel.Dock="Top">
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition />
-                                                <RowDefinition x:Name="row2" Height="0" />
-                                            </Grid.RowDefinitions>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition />
-                                                <ColumnDefinition Width="50" />
-                                            </Grid.ColumnDefinitions>
+                                    <hc:SimplePanel>
+                                        <hc:Watermark
+                                            x:Name="water"
+                                            FontSize="15"
+                                            Mark="未启用"
+                                            MarkBrush="Pink"
+                                            MarkMargin="5"
+                                            Visibility="{Binding IsEnable, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                                        <DockPanel MinHeight="40">
+                                            <Grid DockPanel.Dock="Top">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition />
+                                                    <RowDefinition x:Name="row2" Height="0" />
+                                                </Grid.RowDefinitions>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition Width="50" />
+                                                </Grid.ColumnDefinitions>
 
-                                            <hc:SimplePanel Grid.RowSpan="2">
-                                                <CheckBox
-                                                    Margin="10,0"
-                                                    BorderBrush="Black"
-                                                    BorderThickness="3"
-                                                    IsChecked="{Binding IsEnable}"
-                                                    Visibility="{Binding RelativeSource={RelativeSource AncestorType=local:PlatformPage}, Path=DataContext.SetESigningState, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                                <hc:SimplePanel Grid.RowSpan="2">
+                                                    <CheckBox
+                                                        x:Name="ena"
+                                                        Margin="10,0"
+                                                        BorderBrush="Black"
+                                                        BorderThickness="3"
+                                                        IsChecked="{Binding IsEnable}"
+                                                        Visibility="Collapsed" />
 
-                                                <TextBlock
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="24"
-                                                    Text="{Binding Title}"
-                                                    Visibility="{Binding ShowConfigSetting, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                                                    <TextBlock
+                                                        Padding="5,0"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Background="White"
+                                                        FontSize="24"
+                                                        IsHitTestVisible="False"
+                                                        Text="{Binding Title}"
+                                                        Visibility="{Binding ShowConfigSetting, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
-                                                <hc:SimplePanel VerticalAlignment="Center" Visibility="{Binding ShowConfigSetting, Converter={StaticResource Boolean2VisibilityConverter}}">
-                                                    <hc:SimplePanel.Resources>
-                                                        <Style BasedOn="{StaticResource TextBox.Small}" TargetType="TextBox">
-                                                            <Setter Property="Margin" Value="6,1,0,1" />
-                                                        </Style>
-                                                    </hc:SimplePanel.Resources>
-                                                    <ContentPresenter
-                                                        Margin="{TemplateBinding Padding}"
-                                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                        SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                    <hc:SimplePanel VerticalAlignment="Center" Visibility="{Binding ShowConfigSetting, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                                        <hc:SimplePanel.Resources>
+                                                            <Style BasedOn="{StaticResource TextBox.Small}" TargetType="TextBox">
+                                                                <Setter Property="Margin" Value="6,1,0,1" />
+                                                            </Style>
+                                                        </hc:SimplePanel.Resources>
+                                                        <ContentPresenter
+                                                            Margin="{TemplateBinding Padding}"
+                                                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                            SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                                                    </hc:SimplePanel>
                                                 </hc:SimplePanel>
-                                            </hc:SimplePanel>
 
-                                            <ToggleButton
-                                                Name="tog"
-                                                Grid.Column="1"
-                                                hc:IconElement.Geometry="{StaticResource f.gear}"
-                                                BorderThickness="0"
-                                                IsChecked="{Binding ShowConfigSetting}"
-                                                Style="{StaticResource ToggleButtonFlip}">
-                                                <ToggleButton.Content>
-                                                    <Viewbox Width="18" Height="18">
-                                                        <Path
-                                                            x:Name="pn"
-                                                            Data="{StaticResource f.gear}"
-                                                            Fill="Black" />
-                                                    </Viewbox>
-                                                </ToggleButton.Content>
-                                                <hc:StatusSwitchElement.CheckedElement>
-                                                    <Viewbox Width="18" Height="18">
-                                                        <Path Data="{StaticResource f.reply}" Fill="Black" />
-                                                    </Viewbox>
-                                                </hc:StatusSwitchElement.CheckedElement>
-                                            </ToggleButton>
+                                                <ToggleButton
+                                                    Name="tog"
+                                                    Grid.Column="1"
+                                                    hc:IconElement.Geometry="{StaticResource f.gear}"
+                                                    BorderThickness="0"
+                                                    IsChecked="{Binding ShowConfigSetting}"
+                                                    Style="{StaticResource ToggleButtonFlip}">
+                                                    <ToggleButton.Content>
+                                                        <Viewbox Width="18" Height="18">
+                                                            <Path
+                                                                x:Name="pn"
+                                                                Data="{StaticResource f.gear}"
+                                                                Fill="Black" />
+                                                        </Viewbox>
+                                                    </ToggleButton.Content>
+                                                    <hc:StatusSwitchElement.CheckedElement>
+                                                        <Viewbox Width="18" Height="18">
+                                                            <Path Data="{StaticResource f.reply}" Fill="Black" />
+                                                        </Viewbox>
+                                                    </hc:StatusSwitchElement.CheckedElement>
+                                                </ToggleButton>
 
-                                            <Button
-                                                Grid.Row="1"
-                                                Grid.Column="1"
-                                                hc:IconElement.Geometry="{StaticResource f.floppy-disk}"
-                                                Command="{Binding SaveCommand}"
-                                                Style="{StaticResource ButtonIcon}"
-                                                Visibility="{Binding ShowConfigSetting, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                                <Button
+                                                    Grid.Row="1"
+                                                    Grid.Column="1"
+                                                    hc:IconElement.Geometry="{StaticResource f.floppy-disk}"
+                                                    Command="{Binding SaveCommand}"
+                                                    Style="{StaticResource ButtonIcon}"
+                                                    Visibility="{Binding ShowConfigSetting, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
-                                        </Grid>
-                                    </DockPanel>
-
+                                            </Grid>
+                                        </DockPanel>
+                                    </hc:SimplePanel>
                                 </Border>
                                 <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="ena" Property="Visibility" Value="Visible" />
+                                    </Trigger>
+
                                     <DataTrigger Binding="{Binding IsValid}" Value="False">
                                         <Setter TargetName="bd" Property="BorderBrush" Value="Red" />
                                     </DataTrigger>
@@ -564,6 +611,8 @@
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding ShowConfigSetting}" Value="True">
                                         <Setter TargetName="row2" Property="Height" Value="*" />
+                                        <Setter TargetName="ena" Property="Visibility" Value="Collapsed" />
+                                        <Setter TargetName="water" Property="Visibility" Value="Collapsed" />
                                     </DataTrigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
@@ -574,14 +623,10 @@
             </DockPanel.Resources>
             <DockPanel DockPanel.Dock="Top" LastChildFill="False">
                 <TextBlock
+                    VerticalAlignment="Center"
                     FontSize="18"
                     FontWeight="Black"
                     Text="电签平台" />
-
-                <ToggleButton
-                    Margin="10,0,0,0"
-                    Content="启用/禁用"
-                    IsChecked="{Binding SetESigningState}" />
 
                 <ListBox
                     BorderThickness="0"

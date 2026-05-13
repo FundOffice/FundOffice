@@ -186,7 +186,7 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
 
         ESignViewModels = SigningGalley.ViewModels;
         ESignSource.Source = ESignViewModels;
-        ESignSource.Filter += ESignSource_Filter;
+        //ESignSource.Filter += ESignSource_Filter;
 
         ESigningButtons = [
             new((Geometry)App.Current.Resources["f.user-group"], SyncSigningCustmersOnceCommand, nameof(ESigningWorker.SyncCustmersOnce), "同步投资人信息"),

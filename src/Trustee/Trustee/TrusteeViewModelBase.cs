@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.Models;
+using System.ComponentModel;
 
 namespace FMO.Trustee;
 
@@ -18,6 +19,10 @@ public abstract partial class TrusteeViewModelBase : ObservableObject, IRecipien
 
     [ObservableProperty]
     public partial bool IsAvaliable { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsEnabled { get; set; }
+
 
 
     [ObservableProperty]
@@ -38,9 +43,7 @@ public abstract partial class TrusteeViewModelBase : ObservableObject, IRecipien
 
     protected abstract void SaveConfigOverride();
 
-
-
-
+     
     public void Receive(TrusteeStatus message)
     {
         if (message.Id == Idenitifier)
@@ -62,9 +65,11 @@ public abstract partial class TrusteeViewModelBase<T> : TrusteeViewModelBase, IT
         Assist = new T();
         Assist.LoadConfig();
         IsAvaliable = Assist.IsValid;
-
+        IsEnabled = Assist.IsEnabled;
         Idenitifier = Assist.Identifier;
         Title = Assist.Title;
+
+        
     }
 
 
@@ -80,5 +85,18 @@ public abstract partial class TrusteeViewModelBase<T> : TrusteeViewModelBase, IT
         ShowConfigSetting = false;
 
         Task.Run(async () => { var r = await Assist.VerifyConfig(); WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"{Assist.Title}配置校验{(r ? "成功" : "失败")}")); });
+    }
+
+
+    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+
+        if(e.PropertyName == nameof(TrusteeViewModelBase.IsEnabled) )
+        {
+            SaveConfigOverride();
+            Assist.IsEnabled = IsEnabled;
+            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"托管API【{Title}】已{(IsEnabled?"启":"禁")}用"));
+        }
     }
 }

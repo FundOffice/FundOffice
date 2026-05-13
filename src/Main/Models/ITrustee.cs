@@ -30,6 +30,11 @@ public interface ITrustee
 
     bool IsValid { get; }
 
+    /// <summary>
+    /// 启用
+    /// </summary>
+    bool IsEnabled { get; }
+
     bool Prepare();
 
     string Title { get; }

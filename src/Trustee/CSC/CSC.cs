@@ -590,4 +590,6 @@ internal class APIConfig : IAPIConfig
 
     public string? EncryptKey { get; set; }
 
+
+    public bool IsEnabled { get; set; }
 }

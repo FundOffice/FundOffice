@@ -489,6 +489,7 @@ internal class APIConfig : IAPIConfig
 
     public string? Password { get; set; }
 
+    public bool IsEnabled { get; set; }
 }
 
 

@@ -446,5 +446,6 @@ internal class APIConfig : IAPIConfig
 
     public string? Token { get; set; }
 
+    public bool IsEnabled { get; set; }
 
 }

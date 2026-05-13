@@ -5,7 +5,6 @@ using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
-using Serilog;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -564,7 +563,7 @@ public partial class TrusteeWorker : ObservableObject
     {
         if (trustees is null || trustees.Any()) trustees = Trustees;
 
-        
+
         List<WorkReturn> ret = new();
         var method = nameof(ITrustee.QueryNetValue);
         foreach (var tr in trustees)
@@ -795,7 +794,7 @@ public partial class TrusteeWorker : ObservableObject
 
         if (offwork) return;
 
-        var ava = Maps.Where(x => !x.IsCleared).Select(x => x.Trustee).Distinct().ToList();
+        var ava = Maps.Where(x => !x.IsCleared).Select(x => x.Trustee).Distinct().Where(x => x.IsEnabled).ToList();
 
 
         foreach (var (Config, Task) in tasks)

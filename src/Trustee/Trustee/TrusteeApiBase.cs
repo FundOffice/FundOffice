@@ -15,6 +15,7 @@ public interface IAPIConfig
 {
     public string Id { get; }
 
+    bool IsEnabled { get; set; }
 }
 
 public abstract class TrusteeApiBase : ITrustee
@@ -47,7 +48,8 @@ public abstract class TrusteeApiBase : ITrustee
     protected static HttpClient _client { get; private set; } = new();
 
     private static ILiteDatabase _db { get; } = new LiteDatabase(@$"FileName=data\platformlog.db;Connection=Shared");
-
+    
+    public bool IsEnabled { get; internal set; }
 
     public async Task<bool> VerifyConfig()
     {
@@ -125,10 +127,13 @@ public abstract class TrusteeApiBase : ITrustee
         {
             IsValid = db.GetCollection<TrusteeStatus>().FindById(Identifier)?.Status ?? false;
 
-            if (db.GetCollection<IAPIConfig>().FindById(Identifier) is IAPIConfig config) 
+            if (db.GetCollection<IAPIConfig>().FindById(Identifier) is IAPIConfig config)
+            {
+                IsEnabled = config.IsEnabled;
                 return LoadConfigOverride(config);
+            }
         }
-        catch/*(Exception e) */{ WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"加载{Title}的配置文件出错")); }
+        catch (Exception e) { LogEx.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"加载{Title}的配置文件出错")); }
 
 
         IsValid = db.GetCollection<TrusteeStatus>().FindById(Identifier)?.Status ?? false;

@@ -765,5 +765,6 @@ public class APIConfig : IAPIConfig
 
     public DateTime? TokenTime { get; set; }
 
+    public bool IsEnabled { get; set; }
 }
 
