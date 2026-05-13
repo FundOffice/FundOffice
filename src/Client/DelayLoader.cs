@@ -8,6 +8,7 @@ using FMO.Schedule;
 using FMO.Settings;
 using FMO.Trustee;
 using FMO.Utilities;
+using LiteDB;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
@@ -64,6 +65,9 @@ internal class DelayLoader
 
 
         });
+
+        // 清理log
+        DataHub.Register(ClearLog);
     }
 
 
@@ -491,5 +495,22 @@ internal class DelayLoader
 #endif
     }
 
+
+    private static void ClearLog(NewDay d)
+    {
+        if (!File.Exists("data\\platformlog.db"))
+        {
+            using var fs = new FileStream("data\\platformlog.db", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            if (fs.Length > 1024 * 1024 * 500)
+            {
+                var db = new LiteDatabase(@$"FileName=data\platformlog.db;Connection=Shared");
+                // 条目
+                var total = db.GetCollection<TrusteeCallHistory>().Count();
+                var mid = db.GetCollection<TrusteeCallHistory>().Query().Skip(total / 2).Limit(1).FirstOrDefault();
+                if (mid is not null)
+                    db.GetCollection<TrusteeCallHistory>().DeleteMany(x => x.Time.Date < mid.Time);
+            }
+        }
+    }
 
 }
