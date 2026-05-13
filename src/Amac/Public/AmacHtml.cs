@@ -66,7 +66,7 @@ public class AmacHtml
             }
 
             var sections = document.QuerySelectorAll("div.section");
-            
+
             List<FundBasicInfo> list = [];
             foreach (var section in sections)
             {
@@ -75,7 +75,7 @@ public class AmacHtml
                 if (string.IsNullOrEmpty(title)) continue;
 
                 switch (title)
-                { 
+                {
                     case "产品信息":
                         ParseProductSection(section, list);
                         break;
@@ -167,13 +167,13 @@ public class AmacHtml
 
             var valueCell = row.QuerySelector("td:not(.title)");
             if (valueCell == null) continue;
-            var value = Regex.Replace(valueCell.TextContent, @"\s+", " ").Trim();
+            var value = valueCell.TextContent.Trim();
 
             switch (key)
             {
-                case "基金管理人全称(中文)":
-                    mgr.Name = value;
-                    break;
+                //case "基金管理人全称(中文)":
+                 //   mgr.Name = value;
+                 //   break;
                 case "基金管理人全称(英文)":
                     mgr.EnglishName = string.IsNullOrWhiteSpace(value) ? null : value;
                     break;

@@ -117,9 +117,10 @@ public partial class InitWindowViewModel : ObservableRecipient
         ShowStep1 = false;
         ShowStep2 = true;
         ShowProgress = true;
+
         List<FundBasicInfo> funds = new List<FundBasicInfo>();
         await AmacHtml.CrawleManagerInfo(Manager, funds);
-
+        Manager.Name = ManagerName!;
 
         CurrentScale = Manager.ScaleRange;
         PreNewRuleFundCount = funds.Count(x => x.IsPreRule);
