@@ -21,11 +21,26 @@ public class OrderEntryMonitorMission : OnceMission
 
     public DateOnly OpenDay { get; set; }
 
+    /// <summary>
+    /// 签署日
+    /// </summary>
+    public DateOnly SignDate { get; set; }
 
+    protected override void SetNextRun()
+    {
+        NextRun = (LastRun ?? DateTime.Now).AddMinutes(15);
+        if (NextRun < DateTime.Now) NextRun = DateTime.Now.AddMinutes(15);
+    }
 
 
     protected override async Task<ErrorReturn> WorkOverride()
     {
+        if (OpenDay == default && SignDate == default)
+        {
+            IsAborted = true;
+            return new(false, "日期异常");
+        }
+
         var today = DateOnly.FromDateTime(DateTime.Now);
 
         if (OpenDay.Year > 2000 && today > OpenDay)

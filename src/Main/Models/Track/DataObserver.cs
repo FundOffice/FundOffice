@@ -11,6 +11,8 @@ public interface ITracker<T>
 
 public interface ISettingFunction : IDisposable
 {
+    void Init();
+
     void Start();
 
     void Stop();
@@ -41,6 +43,8 @@ public abstract class DataObserver : ISettingFunction
 
         disposables = null;
     }
+
+    public virtual void Init() { }
 
     public void Start() => RegisterHandler();
 

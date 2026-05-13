@@ -136,7 +136,6 @@
 
                                 <ContentControl
                                     x:Name="btns"
-                                    Content="{Binding}"
                                     ContentTemplate="{x:Null}"
                                     Visibility="Collapsed" />
                             </hc:SimplePanel>
@@ -244,50 +243,8 @@
             </hc:SimplePanel>
 
             <ControlTemplate.Triggers>
-                <!--<Trigger Property="IsMouseOver" Value="True">
-                -->
-                <!--<Setter TargetName="pop" Property="IsOpen" Value="True" />-->
-                <!--
-                    <Trigger.EnterActions>
-                -->
-                <!--  鼠标进入时，启动一个延迟 0.5 秒的动画  -->
-                <!--
-                        <BeginStoryboard x:Name="DelayOpenStoryboard">
-                            <Storyboard>
-                                <BooleanAnimationUsingKeyFrames Storyboard.TargetName="pop" Storyboard.TargetProperty="IsOpen">
-                -->
-                <!--  在 0.5 秒时将 IsOpen 设为 True  -->
-                <!--
-                                    <DiscreteBooleanKeyFrame KeyTime="0:0:0.2" Value="True" />
-                                </BooleanAnimationUsingKeyFrames>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </Trigger.EnterActions>
-                    <Trigger.ExitActions>
-                -->
-                <!--  鼠标离开时，立即取消未完成的延迟动画  -->
-                <!--
-                        <StopStoryboard BeginStoryboardName="DelayOpenStoryboard" />
-
-
-                    </Trigger.ExitActions>
-                </Trigger>-->
-
-                <!--  1. 鼠标离开 Popup 内容(extra)时，启动延迟关闭  -->
-                <!--<EventTrigger RoutedEvent="MouseLeave" SourceName="extra">
-                    <BeginStoryboard x:Name="CloseDelayTimer">
-                -->
-                <!--  关键：添加 FillBehavior="Stop" 避免动画结束后锁定属性值  -->
-                <!--
-                        <Storyboard FillBehavior="Stop">
-                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="pop" Storyboard.TargetProperty="IsOpen">
-                                <DiscreteObjectKeyFrame KeyTime="0:0:0.3" Value="{StaticResource Bool.False}" />
-                            </ObjectAnimationUsingKeyFrames>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </EventTrigger>-->
-
                 <DataTrigger Binding="{Binding IsBackground}" Value="False">
+                    <Setter TargetName="btns" Property="Content" Value="{Binding}" />
                     <Setter TargetName="btns" Property="ContentTemplate">
                         <Setter.Value>
                             <DataTemplate>

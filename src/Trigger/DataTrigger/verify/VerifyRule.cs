@@ -26,8 +26,6 @@ public abstract class VerifyRule : DataObserver, IVerifyRule
     }
 
 
-    public abstract void Init();
-
     public void Verify()
     {
         try

@@ -15,8 +15,6 @@
 public interface IVerifyRule : ISettingFunction
 {
 
-    public void Init();
-
     public void Verify();
 
 

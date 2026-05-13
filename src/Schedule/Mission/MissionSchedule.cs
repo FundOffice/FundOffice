@@ -82,7 +82,7 @@ public static class MissionSchedule
     }
 
 
-    public static void Register(Mission mission)
+    public static Mission Register(Mission mission)
     {
         mission.Init();
         missions[mission.Id] = mission;
@@ -90,7 +90,8 @@ public static class MissionSchedule
         using var db = DbHelper.Mission();
         db.GetCollection<Mission>().Upsert(mission);
 
-        WeakReferenceMessenger.Default.Send(mission);
+        Task.Run(()=> WeakReferenceMessenger.Default.Send(mission));
+        return mission;
     }
 
     public static void SaveChanges(Mission m)
