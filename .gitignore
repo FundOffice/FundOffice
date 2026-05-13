@@ -366,3 +366,4 @@ FodyWeavers.xsd
 /src/Tools/GenerateDemonstration
 /data2
 /logs.db
+/src/Tools/GenerateDemonstration/GenerateDemonstration.csproj
