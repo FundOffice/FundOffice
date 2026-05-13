@@ -24,6 +24,8 @@ public partial class RequestMissingMonitor : ITracker<IEnumerable<TransferOrder>
         using var db = DbHelper.Base();
         var rid = db.GetCollection<TransferOrder>().Query().Where(x => x.Date.DayNumber > limit).Select(x => x.Id).ToList();
 
+        if (rid.Count == 0) return;
+
         using var tdb = DbHelper.Tracker();
         var done = GetCollection(tdb).Query().Select(x => x.Id).ToList();
 
@@ -53,7 +55,12 @@ public partial class RequestMissingMonitor : ITracker<IEnumerable<TransferOrder>
             }
 
             // 如果是历史订单，今天已过开放日，跳过
+            // 可能有没有开放日的情况
             if (order.OpenDate.Year > 2000 && today > order.OpenDate)
+                continue;
+
+            // 签约超过30天
+            if (DateOnly.FromDateTime(DateTime.Now).DayNumber - order.Date.DayNumber > 30)
                 continue;
 
             Check(order, db);

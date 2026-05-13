@@ -21,6 +21,8 @@ public partial class FundSettlementMonitor : ITracker<IEnumerable<TransferReques
         using var db = DbHelper.Base();
         var rid = db.GetCollection<TransferRequest>().Query().Where(x => x.RequestDate.DayNumber > limit).Select(x => new { x.FundId, Date = x.RequestDate }).ToList();
 
+        if (rid.Count == 0) return;
+
         using var tdb = DbHelper.Tracker();
         var done = GetCollection(tdb).Query().Select(x => new { x.FundId, x.Date }).ToList();
 
