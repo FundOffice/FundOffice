@@ -11,4 +11,6 @@
   <Project Path="TestDisclosureChannel/TestDisclosureChannel.csproj" Id="fea4dcc8-b991-4c6d-b2c8-2881fb951f54" />
   <Project Path="TestLitedb/TestLitedb.csproj" Id="f33e637b-ae8f-4fc1-b238-921d6e434092" />
   <Project Path="TestMeishi/TestMeishi.csproj" Id="1627b383-c8e7-4307-acbc-d8c0d4140085" />
+  <Project Path="TestScript/TestScript.csproj" Id="bf12e278-00e6-4762-b360-9118af803319" />
+  <Project Path="TestSimple/TestSimple.csproj" Id="0ba4a74e-eccb-45c9-8d0c-ac3986b21eec" />
 </Solution>
