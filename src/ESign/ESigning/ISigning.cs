@@ -53,7 +53,7 @@ public interface ISigning
 
     Task<TransferOrder[]> QueryOrderAsync(DateTime from = default, DateTime end = default);
 
-    Task<bool> QueryOrderAsync(TransferOrder order);
+    Task<ErrorReturn> QueryOrderAsync(TransferOrder order);
 
     /// <summary>
     /// 创建临时开放日

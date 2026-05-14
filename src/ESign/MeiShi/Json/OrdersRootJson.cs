@@ -135,6 +135,8 @@ public class OrderInfoJson
 
     /// <summary>
     /// 应该是签约状态
+    /// 1 签约中
+    /// 2 完成
     /// </summary>
     [JsonPropertyName("signStatus")]
     public int SignStatus { get; set; }
@@ -208,8 +210,8 @@ public class OrderInfoJson
     ////[JsonPropertyName("recordStatus")]
     ////public object RecordStatus { get; set; }
 
-    //[JsonPropertyName("codeText")]
-    //public string CodeText { get; set; }
+    [JsonPropertyName("codeText")]
+    public string CodeText { get; set; }
 
     //[JsonPropertyName("completionDate")]
     //public string CompletionDate { get; set; }
@@ -233,7 +235,8 @@ public class OrderInfoJson
             InvestorIdentity = this.CardNumber,
             ExternalId = SignFlowId.ToString(),
             CreateDate = DateOnly.FromDateTime(DateTime.Now),
-            Status = SignStatus switch { 1 => OrderStatus.None, 2 => OrderStatus.Accepted , _=> OrderStatus.None  },
+            Status = CodeText?.Trim() switch { "审核" => OrderStatus.Signed, "签约完成" => OrderStatus.Accepted , _=> OrderStatus.None  },
+            IsAborted = IsDelete is 1,
             Source = "meishi",
             Date = GetDate()
         };
@@ -300,6 +303,9 @@ public class OrderFilesJson
 
 public class OrderFilesRootJson
 {
+    [JsonPropertyName("calmHour")]
+    public int? CalmHour { get; set; }
+
     [JsonPropertyName("sealedDocuments")]
     public OrderFilesJson[] Files { get; set; }
 

@@ -56,7 +56,7 @@ public partial class MeiShiAssit : ISigning
     bool isLogin;
 
     public string Id => "meishi";
-     
+
 
     public string? Token { get; set; }
 
@@ -234,6 +234,14 @@ public partial class MeiShiAssit : ISigning
         return new(m.Success);
     }
 
+
+    public async Task<ErrorReturn> Prepare()
+    {
+        if (!IsValid) return new(false, "Config Invalid");
+        if (!isLogin) isLogin = await LoginFromEsign();
+        if (!isLogin) return new(false, "Login Failed");
+        return new(true);
+    }
 
     private async Task<string> Query(DateTime from, DateTime end)
     {
@@ -549,8 +557,9 @@ public partial class MeiShiAssit : ISigning
             request.RequestUri = new Uri("https://vipfunds.simu800.com/vip-manager/manager/signFlowController/querySignFlowAll");
             request.Headers.Add("tokenid", Token);
 
-            object param = end != default ? new { queryType = 0, pageNum = 1, pageSize = 500, signFlowStartDateBegin = from.TimeStampByMilliseconds() } :
-                    new { queryType = 0, pageNum = 1, pageSize = 500, signFlowStartDateBegin = from.TimeStampByMilliseconds() };
+            int[] del = [0];
+            object param = end != default ? new { queryType = 0, pageNum = 1, pageSize = 500, isDeleteList = del, signFlowStartDateBegin = from.TimeStampByMilliseconds() } :
+                    new { queryType = 0, pageNum = 1, pageSize = 500, isDeleteList = del, signFlowStartDateBegin = from.TimeStampByMilliseconds() };
             request.Content = new StringContent(JsonSerializer.Serialize(param), Encoding.UTF8, "application/json");
 
             var response = client.Send(request);
@@ -582,19 +591,23 @@ public partial class MeiShiAssit : ISigning
         return infoJsons.Select(x => x.To()).ToArray();
     }
 
-    public async Task<bool> QueryOrderAsyncA(TransferOrder order)
+    /// <summary>
+    /// 获取签约文件
+    /// </summary>
+    /// <param name="order"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    private async Task<ErrorReturn> QueryOrderFirstTradeAsync(TransferOrder order)
     {
         try
         {
-            if (!IsValid) return false;
-            if (!isLogin) isLogin = await LoginFromEsign();
-            if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return false; }
+            if (await Prepare() is ErrorReturn { Successed: false } r) return r;
 
             // 获取详细数据
             HttpRequestMessage request = new();
             request.Method = HttpMethod.Get;
             request.Headers.Add("tokenid", Token);
-            var uid = order.Type switch { TransferOrderType.FirstTrade => 2070, TransferOrderType.Buy => 3020, _ => 4040 };
+            var uid = order.Type switch { TransferOrderType.FirstTrade => 2060, _ => throw new InvalidOperationException("不支持FirstTrade，请用 QueryOrderAsyncSingle") };
             request.RequestUri = new Uri($"https://vipfunds.simu800.com/vip-manager/manager/signFlowController/querySignFlowInfo?flowId={order.ExternalId}&codeValue={uid}&t={DateTime.Now.TimeStampByMilliseconds()}");
 
             var response = client.Send(request);
@@ -604,15 +617,15 @@ public partial class MeiShiAssit : ISigning
             if (Regex.IsMatch(json, "token已失效|重新登录"))
             {
                 isLogin = false;
-                return false;
+                return new(false, "token已失效|重新登录");
             }
 
             var root = JsonSerializer.Deserialize<RootJson>(json);
 
-            if (root is null) return false;
+            if (root is null) return new(false, "bad json");
 
             var data = root.data.Deserialize<OrderFilesRootJson>();
-            if (data is null) return false;
+            if (data?.Files?.Length is null or 0) return new(false, "json has no file");
 
             foreach (var f in data.Files)
             {
@@ -629,35 +642,37 @@ public partial class MeiShiAssit : ISigning
                     order.RiskPair = new SimpleFile(FileMeta.Create(stream, fn));
             }
 
-            if (!string.IsNullOrWhiteSpace(data.DoubleRecordingUrl))
-            {
-                var fname = $"{order.InvestorName}-{order.Date:yyyy.MM.dd}-双录";
-                var (stream, fn) = await Download(data.DoubleRecordingUrl, fname);
-                order.Videotape = new SimpleFile(FileMeta.Create(stream, fn));
-            }
+            if (data.CalmHour == 24)
+                return await QueryOrderVideoAsync(order);
 
-            return true;
+            return new(true);
         }
         catch (Exception e)
         {
             LogEx.Error(e);
-            return false;
+            return new(false, e.Message);
         }
     }
-    public async Task<bool> QueryOrderAsyncB(TransferOrder order)
+
+    /// <summary>
+    /// 获取双录
+    /// </summary>
+    /// <param name="order"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    private async Task<ErrorReturn> QueryOrderVideoAsync(TransferOrder order)
     {
         try
         {
-            if (!IsValid) return false;
-            if (!isLogin) isLogin = await LoginFromEsign();
-            if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return false; }
+            if (await Prepare() is ErrorReturn { Successed: false } r) return r;
+
 
             // 获取详细数据
             HttpRequestMessage request = new();
             request.Method = HttpMethod.Get;
             request.Headers.Add("tokenid", Token);
-            //var uid = order.Type switch { TransferOrderType.FirstTrade or TransferOrderType.Buy => 2070, _ => 4040 };
-            request.RequestUri = new Uri($"https://vipfunds.simu800.com/vip-manager/manager/signFlowOffline/getSignFlowOffline?signFlowId={order.ExternalId}&t={DateTime.Now.TimeStampByMilliseconds()}");
+            var uid = order.Type switch { TransferOrderType.FirstTrade => 2050, _ => throw new InvalidOperationException("不支持FirstTrade，请用 QueryOrderAsyncSingle") };
+            request.RequestUri = new Uri($"https://vipfunds.simu800.com/vip-manager/manager/signFlowController/querySignFlowInfo?flowId={order.ExternalId}&codeValue={uid}&t={DateTime.Now.TimeStampByMilliseconds()}");
 
             var response = client.Send(request);
 
@@ -666,49 +681,171 @@ public partial class MeiShiAssit : ISigning
             if (Regex.IsMatch(json, "token已失效|重新登录"))
             {
                 isLogin = false;
-                return false;
+                return new(false, "token已失效|重新登录");
             }
 
             var root = JsonSerializer.Deserialize<RootJson>(json);
 
-            if (root is null) return false;
+            if (root is null || root.data is null)
+                throw new InvalidOperationException("JSON解析失败，根对象或data字段为空");
 
-            var data = root.data.Deserialize<OrderFilesRootBJson>();
-            if (data is null) return false;
 
-            foreach (var f in data.Files)
-            {
-                var fname = $"{order.InvestorName}-{order.Date:yyyy.MM.dd}-{f.DocumentName}";
-                var (stream, fn) = await Download(f.SealedUrl!, fname);
+            // 2. 安全获取URL：判断字典键是否存在 + 值不为null
+            var urlNode = root.data["videoUrl"];
+            if (urlNode == null || urlNode.GetValueKind() == JsonValueKind.Null)
+                throw new InvalidOperationException("JSON 中不存在 videoUrl 字段");
 
-                if (f.CodeType == 125)
-                    order.OrderSheet = new SimpleFile(FileMeta.Create(stream, fn));
-                else if (f.CodeType == 123)//(f.DocumentName.Contains("合同"))
-                    order.Contract = new SimpleFile(FileMeta.Create(stream, fn));
-                else if (f.CodeType == 122)//(f.DocumentName.Contains("风险揭示"))
-                    order.RiskDiscloure = new SimpleFile(FileMeta.Create(stream, fn));
-                else if (f.CodeType == 121)//if (f.DocumentName.Contains("告知书"))
-                    order.RiskPair = new SimpleFile(FileMeta.Create(stream, fn));
-                else if (f.CodeType == 126)//(f.DocumentName.Contains("双录"))
-                    order.Videotape = new SimpleFile(FileMeta.Create(stream, fn));
-            }
+            // 安全转换为字符串（替代不安全的AsValue()）
+            var url = urlNode.GetValue<string>().Trim();
+            if (string.IsNullOrEmpty(url))
+                return new(true);
 
-            return true;
+
+            var fname = $"{order.InvestorName}-{order.Date:yyyy.MM.dd}-双录";
+            var (stream, fn) = await Download(url, fname);
+            order.Videotape = new SimpleFile(FileMeta.Create(stream, fn));
+
+            return new(true);
         }
         catch (Exception e)
         {
             LogEx.Error(e);
-            return false;
+            return new(false, e.Message);
         }
     }
 
-    public async Task<bool> QueryOrderAsync(TransferOrder order)
-    {
-        if (_signTypeDict.TryGetValue(order.ExternalId!, out var sr) && sr == 2)
-            return await QueryOrderAsyncB(order);
 
-        return await QueryOrderAsyncA(order);
+
+    public async Task<ErrorReturn> QueryOrderAsyncSingle(TransferOrder order)
+    {
+        try
+        {
+            if (await Prepare() is ErrorReturn { Successed: false } r) return r;
+
+            // 获取详细数据
+            HttpRequestMessage request = new();
+            request.Method = HttpMethod.Get;
+            request.Headers.Add("tokenid", Token);
+            var uid = order.Type switch { TransferOrderType.FirstTrade => throw new InvalidOperationException("不支持FirstTrade，请用 QueryOrderAsyncFirstTrade"), TransferOrderType.Buy => 3010, _ => 4010 };
+            request.RequestUri = new Uri($"https://vipfunds.simu800.com/vip-manager/manager/signFlowController/querySignFlowInfo?flowId={order.ExternalId}&codeValue={uid}&t={DateTime.Now.TimeStampByMilliseconds()}");
+
+            var response = client.Send(request);
+
+            var json = await response.Content.ReadAsStringAsync();
+            SigningLoger.LogRun(this, nameof(QueryOrderAsync), $"{order.ExternalId}", json);
+            if (Regex.IsMatch(json, "token已失效|重新登录"))
+            {
+                isLogin = false;
+                return new(false, "token已失效|重新登录");
+            }
+
+            var root = JsonSerializer.Deserialize<RootJson>(json);
+
+            if (root is null || root.data is null)
+            {
+                throw new InvalidOperationException("JSON解析失败，根对象或data字段为空");
+            }
+
+            // 2. 安全获取URL：判断字典键是否存在 + 值不为null
+            var urlNode = root.data["buyMarkUrl"];
+            if (urlNode == null || urlNode.GetValueKind() == JsonValueKind.Null)
+                throw new InvalidOperationException("JSON 中不存在 buyMarkUrl 字段");
+
+            // 安全转换为字符串（替代不安全的AsValue()）
+            var url = urlNode.GetValue<string>().Trim();
+            if (string.IsNullOrEmpty(url))
+                throw new InvalidOperationException("buyMarkUrl地址为空");
+
+            var fname = $"{order.InvestorName}-{order.Date:yyyy.MM.dd}-{(order.IsBuy() ? "申购申请表" : "赎回申请表")}";
+            var (stream, fn) = await Download(url!, fname);
+
+            order.OrderSheet = new SimpleFile(FileMeta.Create(stream, fn));
+
+            return new(true);
+        }
+        catch (Exception e)
+        {
+            LogEx.Error(e);
+            return new(false, e.Message);
+        }
     }
+
+
+
+    public async Task<ErrorReturn> QueryOrderBaseInfoAsync(TransferOrder order)
+    {
+        try
+        {
+            if (!IsValid) return new(false, "Config Invalid");
+            if (!isLogin) isLogin = await LoginFromEsign();
+            if (!isLogin) return new(false, "Login Failed");
+
+            // 获取详细数据
+            HttpRequestMessage request = new();
+            request.Method = HttpMethod.Get;
+            request.Headers.Add("tokenid", Token);
+            request.RequestUri = new Uri($"https://vipfunds.simu800.com/vip-manager/manager/signFlowController/querySignFlowInfo?flowId={order.ExternalId}&t={DateTime.Now.TimeStampByMilliseconds()}");
+
+            var response = client.Send(request);
+
+            var json = await response.Content.ReadAsStringAsync();
+            SigningLoger.LogRun(this, nameof(QueryOrderAsync), $"{order.ExternalId}", json);
+            if (Regex.IsMatch(json, "token已失效|重新登录"))
+            {
+                isLogin = false;
+                return new(false, "token已失效|重新登录");
+            }
+
+            var root = JsonSerializer.Deserialize<RootJson>(json);
+
+            if (root is null || root.data is null)
+            {
+                throw new InvalidOperationException("JSON解析失败，根对象或data字段为空");
+            }
+
+
+            // 2. 安全获取URL：判断字典键是否存在 + 值不为null
+            var node = root.data["signStatus"];
+            if (node?.GetValueKind() == JsonValueKind.Number)
+                order.Status = node.GetValue<int>() switch { 1 => OrderStatus.Signed, 2 => OrderStatus.Accepted, _ => default };
+
+            node = root.data["isDelete"];
+            if (node?.GetValueKind() == JsonValueKind.Number)
+                order.IsAborted = node.GetValue<int>() == 1;
+
+            return new(true);
+        }
+        catch (Exception e)
+        {
+            LogEx.Error(e);
+            return new(false, e.Message);
+        }
+
+    }
+
+    public async Task<ErrorReturn> QueryOrderAsync(TransferOrder order)
+    {
+        if (await QueryOrderBaseInfoAsync(order) is ErrorReturn r && !r.Successed)
+            return r;
+
+        if (order.Type != TransferOrderType.FirstTrade)
+            return await QueryOrderAsyncSingle(order);
+
+        return await QueryOrderFirstTradeAsync(order);
+    }
+
+    public async Task<ErrorReturn> QueryOrderFilesAsync(TransferOrder order)
+    {
+        if (order.Type != TransferOrderType.FirstTrade)
+            return await QueryOrderAsyncSingle(order);
+
+        return await QueryOrderFirstTradeAsync(order);
+    }
+
+
+
+
+
 
     public async Task<EsigningFundInfo[]> QueryFundInfo()
     {

@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using ClosedXML;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.Logging;
@@ -496,9 +497,9 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
         }
 
         var order = r.Build();
-        if (!await signing.QueryOrderAsync(order))
+        if (await signing.QueryOrderAsync(order) is ErrorReturn { Successed:false} er)
         {
-            HandyControl.Controls.Growl.Warning("未找到对应的订单");
+            HandyControl.Controls.Growl.Warning($"更新订单失败 {er.Error}");
             return;
         }
 

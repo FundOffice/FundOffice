@@ -362,51 +362,44 @@
                         <DataGridTextColumn Binding="{Binding Id}" />
 
 
-
-                        <!--<DataGridTemplateColumn>
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-
-                                    <Button
-                                        x:Name="actionPanel"
-                                        hc:IconElement.Geometry="{StaticResource f.pen}"
-                                        BorderThickness="0"
-                                        Command="{Binding ModifyOrderCommand}"
-                                        CommandParameter="{Binding .}"
-                                        Foreground="Black"
-                                        Style="{StaticResource ButtonIcon.Small}"
-                                        Visibility="Collapsed" />
-
-                                    <DataTemplate.Triggers>
-                        -->
-                        <!--  监听行的鼠标悬停状态  -->
-                        <!--
-                                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
-                                            <Setter TargetName="actionPanel" Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </DataTemplate.Triggers>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>-->
-
                         <DataGridTemplateColumn>
                             <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
+                                <DataTemplate DataType="{x:Type local:TransferOrderViewModel}">
                                     <hc:UniformSpacingPanel Spacing="5">
-                                        <Viewbox Width="15" Height="15">
+                                        <TextBlock
+                                            x:Name="status"
+                                            VerticalAlignment="Center"
+                                            FontSize="9"
+                                            Foreground="Gray"
+                                            Text="签约中"
+                                            Visibility="Collapsed" />
+
+                                        <Viewbox
+                                            x:Name="a"
+                                            Width="15"
+                                            Height="15">
                                             <Path x:Name="req" Data="{StaticResource f.file-circle-minus}" />
                                         </Viewbox>
-                                        <Viewbox Width="15" Height="15">
+                                        <Viewbox
+                                            x:Name="b"
+                                            Width="15"
+                                            Height="15">
                                             <Path x:Name="rec" Data="{StaticResource f.clipboard-check}" />
                                         </Viewbox>
                                     </hc:UniformSpacingPanel>
                                     <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Status}" Value="Signed">
+                                            <Setter TargetName="status" Property="Visibility" Value="Visible" />
+                                            <Setter TargetName="a" Property="Visibility" Value="Collapsed" />
+                                            <Setter TargetName="b" Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
                                         <DataTrigger Binding="{Binding IsApplyed}" Value="False">
                                             <Setter TargetName="req" Property="Fill" Value="Red" />
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding IsConfirmed}" Value="False">
                                             <Setter TargetName="rec" Property="Fill" Value="Red" />
                                         </DataTrigger>
+
                                     </DataTemplate.Triggers>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>

@@ -25,12 +25,12 @@ public enum OrderStatus
     /// <summary>
     /// 投资人签署
     /// </summary>
-    [Description("已签署")]Signed,
+    [Description("已签署")] Signed,
 
     /// <summary>
     /// 管理人接受申请
     /// </summary>
-    [Description("已受理")]Accepted
+    [Description("已受理")] Accepted
 }
 
 
@@ -125,4 +125,6 @@ public class TransferOrder
     /// 回访
     /// </summary>
     public SimpleFile? Review { get; set; }
+
+  
 }

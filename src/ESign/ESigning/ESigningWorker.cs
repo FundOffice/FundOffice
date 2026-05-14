@@ -4,7 +4,6 @@ using FMO.Models;
 using FMO.Trustee;
 using FMO.Utilities;
 using LiteDB;
-using Serilog;
 using System.Runtime.CompilerServices;
 
 namespace FMO.ESigning;
@@ -21,7 +20,7 @@ public record SigningRunMessage(string Name, bool IsRunning);
 
 public class ESigningWorker
 {
-    
+
 
 
     private DateTime _beginDate = new DateTime(2000, 1, 1);//new DateTime(2025, 8, 10);
@@ -172,8 +171,20 @@ public class ESigningWorker
                         item.InvestorId = cid;
                     else LogEx.Error($"Sync Order Investor Not Exists {item.InvestorName}/{item.InvestorIdentity}, in {item.InvestorName} {item.Date} {item.Type}");
 
-                    if (!await sign.QueryOrderAsync(item))
-                        LogEx.Error($"获取Order文件失败 Customer:{item.InvestorName} Fund{item.FundName} {item.Date}");
+
+                    bool check(TransferOrder order)
+                    {
+                        // 检查签约文件
+                        if (order.Type != TransferOrderType.FirstTrade && (order.OrderSheet?.Exists ?? false))
+                            return true;
+
+                        return (order.Contract?.Exists ?? false) && (order.OrderSheet?.Exists ?? false) && (order.RiskDiscloure?.Exists ?? false); 
+                    }
+
+                    // 如果缺文件，就下载
+                    if (check(item) && await sign.QueryOrderAsync(item) is ErrorReturn { Successed: false } er)
+                        LogEx.Error($"获取Order文件失败 Customer:{item.InvestorName} Fund{item.FundName} {item.Date} {er.Error}");
+
                     orders.Add(item);
                 }
 
