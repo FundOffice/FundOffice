@@ -29,7 +29,7 @@ public static class MissionSchedule
     public static void Init()
     {
         using var db = DbHelper.Mission();
-        var ms = db.GetCollection("Mission").Find(Query.Not(nameof(Mission.IsAborted),true)).ToList();
+        var ms = db.GetCollection("Mission").Query().Where(Query.Not(nameof(OnceMission.IsFinished), true)).Where(Query.Not(nameof(Mission.IsAborted),true)).ToList();
 
         missions = ms.Select(x =>
         {
@@ -107,6 +107,8 @@ public static class MissionSchedule
         missions.Remove(id);
         using var db = DbHelper.Mission();
         db.GetCollection<Mission>().UpdateMany($"{{ IsAborted : true }}", $"_id={id}");
+
+        Task.Run(()=> WeakReferenceMessenger.Default.Send(new MissionOverMessage(id)));
     }
 
     internal static void ManualSetNextRun(int id, DateTime time)

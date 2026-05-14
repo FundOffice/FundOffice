@@ -22,3 +22,6 @@ public class MissionProgressMessage
 
     public double Progress { get; set; }
 }
+
+
+public record MissionOverMessage(int Id);

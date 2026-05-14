@@ -25,7 +25,7 @@ public partial class TaskPage : UserControl
         };
     }
 
- 
+
 
     private void ListBox_PreviewMouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
@@ -61,7 +61,7 @@ public class MissionViewAndViewModel
     public required object ViewModel { get; set; }
 }
 
-public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMissionMessage>, IRecipient<Mission>
+public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMissionMessage>, IRecipient<Mission>, IRecipient<MissionOverMessage>
 {
 
     // public ObservableCollection<AutomationViewModelBase> Tasks { get; } = new();
@@ -76,7 +76,6 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
         var ms = MissionSchedule.Missions;
         Templates = MissionManager.Templates;
 
-        var sw = System.Diagnostics.Stopwatch.StartNew();
         Task.Run(async () =>
         {
             await Task.Delay(1);
@@ -84,9 +83,7 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
             {
                 await App.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    sw.Restart();
                     var vm = MissionManager.GetViewModel(m);
-                    sw.Stop(); System.Diagnostics.Debug.WriteLine($"{m.GetType()}, {sw.ElapsedMilliseconds}");
                     Tasks.Add(vm);
                 });
             }
@@ -124,6 +121,15 @@ public partial class TaskPageViewModel : ObservableObject, IRecipient<RemoveMiss
     {
         var vm = MissionManager.GetViewModel(m);
         Tasks.Add(vm);
+    }
+
+    public void Receive(MissionOverMessage message)
+    {
+        Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            if (Tasks.FirstOrDefault(x => x.Id == message.Id) is MissionViewModel m)
+                Tasks.Remove(m);
+        });
     }
 }
 

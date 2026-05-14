@@ -126,7 +126,7 @@
                                             <TextBlock
                                                 Margin="4,0,0,0"
                                                 VerticalAlignment="Center"
-                                                Text="{Binding NextRunTime, StringFormat=M/d HH:mm}" />
+                                                Text="{Binding NextRunTime, StringFormat=HH:mm}" />
                                         </DockPanel>
                                     </Border>
 
@@ -170,7 +170,7 @@
                                         <Viewbox Width="{StaticResource TaskButtonSize}" Height="{StaticResource TaskButtonSize}">
                                             <Path Data="{StaticResource f.clock-rotate-left}" Fill="White" />
                                         </Viewbox>
-                                        <TextBlock Text="{Binding LastRunTime, StringFormat=M/d HH:mm}" />
+                                        <TextBlock x:Name="next" Text="{Binding LastRunTime, StringFormat=yyyy/M/d HH:mm}" />
                                     </DockPanel>
 
 
@@ -214,7 +214,7 @@
 
                                             <TextBlock
                                                 HorizontalAlignment="Center"
-                                                Text="{Binding NextRunTime, StringFormat=M/d HH:mm}"
+                                                Text="{Binding NextRunTime, StringFormat=yyyy/M/d HH:mm}"
                                                 Visibility="{Binding ManualSetNextRun, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
                                         </Grid>
@@ -349,6 +349,11 @@
                 <DataTrigger Binding="{Binding ManualSetNextRun}" Value="True">
                     <Setter TargetName="btn" Property="Visibility" Value="Visible" />
                 </DataTrigger>
+
+                <DataTrigger Binding="{Binding NextRunTime, Converter={StaticResource IsTodayConverter}}" Value="False">
+                    <Setter TargetName="next" Property="Text" Value="{Binding LastRunTime, StringFormat=yyyy/M/d HH:mm}" />
+                </DataTrigger>
+
             </ControlTemplate.Triggers>
         </ControlTemplate>
     </UserControl.Template>

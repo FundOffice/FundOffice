@@ -397,3 +397,17 @@ public class ListIsNotEmpty2BooleanConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+public class IsTodayConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var today = DateTime.Today;
+        return value switch { DateTime d => d.Date == today, DateOnly d => d == DateOnly.FromDateTime(today), _ => false };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}

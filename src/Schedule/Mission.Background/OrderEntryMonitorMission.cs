@@ -11,11 +11,11 @@ namespace Schedule;
 /// </summary>
 public class OrderEntryMonitorMission : OnceMission
 {
-    public int FundId { get; set; }
+    public required int FundId { get; set; }
 
-    public int OrderId { get; set; }
+    public required int OrderId { get; set; }
 
-    public string? FundName { get; set; }
+    public required string FundName { get; set; }
 
     public string? FundCode { get; set; }
 
@@ -24,7 +24,7 @@ public class OrderEntryMonitorMission : OnceMission
     /// <summary>
     /// 签署日
     /// </summary>
-    public DateOnly SignDate { get; set; }
+    public required DateOnly SignDate { get; set; }
 
     protected override void SetNextRun()
     {

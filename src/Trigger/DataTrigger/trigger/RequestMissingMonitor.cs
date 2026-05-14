@@ -75,6 +75,9 @@ public partial class RequestMissingMonitor : ITracker<IEnumerable<TransferOrder>
         if (req is not null)
             return;
 
+
+        var post = order.Type switch { TransferOrderType.Buy or TransferOrderType.FirstTrade or TransferOrderType.Amount or TransferOrderType.RemainAmout => "元", _ => "份额" };
+
         using var trd = DbHelper.Tracker();
         if (GetCollection(trd).FindOne(x => x.Id == order.Id) is null)
         {
@@ -82,14 +85,15 @@ public partial class RequestMissingMonitor : ITracker<IEnumerable<TransferOrder>
             var ms = new OrderEntryMonitorMission
             {
                 FundId = order.FundId,
-                FundName = order.FundName,
+                FundName = order.FundName!,
+                OrderId = order.Id,
                 OpenDay = order.OpenDate,
                 SignDate = order.Date,
                 Name = $"追踪订单是否录单",
                 Description = $"""
                 {order.FundName} 
                 投资人：{order.InvestorName} 
-                {EnumDescriptionTypeConverter.GetEnumDescription(order.Type)} {order.Number}
+                {order.OpenDate} {EnumDescriptionTypeConverter.GetEnumDescription(order.Type)} {order.Number} {post}
                 """,
 
             };
