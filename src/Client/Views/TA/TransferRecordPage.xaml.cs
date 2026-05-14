@@ -1,12 +1,11 @@
-﻿using ClosedXML;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.Logging;
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
-using Serilog;
+using LiteDB;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -41,7 +40,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial ObservableCollection<TransferOrderViewModel>? Orders { get; set; }
 
-    public CollectionViewSource RecordsSource { get; } = new();
+    public CollectionViewSource RecordsSource { get; } = new() ;
     public CollectionViewSource OrderSource { get; } = new();
 
 
@@ -128,31 +127,9 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
         {
             using var db = DbHelper.Base();
             var funds = db.GetCollection<Fund>().FindAll().Select(x => (x.Id, x.Name, x.Code, x.ClearDate)).ToArray();
-            var investors = db.GetCollection<Investor>().Query().Select(x => x.Name).ToArray();
 
             //var map = db.GetCollection<TransferMapping>().FindAll().ToList();
 
-            FundNameFilter.Filters = funds.Select(x => new GridFilterItem
-            {
-                Title = x.Name,
-                FilterFunc = y => y switch { ITransferViewModel v => v.FundName == x.Name, _ => true },
-                IsSelected = false
-            }).ToArray();
-
-            InvestorNameFilter.Filters = investors.Distinct().OfType<string>().Select(x => new GridFilterItem
-            {
-                Title = x,
-                FilterFunc = y => y switch { ITransferViewModel v => v.InvestorName == x, _ => true },
-                IsSelected = false
-            }).ToArray();
-
-
-            OrderStatusFilter.Filters = [
-                new GridFilterItem{ Title = "缺少认申购订单", FilterFunc = y=>y switch{ IHasOrderViewModel x=> x.IsOrderRequired && !x.IsSameManager && x.LackOrder && x.IsBuy(),_=>true } },
-                new GridFilterItem{ Title = "缺少赎回订单", FilterFunc = y=>y switch{ IHasOrderViewModel x=> !x.IsLiquidating && x.IsOrderRequired && !x.IsSameManager && x.LackOrder && x.IsSell(),_=>true } },
-                new GridFilterItem{ Title = "本管理人产品缺少订单", FilterFunc = y=>y switch{ IHasOrderViewModel x=>!x.IsLiquidating && x.IsOrderRequired && x.IsSameManager ,_=>true } },
-                new GridFilterItem{ Title = "有订单", FilterFunc = y => y switch{IHasOrderViewModel x=>x.OrderId != 0 ,_=>true }}
-                ];
 
 
             //var mapd = map.ToDictionary(x => x.OrderId, x => x);
@@ -184,20 +161,33 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
             foreach (var item in orders.IntersectBy(orderConfirm, x => x.Id))
                 item.IsConfirmed = true;
 
-
-            //foreach (var item in orders.Join(requests.Where(x => x.OrderId != 0).Select(x => x.OrderId), x => x.Id, x => x, (o, _) => o))
-            //    item.IsApplyed = true;
-
-            //foreach (var item in orders.Join(records.Where(x => x.OrderId != 0).Select(x => x.OrderId), x => x.Id, x => x, (o, _) => o))
-            //    item.IsConfirmed = true;
+            ///////////////////////////
+            var hasCusIds = tr.Select(x => x.InvestorId).Union(tr2.Select(x => x.InvestorId)).Union(t3.Select(x => x.InvestorId)).Distinct().OrderBy(x => x).ToArray();
+            var investors = db.GetCollection<Investor>().Query().Where(Query.In("_id", hasCusIds.Select(x=>new BsonValue(x)))).Select(x => x.Name).ToArray();
 
 
+            FundNameFilter.Filters = funds.Select(x => new GridFilterItem
+            {
+                Title = x.Name,
+                FilterFunc = y => (y as ITransferViewModel)?.FundName == x.Name,//y switch { ITransferViewModel v => v.FundName == x.Name, _ => true },
+                IsSelected = false
+            }).ToArray();
 
-            //foreach (var item in requests.Join(map, x => x.Id, x => x.RequestId, (o, m) => new { o, m }))
-            //{
-            //    if (item.m.OrderId != 0)
-            //        item.o.OrderId = item.m.OrderId;
-            //}
+            InvestorNameFilter.Filters = investors.OfType<string>().Select(x => new GridFilterItem
+            {
+                Title = x,
+                FilterFunc = y => (y as ITransferViewModel)?.InvestorName == x,//y switch { ITransferViewModel v => v.InvestorName == x, _ => true },
+                IsSelected = false
+            }).ToArray();
+
+
+            OrderStatusFilter.Filters = [
+                new GridFilterItem{ Title = "缺少认申购订单", FilterFunc = y=>y switch{ IHasOrderViewModel x=> x.IsOrderRequired && !x.IsSameManager && x.LackOrder && x.IsBuy(),_=>true } },
+                new GridFilterItem{ Title = "缺少赎回订单", FilterFunc = y=>y switch{ IHasOrderViewModel x=> !x.IsLiquidating && x.IsOrderRequired && !x.IsSameManager && x.LackOrder && x.IsSell(),_=>true } },
+                new GridFilterItem{ Title = "本管理人产品缺少订单", FilterFunc = y=>y switch{ IHasOrderViewModel x=>!x.IsLiquidating && x.IsOrderRequired && x.IsSameManager ,_=>true } },
+                new GridFilterItem{ Title = "有订单", FilterFunc = y => y switch{IHasOrderViewModel x=>x.OrderId != 0 ,_=>true }}
+                ];
+
 
             // 本基金管理人互投 
             var cert = db.GetCollection<Fund>().Query().Select(x => x.Code).ToList();
@@ -497,7 +487,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
         }
 
         var order = r.Build();
-        if (await signing.QueryOrderAsync(order) is ErrorReturn { Successed:false} er)
+        if (await signing.QueryOrderAsync(order) is ErrorReturn { Successed: false } er)
         {
             HandyControl.Controls.Growl.Warning($"更新订单失败 {er.Error}");
             return;
@@ -721,7 +711,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
                 Records?.Add(item);
         });
     }
-    
+
 
 
     public void Receive(TransferRecord message)

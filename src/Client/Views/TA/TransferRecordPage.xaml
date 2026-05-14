@@ -63,6 +63,25 @@
                 </DockPanel>
             </Border>
         </DataTemplate>
+
+        <Style
+            x:Key="TAGrid"
+            BasedOn="{StaticResource DataGrid.NoSelect}"
+            TargetType="DataGrid">
+            <!--  核心只读属性  -->
+            <Setter Property="IsReadOnly" Value="True" />
+
+            <Setter Property="AutoGenerateColumns" Value="False" />
+
+            <!--  列/行虚拟化（大数据量性能优化）  -->
+            <Setter Property="EnableColumnVirtualization" Value="True" />
+            <Setter Property="EnableRowVirtualization" Value="True" />
+            <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+            <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+
+            <!--  延迟滚动（滚动时优化渲染性能）  -->
+            <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="True" />
+        </Style>
     </UserControl.Resources>
     <Grid>
 
@@ -290,13 +309,8 @@
             <TabItem Header="募集户流水">
                 <DataGrid
                     local:InfiniteScrollExtension.Command="{Binding LoadRaisingCommand}"
-                    AutoGenerateColumns="False"
-                    EnableRowVirtualization="True"
-                    IsReadOnly="True"
                     ItemsSource="{Binding TranscationSource.View}"
-                    Style="{StaticResource DataGrid.Small}"
-                    VirtualizingStackPanel.IsVirtualizing="True"
-                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+                    Style="{StaticResource TAGrid}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Binding="{Binding Time, StringFormat=yyyy.MM.dd  HH:mm:ss}" Header="时间" />
                         <DataGridTextColumn
@@ -341,13 +355,8 @@
                 </TabItem.Header>
                 <DataGrid
                     local:InfiniteScrollExtension.Command="{Binding LoadOrderCommand}"
-                    AutoGenerateColumns="False"
-                    EnableRowVirtualization="True"
-                    IsReadOnly="True"
                     ItemsSource="{Binding OrderSource.View}"
-                    Style="{StaticResource DataGrid.NoSelect}"
-                    VirtualizingStackPanel.IsVirtualizing="True"
-                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+                    Style="{StaticResource TAGrid}">
                     <DataGrid.RowStyle>
                         <Style BasedOn="{StaticResource NoSelectDataGridRowStyle}" TargetType="DataGridRow">
 
@@ -670,14 +679,8 @@
                 <DataGrid
                     hc:DataGridAttach.ShowRowNumber="True"
                     local:InfiniteScrollExtension.Command="{Binding LoadRequestCommand}"
-                    AutoGenerateColumns="False"
-                    BorderThickness="0"
-                    EnableRowVirtualization="True"
-                    IsReadOnly="True"
                     ItemsSource="{Binding RequestsSource.View}"
-                    Style="{StaticResource DataGrid.NoSelect}"
-                    VirtualizingStackPanel.IsVirtualizing="True"
-                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+                    Style="{StaticResource TAGrid}">
 
                     <DataGrid.RowStyle>
                         <Style BasedOn="{StaticResource NoSelectDataGridRowStyle}" TargetType="DataGridRow">
@@ -908,14 +911,8 @@
                 <DataGrid
                     hc:DataGridAttach.ShowRowNumber="True"
                     local:InfiniteScrollExtension.Command="{Binding LoadRecordCommand}"
-                    AutoGenerateColumns="False"
-                    BorderThickness="0"
-                    EnableRowVirtualization="True"
-                    IsReadOnly="True"
                     ItemsSource="{Binding RecordsSource.View}"
-                    Style="{StaticResource DataGrid.NoSelect}"
-                    VirtualizingStackPanel.IsVirtualizing="True"
-                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+                    Style="{StaticResource TAGrid}">
                     <DataGrid.RowStyle>
                         <Style BasedOn="{StaticResource NoSelectDataGridRowStyle}" TargetType="DataGridRow">
 
