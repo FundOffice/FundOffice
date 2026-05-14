@@ -10,6 +10,7 @@
   <ItemGroup>
     <Compile Remove="FileStorageInfo.cs" />
     <Compile Remove="Fund\FundAccountType.cs" />
+    <Compile Remove="IdGenerator.cs" />
     <Compile Remove="Investor\Customer.cs" />
     <Compile Remove="LegalEntity\LegalEntity.cs" />
     <Compile Remove="Manager\InstitutionFiles.cs" />

@@ -27,16 +27,7 @@ public class ShareClass
     /// </summary>
     public ShareClass() {   }
 
-    /// <summary>
-    /// 此项用于手动创建
-    /// </summary>
-    /// <param name="name"></param>
-    [SetsRequiredMembers]
-    public ShareClass(string name)
-    {
-        Name = name;
-        Id = IdGenerator.GetNextId(nameof(ShareClass));
-    }
+
 
 }
 
