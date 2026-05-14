@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.IO.AMAC;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
 using Microsoft.Win32;
@@ -16,6 +17,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using Utilities;
 
 namespace FMO;
 
@@ -123,38 +125,46 @@ public partial class FundsPageViewModel : ObservableRecipient, IRecipient<Fund>
     /// <param name="message"></param>
     public void Receive(Fund fund)
     {
-        var fvm = Funds.FirstOrDefault(x => x.Id == fund.Id || x.Code == fund.Code);
-        if (fvm is not null)
+        try
         {
-            if (!fvm.IsEnable && fund.PublicDisclosureSynchronizeTime != default)
-                fvm.IsEnable = true;
+            var fvm = Funds.FirstOrDefault(x => x.Id == fund.Id || x.Code == fund.Code);
+            if (fvm is not null)
+            {
+                if (!fvm.IsEnable && fund.PublicDisclosureSynchronizeTime != default)
+                    fvm.IsEnable = true;
 
-            if (fvm.Name != fund.Name)
-                fvm.Name = fund.Name;
+                if (fvm.Name != fund.Name)
+                    fvm.Name = fund.Name;
 
-            if (fvm.Code != fund.Code)
-                fvm.Code = fund.Code;
+                if (fvm.Code != fund.Code)
+                    fvm.Code = fund.Code;
 
-            if (fvm.SetupDate != fund.SetupDate)
-                fvm.SetupDate = fund.SetupDate;
+                if (fvm.SetupDate != fund.SetupDate)
+                    fvm.SetupDate = fund.SetupDate;
 
-            if (fvm.AuditDate != fund.AuditDate)
-                fvm.AuditDate = fund.AuditDate;
+                if (fvm.AuditDate != fund.AuditDate)
+                    fvm.AuditDate = fund.AuditDate;
 
 
-            fvm.Status = fund.Status;
+                fvm.Status = fund.Status;
 
-            fvm.IsCleared = fund.Status switch { FundStatus.Liquidation or FundStatus.EarlyLiquidation or FundStatus.LateLiquidation => true, _ => false };
+                fvm.IsCleared = fund.Status switch { FundStatus.Liquidation or FundStatus.EarlyLiquidation or FundStatus.LateLiquidation => true, _ => false };
+            }
+            else
+            {
+                Funds.Add(FundViewModel.FromFund(fund));
+
+                TotalCount = Funds.Count();
+            }
+
+            /// 更新
+            UpdateFundCount();
         }
-        else
+        catch (Exception ex)
         {
-            Funds.Add(FundViewModel.FromFund(fund));
-
-            TotalCount = Funds.Count();
+            LogEx.Error(ex);
+            Toast.Warning($"基金信息更新失败{fund?.Name}");
         }
-
-        /// 更新
-        UpdateFundCount();
     }
 
 
