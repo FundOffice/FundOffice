@@ -4,6 +4,7 @@
     <Project Path="../src/Disclosure/Disclosure/Disclosure.csproj" />
     <Project Path="../src/ESign/MeiShi/MeiShi.csproj" />
     <Project Path="../src/Main/Models/Models.csproj" />
+    <Project Path="../src/Utility/FileTemplate/FileTemplate.csproj" />
     <Project Path="../src/Utility/Utilities/Utilities.csproj" />
   </Folder>
   <Project Path="Initial/Initial.csproj" Id="53f9518e-b7d8-4b3a-9ce2-c8edc34a3121" />
