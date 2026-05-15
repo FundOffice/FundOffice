@@ -1,0 +1,39 @@
+﻿desc 单基金份额持有人表
+input Fund[s];Date[s]
+using TransferRecord;Daily[Fund,Date]
+
+---
+public System.Object Build(dynamic REF)
+{
+    IEnumerable<dynamic> records = REF.Records;
+    List<dynamic> dates = REF.Dates;
+    List<dynamic> dailies = REF.Dailies;
+
+    var cur = records.GroupBy(x => x.InvestorId)
+            .Select(x => new
+            {
+                Id = x.Key,
+                x.First().FundId,
+                Name = x.First().InvestorName,
+                Record = x,
+                Share = x.Sum(y => y.ShareChange())
+            }).OrderByDescending(x => x.Share);
+
+    var date = dates[0];
+    var nv = dailies[0].NetValue;
+    var totalShare = cur.Sum(x => x.Share);
+    return new
+    {
+        c = cur.Select(x => new
+        {
+            Name = x.Name,
+            Share = x.Share,
+            Asset = x.Share * nv,
+            Deposit = x.Record.Where(x => x.Type switch { TransferRecordType.Subscription or TransferRecordType.Purchase or TransferRecordType.MoveIn => true, _ => false }).Sum(x => x.ConfirmedNetAmount),
+            Withdraw = x.Record.Where(x => x.Type switch { TransferRecordType.Redemption or TransferRecordType.Redemption or TransferRecordType.MoveOut or TransferRecordType.Distribution => true, _ => false }).Sum(x => x.ConfirmedNetAmount),
+            Proportion = x.Share == 0 ? 0 : x.Share / totalShare
+        })
+    };
+}
+    
+
