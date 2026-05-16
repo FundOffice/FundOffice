@@ -83,5 +83,18 @@ public static class SecurityHelper
         }
     }
 
-
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="sign64"></param>
+    /// <returns></returns>
+    public static bool Verify(string data, string sign64)
+    {
+        using var rsa = RSA.Create();
+        rsa.ImportRSAPublicKey(Convert.FromBase64String(Encoding.UTF8.GetString(AesHelper.Decrypt(_by))), out _);
+        var dataBytes = Encoding.UTF8.GetBytes(data);
+        var signBytes = Convert.FromBase64String(sign64);
+        return rsa.VerifyData(dataBytes, signBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+    }
 }

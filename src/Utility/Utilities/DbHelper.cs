@@ -138,6 +138,10 @@ public static class DbHelper
 
     public static LiteDatabase Tracker() => new LiteDatabase(@$"FileName={_dbfolder}\tracker.db;Password={_password};Connection=Shared");
 
+
+    public static LiteDatabase Template() => new LiteDatabase(@$"FileName={_dbfolder}\template.db;Password={_password};Connection=Shared");
+
+
     public static string[] ListAllFileId()
     {
         List<string> ids = [];

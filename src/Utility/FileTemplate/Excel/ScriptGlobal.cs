@@ -3,9 +3,15 @@
 namespace FMO.Models;
 
 
-public class TemplateGlobal
+public class ScriptGlobal
 {
+    public object[] inputs { get; set; } = [];
+
+
     public Fund[]? Funds { get; set; }
+
+
+    public FundElements[]? Elements { get; set; }
 
     public Investor[]? Investors { get; set; }
 
@@ -20,31 +26,18 @@ public class TemplateGlobal
     /// 
     /// </summary>
     public TransferRecord[]? Records { get; set; }
-
+     
 
     public DateOnly[]? Dates { get; set; }
 
 
 
 }
-
-
-public class TemplateRefer<T> : TemplateGlobal
+ 
+public class TemplateRefer<T> : ScriptGlobal
 {
 
     public ILiteQueryable<T>? query { get; set; }
-
-    //private TransferRecord[] dd(ILiteQueryable<TransferRecord> queryable)
-    //{
-        
-    //}
+     
 }
 
-//public class ttt:TemplateRefer<DailyValue>
-//{
-
-//    public DailyValue[] get()
-//    {
-//        query.Where(x => x.Date <= Dates[0]).OrderByDescending(x => x.Date).Limit(1).ToArray();
-//    }
-//}

@@ -6,7 +6,7 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:FMO"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="模板导出"
+    Title="报表导出"
     Width="800"
     Height="450"
     d:DataContext="{d:DesignInstance Type=local:ExporterWindowViewModel}"
@@ -57,41 +57,7 @@
                 DockPanel.Dock="Right"
                 Style="{StaticResource ButtonPrimary}" />
 
-            <!--<DockPanel DockPanel.Dock="Right" Visibility="{Binding SelectedFileName, Converter={StaticResource Object2VisibilityConverter}}">
-                <hc:SimplePanel DockPanel.Dock="Right">
-                    <ToggleButton Content="自定义" IsChecked="{Binding ShowCustomFileName}" />
-                    <Popup
-                        AllowsTransparency="True"
-                        HorizontalOffset="-300"
-                        IsOpen="{Binding ShowCustomFileName}"
-                        Placement="Bottom"
-                        StaysOpen="False">
-                        <Border Background="WhiteSmoke">
-                            <DockPanel Margin="15">
-                                <Button
-                                    Margin="5,0,0,0"
-                                    Command="{Binding CustomizeCommand}"
-                                    Content="确认"
-                                    DockPanel.Dock="Right"
-                                    Style="{StaticResource ButtonInfo}" />
 
-                                <TextBlock VerticalAlignment="Center" Text="新模板文件名" />
-                                <TextBox
-                                    MinWidth="220"
-                                    Margin="5,0,0,0"
-                                    Text="{Binding CustomFileName}" />
-                            </DockPanel>
-                        </Border>
-                    </Popup>
-                </hc:SimplePanel>
-
-                <Button
-                    Margin="5,0,0,0"
-                    Command="{Binding ModifyCommand}"
-                    Content="修改"
-                    DockPanel.Dock="Right"
-                    Style="{StaticResource ButtonDashedPrimary}" />
-            </DockPanel>-->
             <ListBox
                 ItemsPanel="{StaticResource ItemsWrapPanel}"
                 ItemsSource="{Binding TplFiles}"

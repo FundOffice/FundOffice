@@ -1,0 +1,167 @@
+﻿<Window
+    x:Class="FMO.SheetExportWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="报表生成"
+    Width="500"
+    Height="450"
+    SizeToContent="Height"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <Window.Resources>
+
+        <ItemsPanelTemplate x:Key="wrap">
+            <WrapPanel IsItemsHost="True" />
+        </ItemsPanelTemplate>
+
+
+        <DataTemplate DataType="{x:Type local:FundInputViewModel}">
+            <DockPanel>
+                <DockPanel DockPanel.Dock="Top">
+
+                    <hc:UniformSpacingPanel
+                        x:Name="selbtn"
+                        DockPanel.Dock="Right"
+                        Spacing="5">
+                        <Button Command="{Binding SelectAllFundsCommand}" Content="全选" />
+                        <Button Command="{Binding UnselectAllFundsCommand}" Content="全不选" />
+                        <Button Command="{Binding ReverseSelectFundsCommand}" Content="反选" />
+                    </hc:UniformSpacingPanel>
+
+                    <hc:TextBox hc:InfoElement.Placeholder="输入搜索基金" Text="{Binding SearchKey, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+
+
+                </DockPanel>
+
+                <ListBox
+                    MaxWidth="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}}"
+                    IsSynchronizedWithCurrentItem="False"
+                    ItemsPanel="{StaticResource wrap}"
+                    ItemsSource="{Binding FundSource.View}"
+                    SelectionMode="{Binding ChooseFundMode}">
+                    <ListBox.ItemContainerStyle>
+                        <Style BasedOn="{StaticResource ListBoxItem.AllaysFocus}" TargetType="ListBoxItem">
+                            <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel>
+                                <TextBlock VerticalAlignment="Center" Text="{Binding Fund.ShortName}" />
+
+                                <TextBlock
+                                    Margin="5,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Text="{Binding Fund.Code}" />
+                            </DockPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+
+                </ListBox>
+            </DockPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding ChooseFundMode}" Value="Single">
+                    <Setter TargetName="selbtn" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+
+        <DataTemplate DataType="{x:Type local:DateInputViewModel}">
+            <UniformGrid Rows="1">
+                <Calendar SelectedDate="{Binding Selected}" />
+            </UniformGrid>
+        </DataTemplate>
+
+
+    </Window.Resources>
+
+    <Grid Margin="6">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="40" />
+            <RowDefinition Height="239*" />
+        </Grid.RowDefinitions>
+
+
+        <DockPanel LastChildFill="False">
+            <Button
+                Command="{Binding GenerateSheetCommand}"
+                Content="生成报表"
+                DockPanel.Dock="Right"
+                Style="{StaticResource ButtonPrimary}" />
+
+            <TextBlock
+                VerticalAlignment="Center"
+                FontSize="14"
+                Text="选择模板" />
+            <ListBox
+                Margin="10,0"
+                BorderThickness="0"
+                ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
+                ItemsPanel="{StaticResource wrap}"
+                ItemsSource="{Binding FileNames}"
+                SelectedItem="{Binding SelectedFile}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel>
+                            <TextBlock
+                                MinWidth="50"
+                                HorizontalAlignment="Center"
+                                Text="{Binding}"
+                                TextAlignment="Center" />
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <Button
+                Height="24"
+                Command="{Binding ModifyFileCommand}"
+                Content="修改模板文件"
+                Style="{StaticResource ButtonDanger.Small}" />
+        </DockPanel>
+
+
+        <DockPanel Grid.Row="1">
+            <Separator DockPanel.Dock="Top" />
+
+            <ListBox
+                VerticalAlignment="Center"
+                BorderThickness="0"
+                ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
+                ItemsSource="{Binding Inputs}"
+                SelectedItem="{Binding InputContext}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel>
+                            <TextBlock Margin="5" Text="{Binding Title}" />
+                            <Viewbox
+                                Width="14"
+                                Height="14"
+                                Visibility="{Binding IsFilled, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <Path Data="{StaticResource f.check}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" />
+                            </Viewbox>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+
+        <hc:SimplePanel Grid.Row="2">
+
+            <Separator VerticalAlignment="Top" DockPanel.Dock="Top" />
+            <ContentPresenter Content="{Binding InputContext}" />
+        </hc:SimplePanel>
+
+    </Grid>
+</Window>
