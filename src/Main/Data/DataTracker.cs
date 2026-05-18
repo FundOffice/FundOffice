@@ -201,27 +201,27 @@ public static partial class DataTracker
     //}
 
 
-    public static void CheckIsExpired(IEnumerable<Fund> funds)
-    {
-        using var db = DbHelper.Base();
-        var cur = DateOnly.FromDateTime(DateTime.Today);
+    //public static void CheckIsExpired(IEnumerable<Fund> funds)
+    //{
+    //    using var db = DbHelper.Base();
+    //    var cur = DateOnly.FromDateTime(DateTime.Today);
 
-        var coll = db.GetCollection<FundElements>();
-        foreach (var fund in funds.Where(x => x.Status == FundStatus.Normal || x.Status == FundStatus.StartLiquidation))
-        {
-            var ele = coll.FindById(fund.Id);
-            if (ele is not null)
-            {
-                var expire = ele.ExpirationDate.Value;
+    //    var coll = db.GetCollection<FundElements>();
+    //    foreach (var fund in funds.Where(x => x.Status == FundStatus.Normal || x.Status == FundStatus.StartLiquidation))
+    //    {
+    //        var ele = coll.FindById(fund.Id);
+    //        if (ele is not null)
+    //        {
+    //            var expire = ele.ExpirationDate.Value;
 
-                if (expire != default && cur > expire)
-                {
-                    FundTips.Add(new FundTip(fund.Id, fund.Name, TipType.OverDue, $"基金已超期{cur.DayNumber - expire.DayNumber}天"));
-                    WeakReferenceMessenger.Default.Send(new FundTipMessage(fund.Id));
-                }
-            }
-        }
-    }
+    //            if (expire != default && cur > expire)
+    //            {
+    //                FundTips.Add(new FundTip(fund.Id, fund.Name, TipType.OverDue, $"基金已超期{cur.DayNumber - expire.DayNumber}天"));
+    //                WeakReferenceMessenger.Default.Send(new FundTipMessage(fund.Id));
+    //            }
+    //        }
+    //    }
+    //}
 
     //public static void CheckInvestorBalance()
     //{
