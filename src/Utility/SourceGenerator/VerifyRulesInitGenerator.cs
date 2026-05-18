@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 
-namespace FMO.Generators
+namespace SG
 {
     [Generator]
     public class VerifyRulesGenerator : IIncrementalGenerator

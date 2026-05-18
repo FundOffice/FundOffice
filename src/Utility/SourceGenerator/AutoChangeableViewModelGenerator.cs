@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 
-namespace FMO.SourceGenerator
+namespace SG
 {
     [Generator]
     public class AutoChangeableViewModelGenerator : IIncrementalGenerator
