@@ -116,7 +116,8 @@ public partial class FutureOpenFilesGeneratorWindowViewModel : ObservableObject
             var m = db.GetCollection<Models.Manager>().FindOne(x => x.IsMaster);
             var fund = db.GetCollection<Fund>().FindById(FundId);
             var daily = db.GetDailyCollection(fund.Id).Find(x => x.NetAsset > 0).MaxBy(x => x.Date)!;
-            var ele = db.GetCollection<FundElements>().FindById(fund.Id);
+            var element = db.GetCollection<FundElements>().FindById(fund.Id);
+            //var element = db.GetElements(fund.Id, FactFields.CustodyAccount, FactFields.TrusteeInfo, FactFields.DurationInMonths);
             var legal = db.GetCollection<Participant>().FindAll().FirstOrDefault(x => x.Role.HasFlag(PersonRole.Legal));
             db.Dispose();
             // 数据
@@ -144,8 +145,8 @@ public partial class FutureOpenFilesGeneratorWindowViewModel : ObservableObject
                 {
                     Name = fund.Name,
                     NetAsset = $"{daily.NetAsset / 10000:N0}万",
-                    CustodyAccount = ele.CustodyAccount.Value,
-                    Duration = $"{ele.DurationInMonths}个月"
+                    CustodyAccount = element.CustodyAccount.Value,
+                    Duration = $"{element.DurationInMonths}个月"
                 }
                 ,
                 LegalPerson = FromParitcipant(legal),
@@ -153,7 +154,7 @@ public partial class FutureOpenFilesGeneratorWindowViewModel : ObservableObject
                 ResponsiblePerson = FromParitcipant(ResponsePerson),
                 Trustee = new
                 {
-                    Name = ele.TrusteeInfo.Value?.Name
+                    Name = element.TrusteeInfo.Value?.Name
                 },
                 OpenAgent = FromParitcipant(OpenAgent),
                 OrderPlacer = FromParitcipant(OrderPlacer),

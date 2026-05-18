@@ -3,13 +3,13 @@
     <File Path=".github/workflows/dotnet-desktop.yml" />
   </Folder>
   <Folder Name="/.Test/">
-    <Project Path="test/Initial/Initial.csproj"/>
-    <Project Path="test/TestAmac/TestAmac.csproj"/>
-    <Project Path="test/TestDisclosureChannel/TestDisclosureChannel.csproj"/>
-    <Project Path="test/TestLitedb/TestLitedb.csproj"/>
-    <Project Path="test/TestMeishi/TestMeishi.csproj"/>
-    <Project Path="test/TestScript/TestScript.csproj"/>
-    <Project Path="test/TestSimple/TestSimple.csproj"/>
+    <Project Path="test/Initial/Initial.csproj" />
+    <Project Path="test/TestAmac/TestAmac.csproj" />
+    <Project Path="test/TestDisclosureChannel/TestDisclosureChannel.csproj" />
+    <Project Path="test/TestLitedb/TestLitedb.csproj" />
+    <Project Path="test/TestMeishi/TestMeishi.csproj" />
+    <Project Path="test/TestScript/TestScript.csproj" />
+    <Project Path="test/TestSimple/TestSimple.csproj" />
   </Folder>
   <Folder Name="/Amac/">
     <Project Path="src/Amac/Direct/Amac.Direct.csproj" />
@@ -67,6 +67,7 @@
     <Project Path="src/Utility/SourceGenerator/SourceGenerator.csproj" />
     <Project Path="src/Utility/Utilities/Utilities.csproj" />
   </Folder>
+  <Project Path="../MiniExcel/src/MiniExcel/MiniExcel.csproj" />
 
 
   <Project Path="src/Client/FundOffice.csproj" />

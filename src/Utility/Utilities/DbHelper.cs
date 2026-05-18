@@ -76,11 +76,17 @@ public class BaseDatabase : LiteDatabase
     {
         return string.IsNullOrWhiteSpace(shareClas) ? GetCollection<DailyValue>($"fv_{fid}") : GetCollection<DailyValue>($"fv_{fid}_{shareClas}");
     }
+
+    public FundElements QueryElements(int fid) => FundElements.From(GetCollection<IFundFact>().Find(x => x.FundId == fid).ToArray());
+
+    public FundElements QueryElements(int fid, params string[] fields) => FundElements.From(GetCollection<IFundFact>().Query().Where(x => x.FundId == fid).Where(Query.In(nameof(IFundFact.FactId), fields.Select(x => new BsonValue(x)))).ToArray());
+
+    public T[] QueryFundFact<T>(int fid, string field) => GetCollection<IFundFact>().Find(x => x.FundId == fid && x.FactId == field).OrderByDescending(x=>x.FlowId).OfType<FundFact<T>>().Select(x => x.Data).ToArray();
 }
 
 public static class DbHelper
 {
-    private static string _password ="";
+    private static string _password = "";
 
 
     private const string _dbfolder = "data";
@@ -88,7 +94,7 @@ public static class DbHelper
     private readonly static string _exeFolder;
 
     static DbHelper()
-    { 
+    {
         _exeFolder = AppDomain.CurrentDomain.BaseDirectory;
     }
 

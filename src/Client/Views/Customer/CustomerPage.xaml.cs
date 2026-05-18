@@ -7,7 +7,6 @@ using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
 using Microsoft.Win32;
-using Serilog;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -132,8 +131,12 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
 
         // 未匹配的银行账号 排除产品、特殊账户
         // 托管户
+        //var tracc = db.GetCollection<IFundFact>().Query().Where(x => x.FactId == FactFields.CollectionAccount || x.FactId == FactFields.CustodyAccount).ToArray().OfType<FundFact<BankAccount>>().Select(x => x.Data?.Number);        
+        //var fnames = db.GetCollection<IFundFact>().Query().Where(x => x.FactId == FactFields.FullName).ToArray().OfType<FundFact<string>>().Select(x => x.Data).Distinct().Union(db.GetCollection<Fund>().Query().Select(x => x.Name).ToArray()).ToList();
+
         var tracc = db.GetCollection<FundElements>().FindAll().SelectMany(x => x.CollectionAccount.Changes.Select(y => y.Value.Number).Union(x.CustodyAccount.Changes.Select(y => y.Value.Number))).ToList();
         var fnames = db.GetCollection<FundElements>().FindAll().SelectMany(x => x.FullName.Changes.Select(x => x.Value)).Distinct().Union(db.GetCollection<Fund>().Query().Select(x => x.Name).ToArray()).ToList();
+        
         var acc = db.GetCollection<InvestorBankAccount>().Find(x => x.OwnerId == 0).Where(x => !Regex.IsMatch(x.Name!, "登记专户|子账户|募集专户|公共计息收费")).
                     Where(x => !tracc.Contains(x.Number)).Where(x => !fnames.Any(y => x.Name!.Contains(y))).ToArray();
         UndeservedAccount = [.. acc.Select(x => new UndeservedAccountViewModel(x, Customers))];

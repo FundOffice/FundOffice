@@ -1,6 +1,12 @@
 ﻿namespace FMO.Models;
 
 
+public class FactField(string name) : Attribute
+{
+    public string Name { get; } = name;
+}
+
+
 public partial class FundElements
 {
     public const string SingleShareKey = "单一份额";
@@ -93,7 +99,7 @@ public partial class FundElements
     /// <summary>
     /// 开放日
     /// </summary>
-    public Mutable<OpenRule> FundOpenRule { get; set; } = new(nameof(FundOpenRule));
+    [FactField("OpenRule")] public Mutable<OpenRule> FundOpenRule { get; set; } = new(nameof(FundOpenRule));
 
     /// <summary>
     /// 托管机构

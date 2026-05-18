@@ -144,7 +144,7 @@ public partial class ManualApplyTradeWindowViewModel : ObservableObject
     [ObservableProperty]
     public partial DateTime? Date { get; set; }
 
-    private DateTime[] FixedOpenDates { get; set; }
+    private DateTime[] FixedOpenDates { get; set; } = [];
 
     /// <summary>
     /// 不可更换投资人
@@ -190,6 +190,7 @@ public partial class ManualApplyTradeWindowViewModel : ObservableObject
         using var db = DbHelper.Base();
         var element = db.GetCollection<FundElements>().FindById(value.Id);
         if(element is not null)
+        if (openRule.Length > 0)
         {
             var sheets = element.FundOpenRule.Value?.Apply(DateTime.Now.Year);
             FixedOpenDates = sheets?.Where(x => x.Type is OpenType.Postpone or OpenType.Fixed).Select(x => new DateTime(x.Date, default)).ToArray() ?? [];
@@ -277,7 +278,7 @@ public partial class ManualApplyTradeWindowViewModel : ObservableObject
 
         foreach (var item in ConvertToCalendarDateRanges(dates.Except(FixedOpenDates)))
             picker.BlackoutDates.Add(item);
-         
+
     }
 
     /// <summary>
