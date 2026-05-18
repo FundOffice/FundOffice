@@ -46,7 +46,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\MiniExcel\src\MiniExcel\MiniExcel.csproj" />
+    <ProjectReference Include="..\..\..\..\MiniExcel\src\MiniExcel\MiniExcel.csproj" />
     <ProjectReference Include="..\..\Main\Models\Models.csproj" />
     <ProjectReference Include="..\Utilities\Utilities.csproj" />
   </ItemGroup>
