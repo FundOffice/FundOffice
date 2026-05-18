@@ -190,7 +190,6 @@ public partial class ManualApplyTradeWindowViewModel : ObservableObject
         using var db = DbHelper.Base();
         var element = db.GetCollection<FundElements>().FindById(value.Id);
         if(element is not null)
-        if (openRule.Length > 0)
         {
             var sheets = element.FundOpenRule.Value?.Apply(DateTime.Now.Year);
             FixedOpenDates = sheets?.Where(x => x.Type is OpenType.Postpone or OpenType.Fixed).Select(x => new DateTime(x.Date, default)).ToArray() ?? [];
