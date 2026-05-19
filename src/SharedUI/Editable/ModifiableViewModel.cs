@@ -9,16 +9,17 @@ namespace FMO.Shared;
 
 public enum ValueChangeKind { None, Added, Modified, Deleted }
 
-public class ValueChangeEventArgs : EventArgs
+public class ValueChangeEventArgs
 {
-    public IValueModifier Sender { get; }
+
     public ValueChangeKind Kind { get; }
-    public ValueChangeEventArgs(IValueModifier sender, ValueChangeKind kind) => (Sender, Kind) = (sender, kind);
+
+    public ValueChangeEventArgs(ValueChangeKind kind) => (Kind) = (kind);
 }
 
 public class ValueChangeEventArgs<TProperty> : ValueChangeEventArgs
 {
-    public ValueChangeEventArgs(IValueModifier sender, ValueChangeKind kind) : base(sender, kind)
+    public ValueChangeEventArgs(IValueModifier sender, ValueChangeKind kind) : base(kind)
     {
         if (sender is ModifiableViewModel<TProperty> changeable)
         {
@@ -54,6 +55,28 @@ public interface IValueModifier
     void Clear();
 }
 
+
+public static class CloneHelper
+{
+    /// <summary>
+    /// 克隆值：值类型直接返回，引用类型深克隆
+    /// </summary>
+    public static T? CloneValue<T>(T? value)
+    {
+        // 值类型 → 直接返回
+        if (typeof(T).IsValueType)
+            return value;
+
+        // 引用类型 → 正常克隆逻辑
+        return value switch
+        {
+            null => default,
+            ICloneable c => (T?)c.Clone(),
+            _ => JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value))
+        };
+    }
+}
+
 public abstract partial class ModifiableViewModel<TValue, TDisplay> : ObservableObject, IValueModifier
 {
     public event EventHandler<ValueChangeEventArgs>? Changed;
@@ -64,6 +87,7 @@ public abstract partial class ModifiableViewModel<TValue, TDisplay> : Observable
     public partial TValue? OldValue { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisplayValue))]
     public partial TValue? NewValue { get; set; }
     [ObservableProperty] public partial TValue? FallbackValue { get; set; }
 
@@ -78,7 +102,7 @@ public abstract partial class ModifiableViewModel<TValue, TDisplay> : Observable
 
 
     // 旧值等于回退值，说明当前状态是“继承/未设置”
-    public bool IsInherited => EqualityComparer<TValue?>.Default.Equals(OldValue, FallbackValue);
+    public bool IsInherited => CheckInherited();
 
     public virtual bool CanConfirm => ChangeKind is ValueChangeKind.Added or ValueChangeKind.Modified && (NewValue is not IDataValidation d || d.IsValid());
 
@@ -91,14 +115,22 @@ public abstract partial class ModifiableViewModel<TValue, TDisplay> : Observable
     partial void OnOldValueChanged(TValue? oldValue, TValue? newValue) => UpdateState(oldValue, newValue);
     partial void OnFallbackValueChanged(TValue? oldValue, TValue? newValue) => UpdateState(OldValue, NewValue);
 
+    private bool CheckInherited()
+    {
+        // FallbackValue 是null / 默认值，不认为是继承
+        if (FallbackValue is string s && string.IsNullOrWhiteSpace(s)) return false;
+        else if (FallbackValue is { }) return false;
+
+        return EqualityComparer<TValue?>.Default.Equals(OldValue, FallbackValue);
+    }
+
     private void UpdateState(TValue? oldVal, TValue? newVal)
     {
         var eq = EqualityComparer<TValue?>.Default;
         bool oldIsFallback = eq.Equals(OldValue, FallbackValue);
         bool newIsFallback = eq.Equals(NewValue, FallbackValue);
         bool newEqualsOld = eq.Equals(NewValue, OldValue);
-
-        Debug.WriteLine($"{CanClear} {CanReset}");
+         
         // 🔑 核心状态机：以 FallbackValue 为“未设置”基准线
         ChangeKind = newEqualsOld switch
         {
@@ -110,7 +142,6 @@ public abstract partial class ModifiableViewModel<TValue, TDisplay> : Observable
 
         DetachDeepNotify(oldVal);
         AttachDeepNotify(newVal);
-        Changed?.Invoke(this, new ValueChangeEventArgs(this, ChangeKind));
     }
 
     private void AttachDeepNotify(TValue? value)
@@ -129,14 +160,18 @@ public abstract partial class ModifiableViewModel<TValue, TDisplay> : Observable
     [RelayCommand]
     public void Apply()
     {
-        OldValue = CloneValue(NewValue); // 触发 OnOldValueChanged → ChangeKind = None
+        ValueChangeEventArgs<TValue> e = new(this, ChangeKind);
+        OldValue = CloneHelper.CloneValue(NewValue); // 触发 OnOldValueChanged → ChangeKind = None
+        Changed?.Invoke(this, e);
     }
 
     /// <summary>还原：放弃当前编辑，回退到已确认的旧值</summary>
     [RelayCommand]
     public void Reset()
     {
-        NewValue = CloneValue(OldValue); // 触发 OnNewValueChanged → ChangeKind = None
+        NewValue = CloneHelper.CloneValue(OldValue); // 触发 OnNewValueChanged → ChangeKind = None
+        ValueChangeEventArgs<TValue> e = new(this, ChangeKind);
+        Changed?.Invoke(this, e);
     }
 
     /// <summary>清空/删除：将新值设为回退值，标记为 Deleted</summary>
@@ -145,14 +180,11 @@ public abstract partial class ModifiableViewModel<TValue, TDisplay> : Observable
     {
         if (!CanClear) return;
         NewValue = FallbackValue; // 触发 OnNewValueChanged → ChangeKind = Deleted
+        ValueChangeEventArgs<TValue> e = new(this, ChangeKind);
+        Changed?.Invoke(this, e);
     }
 
-    private static TValue? CloneValue(TValue? value) => value switch
-    {
-        null => default,
-        ICloneable c => (TValue?)c.Clone(),
-        _ => JsonSerializer.Deserialize<TValue>(JsonSerializer.Serialize(value))
-    };
+
 }
 
 
