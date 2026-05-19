@@ -124,11 +124,7 @@
                         Margin="0,5"
                         Foreground="White"
                         Text="公告" />
-                    <Button
-                        hc:IconElement.Geometry="{StaticResource f.plus}"
-                        Command="{Binding AddAnnouncementCommand}"
-                        Foreground="White"
-                        Style="{StaticResource ButtonIcon.Small}" />
+
                 </DockPanel>
             </Border>
             <ListBox

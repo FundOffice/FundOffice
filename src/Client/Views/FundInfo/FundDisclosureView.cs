@@ -36,7 +36,7 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<IDis
         using var db = DbHelper.Base();
         var data = db.GetCollection<FundAnnouncement>().Find(x => x.FundId == fid).ToArray();
 
-        Announcements = [.. data.Select(x => new AnnouncementViewModel(x))];
+        //Announcements = [.. data.Select(x => new AnnouncementViewModel(x))];
 
 
         IEnumerable<PeriodicalDisclosureNotice> notices = db.GetCollection<IDisclosureNotice>().Query().
@@ -65,7 +65,7 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<IDis
     public int FundId { get; }
 
 
-    public ObservableCollection<AnnouncementViewModel> Announcements { get; init; }
+    //public ObservableCollection<AnnouncementViewModel> Announcements { get; init; }
 
 
 
@@ -78,16 +78,7 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<IDis
 
     public ObservableCollection<QuarterlyUpdateViewModel> QuarterlyDisclosure { get; }
 
-    [RelayCommand]
-    public void AddAnnouncement()
-    {
-        using var db = DbHelper.Base();
-        var obj = new FundAnnouncement { FundId = FundId };
-        db.GetCollection<FundAnnouncement>().Insert(obj);
-
-        Announcements?.Add(new(obj));
-    }
-
+ 
     public void Receive(IDisclosureNotice message)
     {
     }
@@ -108,52 +99,7 @@ public partial class FundDisclosureViewModel : ObservableObject, IRecipient<IDis
 }
 
 
-public partial class AnnouncementViewModel : EditableControlViewModelBase<FundAnnouncement>
-{
-    public AnnouncementViewModel(FundAnnouncement obj)
-    {
-        Id = obj.Id;
-        FundId = obj.FundId;
-
-        Title = new()
-        {
-            InitFunc = x => x.Title,
-            UpdateFunc = (x, y) => x.Title = y,
-            ClearFunc = x => x.Title = null
-        };
-        Title.Init(obj);
-
-        Date = new()
-        {
-            InitFunc = x => x.Date == default ? null : new DateTime(x.Date, default),
-            UpdateFunc = (x, y) => x.Date = y is null ? default : DateOnly.FromDateTime(y.Value),
-            ClearFunc = x => x.Date = default,
-            DisplayFunc = x => x?.ToString("yyyy-MM-dd")
-        };
-        Date.Init(obj);
-
-        File = new(obj.File);
-        File.FileChanged += f =>
-        {
-            if (Id == 0) return; // 新建时不保存
-            using var db = DbHelper.Base();
-            db.GetCollection<FundAnnouncement>().UpdateMany(BsonMapper.Global.ToDocument(new { File = f }).ToString(), $"_id={Id}");
-        };
-    }
-
-    public DualFileViewModel File { get; }
-
-
-    public int FundId { get; }
-
-
-    public ChangeableViewModel<FundAnnouncement, string?> Title { get; }
-
-    public ChangeableViewModel<FundAnnouncement, DateTime?> Date { get; }
-
-
-    protected override FundAnnouncement InitNewEntity() => new FundAnnouncement { FundId = FundId };
-}
+ 
 
 public partial class AmacDirectResultViewModel : ObservableObject
 {
