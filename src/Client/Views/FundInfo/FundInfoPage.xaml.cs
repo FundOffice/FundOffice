@@ -742,7 +742,9 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     [RelayCommand]
     public void DeleteFlow(FlowViewModel flow)
     {
-        if (HandyControl.Controls.MessageBox.Show("删除后不可恢复，同时会删除关联的要素", "确认删除", System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.No)
+        if (flow is ContractRelatedFlowViewModel && HandyControl.Controls.MessageBox.Show("删除后不可恢复，同时会删除关联的要素", "确认删除", System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.No)
+            return;
+        else if(HandyControl.Controls.MessageBox.Show("删除后不可恢复!!，确认删除？", "确认删除", System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.No)
             return;
 
         using var db = DbHelper.Base();
