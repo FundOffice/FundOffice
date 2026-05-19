@@ -14,12 +14,39 @@
     d:DesignWidth="800"
     mc:Ignorable="d">
     <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Type shared:ChangeableContainer}}" TargetType="shared:ChangeableContainer">
-            <Setter Property="Entity" Value="{Binding RelativeSource={RelativeSource AncestorType=local:CustomerView}, Path=DataContext}" />
+        <Style BasedOn="{StaticResource {x:Type shared:ModifiableControl}}" TargetType="shared:ModifiableControl">
             <Setter Property="IsReadOnly" Value="{Binding RelativeSource={RelativeSource AncestorType=local:CustomerView}, Path=DataContext.IsReadOnly}" />
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock
+                            Width="50"
+                            Foreground="Gray"
+                            Text="{Binding}" />
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <shared:CopyableTextBlock Foreground="Gray" Text="{Binding}" />
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <SolidColorBrush x:Key="LabelBrush">Gray</SolidColorBrush>
+
+
+        <DataTemplate DataType="{x:Type local:IdentityViewMdoel}">
+            <DockPanel>
+                <ComboBox
+                    BorderThickness="0"
+                    ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=local:CustomerView}, Path=DataContext.IDTypes}"
+                    SelectedItem="{Binding Type}" />
+                <TextBox BorderThickness="0" Text="{Binding Id}" />
+            </DockPanel>
+        </DataTemplate>
 
 
 
@@ -221,11 +248,12 @@
                     Margin="0,0,40,0"
                     BorderBrush="{StaticResource PrimaryBrush}"
                     BorderThickness="0,0,0,1">
-                    <shared:ChangeableControl
+                    <shared:ModifiableControl
                         HorizontalContentAlignment="Center"
-                        Binding="{Binding Name}"
                         EditTemplate="{StaticResource DT.InvestorName}"
+                        Header="投资人"
                         IsReadOnly="{Binding IsReadOnly}"
+                        Modifier="{Binding Name}"
                         TextElement.FontWeight="Bold" />
                 </Border>
 
@@ -233,66 +261,51 @@
 
                 <!--  投资人类型  -->
                 <DockPanel LastChildFill="False">
-                    <shared:ChangeableContainer Binding="{Binding EntityType}">
-                        <shared:ChangeableContainer.ContentTemplate>
+                    <shared:ModifiableControl Header="客户类型" Modifier="{Binding EntityType}">
+                        <shared:ModifiableControl.EditTemplate>
                             <DataTemplate>
                                 <ComboBox
                                     MinWidth="100"
+                                    BorderThickness="0"
                                     ItemsSource="{x:Static local:CustomerViewModel.EntityTypes}"
                                     SelectedItem="{Binding NewValue}" />
                             </DataTemplate>
-                        </shared:ChangeableContainer.ContentTemplate>
-                    </shared:ChangeableContainer>
+                        </shared:ModifiableControl.EditTemplate>
+                    </shared:ModifiableControl>
 
-                    <shared:ChangeableContainer Binding="{Binding Type}">
-                        <shared:ChangeableContainer.ContentTemplate>
+                    <shared:ModifiableControl Margin="5,0" Modifier="{Binding Type}">
+                        <shared:ModifiableControl.EditTemplate>
                             <DataTemplate>
                                 <ComboBox
                                     MinWidth="100"
+                                    BorderThickness="0"
                                     ItemsSource="{Binding DataContext.InvestorTypes, RelativeSource={RelativeSource AncestorType=local:CustomerView}}"
                                     SelectedItem="{Binding NewValue}" />
                             </DataTemplate>
-                        </shared:ChangeableContainer.ContentTemplate>
-                    </shared:ChangeableContainer>
+                        </shared:ModifiableControl.EditTemplate>
+                    </shared:ModifiableControl>
 
                 </DockPanel>
 
 
 
                 <!--  证件  -->
-                <DockPanel LastChildFill="False">
-                    <shared:ChangeableContainer Binding="{Binding IDType}">
-                        <shared:ChangeableContainer.ContentTemplate>
-                            <DataTemplate>
-                                <ComboBox
-                                    MinWidth="100"
-                                    ItemsSource="{Binding DataContext.IDTypes, RelativeSource={RelativeSource AncestorType=local:CustomerView}}"
-                                    SelectedItem="{Binding NewValue}" />
-                            </DataTemplate>
-                        </shared:ChangeableContainer.ContentTemplate>
-                    </shared:ChangeableContainer>
+                <shared:ModifiableControl Header="证件" Modifier="{Binding Identity}">
+                    <shared:ModifiableControl.EditTemplate>
+                        <DataTemplate>
+                            <ContentPresenter Content="{Binding NewValue}" />
+                        </DataTemplate>
+                    </shared:ModifiableControl.EditTemplate>
+                </shared:ModifiableControl>
 
-
-                    <shared:ChangeableContainer Binding="{Binding Identity}">
-                        <shared:ChangeableContainer.ContentTemplate>
-                            <DataTemplate>
-                                <TextBox
-                                    MinWidth="200"
-                                    hc:InfoElement.Placeholder="证件号码"
-                                    IsReadOnly="{Binding OldValue, Converter={StaticResource Object2BooleanConverter}}"
-                                    Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=100}"
-                                    TextAlignment="Center" />
-                            </DataTemplate>
-                        </shared:ChangeableContainer.ContentTemplate>
-                    </shared:ChangeableContainer>
-                </DockPanel>
-
-
-                <shared:ChangeableContainer Binding="{Binding Efficient}">
-                    <shared:ChangeableContainer.ContentTemplate>
+                <shared:ModifiableControl Header="有效期" Modifier="{Binding Efficient}">
+                    <shared:ModifiableControl.EditTemplate>
                         <DataTemplate>
                             <DockPanel DataContext="{Binding NewValue}">
-                                <DatePicker MinWidth="100" SelectedDate="{Binding Begin, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
+                                <DatePicker
+                                    MinWidth="100"
+                                    BorderThickness="0"
+                                    SelectedDate="{Binding Begin, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
                                 <DockPanel Visibility="{Binding IsLongTerm, Converter={StaticResource Boolean2VisibilityReConverter}}">
                                     <TextBlock
                                         Margin="5,0"
@@ -306,17 +319,26 @@
                                     IsChecked="{Binding IsLongTerm}" />
                             </DockPanel>
                         </DataTemplate>
-                    </shared:ChangeableContainer.ContentTemplate>
-                </shared:ChangeableContainer>
+                    </shared:ModifiableControl.EditTemplate>
+                </shared:ModifiableControl>
 
                 <UniformGrid Rows="1">
-                    <shared:ChangeableContainer HorizontalContentAlignment="Stretch" Binding="{Binding Email}" />
+                    <shared:ModifiableControl
+                        HorizontalContentAlignment="Stretch"
+                        Header="Email"
+                        Modifier="{Binding Email}" />
 
-                    <shared:ChangeableContainer HorizontalContentAlignment="Stretch" Binding="{Binding Phone}" />
+                    <shared:ModifiableControl
+                        HorizontalContentAlignment="Stretch"
+                        Header="手机"
+                        Modifier="{Binding Phone}" />
                 </UniformGrid>
 
 
-                <shared:ChangeableContainer HorizontalContentAlignment="Stretch" Binding="{Binding Address}" />
+                <shared:ModifiableControl
+                    HorizontalContentAlignment="Stretch"
+                    Header="地址"
+                    Modifier="{Binding Address}" />
 
 
                 <!--<local:MultiFileDisplay
@@ -327,7 +349,7 @@
 
                 <DockPanel LastChildFill="False">
                     <!--<shared:MultipleFileView
-                        Binding="{Binding IDCards}"
+                        Modifier="{Binding IDCards}"
                         IsReadOnly="{Binding IsReadOnly}"
                         Style="{StaticResource CardFileStyle}" />-->
 
@@ -816,7 +838,7 @@
             local:HelpService.Help="{StaticResource Help.Investor.Modify}"
             local:HelpService.Offset="-80,0"
             local:HelpService.Placement="LeftBottom"
-            IsChecked="{Binding IsReadOnly}"
+            IsChecked="{Binding IsReadOnly, Converter={StaticResource Boolean2BooleanReConverter}}"
             Style="{StaticResource EditSwitch}" />
 
     </Grid>

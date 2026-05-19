@@ -8,7 +8,6 @@ using FMO.PDF;
 using FMO.Shared;
 using FMO.Utilities;
 using Microsoft.Win32;
-using Serilog;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -42,11 +41,12 @@ public partial class CustomerView : UserControl
 /// <summary>
 /// customer vm
 /// </summary>
-public partial class CustomerViewModel : EditableControlViewModelBase<Investor>, IRecipient<IEnumerable<LinkOrderMessage>>, IRecipient<EntityDeleted>
+[EntityModifiable(typeof(Investor))]
+public partial class CustomerViewModel : ObservableObject, IRecipient<IEnumerable<LinkOrderMessage>>, IRecipient<EntityDeleted>
 {
     [TypeConverter(typeof(EnumDescriptionTypeConverter))] public enum NaturalType { [Description("非员工")] NonEmployee, [Description("员工")] Employee };
 
-    public static RiskEvaluation[] RiskEvaluations { get; } = [RiskEvaluation.C1, RiskEvaluation.C2, RiskEvaluation.C3, RiskEvaluation.C4, RiskEvaluation.C5];
+    public static RiskEvaluation[] RiskEvaluations { get; } = [Models.RiskEvaluation.C1, Models.RiskEvaluation.C2, Models.RiskEvaluation.C3, Models.RiskEvaluation.C4, Models.RiskEvaluation.C5];
 
     public static EntityType[] EntityTypes { get; } = [Models.EntityType.Natural, Models.EntityType.Institution, Models.EntityType.Product,];
 
@@ -84,30 +84,23 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
         
         """;
 
-    public ChangeableViewModel<Investor, string> Name { get; }
+    public int Id { get; }
 
-    public ChangeableViewModel<Investor, EntityType> EntityType { get; } = new() { InitFunc = x => x.EntityType, UpdateFunc = (x, y) => x.EntityType = y, ClearFunc = x => x.EntityType = Models.EntityType.Unk, Label = "客户类型" };
+    private Investor _investor;
 
+    public ModifiableViewModel<DateEfficientViewModel> Efficient { get; private set; } = null!;
+
+
+    public ModifiableViewModel<IdentityViewMdoel> Identity { get; private set; } = null!;
 
     [ObservableProperty]
     public partial AmacInvestorType[]? InvestorTypes { get; set; }
 
 
-    public ChangeableViewModel<Investor, AmacInvestorType> Type { get; } = new() { InitFunc = x => x.Type, UpdateFunc = (x, y) => x.Type = y, ClearFunc = x => x.Type = AmacInvestorType.None, Label = "" };
+    [ObservableProperty]
+    public partial bool IsReadOnly { get; set; } = true;
 
-
-
-    public ChangeableViewModel<Investor, IDType> IDType { get; }
-
-    public ChangeableViewModel<Investor, string> Identity { get; }
-
-    public ChangeableViewModel<Investor, string> Email { get; } = new() { InitFunc = x => x.Email, UpdateFunc = (x, y) => x.Email = y, ClearFunc = x => x.Email = null, Label = "Email" };
-
-    public ChangeableViewModel<Investor, string> Phone { get; } = new() { InitFunc = x => x.Phone, UpdateFunc = (x, y) => x.Phone = y, ClearFunc = x => x.Phone = null, Label = "联系方式" };
-
-    public ChangeableViewModel<Investor, string> Address { get; } = new() { InitFunc = x => x.Address, UpdateFunc = (x, y) => x.Address = y, ClearFunc = x => x.Address = null, Label = "联系地址" };
-
-    public MultiFileViewModel IDCards { get; }
+    public MultiFileViewModel IDCards { get; } = new();
 
 
     [ObservableProperty]
@@ -130,9 +123,6 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
     [ObservableProperty]
     public partial string? Nation { get; set; }
 
-
-    //public EntityDateEfficientViewModel<Investor> Efficient { get; } = new() { InitFunc = x => x.Efficient, UpdateFunc = (x, y) => x.Efficient = y, ClearFunc = x => x.Efficient = default, Label = "证件有效期" };
-    public ChangeableViewModel<Investor, DateEfficientViewModel> Efficient { get; } = new() { InitFunc = x => new DateEfficientViewModel(x.Efficient), UpdateFunc = (x, y) => x.Efficient = y?.Build() ?? default, Label = "证件有效期" };
 
     [ObservableProperty]
     public partial RiskLevel? RiskLevel { get; set; }
@@ -200,70 +190,26 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
     public CustomerViewModel(int id)
     {
         using var db = DbHelper.Base();
-        var investor = db.GetCollection<Investor>().FindById(id);
+        _investor = db.GetCollection<Investor>().FindById(id);
         var cards = db.GetCollection<InvestorCertifications>().FindById(id);
         Id = id;
 
+
+        FillBy(_investor);
+        Type.PropertyChanged += Type_PropertyChanged;
+        EntityType.PropertyChanged += EntityType_PropertyChanged;
+        EntityType_PropertyChanged(default, default);
+        Type_PropertyChanged(default, default);
+
         WeakReferenceMessenger.Default.RegisterAll(this);
 
-        Name = new ChangeableViewModel<Investor, string>(investor, init: x => x.Name, update: (x, y) => x.Name = y ?? string.Empty, clear: x => x.Name = string.Empty);
 
-
-        //Name.Init(investor);
-        EntityType.Init(investor);
-        EntityType.PropertyChanged += EntityType_PropertyChanged;
-        EntityType_PropertyChanged(null, null);
-
-        Type.Init(investor);
-        Type.PropertyChanged += Type_PropertyChanged;
-        Type_PropertyChanged(null, null);
-
-        Identity = new()
-        {
-            InitFunc = x => x.Identity?.Id,
-            UpdateFunc = (x, y) => x.Identity = x.Identity is null ? new Identity { Id = y! } : x.Identity with { Id = y! },
-            ClearFunc = x => x.Identity = x.Identity is null ? null : x.Identity with { Id = string.Empty }
-        };
-
-        Identity.Init(investor);
-
-        IDType = new()
-        {
-            InitFunc = x => x.Identity?.Type ?? Models.IDType.Unknown,
-            UpdateFunc = (x, y) => x.Identity = x.Identity is null ? new Identity { Type = y } : x.Identity with { Type = y },
-            ClearFunc = x => x.Identity = x.Identity is null ? null : x.Identity with { Type = default },
-            Label = "证件类型"
-        };
-
-        IDType.Init(investor);
-
-        Email.Init(investor);
-        Phone.Init(investor);
-        Address.Init(investor);
-
-
-
-
-        IDCards = new(cards);
-        IDCards.FileChanged += (x) =>
-        {
-            using var db = DbHelper.Base();
-            db.GetCollection<InvestorCertifications>().Upsert(new InvestorCertifications
-            {
-                Id = Id,
-                Files = x.Files
-            });
-        };
-
-        Efficient.Init(investor);
-
-
-        Accounts = [.. db.GetCollection<InvestorBankAccount>().Find(x => x.OwnerId == investor.Id)];
+        Accounts = [.. db.GetCollection<InvestorBankAccount>().Find(x => x.OwnerId == _investor.Id)];
 
 
 
         var iq = db.GetCollection<InvestorQualification>().Find(x => x.InvestorId == Id/* || (x.InvestorId == 0 && x.InvestorName == investor.Name && x.IdentityCode == investor.Identity.Id)*/).ToArray();
-        Qualifications = [.. iq.Select(x => QualificationViewModel.From(x, investor.Type, investor.EntityType))];
+        Qualifications = [.. iq.Select(x => QualificationViewModel.From(x, _investor.Type, _investor.EntityType))];
         Qualifications.CollectionChanged += (s, e) => OnPropertyChanged(nameof(CanSkipRiskEvaluation));
 
 
@@ -473,28 +419,10 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
     //}
 
 
-    protected override void ModifyOverride(IPropertyModifier unit)
+    public partial void OnEntityChanged()
     {
-        base.ModifyOverride(unit);
-
-        var db = DbHelper.Base();
-        var customer = db.GetCollection<Investor>().FindById(Id);
-        db.Dispose();
-        if (customer is not null)
-            WeakReferenceMessenger.Default.Send(customer);
-    }
-
-
-    protected override void SaveOverride()
-    {
-        base.SaveOverride();
-
-
-        var db = DbHelper.Base();
-        var customer = db.GetCollection<Investor>().FindById(Id);
-        db.Dispose();
-        if (customer is not null)
-            WeakReferenceMessenger.Default.Send(customer);
+        using var db = DbHelper.Base();
+        db.GetCollection<Investor>().Upsert(_investor);
     }
 
 
@@ -576,12 +504,12 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
             if (m.Success)
                 NewEvaluation = m.Groups[1].Value switch
                 {
-                    "1" => RiskEvaluation.C1,
-                    "2" => RiskEvaluation.C2,
-                    "3" => RiskEvaluation.C3,
-                    "4" => RiskEvaluation.C4,
-                    "5" => RiskEvaluation.C5,
-                    _ => RiskEvaluation.Unk
+                    "1" => Models.RiskEvaluation.C1,
+                    "2" => Models.RiskEvaluation.C2,
+                    "3" => Models.RiskEvaluation.C3,
+                    "4" => Models.RiskEvaluation.C4,
+                    "5" => Models.RiskEvaluation.C5,
+                    _ => Models.RiskEvaluation.Unk
                 };
         }
 
@@ -662,7 +590,7 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
             using var db = DbHelper.Base();
             if (db.GetCollection<Investor>().FindById(Id) is Investor investor)
             {
-                investor.RiskEvaluation = RiskEvaluation.C5;
+                investor.RiskEvaluation = Models.RiskEvaluation.C5;
                 db.GetCollection<Investor>().Update(investor);
                 WeakReferenceMessenger.Default.Send(investor);
             }
@@ -828,9 +756,6 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
     //}
 
 
-
-
-    protected override Investor InitNewEntity() => new Investor { Name = string.Empty };
 
     public void Receive(LinkOrderMessage message)
     {
@@ -1040,7 +965,7 @@ public partial class RiskAssessmentViewModel : ObservableObject
         InvestorId = risk.InvestorId;
         Date = risk.Date;
         Level = risk.Level;
-      
+
         File = risk.File;
     }
 
@@ -1071,4 +996,21 @@ public partial class RiskAssessmentViewModel : ObservableObject
     }
 }
 
- 
+
+[AutoViewModel(typeof(Identity))]
+public partial class IdentityViewMdoel : IViewModel<Identity> ,IEquatable<IdentityViewMdoel>, IDataValidation, IDisplay<string>
+{
+    public bool Equals(IdentityViewMdoel? other)
+    {
+        return this.Type == other?.Type && Id == other?.Id && Other == other?.Other;
+    }
+
+    public bool IsValid() => Id?.Length > 3;
+
+    public override string ToString()
+    {
+        return $"{EnumDescriptionTypeConverter.GetEnumDescription(Type)} {Id}";
+    }
+
+    public string Transfer() => $"{EnumDescriptionTypeConverter.GetEnumDescription(Type)}   {Id}";
+}

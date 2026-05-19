@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FMO.Models;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Text.Json;
 
 namespace FMO.Shared;
@@ -130,7 +130,7 @@ public abstract partial class ModifiableViewModel<TValue, TDisplay> : Observable
         bool oldIsFallback = eq.Equals(OldValue, FallbackValue);
         bool newIsFallback = eq.Equals(NewValue, FallbackValue);
         bool newEqualsOld = eq.Equals(NewValue, OldValue);
-         
+
         // 🔑 核心状态机：以 FallbackValue 为“未设置”基准线
         ChangeKind = newEqualsOld switch
         {
@@ -193,5 +193,10 @@ public class ModifiableViewModel<TValue> : ModifiableViewModel<TValue, string>
 
     //public Func<TValue?, string>? DisplayFunc { get; set; }
 
-    public override string? DisplayValue => NewValue switch { IDisplay<string> t => t.Transfer(), _ => NewValue?.ToString() };
+    public override string? DisplayValue => NewValue switch
+    {
+        IDisplay<string> t => t.Transfer(),
+        Enum e => EnumDescriptionTypeConverter.GetEnumDescription(e),
+        _ => NewValue?.ToString()
+    };
 }
