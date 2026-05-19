@@ -76,28 +76,40 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
                         !prop.IsStatic && prop.SetMethod != null && !prop.SetMethod.IsInitOnly)
                     {
                         bool isUserDeclared = declaredPropertiesMap.TryGetValue(prop.Name, out var declaredProp);
-                        string genericArg;
-                        bool isNullable;
 
                         if (isUserDeclared && declaredProp != null)
                         {
                             var declaredType = declaredProp.Type as INamedTypeSymbol;
                             if (declaredType != null && IsModifiableViewModel(declaredType) && declaredType.TypeArguments.Length > 0)
                             {
-                                var vmType = declaredType.TypeArguments[0];
-                                var vmTypeClean = (vmType as INamedTypeSymbol)?.WithNullableAnnotation(NullableAnnotation.NotAnnotated) ?? vmType;
+                                var vmInnerType = declaredType.TypeArguments[0];
+                                var entityPropType = prop.Type;
 
-                                // 🔹 修复：增强接口匹配逻辑，解决跨程序集/可空注解导致的误判跳过
-                                if (vmTypeClean is INamedTypeSymbol vmNamed && IsIViewModelOf(vmNamed, prop.Type))
+                                // 🔹 匹配策略 1：基础/可空类型直接匹配 (DateOnly? ↔ DateOnly)
+                                var vmUnderlying = GetUnderlyingType(vmInnerType);
+                                var entityUnderlying = GetUnderlyingType(entityPropType);
+                                bool isDirectMatch = SymbolEqualityComparer.Default.Equals(vmUnderlying, entityUnderlying) ||
+                                                     vmUnderlying.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == entityUnderlying.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+                                // 🔹 匹配策略 2：复杂 ViewModel 接口匹配 (DateEfficientViewModel ↔ IViewModel<DateEfficient>)
+                                bool isComplexVm = false;
+                                if (!isDirectMatch && vmInnerType is INamedTypeSymbol vmNamed)
                                 {
-                                    genericArg = vmType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                                    isNullable = vmType.IsReferenceType || vmType.NullableAnnotation == NullableAnnotation.Annotated;
+                                    isComplexVm = IsIViewModelOf(vmNamed, entityPropType);
+                                }
+
+                                if (isDirectMatch || isComplexVm)
+                                {
+                                    string genericArg = vmInnerType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                                    bool isNullable = vmInnerType.IsReferenceType || vmInnerType.NullableAnnotation == NullableAnnotation.Annotated ||
+                                                      (vmInnerType is INamedTypeSymbol n && n.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T);
 
                                     properties.Add(new PropertyInfo(
                                         prop.Name, genericArg, isNullable, isWritable: true,
                                         entityType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                                        isUserDeclared: true, isViewModelBacked: true));
-                                    logs.Add($"  ➕ {prop.Name}: {genericArg} (UserDeclared, ViewModelBacked)");
+                                        isUserDeclared: true, isComplexViewModel: isComplexVm));
+
+                                    logs.Add($"  ➕ {prop.Name}: {genericArg} (UserDeclared, {(isComplexVm ? "ComplexVM" : "SimpleNullable")})");
                                     continue;
                                 }
                             }
@@ -105,15 +117,18 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
                             continue;
                         }
 
-                        ITypeSymbol propType = prop.Type;
-                        genericArg = propType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                        isNullable = propType.IsReferenceType || propType.NullableAnnotation == NullableAnnotation.Annotated;
+                        // 🔹 自动生成属性
+                        {
+                            ITypeSymbol propType = prop.Type;
+                            string genericArg = propType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                            bool isNullable = propType.IsReferenceType || propType.NullableAnnotation == NullableAnnotation.Annotated;
 
-                        properties.Add(new PropertyInfo(
-                            prop.Name, genericArg, isNullable, isWritable: true,
-                            entityType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                            isUserDeclared: false, isViewModelBacked: false));
-                        logs.Add($"  ➕ {prop.Name}: {genericArg} (AutoGenerated)");
+                            properties.Add(new PropertyInfo(
+                                prop.Name, genericArg, isNullable, isWritable: true,
+                                entityType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                                isUserDeclared: false, isComplexViewModel: false));
+                            logs.Add($"  ➕ {prop.Name}: {genericArg} (AutoGenerated)");
+                        }
                     }
                 }
                 currentType = currentType.BaseType;
@@ -126,11 +141,17 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
         return new GenerationModel(className, ns, entityTypes, properties, logs);
     }
 
+    private static ITypeSymbol GetUnderlyingType(ITypeSymbol type)
+    {
+        if (type is INamedTypeSymbol named && named.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
+            return named.TypeArguments[0];
+        return type.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
+    }
+
     private static bool IsModifiableViewModel(INamedTypeSymbol type) =>
         type.OriginalDefinition.Name == "ModifiableViewModel" &&
         type.ContainingNamespace?.ToDisplayString() == "FMO.Shared";
 
-    // 🔹 核心修复：双轨匹配（符号相等 + 全限定名字符串降级），移除命名空间硬编码限制
     private static bool IsIViewModelOf(INamedTypeSymbol vmType, ITypeSymbol entityType)
     {
         var targetEntity = entityType.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
@@ -141,10 +162,7 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
             if (iface.OriginalDefinition.Name == "IViewModel" && iface.TypeArguments.Length == 1)
             {
                 var arg = iface.TypeArguments[0].WithNullableAnnotation(NullableAnnotation.NotAnnotated);
-
-                // 1. 优先使用 Roslyn 符号比对
                 if (SymbolEqualityComparer.Default.Equals(arg, targetEntity)) return true;
-                // 2. 降级使用全限定名字符串比对（解决跨程序集引用符号不一致问题）
                 if (arg.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == targetEntityFqn) return true;
             }
         }
@@ -177,13 +195,23 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
         var initAssignments = string.Join("\n", model.Properties.Select(prop =>
         {
             var entityPropAccess = $"entity.{prop.Name}";
-            if (prop.IsViewModelBacked)
-            {
-                return $$"""            {{prop.Name}} = new() { NewValue = new {{prop.GenericArgument}}({{entityPropAccess}}), OldValue =  new {{prop.GenericArgument}}({{entityPropAccess}}) };""";
-            }
 
-            var nullCoalesce = prop.IsNullable ? " ?? default" : "";
-            return $$"""            {{prop.Name}} = new() { NewValue = CloneHelper.CloneValue({{entityPropAccess}}), OldValue = {{entityPropAccess}}{{nullCoalesce}} };""";
+            if (prop.IsComplexViewModel)
+            {
+                // 🔹 复杂 VM：调用构造函数 new VM(entity)
+                return $$"""            {{prop.Name}} = new() { NewValue = new {{prop.GenericArgument}}({{entityPropAccess}}), OldValue = new {{prop.GenericArgument}}({{entityPropAccess}}) };""";
+            }
+            else if (prop.IsUserDeclared)
+            {
+                // 🔹 简单/可空类型：直接赋值，依赖 C# 隐式转换 T -> T?
+                return $$"""            {{prop.Name}} = new() { NewValue = {{entityPropAccess}}, OldValue = {{entityPropAccess}} };""";
+            }
+            else
+            {
+                // 🔹 自动生成：使用 CloneHelper
+                var nullCoalesce = prop.IsNullable ? " ?? default" : "";
+                return $$"""            {{prop.Name}} = new() { NewValue = CloneHelper.CloneValue({{entityPropAccess}}), OldValue = {{entityPropAccess}}{{nullCoalesce}} };""";
+            }
         }));
 
         var eventSubscriptions = string.Join("\n", model.Properties.Where(p => p.IsWritable).Select(prop =>
@@ -191,8 +219,9 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
             var genericArg = prop.GenericArgument;
             var entityPropAccess = $"entity.{prop.Name}";
 
-            if (prop.IsViewModelBacked)
+            if (prop.IsComplexViewModel)
             {
+                // 🔹 复杂 VM：调用 .Build() 还原实体
                 return $$"""
             {{prop.Name}}.Changed += (s, e) =>
             {
@@ -202,10 +231,24 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
             };
 """;
             }
-
-            var nullCoalesce = prop.IsNullable ? " ?? default" : "";
-            var stringEmptyFix = (genericArg == "string") ? " ?? \"\"" : nullCoalesce;
-            return $$"""
+            else if (prop.IsUserDeclared)
+            {
+                // 🔹 简单/可空类型：统一使用 ?? default 安全回写
+                return $$"""
+            {{prop.Name}}.Changed += (s, e) =>
+            {
+                if (e is ValueChangeEventArgs<{{genericArg}}> ee)
+                    {{entityPropAccess}} = ee.NewValue ?? default;
+                _throttle.Execute(OnEntityChanged);
+            };
+""";
+            }
+            else
+            {
+                // 🔹 自动生成
+                var nullCoalesce = prop.IsNullable ? " ?? default" : "";
+                var stringEmptyFix = (genericArg == "string") ? " ?? \"\"" : nullCoalesce;
+                return $$"""
             {{prop.Name}}.Changed += (s, e) =>
             {
                 if (e is ValueChangeEventArgs<{{genericArg}}> ee)
@@ -213,6 +256,7 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
                 _throttle.Execute(OnEntityChanged);
             };
 """;
+            }
         }));
 
         var primaryEntity = model.EntityTypes.FirstOrDefault();
@@ -280,10 +324,10 @@ using FMO.Shared;
         public bool IsWritable { get; }
         public string EntityTypeName { get; }
         public bool IsUserDeclared { get; }
-        public bool IsViewModelBacked { get; }
+        public bool IsComplexViewModel { get; } // 🔹 新增：区分复杂VM与简单可空类型
 
         public PropertyInfo(string name, string genericArgument, bool isNullable, bool isWritable,
-            string entityTypeName, bool isUserDeclared, bool isViewModelBacked)
+            string entityTypeName, bool isUserDeclared, bool isComplexViewModel)
         {
             Name = name;
             GenericArgument = genericArgument;
@@ -291,7 +335,7 @@ using FMO.Shared;
             IsWritable = isWritable;
             EntityTypeName = entityTypeName;
             IsUserDeclared = isUserDeclared;
-            IsViewModelBacked = isViewModelBacked;
+            IsComplexViewModel = isComplexViewModel;
         }
     }
 }

@@ -13,9 +13,7 @@
     Background="Transparent"
     mc:Ignorable="d">
     <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Type shared:ChangeableContainer}}" TargetType="shared:ChangeableContainer">
-            <Setter Property="Entity" Value="{Binding RelativeSource={RelativeSource AncestorType=local:QualificationView}, Path=DataContext}" />
-        </Style>
+        <Style BasedOn="{StaticResource {x:Type shared:ModifiableControl}}" TargetType="shared:ModifiableControl" />
 
 
     </UserControl.Resources>
@@ -40,13 +38,16 @@
                 <TextBlock VerticalAlignment="Center" Text="日期" />
 
 
-                <shared:ChangeableContainer Binding="{Binding Date}">
-                    <shared:ChangeableContainer.ContentTemplate>
+                <shared:ModifiableControl Modifier="{Binding Date}">
+                    <shared:ModifiableControl.EditTemplate>
                         <DataTemplate>
-                            <DatePicker MinWidth="100" SelectedDate="{Binding NewValue, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
+                            <DatePicker
+                                MinWidth="100"
+                                BorderThickness="0"
+                                SelectedDate="{Binding NewValue, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
                         </DataTemplate>
-                    </shared:ChangeableContainer.ContentTemplate>
-                </shared:ChangeableContainer>
+                    </shared:ModifiableControl.EditTemplate>
+                </shared:ModifiableControl>
 
 
                 <CheckBox

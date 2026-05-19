@@ -121,11 +121,11 @@ public class InvestorQualification
 
     public DateOnly Date { get; set; }
 
-    public int InvestorId { get; set; }
+    public int InvestorId { get; init; }
 
-    public string? IdentityCode { get; set; }
+    public string? IdentityCode { get; init; }
 
-    public string? InvestorName { get; set; }
+    public string? InvestorName { get; init; }
 
     /// <summary>
     /// 是否锁定不可修改

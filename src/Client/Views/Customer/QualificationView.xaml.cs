@@ -24,11 +24,14 @@ public partial class QualificationView : UserControl
     }
 }
 
-
-public partial class QualificationViewModel : EditableControlViewModelBase<InvestorQualification>
+[EntityModifiable(typeof(InvestorQualification))]
+public partial class QualificationViewModel : ObservableObject
 {
     public string? Name { get; set; }
 
+    public int Id { get;  }
+
+    private InvestorQualification _qualification;
 
     [ObservableProperty]
     public partial bool IsFinished { get; set; }
@@ -37,7 +40,7 @@ public partial class QualificationViewModel : EditableControlViewModelBase<Inves
     //[ObservableProperty]
     //public partial DateTime? Date { get; set; }
 
-    public ChangeableViewModel<InvestorQualification, DateOnly?> Date { get; } = new() { InitFunc = x => x.Date == default ? null : x.Date, UpdateFunc = (x, y) => x.Date = y ?? default, ClearFunc = x => x.Date = default };
+    public ModifiableViewModel<DateOnly?> Date { get; private set; } = null!;
 
     [ObservableProperty]
     public partial QualificationFileType[]? ProofTypes { get; set; }
@@ -136,6 +139,9 @@ public partial class QualificationViewModel : EditableControlViewModelBase<Inves
     /// </summary>
     public string MethodNotice => MakeMethod();
 
+    [ObservableProperty]
+    public partial bool IsReadOnly { get; set; } = true;
+
     private string MakeMethod()
     {
         string s = "";
@@ -198,7 +204,9 @@ public partial class QualificationViewModel : EditableControlViewModelBase<Inves
 
         using var db = DbHelper.Base();
         var obj = db.GetCollection<InvestorQualification>().FindById(Id);
-
+        _qualification = obj!;
+        FillBy(_qualification);
+ 
         NeedExperience = obj.ProofType != QualificationFileType.Product && obj.ProofType != QualificationFileType.FinancialInstitution;
         Name = obj.InvestorName;
         IgnoreError = obj.IsSettled;
@@ -314,8 +322,7 @@ public partial class QualificationViewModel : EditableControlViewModelBase<Inves
             NetAssets = x.NetAssets
         };
 
-        obj.Date.Init(x);
-        //obj.IsProfessional.Init(x);
+ 
 
         switch (entityType)
         {
@@ -388,8 +395,7 @@ public partial class QualificationViewModel : EditableControlViewModelBase<Inves
 
         WeakReferenceMessenger.Default.Send(obj);
 
-        if (Date.IsValueChanged)
-            Date.Apply();
+ 
         IsReadOnly = true;
     }
 
@@ -400,7 +406,7 @@ public partial class QualificationViewModel : EditableControlViewModelBase<Inves
     {
         HasError = false;
         List<string> info = new();
-        if (Date.OldValue?.Year < 1970)
+        if (Date?.OldValue?.Year < 1970)
         {
             HasError = true;
             info.Add("无日期");
@@ -452,7 +458,11 @@ public partial class QualificationViewModel : EditableControlViewModelBase<Inves
     }
 
 
-    protected override InvestorQualification InitNewEntity() => new InvestorQualification();
+    public partial void OnEntityChanged()
+    {
+        using var db = DbHelper.Base();
+        db.GetCollection<InvestorQualification>().Upsert(_qualification);
+    }
 }
 
 
