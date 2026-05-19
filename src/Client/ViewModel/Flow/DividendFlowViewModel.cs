@@ -330,25 +330,34 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
                 DividendReferenceDate = DividendReferenceDate.OldValue ?? default,
                 RecordDate = RecordDate.OldValue ?? default,
                 ExDividendDate = ExDividendDate.OldValue ?? default,
-                CashPaymentDate = CashPaymentDate.OldValue ?? default, 
+                CashPaymentDate = CashPaymentDate.OldValue ?? default,
             };
 
-            var manager = db.GetCollection<Manager>().FindOne(x => x.IsMaster);
-            notice.MakeWord("产品分红公告.docx", new
+            if (Announcement.Another.Exists)
+                notice.Pdf = new SimpleFile(Announcement.Another.Meta);
+
+            if(Announcement.Normal.Exists)
+                notice.Word = new SimpleFile(Announcement.Normal.Meta);
+            else
             {
-                ManagerName = manager.Name,
-                FundName = fund.Name,
-                FundCode = fund.Code,
-                FundTrustee = fund.Trustee,
-                ModeTarget = Type.OldValue switch { DividendType.PerUnitDividend => "每单位红利", DividendType.TargetNetValue => "分红后净值", DividendType.SpecifiedAmount => "分红总金额", _ => "" },
-                TargetValue = Target.OldValue,
-                DividendReferenceDate = $"{DividendReferenceDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
-                RecordDate = $"{RecordDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
-                ExDividendDate = $"{ExDividendDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
-                CashPaymentDate = $"{CashPaymentDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
-                AnnouncementDate = $"{anndate:yyyy年MM月dd日}",
-                Mail = manager.Email
-            });
+                var manager = db.GetCollection<Manager>().FindOne(x => x.IsMaster);
+                notice.MakeWord("产品分红公告.docx", new
+                {
+                    ManagerName = manager.Name,
+                    FundName = fund.Name,
+                    FundCode = fund.Code,
+                    FundTrustee = fund.Trustee,
+                    ModeTarget = Type.OldValue switch { DividendType.PerUnitDividend => "每单位红利", DividendType.TargetNetValue => "分红后净值", DividendType.SpecifiedAmount => "分红总金额", _ => "" },
+                    TargetValue = Target.OldValue,
+                    DividendReferenceDate = $"{DividendReferenceDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
+                    RecordDate = $"{RecordDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
+                    ExDividendDate = $"{ExDividendDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
+                    CashPaymentDate = $"{CashPaymentDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
+                    AnnouncementDate = $"{anndate:yyyy年MM月dd日}",
+                    Mail = manager.Email
+                });
+            }
+            
 
             DisclosureService.RegisterNotice(notice);
         }
