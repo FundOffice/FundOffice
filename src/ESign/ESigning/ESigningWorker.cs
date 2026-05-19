@@ -182,7 +182,7 @@ public class ESigningWorker
                     }
 
                     // 如果缺文件，就下载
-                    if (check(item) && await sign.QueryOrderAsync(item) is ErrorReturn { Successed: false } er)
+                    if (check(item) && (await sign.QueryOrderAsync(item) is ErrorReturn { Successed: false } er))
                         LogEx.Error($"获取Order文件失败 Customer:{item.InvestorName} Fund{item.FundName} {item.Date} {er.Error}");
 
                     orders.Add(item);
