@@ -20,12 +20,39 @@
         </Style>
 
         <DataTemplate x:Key="DT.Default">
-            <TextBox MinWidth="100" Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=100}" />
+            <TextBox
+                MinWidth="100"
+                BorderThickness="0"
+                Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=100}" />
         </DataTemplate>
 
         <DataTemplate x:Key="DT.Date">
-            <DatePicker MinWidth="110" SelectedDate="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=100}" />
+            <DatePicker
+                MinWidth="110"
+                BorderThickness="0"
+                SelectedDate="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=100}" />
         </DataTemplate>
+
+        <Style BasedOn="{StaticResource {x:Type shared:ModifiableControl}}" TargetType="shared:ModifiableControl">
+            <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
+            <Setter Property="HeaderTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock
+                            Width="50"
+                            Foreground="Gray"
+                            Text="{Binding}" />
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <shared:CopyableTextBlock Text="{Binding}" />
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
     </UserControl.Resources>
     <StackPanel Margin="0,10">
@@ -57,12 +84,7 @@
                     <DataTemplate>
 
                         <Grid Margin="8" Background="Transparent">
-                            <Grid.Resources>
-                                <Style BasedOn="{StaticResource {x:Type shared:ChangeableControl}}" TargetType="shared:ChangeableControl">
-                                    <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
-                                    <Setter Property="Entity" Value="{Binding .}" />
-                                </Style>
-                            </Grid.Resources>
+
                             <DockPanel
                                 x:Name="buttons"
                                 HorizontalAlignment="Right"
@@ -105,16 +127,23 @@
                             <StackPanel>
 
                                 <DockPanel LastChildFill="False">
-                                    <shared:ChangeableControl Binding="{Binding Name}" EditTemplate="{StaticResource DT.Default}" />
+                                    <shared:ModifiableControl
+                                        EditTemplate="{StaticResource DT.Default}"
+                                        Header="策略"
+                                        Modifier="{Binding Name}" />
 
-                                    <shared:ChangeableControl Binding="{Binding Start}" EditTemplate="{StaticResource DT.Date}" />
+                                    <shared:ModifiableControl
+                                        EditTemplate="{StaticResource DT.Date}"
+                                        Header="起始日期"
+                                        Modifier="{Binding Start}" />
 
-                                    <shared:ChangeableControl Binding="{Binding End}">
-                                        <shared:ChangeableControl.EditTemplate>
+                                    <shared:ModifiableControl Header="结束日期" Modifier="{Binding End}">
+                                        <shared:ModifiableControl.EditTemplate>
                                             <DataTemplate>
                                                 <DockPanel>
                                                     <DatePicker
                                                         Width="110"
+                                                        BorderThickness="0"
                                                         SelectedDate="{Binding NewValue.Date}"
                                                         Visibility="{Binding NewValue.IsLongTerm, Mode=OneWay, Converter={StaticResource Boolean2VisibilityReConverter}}" />
                                                     <CheckBox
@@ -123,15 +152,16 @@
                                                         IsChecked="{Binding NewValue.IsLongTerm}" />
                                                 </DockPanel>
                                             </DataTemplate>
-                                        </shared:ChangeableControl.EditTemplate>
-                                    </shared:ChangeableControl>
+                                        </shared:ModifiableControl.EditTemplate>
+                                    </shared:ModifiableControl>
                                 </DockPanel>
 
 
-                                <shared:ChangeableControl
+                                <shared:ModifiableControl
                                     Margin="0,4"
                                     HorizontalContentAlignment="Stretch"
-                                    Binding="{Binding Description}" />
+                                    Header="策略说明"
+                                    Modifier="{Binding Description}" />
 
                             </StackPanel>
 
@@ -176,9 +206,8 @@
 
                         <Grid Margin="8" Background="Transparent">
                             <Grid.Resources>
-                                <Style BasedOn="{StaticResource {x:Type shared:ChangeableControl}}" TargetType="shared:ChangeableControl">
+                                <Style BasedOn="{StaticResource {x:Type shared:ModifiableControl}}" TargetType="shared:ModifiableControl">
                                     <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
-                                    <Setter Property="Entity" Value="{Binding .}" />
                                 </Style>
                             </Grid.Resources>
                             <DockPanel
@@ -224,12 +253,12 @@
 
 
                                 <DockPanel LastChildFill="False">
-                                    <shared:ChangeableControl Binding="{Binding Person}">
-                                        <shared:ChangeableControl.EditTemplate>
+                                    <shared:ModifiableControl Header="基金经理" Modifier="{Binding Person}">
+                                        <shared:ModifiableControl.EditTemplate>
                                             <DataTemplate>
                                                 <ComboBox
                                                     Width="120"
-                                                    ItemsSource="{Binding DataContext.Managers, RelativeSource={RelativeSource AncestorType=shared:ChangeableControl}}"
+                                                    ItemsSource="{Binding DataContext.Managers, RelativeSource={RelativeSource AncestorType=shared:ModifiableControl}}"
                                                     SelectedItem="{Binding NewValue}">
                                                     <ComboBox.ItemTemplate>
                                                         <DataTemplate>
@@ -238,13 +267,13 @@
                                                     </ComboBox.ItemTemplate>
                                                 </ComboBox>
                                             </DataTemplate>
-                                        </shared:ChangeableControl.EditTemplate>
-                                    </shared:ChangeableControl>
+                                        </shared:ModifiableControl.EditTemplate>
+                                    </shared:ModifiableControl>
 
-                                    <shared:ChangeableControl Binding="{Binding Start}" EditTemplate="{StaticResource DT.Date}" />
+                                    <shared:ModifiableControl EditTemplate="{StaticResource DT.Date}" Modifier="{Binding Start}" />
 
-                                    <shared:ChangeableControl Binding="{Binding End}">
-                                        <shared:ChangeableControl.EditTemplate>
+                                    <shared:ModifiableControl Modifier="{Binding End}">
+                                        <shared:ModifiableControl.EditTemplate>
                                             <DataTemplate>
                                                 <DockPanel>
                                                     <DatePicker
@@ -257,15 +286,16 @@
                                                         IsChecked="{Binding NewValue.IsLongTerm}" />
                                                 </DockPanel>
                                             </DataTemplate>
-                                        </shared:ChangeableControl.EditTemplate>
-                                    </shared:ChangeableControl>
+                                        </shared:ModifiableControl.EditTemplate>
+                                    </shared:ModifiableControl>
                                 </DockPanel>
 
 
-                                <shared:ChangeableControl
+                                <shared:ModifiableControl
                                     Margin="0,4"
                                     HorizontalContentAlignment="Stretch"
-                                    Binding="{Binding Profile}" />
+                                    Header="简历"
+                                    Modifier="{Binding Profile}" />
 
                             </StackPanel>
 
