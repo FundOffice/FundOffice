@@ -16,3 +16,16 @@ public class EntityModifiableAttribute: Attribute
 
 
 }
+
+
+
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+public class PropertyModifiyViewModelAttribute:Attribute
+{
+    public PropertyModifiyViewModelAttribute(Type entityType)
+    {
+        EntityType = entityType;
+    }
+
+    public Type EntityType { get; set; }
+}

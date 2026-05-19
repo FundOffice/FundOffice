@@ -79,7 +79,7 @@ public static class CloneHelper
 
 public abstract partial class ModifiableViewModel<TValue, TDisplay> : ObservableObject, IValueModifier
 {
-    public event EventHandler<ValueChangeEventArgs>? Changed;
+    public event EventHandler<ValueChangeEventArgs<TValue>>? Changed;
 
     [ObservableProperty] public partial string? Label { get; set; }
 

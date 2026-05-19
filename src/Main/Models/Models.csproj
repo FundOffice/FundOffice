@@ -20,7 +20,8 @@
 
   <ItemGroup> 
     <ProjectReference Include="..\..\Utility\Logging\Logging.csproj" /> 
-    <ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" /> 
+    <ProjectReference Include="..\CustomAnalyzer\CustomAnalyzer.csproj"  OutputItemType="Analyzer"  ReferenceOutputAssembly="false" />
   </ItemGroup>
   
   <ItemGroup>

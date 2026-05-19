@@ -122,6 +122,7 @@
     <ProjectReference Include="..\Disclosure\Disclosure.UI\Disclosure.UI.csproj" />
     <ProjectReference Include="..\Disclosure\Disclosure\Disclosure.csproj" />
     <ProjectReference Include="..\ESign\ESigning\ESigning.csproj" />
+    <ProjectReference Include="..\Main\CustomAnalyzer\CustomAnalyzer.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"    PrivateAssets="all" />
     <ProjectReference Include="..\Main\Data\Data.csproj" />
     <ProjectReference Include="..\Schedule\Mission\Mission.csproj" />
     <ProjectReference Include="..\Setting\Settings.UI\Settings.UI.csproj" />

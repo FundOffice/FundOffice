@@ -980,7 +980,7 @@ public partial class CustomerViewModel : EditableControlViewModelBase<Investor>,
 //    }
 //}
 
-public partial class DateEfficientViewModel : ObservableObject, IEquatable<DateEfficientViewModel>
+public partial class DateEfficientViewModel : ObservableObject, IEquatable<DateEfficientViewModel>, IViewModel<DateEfficient>
 {
 
     [ObservableProperty]
@@ -1070,3 +1070,5 @@ public partial class RiskAssessmentViewModel : ObservableObject
         WeakReferenceMessenger.Default.Send(new EntityDeleted(typeof(RiskAssessment), Id));
     }
 }
+
+ 

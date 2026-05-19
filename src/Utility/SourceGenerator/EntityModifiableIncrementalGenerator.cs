@@ -1,5 +1,4 @@
-﻿
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System;
@@ -9,12 +8,10 @@ using System.Text;
 
 namespace SG;
 
-
 [Generator]
 public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
 {
     private const string AttributeMetadataName = "FMO.Models.EntityModifiableAttribute";
-    private const string ModifiableViewModelTypeName = "FMO.Shared.ModifiableViewModel<TValue>";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -28,7 +25,6 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
                     var classSymbol = ctx.SemanticModel.GetDeclaredSymbol(classDecl, ct) as INamedTypeSymbol;
                     if (classSymbol == null) return null;
 
-                    // 支持多个 [EntityModifiable] 属性，收集所有实体类型
                     var entityTypes = ctx.Attributes
                         .Select(a => a.ConstructorArguments.FirstOrDefault().Value as INamedTypeSymbol)
                         .OfType<INamedTypeSymbol>()
@@ -56,19 +52,16 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
         var ns = targetClass.ContainingNamespace.IsGlobalNamespace ? string.Empty : targetClass.ContainingNamespace.ToDisplayString();
         var className = targetClass.Name;
 
-        // 🔹 收集 VM 中已声明的属性（跳过这些）
-        var declaredProperties = new HashSet<string>(StringComparer.Ordinal);
+        var declaredPropertiesMap = new Dictionary<string, IPropertySymbol>(StringComparer.Ordinal);
         INamedTypeSymbol? current = targetClass;
         while (current != null && current.SpecialType != SpecialType.System_Object)
         {
             foreach (var member in current.GetMembers())
                 if (member is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public)
-                    declaredProperties.Add(p.Name);
+                    declaredPropertiesMap[p.Name] = p;
             current = current.BaseType;
         }
-        logs.Add($"[Declared] {string.Join(", ", declaredProperties)}");
 
-        // 🔹 收集所有需要生成的属性（支持多实体）
         var properties = new List<PropertyInfo>();
 
         foreach (var entityType in entityTypes)
@@ -80,30 +73,47 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
                 {
                     if (member is IPropertySymbol prop &&
                         prop.DeclaredAccessibility == Accessibility.Public &&
-                        !prop.IsStatic && prop.SetMethod != null &&
-                        !prop.SetMethod.IsInitOnly &&
-                        !declaredProperties.Contains(prop.Name))
+                        !prop.IsStatic && prop.SetMethod != null && !prop.SetMethod.IsInitOnly)
                     {
+                        bool isUserDeclared = declaredPropertiesMap.TryGetValue(prop.Name, out var declaredProp);
+                        string genericArg;
+                        bool isNullable;
+
+                        if (isUserDeclared && declaredProp != null)
+                        {
+                            var declaredType = declaredProp.Type as INamedTypeSymbol;
+                            if (declaredType != null && IsModifiableViewModel(declaredType) && declaredType.TypeArguments.Length > 0)
+                            {
+                                var vmType = declaredType.TypeArguments[0];
+                                var vmTypeClean = (vmType as INamedTypeSymbol)?.WithNullableAnnotation(NullableAnnotation.NotAnnotated) ?? vmType;
+
+                                // 🔹 修复：增强接口匹配逻辑，解决跨程序集/可空注解导致的误判跳过
+                                if (vmTypeClean is INamedTypeSymbol vmNamed && IsIViewModelOf(vmNamed, prop.Type))
+                                {
+                                    genericArg = vmType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                                    isNullable = vmType.IsReferenceType || vmType.NullableAnnotation == NullableAnnotation.Annotated;
+
+                                    properties.Add(new PropertyInfo(
+                                        prop.Name, genericArg, isNullable, isWritable: true,
+                                        entityType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                                        isUserDeclared: true, isViewModelBacked: true));
+                                    logs.Add($"  ➕ {prop.Name}: {genericArg} (UserDeclared, ViewModelBacked)");
+                                    continue;
+                                }
+                            }
+                            logs.Add($"  ⏭️ {prop.Name}: Skipped (UserDeclared, not VM-backed or type mismatch)");
+                            continue;
+                        }
+
                         ITypeSymbol propType = prop.Type;
-                        string propTypeString = propType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        genericArg = propType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        isNullable = propType.IsReferenceType || propType.NullableAnnotation == NullableAnnotation.Annotated;
 
-                        // 🔹 提取泛型参数：ModifiableViewModel<T> 中的 T
-                        string genericArg = GetModifiableViewModelGenericArgument(propType);
-
-                        bool isNullable = propType.IsReferenceType || prop.NullableAnnotation == NullableAnnotation.Annotated;
-                        bool isWritable = prop.SetMethod != null;
-
-                        var propInfo = new PropertyInfo(
-                            sourceTypeName: propTypeString,
-                            name: prop.Name,
-                            genericArgument: genericArg,
-                            isNullable: isNullable,
-                            isWritable: isWritable,
-                            entityTypeName: entityType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                            label: ToChineseLabel(prop.Name));
-
-                        properties.Add(propInfo);
-                        logs.Add($"  ➕ {prop.Name}: {genericArg} (nullable={isNullable}, writable={isWritable})");
+                        properties.Add(new PropertyInfo(
+                            prop.Name, genericArg, isNullable, isWritable: true,
+                            entityType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+                            isUserDeclared: false, isViewModelBacked: false));
+                        logs.Add($"  ➕ {prop.Name}: {genericArg} (AutoGenerated)");
                     }
                 }
                 currentType = currentType.BaseType;
@@ -116,34 +126,29 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
         return new GenerationModel(className, ns, entityTypes, properties, logs);
     }
 
-    // 🔹 尝试提取类型作为 ModifiableViewModel<T> 的泛型参数
-    // 如果是 string → string, 如果是 MyEnum → MyEnum, 如果是 List<T> → List<T> 等
-    private static string GetModifiableViewModelGenericArgument(ITypeSymbol type)
-    {
-        // 基础类型、枚举、数组、泛型等都直接使用原类型
-        return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-    }
+    private static bool IsModifiableViewModel(INamedTypeSymbol type) =>
+        type.OriginalDefinition.Name == "ModifiableViewModel" &&
+        type.ContainingNamespace?.ToDisplayString() == "FMO.Shared";
 
-    // 🔹 简单驼峰转中文标签（可自定义）
-    private static string ToChineseLabel(string propertyName)
+    // 🔹 核心修复：双轨匹配（符号相等 + 全限定名字符串降级），移除命名空间硬编码限制
+    private static bool IsIViewModelOf(INamedTypeSymbol vmType, ITypeSymbol entityType)
     {
-        // 简单示例：ManagerName → "管理人", UserName → "用户名"
-        // 实际项目中可接入资源文件或配置
-        return propertyName switch
+        var targetEntity = entityType.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
+        var targetEntityFqn = targetEntity.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+        foreach (var iface in vmType.AllInterfaces)
         {
-            "ManagerName" => "管理人",
-            "UserName" => "用户名",
-            "Email" => "邮箱",
-            "Phone" => "电话",
-            "Name" => "名称",
-            "Description" => "描述",
-            "Title" => "标题",
-            "Content" => "内容",
-            "Status" => "状态",
-            "CreateTime" => "创建时间",
-            "UpdateTime" => "更新时间",
-            _ => propertyName // 默认返回英文属性名
-        };
+            if (iface.OriginalDefinition.Name == "IViewModel" && iface.TypeArguments.Length == 1)
+            {
+                var arg = iface.TypeArguments[0].WithNullableAnnotation(NullableAnnotation.NotAnnotated);
+
+                // 1. 优先使用 Roslyn 符号比对
+                if (SymbolEqualityComparer.Default.Equals(arg, targetEntity)) return true;
+                // 2. 降级使用全限定名字符串比对（解决跨程序集引用符号不一致问题）
+                if (arg.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) == targetEntityFqn) return true;
+            }
+        }
+        return false;
     }
 
     private static string GenerateSource(GenerationModel model)
@@ -160,37 +165,46 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
         var namespaceOpen = !string.IsNullOrEmpty(model.Namespace) ? $"namespace {model.Namespace}\n{{" : "";
         var namespaceClose = !string.IsNullOrEmpty(model.Namespace) ? "}" : "";
 
-        // 🔹 生成属性声明
-        var propertyDeclarations = string.Join("\n\n", model.Properties.Select(prop =>
+        var propertyDeclarations = string.Join("\n\n", model.Properties.Where(p => !p.IsUserDeclared).Select(prop =>
         {
+            var genericArgClean = prop.GenericArgument.TrimEnd('?');
             var nullableMark = prop.IsNullable ? "?" : "";
-            var genericArg = prop.GenericArgument.Last() == '?' ? prop.GenericArgument : prop.GenericArgument + nullableMark;
             return $$"""
-        public ModifiableViewModel<{{genericArg}}> {{prop.Name}} { get; private set; } = null!;
+        public ModifiableViewModel<{{genericArgClean}}{{nullableMark}}> {{prop.Name}} { get; private set; } = null!;
 """;
         }));
 
-        // 🔹 生成初始化赋值语句
         var initAssignments = string.Join("\n", model.Properties.Select(prop =>
         {
-            var label = prop.Label;
             var entityPropAccess = $"entity.{prop.Name}";
-            var nullableSuffix = prop.IsNullable ? " ?? default" : "";
-            // 注意：ModifiableViewModel<T> 的 OldValue/NewValue 需要相同类型
-            return $$"""
-            {{prop.Name}} = new() { NewValue = CloneHelper.CloneValue({{entityPropAccess}}), OldValue = {{entityPropAccess}}{{(prop.IsNullable ? " ?? default" : "")}} };
-""";
+            if (prop.IsViewModelBacked)
+            {
+                return $$"""            {{prop.Name}} = new() { NewValue = new {{prop.GenericArgument}}({{entityPropAccess}}), OldValue =  new {{prop.GenericArgument}}({{entityPropAccess}}) };""";
+            }
+
+            var nullCoalesce = prop.IsNullable ? " ?? default" : "";
+            return $$"""            {{prop.Name}} = new() { NewValue = CloneHelper.CloneValue({{entityPropAccess}}), OldValue = {{entityPropAccess}}{{nullCoalesce}} };""";
         }));
 
-        // 🔹 生成事件订阅 + throttle 调用
         var eventSubscriptions = string.Join("\n", model.Properties.Where(p => p.IsWritable).Select(prop =>
         {
             var genericArg = prop.GenericArgument;
             var entityPropAccess = $"entity.{prop.Name}";
-            var nullCoalesce = prop.IsNullable ? " ?? default" : "";
-            // 对于 string 类型特殊处理空值
-            var stringEmptyFix = (genericArg == "string") ? " ?? \"\"" : nullCoalesce;
 
+            if (prop.IsViewModelBacked)
+            {
+                return $$"""
+            {{prop.Name}}.Changed += (s, e) =>
+            {
+                if (e is ValueChangeEventArgs<{{genericArg}}> ee)
+                    {{entityPropAccess}} = ee.NewValue.Build();
+                _throttle.Execute(OnEntityChanged);
+            };
+""";
+            }
+
+            var nullCoalesce = prop.IsNullable ? " ?? default" : "";
+            var stringEmptyFix = (genericArg == "string") ? " ?? \"\"" : nullCoalesce;
             return $$"""
             {{prop.Name}}.Changed += (s, e) =>
             {
@@ -201,15 +215,14 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
 """;
         }));
 
-        // 🔹 生成 FillBy 方法参数（支持多实体，这里以第一个实体为主，或可改为字典）
         var primaryEntity = model.EntityTypes.FirstOrDefault();
         var primaryEntityTypeName = primaryEntity?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ?? "object";
-        var primaryEntityVarName = primaryEntity?.Name.ToLowerInvariant() ?? "entity";
 
         return $$"""
 #nullable enable
 {{debugHeader}}
 using System;
+using System.IO;
 using System.ComponentModel;
 using FMO.Models;
 using FMO.Shared;
@@ -225,7 +238,7 @@ using FMO.Shared;
         // 🔹 统一赋值入口
         public void FillBy({{primaryEntityTypeName}}? entity)
         {
-            if (entity is not {{primaryEntityTypeName}} val) return;
+            if (entity is null) throw new InvalidDataException("entity 不能为null");
 
 {{initAssignments}}
 
@@ -261,24 +274,24 @@ using FMO.Shared;
 
     private class PropertyInfo
     {
-        public string SourceTypeName { get; }
         public string Name { get; }
-        public string GenericArgument { get; }  // ModifiableViewModel<T> 中的 T
+        public string GenericArgument { get; }
         public bool IsNullable { get; }
         public bool IsWritable { get; }
         public string EntityTypeName { get; }
-        public string Label { get; }
+        public bool IsUserDeclared { get; }
+        public bool IsViewModelBacked { get; }
 
-        public PropertyInfo(string sourceTypeName, string name, string genericArgument, bool isNullable,
-            bool isWritable, string entityTypeName, string label)
+        public PropertyInfo(string name, string genericArgument, bool isNullable, bool isWritable,
+            string entityTypeName, bool isUserDeclared, bool isViewModelBacked)
         {
-            SourceTypeName = sourceTypeName;
             Name = name;
             GenericArgument = genericArgument;
             IsNullable = isNullable;
             IsWritable = isWritable;
             EntityTypeName = entityTypeName;
-            Label = label;
+            IsUserDeclared = isUserDeclared;
+            IsViewModelBacked = isViewModelBacked;
         }
     }
 }
