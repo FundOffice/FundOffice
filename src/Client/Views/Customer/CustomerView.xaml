@@ -29,7 +29,7 @@
             <Setter Property="ContentTemplate">
                 <Setter.Value>
                     <DataTemplate>
-                        <shared:CopyableTextBlock Foreground="Gray" Text="{Binding}" />
+                        <shared:CopyableTextBlock Text="{Binding}" />
                     </DataTemplate>
                 </Setter.Value>
             </Setter>
