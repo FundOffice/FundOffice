@@ -574,9 +574,10 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
             WeakReferenceMessenger.Default.Send(new NewDay(today));
 
+            DailyCheckRequestIsWell();
+
             // 更新规模图
             InitPlot();
-
 
 
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "更新每日数据完成"));
