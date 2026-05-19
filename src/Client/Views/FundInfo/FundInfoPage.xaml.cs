@@ -9,6 +9,7 @@ using FMO.Todo;
 using FMO.TPL;
 using FMO.Trustee;
 using FMO.Utilities;
+using HandyControl.Controls;
 using LiteDB;
 using Microsoft.Playwright;
 using Microsoft.Win32;
@@ -16,6 +17,7 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
@@ -697,6 +699,12 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     [RelayCommand]
     public void CreateDividendFlow()
     {
+        // 分红日期检查
+        var last = Flows.OfType<DividendFlowViewModel>().Select(x=>x.Date).OfType<DateTime>().LastOrDefault();
+        if (last != default && (DateTime.Now - last).TotalDays < 180)
+            if (HandyControl.Controls.MessageBox.Show($"距上次分红不足6个月，本次分红将不会收取业绩报酬！\n\n建议 {last.AddDays(180):yyyy/M/d} 后分红\n\n是否继续", "警告", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                return;
+
         var flow = new DividendFlow { FundId = Fund.Id };
         using var db = DbHelper.Base();
         db.GetCollection<FundFlow>().Insert(flow);
