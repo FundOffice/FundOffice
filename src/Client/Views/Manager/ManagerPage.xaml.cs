@@ -972,14 +972,12 @@ public partial class ParticipantViewModel : ObservableObject
 }
 
 
-public partial class ManagerFlowViewModel : EditableControlViewModelBase<ManagerFlow>
+[EntityModifiable(typeof(ManagerFlow))]
+public partial class ManagerFlowViewModel : ObservableObject
 {
+    private readonly ManagerFlow _flow;
 
-    public ChangeableViewModel<ManagerFlow, DateOnly?> Date { get; }
-
-    public ChangeableViewModel<ManagerFlow, string> Title { get; }
-
-    public ChangeableViewModel<ManagerFlow, string> Description { get; }
+    public int Id { get; }
 
 
     [ObservableProperty]
@@ -992,39 +990,19 @@ public partial class ManagerFlowViewModel : EditableControlViewModelBase<Manager
     {
         Id = flow.Id;
 
-        Date = new()
-        {
-            Label = "日期",
-            InitFunc = x => x.Date == default ? null : x.Date,
-            UpdateFunc = (x, y) => { IsTemple = false; x.Date = y ?? default; },
-            ClearFunc = x => x.Date = DateOnly.MinValue,
-        };
-        Date.Init(flow);
+        FillBy(flow);
 
-        Title = new()
-        {
-            Label = "标题",
-            InitFunc = x => x.Title,
-            UpdateFunc = (x, y) => { IsTemple = false; x.Title = y; },
-            ClearFunc = x => x.Title = string.Empty,
-        };
-        Title.Init(flow);
-
-        Description = new()
-        {
-            Label = "描述",
-            InitFunc = x => x.Description,
-            UpdateFunc = (x, y) => { IsTemple = false; x.Description = y; },
-            ClearFunc = x => x.Description = string.Empty,
-        };
-        Description.Init(flow);
 
         IsTemple = Id == 0;
-
-
+        _flow = flow;
     }
 
 
+    public partial void OnEntityChanged()
+    {
+        using var db = DbHelper.Base();
+        db.GetCollection<ManagerFlow>().Upsert(_flow);
+    }
 
     [RelayCommand]
     public void OpenNormal() => OpenFolder(@$"manager\flow\{Id}\normal");
@@ -1074,6 +1052,5 @@ public partial class ManagerFlowViewModel : EditableControlViewModelBase<Manager
     }
 
 
-
-    protected override ManagerFlow InitNewEntity() => new ManagerFlow();
+     
 }

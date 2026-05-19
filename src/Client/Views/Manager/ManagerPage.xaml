@@ -753,24 +753,24 @@
                                     </UniformGrid>
 
 
-                                    <shared:ChangeableControl
+                                    <shared:ModifiableControl
                                         MinWidth="500"
                                         HorizontalContentAlignment="Stretch"
-                                        Binding="{Binding Description, UpdateSourceTrigger=PropertyChanged, Delay=200}"
                                         DockPanel.Dock="Bottom"
-                                        Entity="{Binding .}"
-                                        IsReadOnly="{Binding IsReadOnly}" />
+                                        Header="描述"
+                                        IsReadOnly="{Binding IsReadOnly}"
+                                        Modifier="{Binding Description, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
 
-                                    <shared:ChangeableControl
-                                        Binding="{Binding Date}"
-                                        Entity="{Binding .}"
-                                        IsReadOnly="{Binding IsReadOnly}">
-                                        <shared:ChangeableControl.EditTemplate>
+                                    <shared:ModifiableControl
+                                        Header="日期"
+                                        IsReadOnly="{Binding IsReadOnly}"
+                                        Modifier="{Binding Date}">
+                                        <shared:ModifiableControl.EditTemplate>
                                             <DataTemplate>
                                                 <DatePicker Width="100" SelectedDate="{Binding NewValue, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
                                             </DataTemplate>
-                                        </shared:ChangeableControl.EditTemplate>
-                                    </shared:ChangeableControl>
+                                        </shared:ModifiableControl.EditTemplate>
+                                    </shared:ModifiableControl>
 
                                     <DockPanel
                                         AllowDrop="True"
@@ -806,11 +806,11 @@
 
 
 
-                                    <shared:ChangeableControl
+                                    <shared:ModifiableControl
                                         HorizontalContentAlignment="Stretch"
-                                        Binding="{Binding Title, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                        Entity="{Binding .}"
-                                        IsReadOnly="{Binding IsReadOnly}" />
+                                        Header="标题"
+                                        IsReadOnly="{Binding IsReadOnly}"
+                                        Modifier="{Binding Title, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
 
 
                                 </DockPanel>
