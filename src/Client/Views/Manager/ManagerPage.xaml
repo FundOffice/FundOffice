@@ -147,7 +147,10 @@
 
                 <shared:ChangeableControl Binding="{Binding ManagerName}" />
 
-
+                <shared:ModifiableControl
+                    Margin="0,0,60,0"
+                    IsReadOnly="{Binding IsReadOnly}"
+                    Modifier="{Binding ManagerName2}" />
 
                 <UniformGrid Margin="0,0,30,0" Columns="2">
                     <shared:ChangeableControl Binding="{Binding ArtificialPerson}" />

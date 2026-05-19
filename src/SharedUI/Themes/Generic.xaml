@@ -9,6 +9,7 @@
         <ResourceDictionary Source="/SharedUI;component/Themes/Copyable.xaml" />
         <ResourceDictionary Source="/SharedUI;component/Themes/NewFileControl.xaml" />
         <ResourceDictionary Source="/SharedUI;component/Themes/YearCalender.xaml" />
+        <ResourceDictionary Source="/SharedUI;component/Themes/Modifiable.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 
@@ -71,5 +72,6 @@
         TargetType="{x:Type Calendar}">
         <Setter Property="Calendar.CalendarDayButtonStyle" Value="{StaticResource CalendarDayButtonBlackStyle}" />
     </Style>
+
 
 </ResourceDictionary>

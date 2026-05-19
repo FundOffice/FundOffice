@@ -55,6 +55,8 @@ public partial class ManagerPageViewModel : EditableControlViewModelBase<Manager
     /// </summary>  
     public ChangeableViewModel<Manager, string> ManagerName { get; }
 
+    public ModifiableViewModel<string> ManagerName2 { get; }
+
     /// <summary>
     /// 实控人
     /// </summary>
@@ -279,6 +281,8 @@ public partial class ManagerPageViewModel : EditableControlViewModelBase<Manager
             ClearFunc = x => x.Name = string.Empty,
         };
         ManagerName.Init(manager);
+
+        ManagerName2 = new() { Label = "管理人", NewValue = manager.Name, OldValue = manager.Name };
 
         ArtificialPerson = new ChangeableViewModel<Manager, string>
         {
