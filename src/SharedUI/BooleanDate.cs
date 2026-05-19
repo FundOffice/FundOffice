@@ -5,6 +5,9 @@ namespace FMO.Shared;
 
 public partial class BooleanDate : ObservableObject, IEquatable<BooleanDate>, IDisplay<string>
 {
+
+    public DateTime Today => DateTime.Today;
+
     [ObservableProperty]
     public partial DateTime? Date { get; set; }
 

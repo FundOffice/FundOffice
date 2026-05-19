@@ -13,6 +13,7 @@
     Width="800"
     Height="450"
     d:DataContext="{d:DesignInstance Type=local:InstitutionWindowViewModel}"
+    SizeToContent="Height"
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
     <Window.Resources>
@@ -21,6 +22,20 @@
                 <ResourceDictionary Source="/SharedUI;component/Themes/NewFileControl.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <DataTemplate DataType="{x:Type local:IdentityViewMdoel}">
+                <DockPanel>
+                    <ComboBox
+                        Width="150"
+                        BorderThickness="0"
+                        ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=local:InstitutionWindow}, Path=DataContext.IDTypes}"
+                        SelectedItem="{Binding Type}" />
+                    <TextBox BorderThickness="0" Text="{Binding Id}" />
+                </DockPanel>
+            </DataTemplate>
+
+            <DataTemplate x:Key="CapitalText">
+                <shared:CopyableTextBlock Text="{Binding ., StringFormat={}{0} 万元}" />
+            </DataTemplate>
 
             <Style x:Key="RightAlignText" TargetType="TextBlock">
                 <Setter Property="VerticalAlignment" Value="Center" />
@@ -29,12 +44,13 @@
 
             <SolidColorBrush x:Key="LabelBrush">Gray</SolidColorBrush>
 
-            <Style BasedOn="{StaticResource {x:Type shared:ChangeableControl}}" TargetType="shared:ChangeableControl">
+            <Style BasedOn="{StaticResource {x:Type shared:ModifiableControl}}" TargetType="shared:ModifiableControl">
                 <Setter Property="HeaderTemplate">
                     <Setter.Value>
                         <DataTemplate>
                             <TextBlock
-                                Width="80"
+                                Width="60"
+                                Margin="5,0"
                                 VerticalAlignment="Center"
                                 Foreground="{DynamicResource LabelBrush}"
                                 Text="{Binding .}"
@@ -42,18 +58,24 @@
                         </DataTemplate>
                     </Setter.Value>
                 </Setter>
+                <Setter Property="ContentTemplate">
+                    <Setter.Value>
+                        <DataTemplate>
+                            <shared:CopyableTextBlock Text="{Binding}" TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </Setter.Value>
+                </Setter>
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                <Setter Property="Entity" Value="{Binding RelativeSource={RelativeSource AncestorType=local:InstitutionWindow}, Path=DataContext}" />
                 <Setter Property="IsReadOnly" Value="{Binding RelativeSource={RelativeSource AncestorType=local:InstitutionWindow}, Path=DataContext.IsReadOnly}" />
             </Style>
 
             <DataTemplate x:Key="DT.Text.Cap">
-                <TextBox MinWidth="80" Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                <TextBox
+                    MinWidth="80"
+                    BorderThickness="0"
+                    Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
             </DataTemplate>
-
-
         </ResourceDictionary>
-
     </Window.Resources>
     <DockPanel Margin="8">
         <Grid MaxWidth="400">
@@ -64,98 +86,124 @@
                     </Style>
                 </StackPanel.Resources>
 
-                <shared:ChangeableControl
-                    Margin="0,0,20,0"
+                <shared:ModifiableControl
+                    Margin="0,0,30,0"
                     HorizontalContentAlignment="Stretch"
-                    Binding="{Binding InstitutionName}" />
-
-
-
+                    Header="名称"
+                    Modifier="{Binding Name}" />
 
                 <StackPanel>
-                    <shared:ChangeableControl HorizontalContentAlignment="Stretch" Binding="{Binding InstitutionCode}" />
-                    <shared:ChangeableControl HorizontalContentAlignment="Stretch" Binding="{Binding ArtificialPerson}" />
-
-
-                    <shared:ChangeableControl Binding="{Binding RegisterCapital}" EditTemplate="{StaticResource DT.Text.Cap}" />
-                    <shared:ChangeableControl Binding="{Binding RealCapital}" EditTemplate="{StaticResource DT.Text.Cap}" />
-
-
-                    <shared:ChangeableControl HorizontalContentAlignment="Stretch" Binding="{Binding SetupDate}">
-                        <shared:ChangeableControl.EditTemplate>
+                    <shared:ModifiableControl
+                        HorizontalContentAlignment="Stretch"
+                        Header="证件"
+                        Modifier="{Binding Identity}">
+                        <shared:ModifiableControl.EditTemplate>
                             <DataTemplate>
-                                <DatePicker SelectedDate="{Binding NewValue}" />
+                                <ContentPresenter Content="{Binding NewValue}" />
                             </DataTemplate>
-                        </shared:ChangeableControl.EditTemplate>
-                    </shared:ChangeableControl>
+                        </shared:ModifiableControl.EditTemplate>
+                    </shared:ModifiableControl>
 
 
-                    <shared:ChangeableControl Binding="{Binding ExpireDate}">
-                        <shared:ChangeableControl.EditTemplate>
+                    <shared:ModifiableControl
+                        HorizontalContentAlignment="Stretch"
+                        Header="实控人"
+                        Modifier="{Binding ArtificialPerson}" />
+
+                    <shared:ModifiableControl
+                        ContentTemplate="{StaticResource CapitalText}"
+                        EditTemplate="{StaticResource DT.Text.Cap}"
+                        Header="注册资本"
+                        Modifier="{Binding RegisterCapital}" />
+                    <shared:ModifiableControl
+                        ContentTemplate="{StaticResource CapitalText}"
+                        EditTemplate="{StaticResource DT.Text.Cap}"
+                        Header="实缴"
+                        Modifier="{Binding RealCapital}" />
+
+                    <shared:ModifiableControl
+                        HorizontalContentAlignment="Stretch"
+                        Header="成立日期"
+                        Modifier="{Binding SetupDate}">
+                        <shared:ModifiableControl.EditTemplate>
                             <DataTemplate>
-                                <DockPanel>
+                                <DatePicker BorderThickness="0" SelectedDate="{Binding NewValue, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
+                            </DataTemplate>
+                        </shared:ModifiableControl.EditTemplate>
+                    </shared:ModifiableControl>
+
+                    <shared:ModifiableControl Header="核销日期" Modifier="{Binding ExpireDate}">
+                        <shared:ModifiableControl.EditTemplate>
+                            <DataTemplate>
+                                <DockPanel MinHeight="28">
                                     <DatePicker
                                         Width="110"
+                                        BorderThickness="0"
+                                        DisplayDate="{Binding NewValue.Today, Mode=OneWay}"
                                         SelectedDate="{Binding NewValue.Date}"
                                         Visibility="{Binding NewValue.IsLongTerm, Converter={StaticResource Boolean2VisibilityReConverter}}" />
                                     <CheckBox
                                         Margin="8,0"
-                                        Content="至今"
+                                        Content="长期"
                                         IsChecked="{Binding NewValue.IsLongTerm}" />
                                 </DockPanel>
                             </DataTemplate>
-                        </shared:ChangeableControl.EditTemplate>
-                    </shared:ChangeableControl>
+                        </shared:ModifiableControl.EditTemplate>
+                    </shared:ModifiableControl>
 
-
-                    <shared:ChangeableControl Binding="{Binding Telephone}" EditTemplate="{StaticResource DT.Text.Cap}" />
-                    <shared:ChangeableControl Binding="{Binding Fax}" EditTemplate="{StaticResource DT.Text.Cap}" />
-
-
+                    <shared:ModifiableControl
+                        EditTemplate="{StaticResource DT.Text.Cap}"
+                        Header="电话"
+                        Modifier="{Binding Telephone}" />
+                    <shared:ModifiableControl
+                        EditTemplate="{StaticResource DT.Text.Cap}"
+                        Header="传真"
+                        Modifier="{Binding Fax}" />
                 </StackPanel>
 
-                <shared:ChangeableControl
+                <shared:ModifiableControl
                     MinWidth="300"
                     HorizontalContentAlignment="Stretch"
-                    Binding="{Binding WebSite}" />
+                    Header="官网"
+                    Modifier="{Binding WebSite}" />
 
-
-                <shared:ChangeableControl HorizontalContentAlignment="Stretch" Binding="{Binding RegisterAddress}" />
-                <shared:ChangeableControl HorizontalContentAlignment="Stretch" Binding="{Binding OfficeAddress}" />
-                <shared:ChangeableControl HorizontalContentAlignment="Stretch" Binding="{Binding BusinessScope}">
-                    <shared:ChangeableControl.EditTemplate>
+                <shared:ModifiableControl
+                    HorizontalContentAlignment="Stretch"
+                    Header="注册地址"
+                    Modifier="{Binding RegisterAddress}" />
+                <shared:ModifiableControl
+                    HorizontalContentAlignment="Stretch"
+                    Header="办公地址"
+                    Modifier="{Binding OfficeAddress}" />
+                <shared:ModifiableControl
+                    HorizontalContentAlignment="Stretch"
+                    Header="经营范围"
+                    Modifier="{Binding BusinessScope}">
+                    <shared:ModifiableControl.EditTemplate>
                         <DataTemplate>
                             <TextBox
                                 MinHeight="100"
                                 AcceptsReturn="True"
+                                BorderThickness="0"
                                 Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}"
                                 TextWrapping="Wrap" />
                         </DataTemplate>
-                    </shared:ChangeableControl.EditTemplate>
-                </shared:ChangeableControl>
-
-
-
-
+                    </shared:ModifiableControl.EditTemplate>
+                </shared:ModifiableControl>
             </StackPanel>
 
-            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top">
+            <StackPanel
+                Margin="5"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top">
                 <ToggleButton
                     hc:IconElement.Geometry="{StaticResource f.pencil}"
-                    local:HelpService.Help="点击这里修改管理人资料和证件"
+                    local:HelpService.Help="点击这里修改"
                     local:HelpService.Placement="Right"
                     BorderThickness="0"
                     DockPanel.Dock="Right"
                     IsChecked="{Binding IsReadOnly}"
-                    Style="{StaticResource EditSwitch}">
-                    <!--<local:HelpService.Help>
-                  <DataTemplate>
-                      <TextBlock Text="点击这里修改管理人资料和证件" />
-                  </DataTemplate>
-              </local:HelpService.Help>-->
-                </ToggleButton>
-
-
+                    Style="{StaticResource EditSwitch.Small}" />
             </StackPanel>
         </Grid>
 
@@ -183,8 +231,6 @@
             </StackPanel>
         </GroupBox>
 
-
-
         <!--  股权结构  -->
         <StackPanel>
             <Border>
@@ -193,7 +239,6 @@
                         VerticalAlignment="Center"
                         FontSize="18"
                         Text="股东" />
-
 
                     <TextBlock
                         Margin="10,0"
@@ -207,13 +252,6 @@
                         Command="{Binding AddShareHolderCommand}"
                         Foreground="Green"
                         Style="{StaticResource ButtonIcon}" />
-
-
-                    <!--<Button
-                   hc:IconElement.Geometry="{StaticResource f.dharmachakra}"
-                   Command="{Binding OpenOwnershipCommand}"
-                   Style="{StaticResource ButtonIcon}"
-                   ToolTip="股权结构图" />-->
                 </DockPanel>
             </Border>
 
@@ -262,7 +300,6 @@
                                         Foreground="Red"
                                         Style="{StaticResource ButtonIcon.Small}" />
 
-
                                     <Button
                                         hc:IconElement.Geometry="{StaticResource f.pen}"
                                         Command="{Binding DataContext.EditShareHolderCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
@@ -275,6 +312,5 @@
                 </DataGrid.Columns>
             </DataGrid>
         </StackPanel>
-
     </DockPanel>
 </Window>
