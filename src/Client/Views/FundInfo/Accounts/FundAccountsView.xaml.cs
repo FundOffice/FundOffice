@@ -597,60 +597,28 @@ public partial class FundAccountsViewModel : ObservableObject
 }
 
 
-public partial class FundSingletonAccountsViewModel : EditableControlViewModelBase<FundSingletonAccounts>
+[EntityModifiable(typeof(FundSingletonAccounts))]
+public partial class FundSingletonAccountsViewModel : ObservableObject
 {
-    public ChangeableViewModel<FundSingletonAccounts, string?> UniversalNo { get; }
-    public ChangeableViewModel<FundSingletonAccounts, string?> FutureNo { get; }
+    private readonly FundSingletonAccounts _obj;
 
-    public ChangeableViewModel<FundSingletonAccounts, string?> CCDCBondAccount { get; }
+    public int Id { get; }
 
-    public ChangeableViewModel<FundSingletonAccounts, string?> SHCBondAccount { get; }
-
+    [ObservableProperty]
+    public partial bool IsReadOnly { get; set; }
 
     public FundSingletonAccountsViewModel(FundSingletonAccounts obj)
     {
         Id = obj.Id;
 
-        UniversalNo = new()
-        {
-            Label = "证券一码通",
-            InitFunc = x => x.UniversalNo,
-            UpdateFunc = (x, y) => x.UniversalNo = y,
-            ClearFunc = x => x.UniversalNo = null
-        };
-        UniversalNo.Init(obj);
-
-        FutureNo = new()
-        {
-            Label = "统一开户编码",
-            InitFunc = x => x.FutureNo,
-            UpdateFunc = (x, y) => x.FutureNo = y,
-            ClearFunc = x => x.FutureNo = null
-        };
-        FutureNo.Init(obj);
-
-        CCDCBondAccount = new()
-        {
-            Label = "中债登债券账户",
-            InitFunc = x => x.CCDCBondAccount,
-            UpdateFunc = (x, y) => x.CCDCBondAccount = y,
-            ClearFunc = x => x.CCDCBondAccount = null
-        };
-        CCDCBondAccount.Init(obj);
-
-        SHCBondAccount = new()
-        {
-            Label = "上清所债券账户",
-            InitFunc = x => x.SHCBondAccount,
-            UpdateFunc = (x, y) => x.SHCBondAccount = y,
-            ClearFunc = x => x.SHCBondAccount = null
-        };
-        SHCBondAccount.Init(obj);
+        FillBy(obj);
+        _obj = obj;
     }
 
 
-    protected override FundSingletonAccounts InitNewEntity()
+    public partial void OnEntityChanged()
     {
-        return new FundSingletonAccounts { Id = Id };
+        using var db = DbHelper.Base();
+        db.GetCollection<FundSingletonAccounts>().Upsert(_obj);
     }
 }
