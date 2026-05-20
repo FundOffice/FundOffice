@@ -151,8 +151,8 @@ public class FundElementsReflectionRoundTripTests
         using var db = DbHelper.Base();
         var elements = db.GetCollection<FundElements>().FindAll().ToArray();
 
-        // 获取 FactFields 中所有可用的字段名
-        var allFields = typeof(FactFields)
+        // 获取 FactorFields 中所有可用的字段名
+        var allFields = typeof(FactorFields)
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
             .Where(f => f.IsLiteral && !f.IsInitOnly && f.FieldType == typeof(string))
             .Select(f => f.GetRawConstantValue() as string)
@@ -226,7 +226,7 @@ public class FundElementsReflectionRoundTripTests
     }
 
     /// <summary>
-    /// 根据 FactFields 字段名查找对应的 FundElements 属性（处理别名映射）
+    /// 根据 FactorFields 字段名查找对应的 FundElements 属性（处理别名映射）
     /// </summary>
     private static PropertyInfo? FindPropertyByFactField(string factField)
     {
@@ -235,8 +235,8 @@ public class FundElementsReflectionRoundTripTests
             .GetProperty(factField, BindingFlags.Public | BindingFlags.Instance);
         if (directProp != null) return directProp;
 
-        // 策略2: 遍历 FactFields 常量，匹配值相同的字段，再用常量名找属性
-        foreach (var f in typeof(FactFields).GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
+        // 策略2: 遍历 FactorFields 常量，匹配值相同的字段，再用常量名找属性
+        foreach (var f in typeof(FactorFields).GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
         {
             if (f.IsLiteral && !f.IsInitOnly && f.GetRawConstantValue() is string fieldValue && fieldValue == factField)
             {
@@ -244,8 +244,8 @@ public class FundElementsReflectionRoundTripTests
                 // 特殊情况：OpenRule → FundOpenRule，需手动映射
                 var propName = f.Name switch
                 {
-                    nameof(FactFields.FundOpenRule) => nameof(FundElements.FundOpenRule),
-                    nameof(FactFields.PurchasRule) => nameof(FundElements.PurchasRule),
+                    nameof(FactorFields.FundOpenRule) => nameof(FundElements.FundOpenRule),
+                    nameof(FactorFields.PurchasRule) => nameof(FundElements.PurchasRule),
                     _ => f.Name // 默认常量名=属性名
                 };
 

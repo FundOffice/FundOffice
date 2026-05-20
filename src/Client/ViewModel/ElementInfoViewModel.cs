@@ -169,7 +169,7 @@ public partial class BankChangeableViewModel<T> : ChangeableViewModel<T, BankAcc
 
 
 [AutoChangeableViewModel(typeof(FundFeeInfo))]
-public partial class FundFeeInfoViewModel : IDataValidation
+public partial class FundFeeInfoViewModel : IDataValidation,IViewModel<FundFeeInfo>
 {
     public bool IsValid() => Type switch { FundFeeType.Ratio or FundFeeType.Fix => Fee > 0, FundFeeType.Other => Other?.Length > 0, _ => false };
 

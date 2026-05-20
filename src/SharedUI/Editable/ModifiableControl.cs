@@ -47,3 +47,54 @@ public class ModifiableControl : HeaderedContentControl
 
  
 }
+
+
+
+public class FactorModifiableControl : HeaderedContentControl
+{
+    static FactorModifiableControl()
+    {
+        DefaultStyleKeyProperty.OverrideMetadata(typeof(FactorModifiableControl), new FrameworkPropertyMetadata(typeof(FactorModifiableControl)));
+    }
+
+
+
+    /// <summary>
+    /// 可分割，单一份额时为false
+    /// </summary>
+    public bool CanDivide
+    {
+        get { return (bool)GetValue(CanDivideProperty); }
+        set { SetValue(CanDivideProperty, value); }
+    }
+
+    // Using a DependencyProperty as the backing store for CanDivide.  This enables animation, styling, binding, etc...
+    public static readonly DependencyProperty CanDivideProperty =
+        DependencyProperty.Register("CanDivide", typeof(bool), typeof(FactorModifiableControl), new PropertyMetadata(true));
+
+
+
+
+    public DataTemplate EditTemplate
+    {
+        get { return (DataTemplate)GetValue(EditTemplateProperty); }
+        set { SetValue(EditTemplateProperty, value); }
+    }
+
+    // Using a DependencyProperty as the backing store for EditTemplate.  This enables animation, styling, binding, etc...
+    public static readonly DependencyProperty EditTemplateProperty =
+        DependencyProperty.Register("EditTemplate", typeof(DataTemplate), typeof(FactorModifiableControl), new PropertyMetadata(null));
+
+ 
+
+    public bool IsReadOnly
+    {
+        get { return (bool)GetValue(IsReadOnlyProperty); }
+        set { SetValue(IsReadOnlyProperty, value); }
+    }
+
+    // Using a DependencyProperty as the backing store for IsReadOnly.  This enables animation, styling, binding, etc...
+    public static readonly DependencyProperty IsReadOnlyProperty =
+        DependencyProperty.Register("IsReadOnly", typeof(bool), typeof(FactorModifiableControl), new PropertyMetadata(false));
+
+}

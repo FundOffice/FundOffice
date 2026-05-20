@@ -5,6 +5,8 @@
     xmlns:local="clr-namespace:FMO.Shared"
     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
+    <local:DisplayValueConverter x:Key="DisplayValueConverter" />
+
     <!--  🔹 默认只读态显示模板（TextBlock）  -->
     <DataTemplate x:Key="DefaultReadOnlyTemplate">
         <TextBlock
@@ -66,6 +68,7 @@
     <Style TargetType="{x:Type local:ModifiableControl}">
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Header" Value="{Binding Modifier.Label, RelativeSource={RelativeSource Self}}" />
         <Setter Property="HeaderTemplate" Value="{StaticResource DefaultHeadTemplate}" />
@@ -79,7 +82,7 @@
                         Padding="{TemplateBinding Padding}"
                         Background="Transparent"
                         BorderBrush="Transparent"
-                        BorderThickness="1"
+                        BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="4">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -104,7 +107,7 @@
                                 Margin="5,0,0,0"
                                 HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                Content="{Binding Modifier.DisplayValue, RelativeSource={RelativeSource TemplatedParent}}"
+                                Content="{Binding Modifier.NewValue, Converter={StaticResource DisplayValueConverter}, RelativeSource={RelativeSource TemplatedParent}}"
                                 ContentTemplate="{TemplateBinding ContentTemplate}"
                                 Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
@@ -242,7 +245,7 @@
                                 Margin="5,0,0,0"
                                 HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                Content="{Binding Modifier.DisplayValue, RelativeSource={RelativeSource TemplatedParent}}"
+                                Content="{Binding Modifier.NewValue, Converter={StaticResource DisplayValueConverter}, RelativeSource={RelativeSource TemplatedParent}}"
                                 ContentTemplate="{TemplateBinding ContentTemplate}"
                                 Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
@@ -324,7 +327,7 @@
                                 Margin="5,0,0,0"
                                 HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                Content="{Binding Modifier.DisplayValue, RelativeSource={RelativeSource TemplatedParent}}"
+                                Content="{Binding Modifier.NewValue, Converter={StaticResource DisplayValueConverter}, RelativeSource={RelativeSource TemplatedParent}}"
                                 ContentTemplate="{TemplateBinding ContentTemplate}"
                                 Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
@@ -390,5 +393,99 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+
+    <!--  PortionElement  -->
+    <DataTemplate x:Key="DTpl.PortionElement">
+        <DockPanel LastChildFill="False">
+            <DockPanel Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                <hc:SimplePanel Visibility="{Binding CanDivide, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}, Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <Button
+                        hc:IconElement.Geometry="{StaticResource f.knife}"
+                        Command="{Binding DataContext.DivideCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                        Style="{StaticResource ButtonIcon.Small}"
+                        Visibility="{Binding DataContext.UnifiedClass, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                </hc:SimplePanel>
+                <Button
+                    hc:IconElement.Geometry="{StaticResource f.code-merge}"
+                    Command="{Binding DataContext.UnifyCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                    CommandParameter="{Binding .}"
+                    Style="{StaticResource ButtonIcon.Small}"
+                    ToolTip="以此为基准，合并要素"
+                    Visibility="{Binding DataContext.UnifiedClass, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+            </DockPanel>
+
+            <TextBlock
+                VerticalAlignment="Center"
+                Text="{Binding ShareName}"
+                Visibility="{Binding DataContext.UnifiedClass, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+            <local:ModifiableControl
+                VerticalContentAlignment="Center"
+                BorderThickness="0"
+                ContentTemplate="{Binding ContentTemplate, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
+                EditTemplate="{Binding EditTemplate, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
+                IsReadOnly="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
+                Modifier="{Binding .}" />
+
+        </DockPanel>
+    </DataTemplate>
+
+
+    <Style
+        x:Key="Style.ListItem.PortionElement"
+        BasedOn="{StaticResource ListBoxItemCustom}"
+        TargetType="ListBoxItem">
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+
+    <Style TargetType="{x:Type local:FactorModifiableControl}">
+        <Setter Property="EditTemplate" Value="{StaticResource Tpl.Changeable.Element}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:FactorModifiableControl}">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                        <DockPanel DataContext="{TemplateBinding Content}">
+                            <!--  header  -->
+                            <ContentPresenter
+                                VerticalAlignment="Center"
+                                Content="{TemplateBinding Header}"
+                                ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                TextElement.FontWeight="Medium" />
+
+                            <ListBox
+                                x:Name="list"
+                                Margin="5,0,0,0"
+                                Padding="0"
+                                BorderThickness="0"
+                                ItemContainerStyle="{StaticResource Style.ListItem.PortionElement}"
+                                ItemTemplate="{StaticResource DTpl.PortionElement}"
+                                ItemsSource="{Binding Data}"
+                                Style="{StaticResource ListBoxCustom}" />
+                        </DockPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsReadOnly" Value="True">
+                            <Setter TargetName="list" Property="ItemsPanel">
+                                <Setter.Value>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel IsItemsHost="True" />
+                                    </ItemsPanelTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+
+
 
 </ResourceDictionary>

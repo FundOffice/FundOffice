@@ -1012,5 +1012,5 @@ public partial class IdentityViewMdoel : IViewModel<Identity> ,IEquatable<Identi
         return $"{EnumDescriptionTypeConverter.GetEnumDescription(Type)} {Id}";
     }
 
-    public string Transfer() => $"{EnumDescriptionTypeConverter.GetEnumDescription(Type)}   {Id}";
+    public string Transfrom() => $"{EnumDescriptionTypeConverter.GetEnumDescription(Type)}   {Id}";
 }

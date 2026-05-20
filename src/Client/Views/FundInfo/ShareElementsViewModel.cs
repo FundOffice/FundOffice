@@ -3,9 +3,10 @@ using CommunityToolkit.Mvvm.Input;
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
+using LiteDB;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace FMO;
 
@@ -150,7 +151,7 @@ public partial class ShareElementsViewModel<TProperty, TViewModel> : ObservableO
         u.OldValue = JsonSerializer.Deserialize<TViewModel>(JsonSerializer.Serialize(v));
         Data.Clear();
         Data.Add(u);
-          
+
         ///更新到数据库
         using var db = DbHelper.Base();
         var e = db.GetCollection<FundElements>().FindById(FundId);
@@ -164,3 +165,159 @@ public partial class ShareElementsViewModel<TProperty, TViewModel> : ObservableO
         db.GetCollection<FundElements>().Update(e);
     }
 }
+
+
+
+public partial class ShareElementsViewModel2<TValue, TViewModel> : ObservableObject
+{
+
+    [SetsRequiredMembers]
+    public ShareElementsViewModel2(int fundId, int flowId, string factorId, ShareClass[] sc, (TViewModel? Old, TViewModel? New)[] data)
+    {
+        FundId = fundId;
+        FlowId = flowId;
+        FactorId = factorId;
+        Classes = sc;
+
+        // 要素不拆分
+        if (data.Length == 1)
+        {
+            UnifiedClass = true;
+            var u = new FactModifiableViewModel<TViewModel>
+            {
+                FundId = fundId,
+                FlowId = flowId,
+                ShareId = sc[0].Id,
+                FactorId = factorId,
+                ShareName = sc[0].Name,
+                NewValue = (data[0].New),
+                OldValue = CloneHelper.CloneValue(data[0].New),
+                FallbackValue = data[0].Old
+            };
+            u.Changed += U_Changed;
+            Data.Add(u);
+        }
+        else
+        {
+            UnifiedClass = false;
+
+            for (int i = 0; i < sc.Length; i++)
+            {
+                var c = sc[i];
+                var u = new FactModifiableViewModel<TViewModel>
+                {
+                    FundId = fundId,
+                    FlowId = flowId,
+                    ShareId = c.Id,
+                    FactorId = factorId,
+                    ShareName = c.Name,
+                    NewValue = data[i].New,
+                    OldValue = CloneHelper.CloneValue(data[i].New),
+                    FallbackValue = data[i].Old
+                };
+                u.Changed += U_Changed;
+                Data.Add(u);
+            }
+
+        }
+    }
+
+    private void U_Changed(object? sender, FactChangeEventArgs<TViewModel> e)
+    {
+        if (e.Kind is ValueChangeKind.Added or ValueChangeKind.Modified)
+            SaveChange(e.FundId, e.FactorId, e.FlowId, e.ShareId, e.NewValue);
+        else if (e.Kind is ValueChangeKind.Deleted)
+            RemoveFact(e.FundId, e.FactorId, e.FlowId, e.ShareId);
+    }
+
+    void SaveChange(int fundId, string factId, int flowId, int shareId, TViewModel? data)
+    {
+        if (data is TValue good)
+        {
+            using var db = DbHelper.Base();
+            db.GetCollection<IFundFactor>().Upsert(new FundFactor<TValue>(factId, fundId, flowId, shareId, good));
+        }
+        else if (data is IViewModel<TValue> vm)
+        {
+            using var db = DbHelper.Base();
+            db.GetCollection<IFundFactor>().Upsert(new FundFactor<TValue>(factId, fundId, flowId, shareId, vm.Build()));
+        }
+    }
+    void RemoveFact(int fundId, string factId, int flowId, int shareId)
+    {
+        using var db = DbHelper.Base();
+        db.GetCollection<IFundFactor>().Delete($"{fundId}.{flowId}.{shareId}.{factId}");
+    }
+
+
+
+    public ObservableCollection<FactModifiableViewModel<TViewModel>> Data { get; } = new();
+
+    public int FlowId { get; }
+    public string FactorId { get; }
+    public required ShareClass[] Classes { get; set; }
+
+    /// <summary>
+    /// 单一份额
+    /// </summary>
+    [ObservableProperty]
+    public partial bool UnifiedClass { get; set; }
+
+
+    public int FundId { get; set; }
+
+    [RelayCommand]
+    public void Divide()
+    {
+        if (Classes.Length == 1)
+            throw new InvalidOperationException("唯一份额类型，不允许拆分要素");
+
+        UnifiedClass = false;
+        var sc = Classes;
+
+        var v = Data[0].OldValue;
+        var fallback = Data[0].FallbackValue;
+
+        for (int i = 0; i < sc.Length; i++)
+        {
+            var c = sc[i];
+            var u = new FactModifiableViewModel<TViewModel>
+            {
+                FundId = FundId,
+                FlowId = FlowId,
+                ShareId = c.Id,
+                FactorId = FactorId,
+                ShareName = c.Name,
+                NewValue = CloneHelper.CloneValue(v),
+                OldValue = CloneHelper.CloneValue(v),
+                FallbackValue = CloneHelper.CloneValue(fallback)
+            };
+            u.Changed += U_Changed;
+            Data.Add(u);
+        }
+        Data.RemoveAt(0);
+
+    }
+
+    [RelayCommand]
+    public void Unify(FactModifiableViewModel<TViewModel> unit)
+    {
+        UnifiedClass = true;
+        var sc = Classes;
+         
+        ///更新到数据库
+        using var db = DbHelper.Base();
+        var e = db.GetCollection<IFundFactor>().DeleteMany(Query.In("_id", Data.Select(x => new BsonValue(x.Id))));
+
+     
+
+        unit.ShareId = -1;
+        unit.ShareName = null;
+
+        SaveChange(FundId, FactorId, FlowId, -1, unit.OldValue);
+
+        Data.Clear();
+        Data.Add(unit);
+    }
+}
+

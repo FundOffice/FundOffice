@@ -58,14 +58,28 @@ public static partial class DatabaseAssist
         [125] = MoveMissionDll,
         [126] = MiggreateToNewDisclosure,
         [127] = ChangeLockingRule,
-        [129] = MoveToFact,
+        [131] = MoveToFact,
     };
 
     private static void MoveToFact(BaseDatabase database)
     {
-        database.DropCollection("IFundFact");
-        var ele = database.GetCollection<FundElements>().FindAll().ToArray().SelectMany(x => x.ToFacts());
-        database.GetCollection<IFundFact>().InsertBulk(ele);
+        database.DropCollection("IFundFactor");
+        var ele = database.GetCollection<FundElements>().FindAll().ToList();//.SelectMany(x => x);
+
+        foreach (var item in ele)
+        {
+            foreach (var sc in item.ShareClasses.Changes)
+            {
+                if (sc.Value.Length == 1 && sc.Value[0].Name == ShareClass.DefaultShare.Name)
+                    sc.Value[0].Id = -1;
+            }
+        }
+        var wrongSingletonShare = ele.SelectMany(x => x.ShareClasses.Changes.Select(y => y.Value)).SelectMany(x => x).Where(x => x.Name == ShareClass.DefaultShare.Name).ToArray();
+
+        var facts = ele.SelectMany(x => x.ToFactors());
+
+
+        database.GetCollection<IFundFactor>().InsertBulk(facts);
     }
 
     private static void ChangeLockingRule(BaseDatabase db)
@@ -73,7 +87,7 @@ public static partial class DatabaseAssist
         var els = db.GetCollection(nameof(FundElements)).FindAll().ToArray();
         foreach (var item in els)
         {
-            item[nameof(FundElements.LockingRule)] = BsonMapper.Global.ToDocument( new SealingRule());
+            item[nameof(FundElements.LockingRule)] = BsonMapper.Global.ToDocument(new SealingRule());
         }
         db.GetCollection(nameof(FundElements)).Update(els);
     }

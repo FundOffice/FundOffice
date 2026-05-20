@@ -13,7 +13,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace FMO;
 
 
-public partial class ShareClassViewModel : ObservableObject
+public partial class ShareClassViewModel : ObservableObject, IViewModel<ShareClass>
 {
     [ObservableProperty]
     public partial int Id { get; set; }
@@ -33,6 +33,8 @@ public partial class ShareClassViewModel : ObservableObject
         Name = s.Name;
         Requirement = s.Requirement;
     }
+
+    public ShareClass Build() => new ShareClass() { Name = Name, Id = Id, Requirement = Requirement };
 }
 
 

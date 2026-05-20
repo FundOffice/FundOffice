@@ -131,8 +131,8 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
 
         // 未匹配的银行账号 排除产品、特殊账户
         // 托管户
-        //var tracc = db.GetCollection<IFundFact>().Query().Where(x => x.FactId == FactFields.CollectionAccount || x.FactId == FactFields.CustodyAccount).ToArray().OfType<FundFact<BankAccount>>().Select(x => x.Data?.Number);        
-        //var fnames = db.GetCollection<IFundFact>().Query().Where(x => x.FactId == FactFields.FullName).ToArray().OfType<FundFact<string>>().Select(x => x.Data).Distinct().Union(db.GetCollection<Fund>().Query().Select(x => x.Name).ToArray()).ToList();
+        //var tracc = db.GetCollection<IFundFact>().Query().Where(x => x.FactId == FactorFields.CollectionAccount || x.FactId == FactorFields.CustodyAccount).ToArray().OfType<FundFact<BankAccount>>().Select(x => x.Data?.Number);        
+        //var fnames = db.GetCollection<IFundFact>().Query().Where(x => x.FactId == FactorFields.FullName).ToArray().OfType<FundFact<string>>().Select(x => x.Data).Distinct().Union(db.GetCollection<Fund>().Query().Select(x => x.Name).ToArray()).ToList();
 
         var tracc = db.GetCollection<FundElements>().FindAll().SelectMany(x => x.CollectionAccount.Changes.Select(y => y.Value.Number).Union(x.CustodyAccount.Changes.Select(y => y.Value.Number))).ToList();
         var fnames = db.GetCollection<FundElements>().FindAll().SelectMany(x => x.FullName.Changes.Select(x => x.Value)).Distinct().Union(db.GetCollection<Fund>().Query().Select(x => x.Name).ToArray()).ToList();

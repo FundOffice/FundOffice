@@ -214,7 +214,7 @@ public partial class InvestManagerViewModel : ObservableObject
 
         public bool Equals(PersonInfo? other) => Id == other?.Id;
 
-        public string Transfer() => Name;
+        public string Transfrom() => Name;
 
 
     }

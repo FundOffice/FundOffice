@@ -543,11 +543,96 @@
 
         </ControlTemplate>
 
+
+
         <DataTemplate x:Key="DT.Fee">
             <WrapPanel DataContext="{Binding NewValue}">
+                <CheckBox IsChecked="{Binding HasFee}" />
+
                 <ComboBox
                     Width="90"
                     Margin="4,0"
+                    ItemsSource="{Binding DataContext.FundFeeTypes, RelativeSource={RelativeSource AncestorType=local:ElementsView}}"
+                    SelectedItem="{Binding Type}"
+                    Visibility="{Binding HasFee, Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+
+                <DockPanel Visibility="{Binding HasFee, Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <TextBox
+                        x:Name="mon"
+                        MinWidth="40"
+                        HorizontalContentAlignment="Center"
+                        Text="{Binding Fee, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                    <TextBlock
+                        x:Name="a"
+                        Margin="4,0"
+                        VerticalAlignment="Center"
+                        FontSize="14"
+                        Text="%"
+                        Visibility="Collapsed" />
+                    <TextBlock
+                        x:Name="b"
+                        Margin="4,0"
+                        VerticalAlignment="Center"
+                        FontSize="14"
+                        Text="元"
+                        Visibility="Collapsed" />
+                    <TextBox
+                        x:Name="other"
+                        MinWidth="300"
+                        Text="{Binding Other, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                        Visibility="Collapsed" />
+                </DockPanel>
+
+                <DockPanel Visibility="{Binding HasFee, Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <CheckBox
+                        Margin="4,0"
+                        Content="保底"
+                        IsChecked="{Binding HasGuaranteedFee}" />
+
+
+                    <TextBox
+                        x:Name="gr"
+                        MinWidth="60"
+                        HorizontalContentAlignment="Center"
+                        Text="{Binding GuaranteedFee, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                        Visibility="{Binding HasGuaranteedFee, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                    <TextBlock
+                        x:Name="ad"
+                        Margin="4,0"
+                        VerticalAlignment="Center"
+                        FontSize="14"
+                        Text="元"
+                        Visibility="{Binding HasGuaranteedFee, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                </DockPanel>
+            </WrapPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding NewValue.Type}" Value="Other">
+                    <Setter TargetName="other" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="mon" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NewValue.Type}" Value="Ratio">
+                    <Setter TargetName="a" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding NewValue.Type}" Value="Fix">
+                    <Setter TargetName="b" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate x:Key="DT.Fee2">
+            <WrapPanel DataContext="{Binding OldValue}">
+                <ComboBox
+                    Width="90"
+                    Margin="4,0"
+                    BorderThickness="0"
                     ItemsSource="{Binding DataContext.FundFeeTypes, RelativeSource={RelativeSource AncestorType=local:ElementsView}}"
                     SelectedItem="{Binding Type}">
                     <ComboBox.ItemTemplate>
@@ -557,12 +642,11 @@
                     </ComboBox.ItemTemplate>
                 </ComboBox>
 
-
                 <TextBox
                     x:Name="mon"
                     MinWidth="40"
                     HorizontalContentAlignment="Center"
-                    Text="{Binding Fee, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                    Text="{Binding Fee, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
                 <TextBlock
                     x:Name="a"
                     Margin="4,0"
@@ -604,20 +688,20 @@
                     Visibility="{Binding HasGuaranteedFee, Converter={StaticResource Boolean2VisibilityConverter}}" />
             </WrapPanel>
             <DataTemplate.Triggers>
-                <DataTrigger Binding="{Binding NewValue.Type}" Value="Other">
+                <DataTrigger Binding="{Binding OldValue.Type}" Value="Other">
                     <Setter TargetName="other" Property="Visibility" Value="Visible" />
                     <Setter TargetName="mon" Property="Visibility" Value="Collapsed" />
                 </DataTrigger>
-                <DataTrigger Binding="{Binding NewValue.Type}" Value="Ratio">
+                <DataTrigger Binding="{Binding OldValue.Type}" Value="Ratio">
                     <Setter TargetName="a" Property="Visibility" Value="Visible" />
                 </DataTrigger>
-                <DataTrigger Binding="{Binding NewValue.Type}" Value="Fix">
+                <DataTrigger Binding="{Binding OldValue.Type}" Value="Fix">
                     <Setter TargetName="b" Property="Visibility" Value="Visible" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
 
-
+        <DataTemplate x:Key="Display.Fee" />
 
         <DataTemplate x:Key="DT.RedemptionFee">
             <WrapPanel DataContext="{Binding NewValue}">
@@ -1161,10 +1245,12 @@
                         </Border>
 
                         <StackPanel>
-                            <shared:ChangeableContainer
+                            <shared:ModifiableControl
                                 HorizontalContentAlignment="Stretch"
-                                Binding="{Binding FullName}"
-                                ContentTemplate="{StaticResource DT.Text.Center}" />
+                                EditTemplate="{StaticResource DT.Text.Center}"
+                                Header="基金全称"
+                                IsReadOnly="{Binding IsReadOnly}"
+                                Modifier="{Binding FullName}" />
 
 
                             <DockPanel>
@@ -1302,11 +1388,17 @@
 
                         <StackPanel>
 
-                            <local:PortionElementView
+                            <!--<local:PortionElementView
                                 Content="{Binding ManageFee}"
                                 ContentTemplate="{StaticResource DT.Fee}"
                                 EditTemplate="{StaticResource CT.Fee}"
-                                Header="管理费" />
+                                Header="管理费" />-->
+
+                            <shared:FactorModifiableControl
+                                Content="{Binding ManageFee}"
+                                EditTemplate="{StaticResource DT.Fee}"
+                                Header="管理费"
+                                IsReadOnly="{Binding IsReadOnly}" />
 
                             <shared:ChangeableContainer Binding="{Binding ManageFeePay}" ContentTemplate="{StaticResource DT.FeePay}" />
 

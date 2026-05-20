@@ -204,6 +204,8 @@
 
         </DockPanel>
     </DataTemplate>
+
+
     <Style
         x:Key="Style.ListItem.PortionElement"
         BasedOn="{StaticResource ListBoxItemCustom}"

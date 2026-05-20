@@ -49,5 +49,5 @@ public partial class BooleanDate : ObservableObject, IEquatable<BooleanDate>, ID
             Date = DateTime.MaxValue;
     }
 
-    public string Transfer() => IsLongTerm ? "长期" : Date?.ToString("yyyy/MM/dd") ?? "未设置";
+    public string Transfrom() => IsLongTerm ? "长期" : Date?.ToString("yyyy/MM/dd") ?? "未设置";
 }
