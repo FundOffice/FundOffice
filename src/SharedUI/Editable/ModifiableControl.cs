@@ -75,6 +75,19 @@ public class FactorModifiableControl : HeaderedContentControl
 
 
 
+    public bool CanMerge
+    {
+        get { return (bool)GetValue(CanMergeProperty); }
+        set { SetValue(CanMergeProperty, value); }
+    }
+
+    // Using a DependencyProperty as the backing store for CanMerge.  This enables animation, styling, binding, etc...
+    public static readonly DependencyProperty CanMergeProperty =
+        DependencyProperty.Register(nameof(CanMerge), typeof(bool), typeof(FactorModifiableControl), new PropertyMetadata(false));
+
+
+
+
     public DataTemplate EditTemplate
     {
         get { return (DataTemplate)GetValue(EditTemplateProperty); }

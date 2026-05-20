@@ -6,6 +6,7 @@ using FMO.Utilities;
 using LiteDB;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
+using Utilities;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace FMO;
@@ -182,14 +183,15 @@ public partial class ShareElementsViewModel2<TValue, TViewModel> : ObservableObj
         // 要素不拆分
         if (data.Length == 1)
         {
-            UnifiedClass = true;
+            CanDivide = sc.Length > 1;
+            CanMerge = false;
             var u = new FactModifiableViewModel<TViewModel>
             {
                 FundId = fundId,
                 FlowId = flowId,
                 ShareId = sc[0].Id,
                 FactorId = factorId,
-                ShareName = sc[0].Name,
+                ShareName = null,
                 NewValue = (data[0].New),
                 OldValue = CloneHelper.CloneValue(data[0].New),
                 FallbackValue = data[0].Old
@@ -199,7 +201,8 @@ public partial class ShareElementsViewModel2<TValue, TViewModel> : ObservableObj
         }
         else
         {
-            UnifiedClass = false;
+            CanDivide = false;
+            CanMerge = sc.Length > 1;
 
             for (int i = 0; i < sc.Length; i++)
             {
@@ -257,11 +260,19 @@ public partial class ShareElementsViewModel2<TValue, TViewModel> : ObservableObj
     public string FactorId { get; }
     public required ShareClass[] Classes { get; set; }
 
+
+
     /// <summary>
-    /// 单一份额
+    /// 可分割
     /// </summary>
     [ObservableProperty]
-    public partial bool UnifiedClass { get; set; }
+    public partial bool CanDivide { get; set; }
+
+    /// <summary>
+    /// 可合并
+    /// </summary>
+    [ObservableProperty]
+    public partial bool CanMerge { get; set; }
 
 
     public int FundId { get; set; }
@@ -270,9 +281,15 @@ public partial class ShareElementsViewModel2<TValue, TViewModel> : ObservableObj
     public void Divide()
     {
         if (Classes.Length == 1)
-            throw new InvalidOperationException("唯一份额类型，不允许拆分要素");
+        {
+            Toast.Warning("单一份额，不允许拆分要素");
+            return;
+            //   throw new InvalidOperationException("唯一份额类型，不允许拆分要素");
+        }
 
-        UnifiedClass = false;
+        CanDivide = false;
+        CanMerge = true;
+
         var sc = Classes;
 
         var v = Data[0].OldValue;
@@ -302,14 +319,16 @@ public partial class ShareElementsViewModel2<TValue, TViewModel> : ObservableObj
     [RelayCommand]
     public void Unify(FactModifiableViewModel<TViewModel> unit)
     {
-        UnifiedClass = true;
+        CanDivide = true;
+        CanMerge = false;
+
         var sc = Classes;
-         
+
         ///更新到数据库
         using var db = DbHelper.Base();
         var e = db.GetCollection<IFundFactor>().DeleteMany(Query.In("_id", Data.Select(x => new BsonValue(x.Id))));
 
-     
+
 
         unit.ShareId = -1;
         unit.ShareName = null;

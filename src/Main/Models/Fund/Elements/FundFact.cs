@@ -104,25 +104,26 @@ public class FactorItem<T>
         for (var i = 0; i < classId.Length; i++)
         {
             var sc = classId[i];
-            bool set = false;
+            //bool set = false;
             foreach (var (flowid, data) in _flowGroupCache.Where(x => x.FlowId <= flowId))
             {
                 if (data.FirstOrDefault(x => x.ShareId == sc) is FundFactor<T> fact)
                 {
-                    set = true;
+                    //set = true;
                     values[i] = fact.Data;
                     break;
                 }
-                else if (data.Length == 1 && data[0].ShareId == -1)
+                else if (data[0].ShareId == -1)
                 {
-                    set = true;
+                    //set = true;
                     values[i] = data[0].Data;
                     break;
                 }
+                break;
             }
             // 匹配最初一个flow的 shareid = -1 数据
-            if (!set && _flowGroupCache.LastOrDefault().Fact.FirstOrDefault() is FundFactor<T> fa && fa.ShareId == -1)
-                values[i] = fa.Data;
+            //if (!set && _flowGroupCache.LastOrDefault().Fact.FirstOrDefault() is FundFactor<T> fa && fa.ShareId == -1)
+            //    values[i] = fa.Data;
         }
         return values;
     }
@@ -130,7 +131,11 @@ public class FactorItem<T>
     public virtual (T? Old, T? New)[] GetInheritValues(int flowId, params int[] classId)
     {
         var values = GetValues(flowId, classId);
+
         var values2 = GetValues(flowId - 1, classId);
+
+        if (values.Distinct().Count() == 1)
+            return [(values[0], values2[0])];
 
         return Enumerable.Range(0, classId.Length).Select(x => (values[x], values2[x])).ToArray();
     }

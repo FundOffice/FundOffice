@@ -58,7 +58,7 @@ public static partial class DatabaseAssist
         [125] = MoveMissionDll,
         [126] = MiggreateToNewDisclosure,
         [127] = ChangeLockingRule,
-        [131] = MoveToFact,
+        [132] = MoveToFact,
     };
 
     private static void MoveToFact(BaseDatabase database)
@@ -80,6 +80,8 @@ public static partial class DatabaseAssist
 
 
         database.GetCollection<IFundFactor>().InsertBulk(facts);
+
+        var d =  database.GetCollection(nameof(IFundFactor)).FindOne(x=>true);
     }
 
     private static void ChangeLockingRule(BaseDatabase db)

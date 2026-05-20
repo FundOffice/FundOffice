@@ -1395,6 +1395,8 @@
                                 Header="管理费" />-->
 
                             <shared:FactorModifiableControl
+                                CanDivide="{Binding ManageFee.CanDivide}"
+                                CanMerge="{Binding ManageFee.CanMerge}"
                                 Content="{Binding ManageFee}"
                                 EditTemplate="{StaticResource DT.Fee}"
                                 Header="管理费"
