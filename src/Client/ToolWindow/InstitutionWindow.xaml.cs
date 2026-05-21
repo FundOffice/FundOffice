@@ -92,7 +92,7 @@ public partial class InstitutionWindowViewModel : ObservableObject
         Id = _org.Id;
 
         ExpireDate = new() { NewValue = new(_org.ExpireDate), OldValue = new(_org.ExpireDate) };
-        ExpireDate.Changed += (s, e) => { _org.ExpireDate = DateOnly.FromDateTime(ExpireDate.NewValue?.Date ?? default); OnEntityChanged(); };
+        ExpireDate.Changed += e => { _org.ExpireDate = DateOnly.FromDateTime(ExpireDate.NewValue?.Date ?? default); OnEntityChanged(); };
         FillBy(_org);
 
         var rel = db.GetCollection<Ownership>().Find(x => x.InstitutionId == id).ToArray();
@@ -111,7 +111,7 @@ public partial class InstitutionWindowViewModel : ObservableObject
 
 
         ShowFileList = !string.IsNullOrWhiteSpace(Identity.OldValue!.Id);
-        Identity.Changed += (s, e) =>
+        Identity.Changed += e =>
         {
 
             ShowFileList = !string.IsNullOrWhiteSpace(Identity.OldValue!.Id);

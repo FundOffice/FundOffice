@@ -1,0 +1,35 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mod="clr-namespace:FMO.Factor.Modifier"
+    xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI">
+
+
+    <DataTemplate x:Key="DT.TextBox.Center">
+        <TextBox HorizontalContentAlignment="Center" Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+    </DataTemplate>
+
+
+    <DataTemplate x:Key="DT.SecurityFundType">
+        <ComboBox
+            Width="120"
+            BorderThickness="0"
+            ItemsSource="{Binding Source={x:Static local:ElementsViewModel.SecurityFundTypes}}"
+            SelectedItem="{Binding NewValue}">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type mod:SecurityFundTypeModifier}">
+        <ComboBox
+            Width="60"
+            ItemsSource="{Binding Source={x:Static local:ElementsViewModel.RiskLevels}}"
+            SelectedItem="{Binding NewValue}" />
+    </DataTemplate>
+
+</ResourceDictionary>

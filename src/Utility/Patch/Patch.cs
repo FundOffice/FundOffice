@@ -58,7 +58,7 @@ public static partial class DatabaseAssist
         [125] = MoveMissionDll,
         [126] = MiggreateToNewDisclosure,
         [127] = ChangeLockingRule,
-        [132] = MoveToFact,
+        [136] = MoveToFact,
     };
 
     private static void MoveToFact(BaseDatabase database)
@@ -75,13 +75,13 @@ public static partial class DatabaseAssist
             }
         }
         var wrongSingletonShare = ele.SelectMany(x => x.ShareClasses.Changes.Select(y => y.Value)).SelectMany(x => x).Where(x => x.Name == ShareClass.DefaultShare.Name).ToArray();
-
+ 
         var facts = ele.SelectMany(x => x.ToFactors());
 
+        var ff = new FundFactors(facts.Where(x=>x.FundId == 9));
 
         database.GetCollection<IFundFactor>().InsertBulk(facts);
 
-        var d =  database.GetCollection(nameof(IFundFactor)).FindOne(x=>true);
     }
 
     private static void ChangeLockingRule(BaseDatabase db)

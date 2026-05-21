@@ -234,16 +234,16 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
 
             if (prop.IsComplexViewModel)
                 return $$"""
-            {{prop.Name}}.Changed += (s, e) =>
+            {{prop.Name}}.Changed += e =>
             {
                 if (e is ValueChangeEventArgs<{{genericArg}}> ee)
-                    {{entityAccess}} = ee.NewValue.Build();
+                    {{entityAccess}} = ee.NewValue?.Build() ?? default;
                 _throttle.Execute(OnEntityChanged);
             };
 """;
             else if (prop.IsUserDeclared)
                 return $$"""
-            {{prop.Name}}.Changed += (s, e) =>
+            {{prop.Name}}.Changed += e =>
             {
                 if (e is ValueChangeEventArgs<{{genericArg}}> ee)
                     {{entityAccess}} = ee.NewValue ?? default;
@@ -255,7 +255,7 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
                 var nullCoalesce = prop.IsNullable ? " ?? default" : "";
                 var stringFix = (genericArg == "string") ? " ?? \"\"" : nullCoalesce;
                 return $$"""
-            {{prop.Name}}.Changed += (s, e) =>
+            {{prop.Name}}.Changed += e =>
             {
                 if (e is ValueChangeEventArgs<{{genericArg}}> ee)
                     {{entityAccess}} = ee.NewValue{{stringFix}};

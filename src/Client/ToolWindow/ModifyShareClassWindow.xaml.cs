@@ -30,9 +30,18 @@ public partial class ModifyShareClassWindowViewModel : ObservableObject
     public int FundId { get; }
     public int FlowId { get; }
 
+    /// <summary>
+    /// 初始是单一份额，
+    /// </summary>
+    public bool IsOriginalSingleton { get; set; }
 
     [ObservableProperty]
     public partial ObservableCollection<ShareClassViewModel> Shares { get; set; }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ConfirmSharesCommand))]
+    public partial bool AnythingChanged { get; set; }
+
 
     [SetsRequiredMembers]
 #pragma warning disable CS9264 // 退出构造函数时，不可为 null 的属性必须包含非 null 值。请考虑添加 ‘required’ 修饰符，或将属性声明为可为 null，或添加 ‘[field: MaybeNull, AllowNull]’ 特性。
@@ -44,13 +53,18 @@ public partial class ModifyShareClassWindowViewModel : ObservableObject
         FundId = fundId;
         FlowId = flowId;
 
+        IsOriginalSingleton = shareClassViewModels.Length <= 1;
         old = [.. shareClassViewModels.Select(x => x.Build())];
         Shares = [.. shareClassViewModels];
+
+        foreach (var item in Shares)
+            item.PropertyChanged += (s, e) => AnythingChanged = true;
+        Shares.CollectionChanged += (s, e) => AnythingChanged = true;
     }
 
 
     [RelayCommand]
-    public void DivideShares()
+    public void DivideShares(ShareClassViewModel? vm)
     {
         ///最大5类
         if (Shares.Count > 5) return;
@@ -59,14 +73,25 @@ public partial class ModifyShareClassWindowViewModel : ObservableObject
         if (Shares.Count == 1)
         {
             Shares[0].Name = "A";
-            var tmp = new ShareClass { Name = "A", Requirement = Shares[0].Requirement };
+            var tmp = new ShareClass { Name = "A", Inherit = vm?.Inherit ?? ShareClass.Singleton, Requirement = Shares[0].Requirement };
             db.GetCollection<ShareClass>().Insert(tmp);
             Shares[0].Id = tmp.Id;
         }
-        var sc = new ShareClass { Name = ((char)('A' + Shares.Count)).ToString() };
+        var sc = new ShareClass { Name = GetNextClass(), Inherit = vm?.Id ?? vm?.Inherit ?? ShareClass.Singleton };
         db.GetCollection<ShareClass>().Insert(sc);
 
         Shares.Add(new(sc));
+    }
+
+    private string GetNextClass()
+    {
+        var cnt = Shares.Count;
+        var tmp = ((char)('A' + cnt++)).ToString();
+        while (Shares.Any(x => x.Name == tmp))
+        {
+            tmp = ((char)('A' + cnt++)).ToString();
+        }
+        return tmp;
     }
 
     [RelayCommand]
@@ -74,11 +99,12 @@ public partial class ModifyShareClassWindowViewModel : ObservableObject
     {
         Shares.Remove(s);
 
+        // 只改名，确认的时候还要改要素
         if (Shares.Count == 1)
-            Shares[0] = new(ShareClass.DefaultShare);
+            Shares[0].Name = ShareClass.DefaultShare.Name;// = new(ShareClass.DefaultShare);
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(AnythingChanged))]
     public void ConfirmShares(Window wnd)
     {
         using var db = DbHelper.Base();
@@ -89,12 +115,12 @@ public partial class ModifyShareClassWindowViewModel : ObservableObject
 
         // 同名对齐
         var dic = old.ToDictionary(x => x.Name, x => x.Id);
-        rem.ForEach(x => x.Id = dic.TryGetValue(x.Name, out var d) ? d : 0);
+        rem.ForEach(x => x.Id = dic.TryGetValue(x.Name, out var d) ? d : x.Id);
 
         var remove = old.ExceptBy(rem.Select(x => x.Id), x => x.Id).Where(x => x.Id != -1).ToArray();
-        var add = rem.ExceptBy(old.Select(x => x.Id), x => x.Id).ToArray();
-        var change = rem.Where(x => old.Any(y => y.Id == x.Id && (y.Name != x.Name || x.Requirement != y.Requirement))).ToArray();
- 
+        //var add = rem.ExceptBy(old.Select(x => x.Id), x => x.Id).ToArray();
+        //var change = rem.Where(x => old.Any(y => y.Id == x.Id && (y.Name != x.Name || x.Requirement != y.Requirement))).ToArray();
+
 
         if ((remove.Length != 0 && MessageBoxResult.Cancel == HandyControl.Controls.MessageBox.Show($"此操作将会删除份额[{string.Join(',', remove.Select(x => x.Name))}]相关的要素", "危险操作提示", MessageBoxButton.OKCancel)))
         {
@@ -102,9 +128,10 @@ public partial class ModifyShareClassWindowViewModel : ObservableObject
             return;
         }
 
-        if(add.Length >0 || remove.Length > 0 || change.Length > 0)
+        // 有变化 
+        if (AnythingChanged)
         {
-            ShareClassChange(remove);
+            ShareClassChange(rem, remove);
             WeakReferenceMessenger.Default.Send(new FundShareChangedMessage { FundId = FundId, FlowId = FlowId });
 
             wnd.DialogResult = true;
@@ -122,33 +149,36 @@ public partial class ModifyShareClassWindowViewModel : ObservableObject
     }
 
 
-    public void InitShare(Mutable<ShareClass[]>? shareClass = null)
-    {
-        if (shareClass is null)
-        {
-            using var db = DbHelper.Base();
-            shareClass = db.GetCollection<FundElements>().FindById(FundId)?.ShareClasses;
-        }
+    //public void InitShare(Mutable<ShareClass[]>? shareClass = null)
+    //{
+    //    if (shareClass is null)
+    //    {
+    //        using var db = DbHelper.Base();
+    //        shareClass = db.GetCollection<FundElements>().FindById(FundId)?.ShareClasses;
+    //    }
 
-        old = shareClass!.GetValue(FlowId).Value ?? Array.Empty<ShareClass>();
+    //    old = shareClass!.GetValue(FlowId).Value ?? [];
 
-        if (shareClass is not null && shareClass.GetValue(FlowId).Value is ShareClass[] shares)
-            Shares = new ObservableCollection<ShareClassViewModel>(shares.Select(x => new ShareClassViewModel { Id = x.Id, Name = x.Name, Requirement = x.Requirement }));
-        else
-            Shares = new([new ShareClassViewModel { Id = -1, Name = FundElements.SingleShareKey }]);// throw new Exception(); //Shares = new ObservableCollection<ShareClassViewModel>([new ShareClassViewModel { Id = IdGenerator.GetNextId(nameof(ShareClass)), Name = FundElements.SingleShareKey }]);
+    //    if (shareClass is not null && shareClass.GetValue(FlowId).Value is ShareClass[] shares)
+    //        Shares = new ObservableCollection<ShareClassViewModel>(shares.Select(x => new ShareClassViewModel { Id = x.Id, Name = x.Name, Requirement = x.Requirement }));
+    //    else
+    //        Shares = new([new ShareClassViewModel { Id = -1, Name = FundElements.SingleShareKey }]);// throw new Exception(); //Shares = new ObservableCollection<ShareClassViewModel>([new ShareClassViewModel { Id = IdGenerator.GetNextId(nameof(ShareClass)), Name = FundElements.SingleShareKey }]);
 
-    }
+    //}
 
 
-    private void ShareClassChange(ShareClass[] remove)
+    private void ShareClassChange(List<ShareClass> rem, ShareClass[] remove)
     {
         using var db = DbHelper.Base();
 
-        db.GetCollection<IFundFactor>().Upsert(new FundFactor<ShareClass[]>(FactorFields.ShareClasses, FundId, FlowId, Shares.Select(x => x.Build()).ToArray()));
+        db.GetCollection<IFundFactor>().Upsert(new FundFactor<ShareClass[]>(FactorFields.ShareClasses, FundId, FlowId, rem.ToArray()));
 
         // 删除相关要素
-        db.GetCollection<IFundFactor>().DeleteMany(Query.And(Query.EQ(nameof(FundId), FundId), Query.In(nameof(IFundFactor.ShareId), remove.Where(x => x.Id != -1).Select(x => new BsonValue(x.Id)))));
+        if (remove.Length > 0)
+            db.GetCollection<IFundFactor>().DeleteMany(Query.And(Query.EQ(nameof(FundId), FundId), /*Query.EQ(nameof(FlowId), FlowId), */Query.In(nameof(IFundFactor.ShareId), remove.Where(x => x.Id != -1).Select(x => new BsonValue(x.Id)))));
 
+        if (rem.Count == 1) // 统一了
+            db.GetCollection<IFundFactor>().UpdateMany(Query.And(Query.EQ(nameof(FundId), FundId), Query.In(nameof(IFundFactor.ShareId))), $"{{ {nameof(IFundFactor.ShareId)} : -1 }}");
 
     }
 

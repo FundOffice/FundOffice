@@ -58,34 +58,16 @@ public class FactorModifiableControl : HeaderedContentControl
     }
 
 
+ 
 
-    /// <summary>
-    /// 可分割，单一份额时为false
-    /// </summary>
-    public bool CanDivide
+    public IFactorModifier Modifier
     {
-        get { return (bool)GetValue(CanDivideProperty); }
-        set { SetValue(CanDivideProperty, value); }
+        get => (IFactorModifier)GetValue(ModifierProperty);
+        set => SetValue(ModifierProperty, value);
     }
-
-    // Using a DependencyProperty as the backing store for CanDivide.  This enables animation, styling, binding, etc...
-    public static readonly DependencyProperty CanDivideProperty =
-        DependencyProperty.Register("CanDivide", typeof(bool), typeof(FactorModifiableControl), new PropertyMetadata(true));
-
-
-
-
-    public bool CanMerge
-    {
-        get { return (bool)GetValue(CanMergeProperty); }
-        set { SetValue(CanMergeProperty, value); }
-    }
-
-    // Using a DependencyProperty as the backing store for CanMerge.  This enables animation, styling, binding, etc...
-    public static readonly DependencyProperty CanMergeProperty =
-        DependencyProperty.Register(nameof(CanMerge), typeof(bool), typeof(FactorModifiableControl), new PropertyMetadata(false));
-
-
+    public static readonly DependencyProperty ModifierProperty =
+        DependencyProperty.Register(nameof(Modifier), typeof(IFactorModifier), typeof(FactorModifiableControl),
+            new FrameworkPropertyMetadata(null));
 
 
     public DataTemplate EditTemplate

@@ -31,7 +31,7 @@
       <Build Solution="Debug|*" Project="false" />
     </Project>
     <Project Path="src/Main/Data/Data.csproj" />
-    <Project Path="src/Main/HookableGenerator/HookableGenerator.csproj" Id="828d7c6d-19d1-4fdf-ba6b-c77bd079eb57" />
+    <Project Path="src/Main/HookableGenerator/ModelsGenerator.csproj" Id="828d7c6d-19d1-4fdf-ba6b-c77bd079eb57" />
     <Project Path="src/Main/Models/Models.csproj" />
   </Folder>
   <Folder Name="/Mission/">
@@ -62,6 +62,7 @@
     <Project Path="src/Trustee/XYZQ/XYZQ.csproj" />
   </Folder>
   <Folder Name="/Utility/">
+    <Project Path="src/Utility/ElementGenerator/ElementGenerator.csproj" Id="e2c45d0b-85f5-44d1-bf44-32209df9b96f" />
     <Project Path="src/Utility/FileTemplate/FileTemplate.csproj" />
     <Project Path="src/Utility/Logging/Logging.csproj" />
     <Project Path="src/Utility/OCR/OCR.csproj" />

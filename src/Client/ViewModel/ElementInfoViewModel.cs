@@ -114,7 +114,7 @@ public partial class InvestmentManagerInfoViewModel;
 
 
 [AutoChangeableViewModel(typeof(BankAccount))]
-public partial class BankAccountInfoViewModel : IDataValidation
+public partial class BankAccountInfoViewModel : IDataValidation, IViewModel<BankAccount>
 {
 
     private string? _Deposit;
@@ -167,9 +167,8 @@ public partial class BankChangeableViewModel<T> : ChangeableViewModel<T, BankAcc
 
 
 
-
-[AutoChangeableViewModel(typeof(FundFeeInfo))]
-public partial class FundFeeInfoViewModel : IDataValidation,IViewModel<FundFeeInfo>
+ 
+public partial class FundFeeInfoViewModel : IDataValidation, IViewModel<FundFeeInfo, FundFeeInfoViewModel>
 {
     public bool IsValid() => Type switch { FundFeeType.Ratio or FundFeeType.Fix => Fee > 0, FundFeeType.Other => Other?.Length > 0, _ => false };
 
@@ -346,8 +345,8 @@ public partial class TemporarilyOpenInfoViewModel : IDataValidation
 }
 
 [AutoChangeableViewModel(typeof(PerformanceBenchmark))]
-public partial class PerformanceBenchmarkViewModel  
-{ 
+public partial class PerformanceBenchmarkViewModel
+{
 }
 
 
@@ -367,13 +366,18 @@ public partial class FundPurchaseRuleViewModel : IDataValidation
     }
 }
 
-[AutoChangeableViewModel(typeof(FeePayInfo))]
-public partial class FeePayInfoViewModel
+//[AutoChangeableViewModel(typeof(FeePayInfo))]
+public partial class FeePayInfoViewModel : IViewModel<FeePayInfo, FeePayInfoViewModel>//, IEquatable<FeePayInfoViewModel>
 {
     public override string? ToString()
     {
         return Type switch { FeePayFrequency.Month => "按月支付", FeePayFrequency.Quarter => "按季支付", FeePayFrequency.Other => Other, _ => "未设置" };
     }
+
+
+    //public override bool Equals(object? obj) => obj switch { FeePayInfoViewModel v => v.Type == this.Type && v.Other == this.Other, _ => false };
+
+
 }
 
 

@@ -122,18 +122,19 @@
     <ProjectReference Include="..\Disclosure\Disclosure.UI\Disclosure.UI.csproj" />
     <ProjectReference Include="..\Disclosure\Disclosure\Disclosure.csproj" />
     <ProjectReference Include="..\ESign\ESigning\ESigning.csproj" />
-    <ProjectReference Include="..\Main\CustomAnalyzer\CustomAnalyzer.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"    PrivateAssets="all" />
+    <ProjectReference Include="..\Main\CustomAnalyzer\CustomAnalyzer.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all" />
     <ProjectReference Include="..\Main\Data\Data.csproj" />
     <ProjectReference Include="..\Schedule\Mission\Mission.csproj" />
     <ProjectReference Include="..\Setting\Settings.UI\Settings.UI.csproj" />
     <ProjectReference Include="..\Todo\Todo.UI\Todo.UI.csproj" />
     <ProjectReference Include="..\Trigger\DataTrigger\DataTrigger.csproj" />
+    <ProjectReference Include="..\Utility\ElementGenerator\ElementGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all" />
     <ProjectReference Include="..\Utility\Logging\Logging.csproj" />
     <ProjectReference Include="..\Utility\Patch\Patch.csproj" />
     <ProjectReference Include="..\Utility\PDF\PdfExt.csproj" TargetFramework="net9.0-windows" />
     <ProjectReference Include="..\Plugin\Plugin\Plugin.csproj" />
     <ProjectReference Include="..\SharedUI\SharedUI.csproj" />
-    <ProjectReference Include="..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all" />
     <ProjectReference Include="..\Utility\FileTemplate\FileTemplate.csproj" />
     <ProjectReference Include="..\Trustee\Trustee\Trustee.csproj" />
     <ProjectReference Include="..\Utility\Utilities\Utilities.csproj" />

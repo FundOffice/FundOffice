@@ -155,7 +155,7 @@ public partial class ManagerPageViewModel :ObservableObject, IRecipient<Particip
         InstitutionCode = _manager.Identity!.Id;
 
         ExpireDate = new() { NewValue = new(_manager.ExpireDate), OldValue = new(_manager.ExpireDate) };
-        ExpireDate.Changed += (s, e) => { _manager.ExpireDate = DateOnly.FromDateTime(ExpireDate.NewValue.Date ?? default); OnEntityChanged(); };
+        ExpireDate.Changed += (e) => { _manager.ExpireDate = DateOnly.FromDateTime(ExpireDate.NewValue.Date ?? default); OnEntityChanged(); };
         FillBy(_manager);
 
 

@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace FMO.Models;
+﻿namespace FMO.Models;
 
 /// <summary>
 /// 有不同份额安排
@@ -14,21 +12,37 @@ public class ShareClass
     /// </summary>
     public required string Name { get; set; }
 
+
+    public int Inherit { get; set; } = ShareClass.Singleton;
+
     /// <summary>
     /// 要求
     /// </summary>
     public string? Requirement { get; set; }
 
 
-    public static ShareClass DefaultShare => new ShareClass { Id = -1, Name = FundElements.SingleShareKey };
+    public const int Singleton = -1;
+
+    public static ShareClass DefaultShare { get; } = new ShareClass { Id = -1, Name = FundElements.SingleShareKey };
+
+    public static ShareClass[] Default { get; } = [DefaultShare];
+
 
     /// <summary>
     /// 仅用于serialize
     /// </summary>
-    public ShareClass() {   }
+    public ShareClass() { }
 
 
 
+}
+
+
+public record struct ShareType(string? Requirement, string Id = "singleton", string Name = "单一份额", string Inherit = "singleton")
+{
+    public const string Singleton = "singleton";
+
+    public static ShareType[] Default { get; } = [new(null)];
 }
 
 

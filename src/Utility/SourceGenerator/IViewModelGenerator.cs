@@ -6,38 +6,38 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace SourceGenerator;
+namespace SG;
 
 [Generator]
-public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
+public class IViewModelIncrementalGenerator : IIncrementalGenerator
 {
-    private const string AttributeMetadataName = "FMO.Models.AutoViewModelAttribute";
-
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        var classDeclarations = context.SyntaxProvider
-            .ForAttributeWithMetadataName(
-                AttributeMetadataName,
-                predicate: (node, _) => node is ClassDeclarationSyntax,
-                transform: (ctx, ct) =>
-                {
-                    var classDecl = (ClassDeclarationSyntax)ctx.TargetNode;
-                    var classSymbol = ctx.SemanticModel.GetDeclaredSymbol(classDecl, ct) as INamedTypeSymbol;
-                    if (classSymbol == null) return null;
+        var classDeclarations = context.SyntaxProvider.CreateSyntaxProvider(
+            predicate: (node, _) => node is ClassDeclarationSyntax,
+            transform: (ctx, ct) =>
+            {
+                var classDecl = (ClassDeclarationSyntax)ctx.Node;
+                var classSymbol = ctx.SemanticModel.GetDeclaredSymbol(classDecl, ct) as INamedTypeSymbol;
+                if (classSymbol == null) return null;
 
-                    var attribute = ctx.Attributes.FirstOrDefault();
-                    var typeArg = attribute?.ConstructorArguments.FirstOrDefault().Value as INamedTypeSymbol;
-                    if (typeArg == null) return null;
+                var iViewModelInterface = classSymbol.AllInterfaces.FirstOrDefault(i =>
+                    i.Name == "IViewModel" && i.TypeArguments.Length == 2);
 
-                    return BuildGenerationModel(classSymbol, typeArg);
-                })
+                if (iViewModelInterface == null) return null;
+
+                var typeArg = iViewModelInterface.TypeArguments[0] as INamedTypeSymbol;
+                if (typeArg == null) return null;
+
+                return BuildGenerationModel(classSymbol, typeArg);
+            })
             .Where(model => model != null);
 
         context.RegisterSourceOutput(classDeclarations, (spc, model) =>
         {
             if (model == null) return;
             var source = GenerateSource(model);
-            spc.AddSource($"{model.ClassName}.AutoViewModel.g.cs", SourceText.From(source, Encoding.UTF8));
+            spc.AddSource($"{model.ClassName}.vm.g.cs", SourceText.From(source, Encoding.UTF8));
         });
     }
 
@@ -50,7 +50,6 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
         var className = targetClass.Name;
         var sourceTypeName = sourceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        // 1️⃣ VM 本身已声明的属性
         var viewModelDeclaredProperties = new HashSet<string>(StringComparer.Ordinal);
         foreach (var member in targetClass.GetMembers())
             if (member is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public)
@@ -58,13 +57,11 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
 
         logs.Add($"[VM Declared] {string.Join(", ", viewModelDeclaredProperties)}");
 
-        // 2️⃣ VM 继承链属性
         var existingInHierarchy = new HashSet<string>(StringComparer.Ordinal);
         INamedTypeSymbol? current = targetClass.BaseType;
 
         while (current != null && current.SpecialType != SpecialType.System_Object)
         {
-            // 1. 收集当前 VM 类自身的公共属性
             logs.Add($"🔍 遍历VM类型：{current.Name}");
             foreach (var member in current.GetMembers())
             {
@@ -75,14 +72,12 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
                 }
             }
 
-            // 2. 查找当前类是否是 AutoVM 并收集【源模型(Source)】的属性
-            var autoAttr = current.GetAttributes().FirstOrDefault(a =>
-                a.AttributeClass?.ToDisplayString() == AttributeMetadataName);
+            var iViewModelInterface = current.AllInterfaces.FirstOrDefault(i => i.Name == "IViewModel" && i.TypeArguments.Length == 2);
 
-            if (autoAttr != null)
+            if (iViewModelInterface != null)
             {
-                logs.Add($"ℹ️ 类型 {current.Name} 是 AutoVM，开始收集源模型属性");
-                var srcType = autoAttr.ConstructorArguments.FirstOrDefault().Value as INamedTypeSymbol;
+                logs.Add($"ℹ️ 类型 {current.Name} 实现了 IViewModel，开始收集源模型属性");
+                var srcType = iViewModelInterface.TypeArguments[0] as INamedTypeSymbol;
 
                 if (srcType != null)
                 {
@@ -96,19 +91,13 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
                         }
                     }
                 }
-                else
-                {
-                    logs.Add($"❌ 源模型类型为 null");
-                }
             }
 
-            // 继续往上遍历父类
             current = current.BaseType;
         }
 
         logs.Add($"📊 最终已存在属性总数：{existingInHierarchy.Count}\n");
 
-        // 3️⃣ 收集源属性 + 嵌套检查
         var propertiesToGenerate = new List<PropertyInfo>();
         var propertiesToAssignOnly = new List<PropertyInfo>();
 
@@ -121,11 +110,9 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
                     prop.DeclaredAccessibility == Accessibility.Public &&
                     !prop.IsStatic)
                 {
-                    // 🔹 支持命名类型和数组类型
                     ITypeSymbol propType = prop.Type;
                     string propTypeString = propType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-                    // 如果是数组，获取元素类型用于嵌套检查（可选）
                     INamedTypeSymbol? propNamedType = propType switch
                     {
                         INamedTypeSymbol named => named,
@@ -133,7 +120,7 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
                         _ => null
                     };
 
-                    if (propNamedType == null) continue; // 跳过不支持的类型（如泛型、元组等）
+                    if (propNamedType == null) continue;
 
                     if (viewModelDeclaredProperties.Contains(prop.Name))
                     {
@@ -141,27 +128,46 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
                         continue;
                     }
 
-                    bool isNullable = propType.IsReferenceType ||
-                                     (propType is IArrayTypeSymbol) ||
-                                     prop.NullableAnnotation == NullableAnnotation.Annotated;
-                    bool isWritable = prop.SetMethod != null;
+                    // 🔹 精确计算源属性是否可空
+                    bool sourceIsNullable;
+                    if (propType.IsReferenceType || propType is IArrayTypeSymbol)
+                    {
+                        // 引用类型：只要没有明确标记为 NotAnnotated，就认为是可空的
+                        sourceIsNullable = prop.NullableAnnotation != NullableAnnotation.NotAnnotated;
+                    }
+                    else
+                    {
+                        // 值类型：只有 Nullable<T> 是可空的
+                        sourceIsNullable = propType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
+                    }
 
-                    // 🔍 嵌套检查只对非数组类型生效
+                    // 🔹 计算 VM 属性是否可空 (用于生成 VM 属性声明)
+                    bool vmIsNullable = propType.IsReferenceType ||
+                                        (propType is IArrayTypeSymbol) ||
+                                        prop.NullableAnnotation == NullableAnnotation.Annotated;
+
+                    bool isWritable = prop.SetMethod != null;
+                    bool isString = propType.SpecialType == SpecialType.System_String;
+                    bool isValueType = propType.IsValueType;
+
                     var (isNested, vmType) = propType is IArrayTypeSymbol
                         ? (false, null)
                         : CheckNestedViewModelPattern(targetClass, prop.Name, propNamedType);
 
                     var vmTypeName = isNested && vmType != null
                         ? vmType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        : propTypeString; // ✅ 使用完整类型字符串，支持数组
+                        : propTypeString;
 
                     var propInfo = new PropertyInfo(
-                        propTypeString,      // 源类型（含数组）
+                        propTypeString,
                         prop.Name,
-                        isNullable,
+                        sourceIsNullable,
+                        vmIsNullable,
                         isWritable,
                         isNested,
-                        vmTypeName);
+                        vmTypeName,
+                        isString,
+                        isValueType);
 
                     if (existingInHierarchy.Contains(prop.Name))
                     {
@@ -183,18 +189,13 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
         if (propertiesToGenerate.Count == 0 && propertiesToAssignOnly.Count == 0)
             return null;
 
-        //bool needsINPC = !targetClass.AllInterfaces.Any(i => i.Name == "INotifyPropertyChanged");
         bool needsINPC = true, hasAutoBase = false;
         var baseType = targetClass.BaseType;
 
-        // 遍历基类链
         while (baseType != null && baseType.SpecialType != SpecialType.System_Object)
         {
-            // 检查基类是否标记了 AutoViewModelAttribute
-            if (baseType.GetAttributes().Any(attr =>
-                attr.AttributeClass?.ToDisplayString() == AttributeMetadataName))
+            if (baseType.AllInterfaces.Any(i => i.Name == "IViewModel" && i.TypeArguments.Length == 2))
             {
-                // 父类已经是 AutoViewModel → 不需要生成 INPC
                 needsINPC = false;
                 hasAutoBase = true;
                 break;
@@ -208,16 +209,56 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
             baseType = baseType.BaseType;
         }
 
-        logs.Add($"最终 needsINPC = {needsINPC} | 类名：{targetClass.Name}");
+        bool hasManualEquals = false;
+        var checkType = targetClass;
+        while (checkType != null && checkType.SpecialType != SpecialType.System_Object)
+        {
+            if (checkType.GetMembers("Equals").OfType<IMethodSymbol>().Any(m =>
+                m.Parameters.Length == 1 &&
+                SymbolEqualityComparer.Default.Equals(m.Parameters[0].Type, sourceType)))
+            {
+                hasManualEquals = true;
+                break;
+            }
+            checkType = checkType.BaseType;
+        }
 
+        bool hasManualGetHashCode = false;
+        var checkTypeForHash = targetClass;
+        while (checkTypeForHash != null && checkTypeForHash.SpecialType != SpecialType.System_Object)
+        {
+            if (checkTypeForHash.GetMembers("GetHashCode").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 0))
+            {
+                hasManualGetHashCode = true;
+                break;
+            }
+            checkTypeForHash = checkTypeForHash.BaseType;
+        }
+
+        bool hasManualObjectEquals = false;
+        var checkTypeForObjEq = targetClass;
+        while (checkTypeForObjEq != null && checkTypeForObjEq.SpecialType != SpecialType.System_Object)
+        {
+            if (checkTypeForObjEq.GetMembers("Equals").OfType<IMethodSymbol>().Any(m =>
+                m.Parameters.Length == 1 &&
+                m.Parameters[0].Type.SpecialType == SpecialType.System_Object &&
+                m.IsOverride))
+            {
+                hasManualObjectEquals = true;
+                break;
+            }
+            checkTypeForObjEq = checkTypeForObjEq.BaseType;
+        }
+
+        logs.Add($"最终 needsINPC = {needsINPC} | hasManualEquals = {hasManualEquals} | 类名：{targetClass.Name}");
 
         return new GenerationModel(className, ns, sourceTypeName,
-            propertiesToGenerate, propertiesToAssignOnly, needsINPC, hasAutoBase, logs);
+            propertiesToGenerate, propertiesToAssignOnly, needsINPC, hasAutoBase,
+            hasManualEquals, hasManualGetHashCode, hasManualObjectEquals, sourceType.IsReferenceType, logs);
     }
 
     private static string GenerateSource(GenerationModel model)
     {
-        // 🔹 生成调试注释头
 #if DEBUG
         var debugHeader = string.Join("\n",
     new[] { "// 🔍 ===== AutoViewModel Debug Info =====" }
@@ -242,17 +283,11 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
     }
 """ : "";
 
-        // 🔹 构造函数中的赋值语句
-        var ctorAssignments = GenerateAssignments(model.PropertiesToGenerate, model.PropertiesToAssignOnly, "val");
         var fillAssignments = GenerateAssignments(model.PropertiesToGenerate, model.PropertiesToAssignOnly, "val");
 
-
-        // 🔹 生成的 Property 代码块（使用 ViewModel 中的实际类型）
         var generatedProperties = string.Join("\n\n", model.PropertiesToGenerate.Select(prop =>
         {
             var typeName = prop.GetViewModelPropertyTypeString();
-            var backingField = $"_{char.ToLowerInvariant(prop.Name[0])}{prop.Name.Substring(1)}";
-
             return $$"""
 
         public {{typeName}} {{prop.Name}} { get => field; set => SetProperty(ref field, value); }
@@ -260,17 +295,111 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
 """;
         }));
 
-        // 🔹 Build 方法中的初始化语句（使用新的 GetBuildInitializer）
         var buildInitializers = string.Join("\n\t\t\t\t",
             model.PropertiesToGenerate.Concat(model.PropertiesToAssignOnly)
                 .Where(p => p.IsWritable)
                 .Select(p => p.GetBuildInitializer())
-                .Where(s => !string.IsNullOrEmpty(s)));  // 过滤空字符串
+                .Where(s => !string.IsNullOrEmpty(s)));
 
         var namespaceOpen = !string.IsNullOrEmpty(model.Namespace) ? $"namespace {model.Namespace}\n{{" : "";
         var namespaceClose = !string.IsNullOrEmpty(model.Namespace) ? "}" : "";
         var inpcInheritance = model.NeedsINPC ? " : INotifyPropertyChanged" : "";
         var overnew = model.HasAutoBase ? "new" : "";
+
+        var equalsBlock = "";
+        if (!model.HasManualEquals)
+        {
+            var equalsLines = new List<string>();
+            var paramType = model.SourceTypeIsReferenceType ? $"{model.SourceTypeName}?" : model.SourceTypeName;
+
+            equalsLines.Add($"        public bool Equals({paramType} other)");
+            equalsLines.Add("        {");
+            if (model.SourceTypeIsReferenceType)
+            {
+                equalsLines.Add("            if (other is null) return false;");
+            }
+
+            var allProps = model.PropertiesToGenerate.Concat(model.PropertiesToAssignOnly);
+            foreach (var prop in allProps)
+            {
+                if (prop.IsNestedViewModel)
+                {
+                    if (prop.VmIsNullable)
+                    {
+                        equalsLines.Add($"            if (!global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.Equals({prop.Name}?.Build(), other.{prop.Name})) return false;");
+                    }
+                    else
+                    {
+                        equalsLines.Add($"            if (!global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.Equals({prop.Name}!.Build(), other.{prop.Name})) return false;");
+                    }
+                }
+                else
+                {
+                    equalsLines.Add($"            if (!global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.Equals({prop.Name}, other.{prop.Name})) return false;");
+                }
+            }
+            equalsLines.Add("            return true;");
+            equalsLines.Add("        }");
+            equalsBlock = string.Join("\n", equalsLines);
+        }
+
+        var objectEqualsBlock = "";
+        if (!model.HasManualEquals && !model.HasManualObjectEquals)
+        {
+            objectEqualsBlock = $$"""
+        public override bool Equals(object? obj)
+        {
+            return obj is {{model.SourceTypeName}} other && Equals(other);
+        }
+""";
+        }
+
+        var getHashCodeBlock = "";
+        if (!model.HasManualGetHashCode)
+        {
+            var hashCodeLines = new List<string>();
+            hashCodeLines.Add("        public override int GetHashCode()");
+            hashCodeLines.Add("        {");
+            hashCodeLines.Add("            unchecked");
+            hashCodeLines.Add("            {");
+            hashCodeLines.Add("                int hash = 17;");
+
+            var allProps = model.PropertiesToGenerate.Concat(model.PropertiesToAssignOnly);
+            foreach (var prop in allProps)
+            {
+                if (prop.IsNestedViewModel)
+                {
+                    if (prop.VmIsNullable)
+                        hashCodeLines.Add($"                hash = hash * 31 + global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.GetHashCode({prop.Name}?.Build()!);");
+                    else
+                        hashCodeLines.Add($"                hash = hash * 31 + global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.GetHashCode({prop.Name}!.Build()!);");
+                }
+                else
+                {
+                    hashCodeLines.Add($"                hash = hash * 31 + global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.GetHashCode({prop.Name}!);");
+                }
+            }
+
+            hashCodeLines.Add("                return hash;");
+            hashCodeLines.Add("            }");
+            hashCodeLines.Add("        }");
+            getHashCodeBlock = string.Join("\n", hashCodeLines);
+        }
+
+        var transMethods = $$"""
+        public static {{model.SourceTypeName}} Trans({{model.ClassName}} vm)
+        {
+            if (vm is null) return default!;
+            return vm.Build();
+        }
+
+        public static {{model.ClassName}} Trans({{model.SourceTypeName}}? val)
+        {
+            var vm = new {{model.ClassName}}();
+            vm.FillBy(val);
+            return vm;
+        }
+""";
 
         return $$"""
 #nullable enable
@@ -291,6 +420,13 @@ using System.Runtime.CompilerServices;
                 FillBy(val);
         }
 
+{{transMethods}}
+
+{{equalsBlock}}
+
+{{objectEqualsBlock}}
+
+{{getHashCodeBlock}}
 
         public {{model.ClassName}} FillBy({{model.SourceTypeName}}? obj)
         {
@@ -316,7 +452,6 @@ using System.Runtime.CompilerServices;
 """;
     }
 
-    // 🔹 辅助方法：生成赋值语句块
     private static string GenerateAssignments(
         List<PropertyInfo> toGenerate,
         List<PropertyInfo> toAssignOnly,
@@ -333,13 +468,11 @@ using System.Runtime.CompilerServices;
         return string.Join("\n", lines);
     }
 
-    // 🔹 查找 ViewModel 中对应属性的类型，检查是否符合嵌套 ViewModel 约定
     private static (bool IsMatch, INamedTypeSymbol? ViewModelType) CheckNestedViewModelPattern(
         INamedTypeSymbol viewModelClass,
         string propertyName,
         INamedTypeSymbol sourcePropertyType)
     {
-        // 🔹 遍历继承链查找属性（含基类）
         INamedTypeSymbol? current = viewModelClass;
         IPropertySymbol? vmProperty = null;
 
@@ -350,16 +483,14 @@ using System.Runtime.CompilerServices;
                 .FirstOrDefault(p => p.DeclaredAccessibility == Accessibility.Public);
 
             if (vmProperty != null)
-                break;  // ✅ 找到即停止
+                break;
 
-            current = current.BaseType;  // 🔹 继续查父类
+            current = current.BaseType;
         }
 
-        // 没找到属性 → 不启用嵌套模式
         if (vmProperty?.Type is not INamedTypeSymbol vmPropertyType)
             return (false, null);
 
-        // 🔹 检查命名约定：源类型 "SimpleFile" → VM 属性类型应为 "SimpleFileViewModel"
         var expectedVmTypeName = sourcePropertyType.Name + "ViewModel";
 
         if (vmPropertyType.Name == expectedVmTypeName &&
@@ -371,7 +502,6 @@ using System.Runtime.CompilerServices;
         return (false, null);
     }
 
-    // 🔹 检查 ViewModel 是否有接受源类型作为单参数的构造函数
     private static bool HasConstructorWithSourceType(INamedTypeSymbol viewModelType, INamedTypeSymbol sourceType)
     {
         foreach (var ctor in viewModelType.Constructors)
@@ -385,19 +515,19 @@ using System.Runtime.CompilerServices;
         return false;
     }
 
-
-    // 🔹 GenerationModel 增加 PropertiesToAssignOnly
-
-
     private class GenerationModel
     {
         public string ClassName { get; }
         public string Namespace { get; }
         public string SourceTypeName { get; }
-        public List<PropertyInfo> PropertiesToGenerate { get; }      // 需生成 property
-        public List<PropertyInfo> PropertiesToAssignOnly { get; }    // 只需赋值
+        public List<PropertyInfo> PropertiesToGenerate { get; }
+        public List<PropertyInfo> PropertiesToAssignOnly { get; }
         public bool NeedsINPC { get; }
         public bool HasAutoBase { get; }
+        public bool HasManualEquals { get; }
+        public bool HasManualGetHashCode { get; }
+        public bool HasManualObjectEquals { get; }
+        public bool SourceTypeIsReferenceType { get; }
         public List<string> DebugLogs { get; }
 
         public GenerationModel(
@@ -408,6 +538,10 @@ using System.Runtime.CompilerServices;
             List<PropertyInfo> propertiesToAssignOnly,
             bool needsINPC,
             bool hasAutoBase,
+            bool hasManualEquals,
+            bool hasManualGetHashCode,
+            bool hasManualObjectEquals,
+            bool sourceTypeIsReferenceType,
             List<string> logs)
         {
             ClassName = className;
@@ -417,47 +551,54 @@ using System.Runtime.CompilerServices;
             PropertiesToAssignOnly = propertiesToAssignOnly;
             NeedsINPC = needsINPC;
             HasAutoBase = hasAutoBase;
+            HasManualEquals = hasManualEquals;
+            HasManualGetHashCode = hasManualGetHashCode;
+            HasManualObjectEquals = hasManualObjectEquals;
+            SourceTypeIsReferenceType = sourceTypeIsReferenceType;
             DebugLogs = logs;
         }
     }
 
     private class PropertyInfo
     {
-        public string SourceTypeName { get; }        // 源类属性类型，如 "global::MyApp.ClassA"
-        public string ViewModelTypeName { get; }     // VM 中使用的类型，如 "global::MyApp.ClassAViewModel"
+        public string SourceTypeName { get; }
+        public string ViewModelTypeName { get; }
         public string Name { get; }
-        public bool IsNullable { get; }
+        public bool SourceIsNullable { get; } // 源属性是否可空
+        public bool VmIsNullable { get; }     // VM 属性是否可空
         public bool IsWritable { get; }
-        public bool IsNestedViewModel { get; }       // 是否启用嵌套 ViewModel 模式
+        public bool IsNestedViewModel { get; }
+        public bool IsString { get; }
+        public bool IsValueType { get; }
 
-        public PropertyInfo(string sourceTypeName, string name, bool isNullable, bool isWritable,
-            bool isNestedViewModel, string viewModelTypeName)
+        public PropertyInfo(string sourceTypeName, string name, bool sourceIsNullable, bool vmIsNullable, bool isWritable,
+            bool isNestedViewModel, string viewModelTypeName, bool isString, bool isValueType)
         {
             SourceTypeName = sourceTypeName;
             Name = name;
-            IsNullable = isNullable;
+            SourceIsNullable = sourceIsNullable;
+            VmIsNullable = vmIsNullable;
             IsWritable = isWritable;
             IsNestedViewModel = isNestedViewModel;
             ViewModelTypeName = viewModelTypeName;
+            IsString = isString;
+            IsValueType = isValueType;
         }
 
-        // 🔹 获取在 ViewModel 中声明属性时使用的类型（带 ? 处理）
         public string GetViewModelPropertyTypeString()
         {
             var typeName = IsNestedViewModel ? ViewModelTypeName : SourceTypeName;
-            return IsNullable ? $"{typeName}?" : typeName;
+            return VmIsNullable ? $"{typeName}?" : typeName;
         }
 
-        // 🔹 获取 FillBy 中的赋值表达式
         public string GetFillAssignment(string sourceVar)
         {
             if (IsNestedViewModel)
             {
-                return IsNullable
+                return VmIsNullable
                     ? $"{Name} = {sourceVar}.{Name} != null ? new {ViewModelTypeName}({sourceVar}.{Name}) : null;"
                     : $"{Name} = new {ViewModelTypeName}({sourceVar}.{Name});";
             }
-            // ✅ 数组/普通类型都直接赋值
             return $"{Name} = {sourceVar}.{Name};";
         }
 
@@ -465,23 +606,31 @@ using System.Runtime.CompilerServices;
         {
             if (IsNestedViewModel)
             {
-                return IsNullable
+                return VmIsNullable
                     ? $"{Name} = {Name}?.Build(),"
                     : $"{Name} = {Name}!.Build(),";
             }
-            // ✅ 只处理可写属性
+
             if (!IsWritable)
                 return string.Empty;
 
-            // string
-            if (SourceTypeName == "string")
-                return $"{Name} = {Name} is not null ? {Name} : String.Empty,";
+            // 🔹 核心逻辑：如果源属性不可空，但 VM 属性可空，需要处理 null 值
+            if (!SourceIsNullable && VmIsNullable)
+            {
+                if (IsString)
+                {
+                    return $"{Name} = {Name} ?? string.Empty,";
+                }
+                if (IsValueType)
+                {
+                    return $"{Name} = {Name} ?? default,";
+                }
+                // 对于非可空引用类型，直接强制赋值以消除 nullable 警告
+                return $"{Name} = {Name}!,";
+            }
 
-            // 🔹 可空类型：不为 null 时赋值，否则赋 default
-            // 🔹 非可空类型：直接赋值
-            return IsNullable
-                ? $"{Name} = {Name} is not null ? {Name} : default,"
-                : $"{Name} = {Name},";
+            // 🔹 如果源属性本身可空，或者 VM 属性不可空，直接赋值
+            return $"{Name} = {Name},";
         }
     }
 }

@@ -66,13 +66,7 @@ public class FundElementsFactorGenerator : IIncrementalGenerator
 
             namespace FMO.Models
             {
-                /// <summary>
-                    /// 自动生成的 FactorId 常量映射，键为属性名，值为实际使用的 FactorId
-                    /// </summary>
-                public static class FactorFields
-                {
-            {{GenerateFactorFields(props)}}
-                }
+
 
                 public partial class FundElements
                 {
@@ -80,6 +74,8 @@ public class FundElementsFactorGenerator : IIncrementalGenerator
 
                     public IFundFactor[] ToFactors()
                     {
+                       
+
                         var Factors = new List<IFundFactor>();
                         var fundId = this.Id;
 
@@ -137,25 +133,22 @@ public class FundElementsFactorGenerator : IIncrementalGenerator
 
     // ==================== 代码生成模板 ====================
 
-    /// <summary>
-    /// 生成 FactorFields 常量类内容
-    /// </summary>
-    private static string GenerateFactorFields(ImmutableArray<PropertyModel?> props) =>
-        string.Join("\n\n", props.OfType<PropertyModel>().Select(p =>
-            $"        /// <summary>FactorId for property '{p.Name}'</summary>\n        public const string {p.Name} = \"{p.FactorKey}\";"));
 
     /// <summary>
     /// 生成 Mutable 属性的 ToFactors 代码
     /// </summary>
-    private static string GenerateMutableToFactor(ImmutableArray<PropertyModel> props) => string.Join("\n", props.Select(p => $$"""
+    private static string GenerateMutableToFactor(ImmutableArray<PropertyModel> props) => string.Join("\n", props.Select(p =>
+    {
+        return $$"""
                 if (this.{{p.Name}} is Mutable<{{p.Type}}> m_{{p.Name}} && m_{{p.Name}}.Changes.Count > 0)
                 {
                     foreach (var (flowId, value) in m_{{p.Name}}.Changes)
                     {
-                        Factors.Add(new FundFactor<{{p.Type}}> { FundId = fundId, FlowId = flowId, ShareId = -1, FactorId = FactorFields.{{p.Name}}, Data = value });
+                        Factors.Add(new FundFactor<{{p.Type}}> { FundId = fundId, FlowId = flowId, ShareId = ShareClass.Singleton, FactorId = FactorFields.{{p.Name}}, Data = value });
                     }
                 }
-    """));
+    """;
+    }));
 
     /// <summary>
     /// 生成 PortionMutable 属性的 ToFactors 代码

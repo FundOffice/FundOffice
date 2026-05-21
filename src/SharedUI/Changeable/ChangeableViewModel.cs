@@ -88,8 +88,8 @@ public partial class ChangeableViewModel<TEntity, TProperty> : ObservableObject,
 
     public ChangeableViewModel()
     {
-        if (!(typeof(TProperty).IsValueType || typeof(TProperty) == typeof(string) || typeof(TProperty).IsAssignableTo(typeof(IEquatable<TProperty>))))
-            throw new InvalidOperationException();
+        //if (!(typeof(TProperty).IsValueType || typeof(TProperty) == typeof(string) || typeof(TProperty).IsAssignableTo(typeof(IEquatable<TProperty>))))
+        //    throw new InvalidOperationException();
 
         if (typeof(TProperty).IsAssignableTo(typeof(INotifyPropertyChanged)))
             _notnullDefault = (TProperty)Activator.CreateInstance(typeof(TProperty))!;

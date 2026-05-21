@@ -24,6 +24,8 @@ public partial class ShareClassViewModel : ObservableObject, IViewModel<ShareCla
     [ObservableProperty]
     public partial string? Requirement { get; set; }
 
+    public int Inherit { get; set; }
+
     public ShareClassViewModel() { }
 
     [SetsRequiredMembers]
@@ -31,13 +33,14 @@ public partial class ShareClassViewModel : ObservableObject, IViewModel<ShareCla
     {
         Id = s.Id;
         Name = s.Name;
+        Inherit = s.Inherit;
         Requirement = s.Requirement;
     }
 
-    public ShareClass Build() => new ShareClass() { Name = Name, Id = Id, Requirement = Requirement };
+    public ShareClass Build() => new ShareClass() { Name = Name, Id = Id, Inherit = Inherit, Requirement = Requirement };
 }
 
-
+ 
 
 public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IElementChangable//, IFileSetter
 {

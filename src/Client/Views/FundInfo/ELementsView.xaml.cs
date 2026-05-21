@@ -142,14 +142,15 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
     #region 要素
 
+    //[ObservableProperty]
+    //public partial FactorModifiableViewModel<string>? FullName { get; set; }
+
+
+     
+
+
     [ObservableProperty]
-    public partial FactModifiableViewModel<string>? FullName { get; set; }
-
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, string>? ShortName { get; set; }
-
+    public partial ShareFactorViewModel<FundFeeInfo, FundFeeInfoViewModel>? ManageFee { get; set; }
 
     [ObservableProperty]
     public partial ChangeableViewModel<FundElements, SecurityFundType>? SecurityFundType { get; set; }
@@ -275,12 +276,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
 
 
-    [ObservableProperty]
-    public partial ShareElementsViewModel2<FundFeeInfo, FundFeeInfoViewModel>? ManageFee { get; set; }
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, FeePayInfoViewModel>? ManageFeePay { get; set; }
+     
 
 
 
@@ -311,9 +307,63 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     public partial bool OnlyOneShare { get; set; }
 
 
+    void SaveChange<T>(int fundId, string factId, int flowId, int shareId, T data)
+    {
+        using var db = DbHelper.Base();
+        db.GetCollection<IFundFactor>().Upsert(new FundFactor<T>(factId, fundId, flowId, shareId, data));
+    }
 
+    void RemoveFact(int fundId, string factId, int flowId, int shareId)
+    {
+        using var db = DbHelper.Base();
+        db.GetCollection<IFundFactor>().Delete($"{fundId}.{flowId}.{shareId}.{factId}");
+    }
 
     #endregion
+
+    //private void FillBy(FundFactors factors, int flowId)
+    //{
+    //    var sc = factors.ShareClasses[flowId];
+    //    var classIds = sc.Select(x => x.Id).ToArray();
+
+    //    // singleton 示例
+    //    FullName = new()
+    //    {
+    //        FlowId = flowId,
+    //        ShareId = -1,
+    //        FactorId = FactorFields.FullName,
+    //        FundId = FundId,
+    //        NewValue = CloneHelper.CloneValue(factors.FullName[flowId]),
+    //        OldValue = CloneHelper.CloneValue(factors.FullName[flowId]),
+    //        FallbackValue = CloneHelper.CloneValue(factors.FullName[flowId - 1]),
+    //    };
+
+    //    FullName.Changed += (s, e) =>
+    //    {
+    //        if (e.Kind is ValueChangeKind.Added or ValueChangeKind.Modified)
+    //            SaveChange(e.FundId, FactorFields.FullName, e.FlowId, e.ShareId, e.NewValue);
+    //        else if (e.Kind is ValueChangeKind.Deleted)
+    //            RemoveFact(e.FundId, FactorFields.FullName, e.FlowId, e.ShareId);
+    //    };
+
+
+    //    // 其它示例
+    //    var mfi = factors.ManageFee.GetInheritValues(flowId, classIds);
+    //    ManageFee = new ShareFactorViewModel<FundFeeInfo, FundFeeInfoViewModel>(FundId, FlowId, FactorFields.ManageFee, sc, [.. mfi.Select(x => (new FundFeeInfoViewModel(x.Old), new FundFeeInfoViewModel(x.New)))]);
+
+
+    //    // 写在外面 
+    //    void SaveChange<T>(int fundId, string factId, int flowId, int shareId, T data)
+    //    {
+    //        using var db = DbHelper.Base();
+    //        db.GetCollection<IFundFactor>().Upsert(new FundFactor<T>(factId, FundId, FlowId, shareId, data));
+    //    }
+    //    void RemoveFact(int fundId, string factId, int flowId, int shareId)
+    //    {
+    //        using var db = DbHelper.Base();
+    //        db.GetCollection<IFundFactor>().Delete($"{fundId}.{flowId}.{shareId}.{factId}");
+    //    }
+    //}
 
     partial void OnFlowIdChanged(int oldValue, int newValue)
     {
@@ -330,8 +380,10 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
         //var facts = db.GetCollection<IFundFact>().Find(x => x.FundId == FundId).OrderByDescending(x => x.FlowId).GroupBy(x => x.FactId).ToDictionary(x => x.Key, x => x.AsEnumerable());
 
+        // var firstFlow = db.GetCollection<FundFlow>().Query().Where(x => x.FundId == FundId).OrderBy(x => x.Id).Select(x => x.Id).FirstOrDefault();
         FundFactors facts = new FundFactors(db.GetCollection<IFundFactor>().Find(x => x.FundId == FundId).ToArray());
-        var sccc = facts.ShareClasses[newValue];
+
+        FillBy(facts, newValue);
 
         var type = GetType();
         SetupDate = fund.SetupDate;
@@ -339,63 +391,12 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         IsSharesInherited = cinfo.FlowId < newValue;
         var sc = cinfo.Value ?? [ShareClass.DefaultShare];
 
-        var classIds = sccc.Select(x => x.Id).ToArray();
-
-        Shares = new(sccc.Select(x => new ShareClassViewModel { Id = x.Id, Name = x.Name, Requirement = x.Requirement }));
+ 
         OnlyOneShare = Shares.Count <= 1;
 
 
         OpenRule = elements.FundOpenRule.GetValue(newValue).Value;
-
-        FullName = new() { FlowId = newValue, ShareId = -1, FactorId = FactorFields.FullName, FundId = FundId, NewValue = facts.FullName[newValue], OldValue = facts.FullName[newValue], FallbackValue = facts.FullName[newValue - 1] };
-        FullName.Changed += (s, e) =>
-        {
-            if (e.Kind is ValueChangeKind.Added or ValueChangeKind.Modified)
-                SaveChange(e.FundId, FactorFields.FullName, e.FlowId, e.ShareId, e.NewValue);
-            else if (e.Kind is ValueChangeKind.Deleted)
-                RemoveFact(e.FundId, FactorFields.FullName, e.FlowId, e.ShareId);
-        };
-
-        var mfi = facts.ManageFee.GetInheritValues(newValue, classIds);
-
-
-        ManageFee = new ShareElementsViewModel2<FundFeeInfo, FundFeeInfoViewModel>(FundId, FlowId, FactorFields.ManageFee, sccc, [.. mfi.Select(x => (new FundFeeInfoViewModel(x.New), new FundFeeInfoViewModel(x.Old)))]);
-
-        void SaveChange<T>(int fundId, string factId, int flowId, int shareId, T data)
-        {
-            using var db = DbHelper.Base();
-            db.GetCollection<IFundFactor>().Upsert(new FundFactor<T>(factId, FundId, FlowId, shareId, data));
-        }
-        void RemoveFact(int fundId, string factId, int flowId, int shareId)
-        {
-            using var db = DbHelper.Base();
-            db.GetCollection<IFundFactor>().Delete($"{fundId}.{flowId}.{shareId}.{factId}");
-        }
-
-
-
-
-
-
-        //FullName = new ChangeableViewModel<FundElements, string>
-        //{
-        //    Label = "基金全称",
-        //    InitFunc = x => x.FullName.GetValue(newValue).Value,
-        //    InheritedFunc = x => x.FullName.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-        //    UpdateFunc = (x, y) => x.FullName.SetValue(y!, newValue),
-        //    ClearFunc = x => x.FullName.RemoveValue(newValue)
-        //};
-        //FullName.Init(elements);
-
-        ShortName = new ChangeableViewModel<FundElements, string>
-        {
-            Label = "基金简称",
-            InitFunc = x => x.ShortName.GetValue(newValue).Value,
-            InheritedFunc = x => x.ShortName.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.ShortName.SetValue(y!, newValue),
-            ClearFunc = x => x.ShortName.RemoveValue(newValue)
-        };
-        ShortName.Init(elements);
+ 
 
         SecurityFundType = new()
         {
@@ -706,16 +707,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         RedemptionFee = new ShareElementsViewModel<RedemptionFeeInfo, RedemptionFeeInfoViewMdoel>(FundId, FlowId, elements, sc, x => x.RedemptionFee, x => new(x), x => x!.Build());
         PerformanceFeeStatement = new ShareElementsViewModel<string, string>(FundId, FlowId, elements, sc, x => x.PerformanceFeeStatement, x => x!, x => x!);
 
-        //ManageFee = new ShareElementsViewModel<FundFeeInfo, FundFeeInfoViewModel>(FundId, FlowId, elements, sc, x => x.ManageFee, x => new(x), x => x!.Build());
-        ManageFeePay = new ChangeableViewModel<FundElements, FeePayInfoViewModel>
-        {
-            Label = "支付频率",
-            InitFunc = x => new(x.ManageFeePay!.GetValue(newValue).Value),
-            InheritedFunc = x => x.ManageFeePay.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.ManageFeePay!.SetValue(y!.Build(), newValue),
-            ClearFunc = x => x.ManageFeePay!.RemoveValue(newValue),
-        };
-        ManageFeePay.Init(elements);
+ 
 
         CoolingPeriod = new ChangeableViewModel<FundElements, CoolingPeriodInfoViewModel>
         {
@@ -839,20 +831,20 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         }
     }
 
-    public void InitShare(Mutable<ShareClass[]>? shareClass = null)
-    {
-        if (shareClass is null)
-        {
-            using var db = DbHelper.Base();
-            shareClass = db.GetCollection<FundElements>().FindById(FundId)?.ShareClasses;
-        }
+    //public void InitShare(Mutable<ShareClass[]>? shareClass = null)
+    //{
+    //    if (shareClass is null)
+    //    {
+    //        using var db = DbHelper.Base();
+    //        shareClass = db.GetCollection<FundElements>().FindById(FundId)?.ShareClasses;
+    //    }
 
-        if (shareClass is not null && shareClass.GetValue(FlowId).Value is ShareClass[] shares)
-            Shares = new ObservableCollection<ShareClassViewModel>(shares.Select(x => new ShareClassViewModel { Id = x.Id, Name = x.Name }));
-        else
-            throw new Exception(); //Shares = new ObservableCollection<ShareClassViewModel>([new ShareClassViewModel { Id = IdGenerator.GetNextId(nameof(ShareClass)), Name = FundElements.SingleShareKey }]);
+    //    if (shareClass is not null && shareClass.GetValue(FlowId).Value is ShareClass[] shares)
+    //        Shares = new ObservableCollection<ShareClassViewModel>(shares.Select(x => new ShareClassViewModel { Id = x.Id, Name = x.Name }));
+    //    else
+    //        throw new Exception(); //Shares = new ObservableCollection<ShareClassViewModel>([new ShareClassViewModel { Id = IdGenerator.GetNextId(nameof(ShareClass)), Name = FundElements.SingleShareKey }]);
 
-    }
+    //}
 
     //public void Receive(FundShareChangedMessage message)
     //{
@@ -927,4 +919,6 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         //if (message.FundId == FundId && message.FlowId == FlowId)
         OnFlowIdChanged(FlowId, FlowId);
     }
+
+    public class Modifier { }
 }

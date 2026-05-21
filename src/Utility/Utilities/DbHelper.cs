@@ -77,11 +77,21 @@ public class BaseDatabase : LiteDatabase
         return string.IsNullOrWhiteSpace(shareClas) ? GetCollection<DailyValue>($"fv_{fid}") : GetCollection<DailyValue>($"fv_{fid}_{shareClas}");
     }
 
-    public FundElements QueryElements(int fid) => FundElements.From(GetCollection<IFundFactor>().Find(x => x.FundId == fid).ToArray());
+    //public FundElements QueryElements(int fid) => FundElements.From(GetCollection<IFundFactor>().Find(x => x.FundId == fid).ToArray());
 
-    public FundElements QueryElements(int fid, params string[] fields) => FundElements.From(GetCollection<IFundFactor>().Query().Where(x => x.FundId == fid).Where(Query.In(nameof(IFundFactor.FactorId), fields.Select(x => new BsonValue(x)))).ToArray());
-
+    //public FundElements QueryElements(int fid, params string[] fields) => FundElements.From(GetCollection<IFundFactor>().Query().Where(x => x.FundId == fid).Where(Query.In(nameof(IFundFactor.FactorId), fields.Select(x => new BsonValue(x)))).ToArray());
+//
     public T[] QueryFundFact<T>(int fid, string field) => GetCollection<IFundFactor>().Find(x => x.FundId == fid && x.FactorId == field).OrderByDescending(x=>x.FlowId).OfType<FundFactor<T>>().Select(x => x.Data).ToArray();
+
+    public FundFactors QueryFactor(int fundId)
+    {
+        var flowIds = GetCollection<FundFlow>().Query().Where(x => x.FundId == fundId).Select(x => x.Id).ToArray();
+
+        var factors = GetCollection<IFundFactor>().Query().Where(x => x.FundId == fundId).Where(Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x => new BsonArray(x)))).ToArray();
+
+        return new FundFactors(factors);
+    }
+
 }
 
 public static class DbHelper

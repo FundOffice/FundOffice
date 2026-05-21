@@ -15,6 +15,7 @@
                 <ResourceDictionary Source="/HelpTemplates.xaml" />
                 <ResourceDictionary Source="/SharedUI;component/Themes/Generic.xaml" />
                 <ResourceDictionary Source="/Themes/Notice.xaml" />
+                <ResourceDictionary Source="/Themes/FactorDataTemplates.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

@@ -124,7 +124,7 @@ public partial class StrategyInfoViewModel : ObservableObject
         FillBy(_strategy);
 
         End = new() { NewValue = new(_strategy.End), OldValue = new(_strategy.End) };
-        End.Changed += (s, e) => { _strategy.End = DateOnly.FromDateTime(End.NewValue?.Date ?? default); OnEntityChanged(); };
+        End.Changed += (e) => { _strategy.End = DateOnly.FromDateTime(End.NewValue?.Date ?? default); OnEntityChanged(); };
     }
 
 
@@ -168,10 +168,10 @@ public partial class InvestManagerViewModel : ObservableObject
         Managers = new(managers.Select(x => new PersonInfo(x.Id, x.Name!)));
 
         End = new() { NewValue = new(investmentManager.End), OldValue = new(investmentManager.End) };
-        End.Changed += (s, e) => { investmentManager.End = DateOnly.FromDateTime(End.NewValue?.Date ?? default); OnEntityChanged(); };
+        End.Changed += (e) => { investmentManager.End = DateOnly.FromDateTime(End.NewValue?.Date ?? default); OnEntityChanged(); };
 
         Person = new() { NewValue = Managers.FirstOrDefault(x => x.Id == investmentManager.PersonId), OldValue = Managers.FirstOrDefault(x => x.Id == investmentManager.PersonId) };
-        Person.Changed += (s, e) =>
+        Person.Changed += (e) =>
         {
             investmentManager.PersonId = e.NewValue?.Id ?? 0;
             OnEntityChanged();

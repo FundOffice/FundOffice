@@ -9,6 +9,7 @@
     Title="基金份额"
     Width="400"
     Height="250"
+    d:DataContext="{d:DesignInstance Type=local:ModifyShareClassWindowViewModel}"
     ResizeMode="NoResize"
     SizeToContent="Height"
     WindowStyle="None"
@@ -23,7 +24,8 @@
                         hc:IconElement.Geometry="{StaticResource f.knife}"
                         Command="{Binding DivideSharesCommand}"
                         Style="{StaticResource ButtonDefault.Small}"
-                        ToolTip="拆分" />
+                        ToolTip="拆分"
+                        Visibility="{Binding IsOriginalSingleton, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
                     <Button
                         hc:IconElement.Geometry="{StaticResource f.circle-check}"
@@ -77,6 +79,13 @@
                                 BorderThickness="0,0,0,1">
 
                                 <DockPanel>
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.knife}"
+                                        Command="{Binding DataContext.DivideSharesCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding .}"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        ToolTip="拆分"
+                                        Visibility="{Binding DataContext.IsOriginalSingleton, Converter={StaticResource Boolean2VisibilityReConverter}, RelativeSource={RelativeSource AncestorType=Window}}" />
                                     <Button
                                         x:Name="btn"
                                         hc:IconElement.Geometry="{StaticResource f.xmark}"

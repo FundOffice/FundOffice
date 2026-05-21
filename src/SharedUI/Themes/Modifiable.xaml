@@ -113,6 +113,7 @@
 
                             <Border
                                 Grid.Column="1"
+                                Margin="5,0,0,0"
                                 BorderBrush="Gray"
                                 BorderThickness="1"
                                 CornerRadius="5"
@@ -297,7 +298,7 @@
                             <Grid.ColumnDefinitions>
                                 <!--  Header 区域（可定制）  -->
                                 <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="Auto" />
                                 <!--  内容区域（只读/编辑自动切换）  -->
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
@@ -397,19 +398,19 @@
     <DataTemplate x:Key="DTpl.PortionElement">
         <DockPanel LastChildFill="False">
             <DockPanel x:Name="btns" Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}, Converter={StaticResource Boolean2VisibilityReConverter}}">
-                <hc:SimplePanel Visibility="{Binding CanDivide, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}, Converter={StaticResource Boolean2VisibilityConverter}}">
+                <hc:SimplePanel Visibility="{Binding Modifier.CanDivide, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}, Converter={StaticResource Boolean2VisibilityConverter}}">
                     <Button
                         hc:IconElement.Geometry="{StaticResource f.knife}"
-                        Command="{Binding DataContext.DivideCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                        Command="{Binding Modifier.DivideCommand, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
                         Style="{StaticResource ButtonIcon.Small}" />
                 </hc:SimplePanel>
                 <Button
                     hc:IconElement.Geometry="{StaticResource f.code-merge}"
-                    Command="{Binding DataContext.UnifyCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                    Command="{Binding Modifier.UnifyCommand, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
                     CommandParameter="{Binding .}"
                     Style="{StaticResource ButtonIcon.Small}"
                     ToolTip="以此为基准，合并要素"
-                    Visibility="{Binding CanMerge, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                    Visibility="{Binding Modifier.CanMerge, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}, Converter={StaticResource Boolean2VisibilityConverter}}" />
             </DockPanel>
 
             <local:ModifiableControl
@@ -444,22 +445,24 @@
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}">
-                        <DockPanel DataContext="{TemplateBinding Content}">
+                        <DockPanel>
                             <!--  header  -->
                             <ContentPresenter
                                 VerticalAlignment="Center"
                                 Content="{TemplateBinding Header}"
                                 ContentTemplate="{TemplateBinding HeaderTemplate}"
-                                TextElement.FontWeight="Medium" />
+                                TextElement.FontWeight="Medium"
+                                TextElement.Foreground="Gray" />
 
                             <ListBox
                                 x:Name="list"
                                 Margin="5,0,0,0"
                                 Padding="0"
+                                VerticalAlignment="Center"
                                 BorderThickness="0"
                                 ItemContainerStyle="{StaticResource Style.ListItem.PortionElement}"
                                 ItemTemplate="{StaticResource DTpl.PortionElement}"
-                                ItemsSource="{Binding Data}"
+                                ItemsSource="{Binding Modifier.Data, RelativeSource={RelativeSource TemplatedParent}}"
                                 Style="{StaticResource ListBoxCustom}" />
                         </DockPanel>
                     </Border>
@@ -468,7 +471,11 @@
                             <Setter TargetName="list" Property="ItemsPanel">
                                 <Setter.Value>
                                     <ItemsPanelTemplate>
-                                        <WrapPanel IsItemsHost="True" />
+                                        <hc:UniformSpacingPanel
+                                            ChildWrapping="Wrap"
+                                            HorizontalSpacing="8"
+                                            IsItemsHost="True"
+                                            VerticalSpacing="2" />
                                     </ItemsPanelTemplate>
                                 </Setter.Value>
                             </Setter>
