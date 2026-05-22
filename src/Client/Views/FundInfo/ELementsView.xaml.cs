@@ -146,30 +146,21 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     //public partial FactorModifiableViewModel<string>? FullName { get; set; }
 
 
-     
+
 
 
     [ObservableProperty]
     public partial ShareFactorViewModel<FundFeeInfo, FundFeeInfoViewModel>? ManageFee { get; set; }
 
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, SecurityFundType>? SecurityFundType { get; set; }
-
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, RiskLevel>? RiskLevel { get; set; }
 
 
 
 
 
     [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, int?>? DurationInMonths { get; set; }
+    public partial FactorModifiableViewModel<int?, FundDurationViewModel> DurationInMonths { get; private set; } = null!;
 
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, DateOnly?>? ExpirationDate { get; set; }
-
+ 
 
 
     [ObservableProperty]
@@ -197,7 +188,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSealingFund))]
-    public partial ChangeableViewModel<FundElements, DataExtraViewModel<FundMode>>? FundModeInfo { get; set; }
+    public partial FactorModifiableViewModel<FundModeInfo, FundModeViewModel> FundModeInfo { get; set; } = null!;
 
 
     [ObservableProperty]
@@ -276,7 +267,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
 
 
-     
+
 
 
 
@@ -391,23 +382,14 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         IsSharesInherited = cinfo.FlowId < newValue;
         var sc = cinfo.Value ?? [ShareClass.DefaultShare];
 
- 
+
         OnlyOneShare = Shares.Count <= 1;
 
 
         OpenRule = elements.FundOpenRule.GetValue(newValue).Value;
- 
 
-        SecurityFundType = new()
-        {
-            Label = "基金类型",
-            InitFunc = x => x.SecurityFundType.GetValue(newValue).Value,
-            InheritedFunc = x => x.SecurityFundType.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.SecurityFundType.SetValue(y!, newValue),
-            ClearFunc = x => x.SecurityFundType.RemoveValue(newValue),
-            DisplayFunc = x => x switch { Models.SecurityFundType.Unk => "未设置", _ => EnumDescriptionTypeConverter.GetEnumDescription(x) }
-        };
-        SecurityFundType.Init(elements);
+
+
 
         if (isori)
         {
@@ -418,20 +400,27 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
                 ShortName.NewValue = fund.ShortName;
         }
 
+        /// 最大999，认为是永续
+        DurationInMonths.Changed += (e) =>
+        {
+            if (e.NewValue >= 999)
+            {
+                ExpirationDate?.NewValue = new(2099, 12, 31);
+            }
+            else if (e.NewValue is int d)
+            {
+                ExpirationDate?.NewValue = SetupDate.AddMonths(d).AddDays(-1);
+            }
+        };
+
+        ExpirationDate.Changed += e =>
+            DataHub.Push(new EntityChanged<FundElements, DateOnly, int>(Id, nameof(FundElements.ExpirationDate), e.OldValue ?? default, e.NewValue ?? default));
+
+
 
         #region MyRegion
 
-        FundModeInfo = new ChangeableViewModel<FundElements, DataExtraViewModel<FundMode>>
-        {
-            Label = "运作方式",
-            InitFunc = x => new(x.FundModeInfo!.GetValue(newValue).Value),
-            InheritedFunc = x => x.FundModeInfo.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.FundModeInfo!.SetValue(y!.Build(), newValue),
-            ClearFunc = x => x.FundModeInfo!.RemoveValue(newValue),
-            DisplayFunc = x => x?.Data switch { FundMode.Open => "开放式", FundMode.Close => "封闭式", FundMode.Other => x.Other, _ => "-" }
-        };
-        FundModeInfo.Init(elements);
-
+ 
 
         SealingRule = new ChangeableViewModel<FundElements, SealingInfoViewModel>
         {
@@ -446,60 +435,6 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
 
         LockingRule = new ShareElementsViewModel<SealingRule, SealingInfoViewModel>(FundId, FlowId, elements, sc, x => x.LockingRule, x => new(x), x => x!.Build(), x => x?.Type switch { SealingType.No => "无", SealingType.Has => $"{x.Month}个月", SealingType.Other => x.Other, _ => "未设置" });
-
-
-
-        RiskLevel = new ChangeableViewModel<FundElements, RiskLevel>
-        {
-            Label = "风险等级",
-            InitFunc = x => x.RiskLevel!.GetValue(newValue).Value,
-            InheritedFunc = x => x.RiskLevel.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.RiskLevel!.SetValue(y, newValue),
-            ClearFunc = x => x.RiskLevel!.RemoveValue(newValue),
-
-        };
-        RiskLevel.Init(elements);
-
-
-        /// 最大999，认为是永续
-        DurationInMonths = new ChangeableViewModel<FundElements, int?>
-        {
-            Label = "存续期",
-            InitFunc = x => x.DurationInMonths!.GetValue(newValue).Value switch { 0 => null, var n => n },
-            InheritedFunc = x => x.DurationInMonths.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) =>
-            {
-                if (y is not null)
-                {
-                    x.DurationInMonths!.SetValue(y.Value, newValue);
-
-                    if (newValue >= 999)
-                    {
-                        ExpirationDate?.NewValue = new(2099, 12, 31);
-                        //ExpirationDate.OldValue = new(2099, 12, 31);
-                    }
-                    else
-                    {
-                        ExpirationDate?.NewValue = SetupDate.AddMonths(y.Value).AddDays(-1);
-                        //ExpirationDate.OldValue = ExpirationDate.NewValue;
-                    }
-                }
-            },
-            ClearFunc = x => x.DurationInMonths!.RemoveValue(newValue),
-            DisplayFunc = x => x switch { >= 999 => "无固定期限", var m when m % 12 == 0 => $"{x / 12}年", > 0 => $"{x}个月", _ => "未设置" }
-        };
-        DurationInMonths.Init(elements);
-
-        ExpirationDate = new ChangeableViewModel<FundElements, DateOnly?>
-        {
-            Label = "到期日",
-            InitFunc = x => ExpirationDateFormat(x.ExpirationDate!.GetValue(newValue).Value),
-            InheritedFunc = x => x.ExpirationDate.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => { if (y is not null) x.ExpirationDate!.SetValue(y.Value, newValue); },
-            ClearFunc = x => x.ExpirationDate!.RemoveValue(newValue),
-            DisplayFunc = x => x is null || x.Value == default(DateOnly) ? "未设置" : x.Value.ToString("yyyy/MM/dd")
-        };
-        ExpirationDate.Init(elements);
 
 
 
@@ -707,7 +642,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         RedemptionFee = new ShareElementsViewModel<RedemptionFeeInfo, RedemptionFeeInfoViewMdoel>(FundId, FlowId, elements, sc, x => x.RedemptionFee, x => new(x), x => x!.Build());
         PerformanceFeeStatement = new ShareElementsViewModel<string, string>(FundId, FlowId, elements, sc, x => x.PerformanceFeeStatement, x => x!, x => x!);
 
- 
+
 
         CoolingPeriod = new ChangeableViewModel<FundElements, CoolingPeriodInfoViewModel>
         {
@@ -733,15 +668,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
     }
 
-    private DateOnly? ExpirationDateFormat(DateOnly value)
-    {
-        if (value == default)
-        {
-            if (DurationInMonths!.NewValue is not null && DurationInMonths.NewValue > 0)
-                return SetupDate.AddMonths(DurationInMonths.NewValue.Value).AddDays(-1);
-        }
-        return value;
-    }
+
 
     private string BankString(BankAccountInfoViewModel? x)
     {
@@ -878,16 +805,13 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
             WeakReferenceMessenger.Default.Send(new FundAccountChangedMessage(FundId, FundAccountType.Collection));
         else if (unit == CustodyAccount)
             WeakReferenceMessenger.Default.Send(new FundAccountChangedMessage(FundId, FundAccountType.Custody));
-        else if (unit == ExpirationDate)
-            DataHub.Push(new EntityChanged<FundElements, DateOnly, int>(Id, nameof(FundElements.ExpirationDate), ExpirationDate.OldValue ?? default, ExpirationDate.NewValue ?? default));
+
     }
 
 
     protected override void DeleteOverride(IPropertyModifier unit)
     {
         base.DeleteOverride(unit);
-        if (unit == ExpirationDate)
-            DataHub.Push(new EntityChanged<FundElements, DateOnly, int>(Id, nameof(FundElements.ExpirationDate), ExpirationDate.OldValue ?? default, ExpirationDate.NewValue ?? default));
     }
 
     protected override void SaveOverride()

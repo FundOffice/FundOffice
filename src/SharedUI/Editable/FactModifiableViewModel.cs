@@ -90,12 +90,14 @@ public partial class FactorModifiableViewModel<TValue> : ModifiableViewModel<TVa
 
     public string? ShareName { get; set; }
 
-    protected override void NotifyChanged(ValueChangeKind kind, TValue value)
+    protected override void NotifyChanged(ValueChangeKind kind, TValue? value)
     {
         if (kind is ValueChangeKind.Added or ValueChangeKind.Modified)
-            SaveChange(FundId, FactorFields.ManageFee, FlowId, ShareId, value);
+            SaveChange(FundId, FactorId, FlowId, ShareId, value);
         else if (kind is ValueChangeKind.Deleted)
-            RemoveFact(FundId, FactorFields.ManageFee, FlowId, ShareId);
+            RemoveFact(FundId, FactorId, FlowId, ShareId);
+
+        base.NotifyChanged(kind, value);
     }
 
 
@@ -131,9 +133,11 @@ public partial class FactorModifiableViewModel<TValue, TViewModel> : ModifiableV
     protected override void NotifyChanged(ValueChangeKind kind, TViewModel value)
     {
         if (kind is ValueChangeKind.Added or ValueChangeKind.Modified)
-            SaveChange(FundId, FactorFields.ManageFee, FlowId, ShareId, value);
+            SaveChange(FundId, FactorId, FlowId, ShareId, value);
         else if (kind is ValueChangeKind.Deleted)
-            RemoveFact(FundId, FactorFields.ManageFee, FlowId, ShareId);
+            RemoveFact(FundId, FactorId, FlowId, ShareId);
+
+        base.NotifyChanged(kind, value);
     }
 
 

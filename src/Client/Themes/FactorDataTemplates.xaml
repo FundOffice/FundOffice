@@ -2,7 +2,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:FMO"
-    xmlns:mod="clr-namespace:FMO.Factor.Modifier"
+    xmlns:mod="clr-namespace:FMO.Models;assembly=Models"
     xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI">
 
 
@@ -14,7 +14,6 @@
     <DataTemplate x:Key="DT.SecurityFundType">
         <ComboBox
             Width="120"
-            BorderThickness="0"
             ItemsSource="{Binding Source={x:Static local:ElementsViewModel.SecurityFundTypes}}"
             SelectedItem="{Binding NewValue}">
             <ComboBox.ItemTemplate>
@@ -25,11 +24,63 @@
         </ComboBox>
     </DataTemplate>
 
-    <DataTemplate DataType="{x:Type mod:SecurityFundTypeModifier}">
+    <DataTemplate DataType="{x:Type mod:SecurityFundType}">
+        <ComboBox
+            Width="60"
+            ItemsSource="{Binding Source={x:Static local:ElementsViewModel.SecurityFundTypes}}"
+            SelectedItem="{Binding NewValue}" />
+    </DataTemplate>
+
+
+    <DataTemplate x:Key="DT.RiskLevel">
         <ComboBox
             Width="60"
             ItemsSource="{Binding Source={x:Static local:ElementsViewModel.RiskLevels}}"
             SelectedItem="{Binding NewValue}" />
+    </DataTemplate>
+
+    <DataTemplate x:Key="DT.DurationInMonths">
+        <DockPanel>
+            <TextBox
+                Width="50"
+                HorizontalContentAlignment="Center"
+                Text="{Binding NewValue.Value, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+            <TextBlock VerticalAlignment="Center" Text="个月" />
+        </DockPanel>
+    </DataTemplate>
+
+
+    <DataTemplate x:Key="DT.ExpirationDate">
+        <DatePicker Width="100" SelectedDate="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
+    </DataTemplate>
+
+
+    <DataTemplate x:Key="DT.FundMode">
+        <DockPanel>
+            <ComboBox
+                Width="80"
+                Margin="4,0,0,0"
+                ItemsSource="{Binding Source={x:Static local:ElementsViewModel.FundModes}}"
+                SelectedItem="{Binding NewValue.Mode}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <TextBox
+                x:Name="other"
+                MinWidth="100"
+                Text="{Binding NewValue.Other, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                Visibility="Collapsed" />
+
+        </DockPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding NewValue.Mode}" Value="Other">
+                <Setter TargetName="other" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
     </DataTemplate>
 
 </ResourceDictionary>

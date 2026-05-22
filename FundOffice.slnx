@@ -62,7 +62,9 @@
     <Project Path="src/Trustee/XYZQ/XYZQ.csproj" />
   </Folder>
   <Folder Name="/Utility/">
-    <Project Path="src/Utility/ElementGenerator/ElementGenerator.csproj" Id="e2c45d0b-85f5-44d1-bf44-32209df9b96f" />
+    <Project Path="src/Utility/ElementGenerator/ElementGenerator.csproj" Id="e2c45d0b-85f5-44d1-bf44-32209df9b96f">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
     <Project Path="src/Utility/FileTemplate/FileTemplate.csproj" />
     <Project Path="src/Utility/Logging/Logging.csproj" />
     <Project Path="src/Utility/OCR/OCR.csproj" />
@@ -72,6 +74,8 @@
     <Project Path="src/Utility/Utilities/Utilities.csproj" />
   </Folder>
   <Project Path="../MiniExcel/src/MiniExcel/MiniExcel.csproj" />
+
+
   <Project Path="src/Client/FundOffice.csproj" />
   <Project Path="src/Plugin/Plugin/Plugin.csproj" />
   <Project Path="src/SharedUI/SharedUI.csproj" />

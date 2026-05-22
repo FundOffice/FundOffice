@@ -313,7 +313,7 @@
 
                             <Viewbox
                                 Grid.Column="1"
-                                Height="8"
+                                Height="7.5"
                                 VerticalAlignment="Top"
                                 Visibility="{Binding Modifier.IsInherited, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}">
                                 <Path Data="{StaticResource f.arrow-turn-down}" Fill="Brown" />

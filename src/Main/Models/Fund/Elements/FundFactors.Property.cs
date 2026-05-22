@@ -25,7 +25,7 @@ public partial class FundFactors
     /// <summary>
     /// 运作方式
     /// </summary>
-    public SingletonFactorItem<DataExtra<FundMode>> FundModeInfo { get; private set; } = null!;
+    public SingletonFactorItem<FundModeInfo> FundModeInfo { get; private set; } = null!;
 
     /// <summary>
     /// 封闭期

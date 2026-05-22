@@ -29,7 +29,7 @@ public class ValueChangeEventArgs<TProperty> : ValueChangeEventArgs
         }
     }
 
-    public ValueChangeEventArgs(ValueChangeKind kind, TProperty newValue) : base(kind)
+    public ValueChangeEventArgs(ValueChangeKind kind, TProperty? newValue) : base(kind)
     {
         NewValue = newValue;
     }
@@ -190,18 +190,16 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
     [RelayCommand]
     public void Apply()
     {
-        var kind = ChangeKind;
         OldValue = TViewModel.Trans(NewValue); // 触发 OnOldValueChanged → ChangeKind = None
-        NotifyChanged(kind, NewValue);
+        NotifyChanged(ChangeKind, NewValue);
     }
 
     /// <summary>还原：放弃当前编辑，回退到已确认的旧值</summary>
     [RelayCommand]
     public void Reset()
     {
-        var kind = ChangeKind;
         NewValue = TViewModel.Trans(OldValue); // 触发 OnNewValueChanged → ChangeKind = None
-        NotifyChanged(kind, NewValue);
+        NotifyChanged(ChangeKind, NewValue);
     }
 
     /// <summary>清空/删除：将新值设为回退值，标记为 Deleted</summary>
@@ -210,9 +208,8 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
     {
         if (!CanClear) return;
 
-        var kind = ChangeKind;
         NewValue = TViewModel.Trans(FallbackValue); // 触发 OnNewValueChanged → ChangeKind = Deleted
-        NotifyChanged(kind, NewValue);
+        NotifyChanged(ChangeKind, NewValue);
     }
 
     protected virtual void NotifyChanged(ValueChangeKind kind, TViewModel value) => Changed?.Invoke(new ValueChangeEventArgs<TValue>(ChangeKind, TViewModel.Trans(value)));
@@ -229,8 +226,9 @@ public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModif
     public partial TValue? OldValue { get; set; }
 
     [ObservableProperty]
-    //[NotifyPropertyChangedFor(nameof(DisplayValue))]
+    [NotifyPropertyChangedFor(nameof(IsInherited))]
     public partial TValue? NewValue { get; set; }
+
     [ObservableProperty] public partial TValue? FallbackValue { get; set; }
 
     [ObservableProperty]
@@ -302,22 +300,22 @@ public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModif
     }
     private void OnDeepPropertyChanged(object? sender, PropertyChangedEventArgs e) => UpdateState();
 
+
+
     /// <summary>确认修改：新值固化到旧值，状态归零</summary>
     [RelayCommand]
     public void Apply()
     {
-        ValueChangeEventArgs<TValue> e = new(this, ChangeKind);
         OldValue = CloneHelper.CloneValue(NewValue); // 触发 OnOldValueChanged → ChangeKind = None
-        Changed?.Invoke(e);
+        NotifyChanged(ChangeKind, NewValue);
     }
 
     /// <summary>还原：放弃当前编辑，回退到已确认的旧值</summary>
     [RelayCommand]
     public void Reset()
     {
-        ValueChangeEventArgs<TValue> e = new(this, ChangeKind);
-        NewValue = CloneHelper.CloneValue(OldValue); // 触发 OnNewValueChanged → ChangeKind = None
-        Changed?.Invoke(e);
+        NewValue = CloneHelper.CloneValue(OldValue);// 触发 OnNewValueChanged → ChangeKind = None
+        NotifyChanged(ChangeKind, NewValue);
     }
 
     /// <summary>清空/删除：将新值设为回退值，标记为 Deleted</summary>
@@ -325,13 +323,12 @@ public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModif
     public void Clear()
     {
         if (!CanClear) return;
-        ValueChangeEventArgs<TValue> e = new(this, ChangeKind);
+
         NewValue = FallbackValue; // 触发 OnNewValueChanged → ChangeKind = Deleted
-        Changed?.Invoke(e);
+        NotifyChanged(ChangeKind, NewValue);
     }
 
-
-    protected virtual void NotifyChanged(ValueChangeKind kind, TValue value) => Changed?.Invoke(new ValueChangeEventArgs<TValue>(ChangeKind, value));
+    protected virtual void NotifyChanged(ValueChangeKind kind, TValue? value) => Changed?.Invoke(new ValueChangeEventArgs<TValue>(ChangeKind, value));
 }
 
 

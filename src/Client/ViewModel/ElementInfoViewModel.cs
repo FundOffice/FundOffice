@@ -167,7 +167,7 @@ public partial class BankChangeableViewModel<T> : ChangeableViewModel<T, BankAcc
 
 
 
- 
+
 public partial class FundFeeInfoViewModel : IDataValidation, IViewModel<FundFeeInfo, FundFeeInfoViewModel>
 {
     public bool IsValid() => Type switch { FundFeeType.Ratio or FundFeeType.Fix => Fee > 0, FundFeeType.Other => Other?.Length > 0, _ => false };
@@ -400,5 +400,27 @@ public partial class CallbackInfoViewModel
     public override string? ToString()
     {
         return IsRequired ? "需要" : "不适用";
+    }
+}
+
+
+public partial class FundDurationViewModel : ObservableObject, IViewModel<int?, FundDurationViewModel>, IDisplay<string>
+{
+
+
+    public string Transfrom()
+    {
+        return Value switch { >= 999 => "无固定期限", var m when m % 12 == 0 => $"{Value / 12}年", > 0 => $"{Value}个月", _ => "未设置" };
+    }
+}
+
+
+public partial class FundModeViewModel : ObservableObject, IViewModel<FundModeInfo, FundModeViewModel>, IDisplay<string>
+{
+ 
+
+    public string Transfrom()
+    {
+        return Mode switch { FundMode.Open => "开放式", FundMode.Close => "封闭式", FundMode.Other => Other ?? "未设置", _ => "未设置" };
     }
 }

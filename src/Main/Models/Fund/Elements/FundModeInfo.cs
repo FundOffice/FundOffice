@@ -20,5 +20,5 @@ public class FundModeInfo
 {
     public FundMode Mode { get; set; }
 
-    public string? Extra { get; set; }
+    public string? Other { get; set; }
 }

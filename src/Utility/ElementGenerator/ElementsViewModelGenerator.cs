@@ -171,7 +171,7 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
             else
                 vmSymbol = compilation.GetTypeByMetadataName("ElementsViewModel");
 
-            var allModifiersBuilder = ImmutableArray.CreateBuilder<PropertyMeta>();
+            var allPropertiesBuilder = ImmutableArray.CreateBuilder<PropertyMeta>();
             var propsToDeclareBuilder = ImmutableArray.CreateBuilder<PropertyMeta>();
             var propsForFillByBuilder = ImmutableArray.CreateBuilder<PropertyMeta>();
             var excludedProps = new List<string>();
@@ -204,20 +204,29 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
                     vmName = specificVm;
                 }
 
-                string? ctorParams = null;
-                string? ctorBaseArgs = null;
-                if (!isSingleton && sfvSymbol != null)
+                // [核心修复] 如果原始属性是 DateOnly 或者 DateTime, 生成的用 xxx? 可空类型
+                string tNameForGeneric = tName;
+                if (tSymbol.Name is "DateOnly" or "DateTime")
                 {
-                    var ctor = sfvSymbol.Constructors.FirstOrDefault(c => !c.IsStatic && c.Parameters.Length == 5);
-                    if (ctor != null)
-                    {
-                        ctorParams = string.Join(", ", ctor.Parameters.Select(par => $"{par.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {par.Name}"));
-                        ctorBaseArgs = string.Join(", ", ctor.Parameters.Select(par => par.Name));
-                    }
+                    tNameForGeneric = $"{tName}?";
                 }
 
-                var meta = new PropertyMeta(prop.Name, isSingleton, tName, vmName, isDoubleTemplate, ctorParams, ctorBaseArgs);
-                allModifiersBuilder.Add(meta);
+                // 直接计算基类全名称（包含泛型参数），用于属性和实例化
+                string baseTypeStr;
+                if (isSingleton)
+                {
+                    baseTypeStr = isDoubleTemplate
+                        ? $"{fmvFullName}<{tNameForGeneric}, {vmName}>"
+                        : $"{fmvFullName}<{tNameForGeneric}>";
+                }
+                else
+                {
+                    baseTypeStr = isDoubleTemplate
+                        ? $"{sfvFullName}<{tNameForGeneric}, {vmName}>"
+                        : $"{sfvFullName}<{tNameForGeneric}>";
+                }
+
+                var meta = new PropertyMeta(prop.Name, isSingleton, tName, vmName, isDoubleTemplate, baseTypeStr);
 
                 bool isHandwritten = manualProps.Contains(prop.Name);
                 bool includeInFillBy = false;
@@ -230,6 +239,32 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
                         if (vmPropType.OriginalDefinition.Name == "FactorModifiableViewModel" || vmPropType.OriginalDefinition.Name == "ShareFactorViewModel")
                         {
                             includeInFillBy = true;
+
+                            // [核心修复] 对于手写属性，必须使用开发者在 ViewModel 中实际声明的泛型参数，
+                            // 否则会导致生成的 new() 实例化代码泛型参数不匹配（例如丢失双泛型或可空类型标识）。
+                            var typeArgs = vmPropType.TypeArguments;
+                            string manualTName = typeArgs[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                            string manualVmName = typeArgs.Length > 1 ? typeArgs[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) : manualTName;
+                            bool manualIsDoubleTemplate = typeArgs.Length > 1;
+
+                            var validTypeArgs = typeArgs.Length > 2 ? typeArgs.Take(2) : typeArgs;
+                            string manualBaseTypeStr;
+                            if (isSingleton)
+                            {
+                                manualBaseTypeStr = $"{fmvFullName}<{string.Join(", ", validTypeArgs.Select(t => t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))}>";
+                            }
+                            else
+                            {
+                                manualBaseTypeStr = $"{sfvFullName}<{string.Join(", ", validTypeArgs.Select(t => t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))}>";
+                            }
+
+                            meta = meta with
+                            {
+                                TName = manualTName,
+                                VMName = manualVmName,
+                                IsDoubleTemplate = manualIsDoubleTemplate,
+                                BaseTypeStr = manualBaseTypeStr
+                            };
                         }
                     }
                     if (!includeInFillBy) excludedProps.Add($"{prop.Name} (Manual - Not a supported VM type)");
@@ -239,6 +274,7 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
                     includeInFillBy = true;
                 }
 
+                allPropertiesBuilder.Add(meta);
                 if (includeInFillBy) propsForFillByBuilder.Add(meta);
                 if (!isHandwritten) propsToDeclareBuilder.Add(meta);
             }
@@ -250,62 +286,13 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
                 ExcludedProps = string.Join(", ", excludedProps)
             };
 
-            return (targetNamespace, hasViewModel, propsToDeclareBuilder.ToImmutable(), propsForFillByBuilder.ToImmutable(), allModifiersBuilder.ToImmutable(), debug, mappings, fmvFullName, sfvFullName, cloneHelperFullName, shareClassFullName, factorFieldsFullName, shareClassVmFullName);
+            return (targetNamespace, hasViewModel, propsToDeclareBuilder.ToImmutable(), propsForFillByBuilder.ToImmutable(), allPropertiesBuilder.ToImmutable(), debug, mappings, fmvFullName, sfvFullName, cloneHelperFullName, shareClassFullName, factorFieldsFullName, shareClassVmFullName);
         });
 
         // 5. 代码生成
         context.RegisterSourceOutput(propertiesToGenerate, (spc, data) =>
         {
-            var (ns, hasViewModel, propsToDeclare, propsForFillBy, allModifiers, debug, mappings, fmvFullName, sfvFullName, cloneHelperFullName, shareClassFullName, factorFieldsFullName, shareClassVmFullName) = data;
-
-            // ==========================================
-            // A. 生成全局 Modifier 类 (独立文件)
-            // ==========================================
-            if (allModifiers.Length > 0)
-            {
-                var modifierSb = new StringBuilder();
-                modifierSb.AppendLine("// <auto-generated/>");
-                modifierSb.AppendLine("#nullable enable");
-                modifierSb.AppendLine();
-                modifierSb.AppendLine("namespace FMO.Factor.Modifier;");
-                modifierSb.AppendLine();
-
-                foreach (var p in allModifiers)
-                {
-                    string baseTypeStr;
-                    if (p.IsSingleton)
-                    {
-                        baseTypeStr = p.IsDoubleTemplate
-                            ? $"{fmvFullName}<{p.TName}, {p.VMName}>"
-                            : $"{fmvFullName}<{p.TName}>";
-                    }
-                    else
-                    {
-                        baseTypeStr = p.IsDoubleTemplate
-                            ? $"{sfvFullName}<{p.TName}, {p.VMName}>"
-                            : $"{sfvFullName}<{p.TName}>";
-                    }
-
-                    string modifierClassName = $"{p.Name}Modifier";
-                    string ctorBlock = "";
-
-                    if (!p.IsSingleton && !string.IsNullOrEmpty(p.CtorParams))
-                    {
-                        ctorBlock = $$"""
-        public {{modifierClassName}}({{p.CtorParams}}) : base({{p.CtorBaseArgs}}) { }
-""";
-                    }
-
-                    modifierSb.Append($$"""
-public partial class {{modifierClassName}} : {{baseTypeStr}} 
-{
-{{ctorBlock}}
-}
-
-""");
-                }
-                spc.AddSource("FactorModifiers.g.cs", modifierSb.ToString());
-            }
+            var (ns, hasViewModel, propsToDeclare, propsForFillBy, allProperties, debug, mappings, fmvFullName, sfvFullName, cloneHelperFullName, shareClassFullName, factorFieldsFullName, shareClassVmFullName) = data;
 
             // ==========================================
             // B. 生成 ElementsViewModel (如果存在)
@@ -315,9 +302,8 @@ public partial class {{modifierClassName}} : {{baseTypeStr}}
             var sb = new StringBuilder();
             foreach (var p in propsToDeclare)
             {
-                string typeStr = $"global::FMO.Factor.Modifier.{p.Name}Modifier";
                 sb.Append($$"""
-    public {{typeStr}} {{p.Name}} { get => field; set => SetProperty(ref field, value); }
+    public {{p.BaseTypeStr}} {{p.Name}} { get => field; set => SetProperty(ref field, value); }
 
 """);
             }
@@ -335,14 +321,12 @@ public partial class {{modifierClassName}} : {{baseTypeStr}}
 
             foreach (var p in propsForFillBy)
             {
-                string modifierFullName = $"global::FMO.Factor.Modifier.{p.Name}Modifier";
-
                 if (p.IsSingleton)
                 {
                     if (p.IsDoubleTemplate)
                     {
                         fillBySb.Append($$"""
-        {{p.Name}} = new {{modifierFullName}}()
+        {{p.Name}} = new {{p.BaseTypeStr}}()
         {
             FlowId = flowId,
             ShareId = {{shareClassFullName}}.Singleton,
@@ -358,7 +342,7 @@ public partial class {{modifierClassName}} : {{baseTypeStr}}
                     else
                     {
                         fillBySb.Append($$"""
-        {{p.Name}} = new {{modifierFullName}}()
+        {{p.Name}} = new {{p.BaseTypeStr}}()
         {
             FlowId = flowId,
             ShareId = {{shareClassFullName}}.Singleton,
@@ -376,7 +360,7 @@ public partial class {{modifierClassName}} : {{baseTypeStr}}
                 {
                     fillBySb.Append($$"""
         var mfi_{{p.Name}} = factors.{{p.Name}}.GetInheritValues(flowId, classIds);
-        {{p.Name}} = new {{modifierFullName}}(
+        {{p.Name}} = new {{p.BaseTypeStr}}(
             this.FundId,
             flowId,
             {{factorFieldsFullName}}.{{p.Name}},
@@ -427,7 +411,7 @@ public partial class {{modifierClassName}} : {{baseTypeStr}}
 
             debugComments.AppendLine($"// Auto-Generated Props (RefCount): {debug.RefCount}");
             debugComments.AppendLine($"// FillBy Props Count: {debug.FillByCount}");
-            debugComments.AppendLine($"// Total Modifiers Generated: {allModifiers.Length}");
+            debugComments.AppendLine($"// Total Properties Mapped: {allProperties.Length}");
             debugComments.AppendLine("// ------------------");
 
             var source = string.IsNullOrEmpty(ns) ? $$"""
@@ -526,8 +510,7 @@ public partial class ElementsViewModel{{inpcInheritance}}
         string TName,
         string VMName,
         bool IsDoubleTemplate,
-        string? CtorParams = null,
-        string? CtorBaseArgs = null);
+        string BaseTypeStr);
 
     private record VMMapping(string ModelType, string ViewModelType);
 }

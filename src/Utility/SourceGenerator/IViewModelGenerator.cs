@@ -50,292 +50,255 @@ public class IViewModelIncrementalGenerator : IIncrementalGenerator
         var className = targetClass.Name;
         var sourceTypeName = sourceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
+        // ==========================================
+        // 🔹 核心逻辑 1：精确计算 C# 无约束泛型 T? 的实例化类型
+        // ==========================================
+        string nullableParamTypeString; // 对应接口中的 TValue?
+        string nonNullableTypeString;   // 用于 is 模式匹配
+        string comparerTypeString;      // 用于 EqualityComparer<T> 的泛型参数
+
+        if (sourceType.IsReferenceType)
+        {
+            // 引用类型：T? 变成 可空引用类型 (如 FundFeeInfo?)
+            nonNullableTypeString = sourceTypeName.EndsWith("?") ? sourceTypeName.Substring(0, sourceTypeName.Length - 1) : sourceTypeName;
+            nullableParamTypeString = nonNullableTypeString + "?";
+            comparerTypeString = nonNullableTypeString; // EqualityComparer 不接受引用类型的 ?
+        }
+        else
+        {
+            // 值类型 (包含 int, Enum, DateTime, 以及 Nullable<int>)：T? 就是 T 本身！
+            nullableParamTypeString = sourceTypeName;
+            comparerTypeString = sourceTypeName;      // EqualityComparer 接受 int, int?, FundMode
+
+            if (sourceType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
+            {
+                var underlyingType = ((INamedTypeSymbol)sourceType).TypeArguments[0];
+                nonNullableTypeString = underlyingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            }
+            else
+            {
+                nonNullableTypeString = sourceTypeName;
+            }
+        }
+
+        bool canBeNull = sourceType.IsReferenceType || sourceType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
+
         var viewModelDeclaredProperties = new HashSet<string>(StringComparer.Ordinal);
         foreach (var member in targetClass.GetMembers())
             if (member is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public)
                 viewModelDeclaredProperties.Add(p.Name);
-
-        logs.Add($"[VM Declared] {string.Join(", ", viewModelDeclaredProperties)}");
 
         var existingInHierarchy = new HashSet<string>(StringComparer.Ordinal);
         INamedTypeSymbol? current = targetClass.BaseType;
 
         while (current != null && current.SpecialType != SpecialType.System_Object)
         {
-            logs.Add($"🔍 遍历VM类型：{current.Name}");
             foreach (var member in current.GetMembers())
-            {
                 if (member is IPropertySymbol p && p.DeclaredAccessibility == Accessibility.Public)
-                {
                     existingInHierarchy.Add(p.Name);
-                    logs.Add($"✅ 已包含VM属性：{p.Name}");
-                }
-            }
 
-            var iViewModelInterface = current.AllInterfaces.FirstOrDefault(i => i.Name == "IViewModel" && i.TypeArguments.Length == 2);
-
-            if (iViewModelInterface != null)
+            var baseIViewModel = current.AllInterfaces.FirstOrDefault(i => i.Name == "IViewModel" && i.TypeArguments.Length == 2);
+            if (baseIViewModel != null)
             {
-                logs.Add($"ℹ️ 类型 {current.Name} 实现了 IViewModel，开始收集源模型属性");
-                var srcType = iViewModelInterface.TypeArguments[0] as INamedTypeSymbol;
-
+                var srcType = baseIViewModel.TypeArguments[0] as INamedTypeSymbol;
                 if (srcType != null)
-                {
-                    logs.Add($"🔍 遍历源模型：{srcType.Name}");
                     foreach (var sourceMember in srcType.GetMembers())
-                    {
                         if (sourceMember is IPropertySymbol sp && sp.DeclaredAccessibility == Accessibility.Public)
-                        {
                             existingInHierarchy.Add(sp.Name);
-                            logs.Add($"✅ 已包含源模型属性：{sp.Name}");
-                        }
-                    }
-                }
             }
-
             current = current.BaseType;
         }
-
-        logs.Add($"📊 最终已存在属性总数：{existingInHierarchy.Count}\n");
 
         var propertiesToGenerate = new List<PropertyInfo>();
         var propertiesToAssignOnly = new List<PropertyInfo>();
 
-        var currentType = sourceType;
-        while (currentType != null && currentType.SpecialType != SpecialType.System_Object)
+        bool isWrapperType = sourceType.SpecialType switch
         {
-            foreach (var member in currentType.GetMembers())
+            SpecialType.System_Boolean or SpecialType.System_Char or SpecialType.System_SByte or
+            SpecialType.System_Byte or SpecialType.System_Int16 or SpecialType.System_UInt16 or
+            SpecialType.System_Int32 or SpecialType.System_UInt32 or SpecialType.System_Int64 or
+            SpecialType.System_UInt64 or SpecialType.System_Decimal or SpecialType.System_Single or
+            SpecialType.System_Double or SpecialType.System_String or SpecialType.System_DateTime => true,
+            _ => sourceType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T || sourceType.TypeKind == TypeKind.Enum
+        };
+
+        if (isWrapperType)
+        {
+            logs.Add("⚠️ 启用 Wrapper 模式 (基础类型/Enum/Nullable)");
+            bool sourceIsNullable = sourceType.IsReferenceType || sourceType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
+            var propInfo = new PropertyInfo(sourceTypeName, "Value", sourceIsNullable, sourceIsNullable, true, false, sourceTypeName, sourceType.SpecialType == SpecialType.System_String, sourceType.IsValueType);
+            propertiesToGenerate.Add(propInfo);
+        }
+        else
+        {
+            var currentType = sourceType;
+            while (currentType != null && currentType.SpecialType != SpecialType.System_Object)
             {
-                if (member is IPropertySymbol prop &&
-                    prop.DeclaredAccessibility == Accessibility.Public &&
-                    !prop.IsStatic)
+                foreach (var member in currentType.GetMembers())
                 {
-                    ITypeSymbol propType = prop.Type;
-                    string propTypeString = propType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-
-                    INamedTypeSymbol? propNamedType = propType switch
+                    if (member is IPropertySymbol prop && prop.DeclaredAccessibility == Accessibility.Public && !prop.IsStatic)
                     {
-                        INamedTypeSymbol named => named,
-                        IArrayTypeSymbol array when array.ElementType is INamedTypeSymbol elem => elem,
-                        _ => null
-                    };
+                        ITypeSymbol propType = prop.Type;
+                        string propTypeString = propType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-                    if (propNamedType == null) continue;
+                        INamedTypeSymbol? propNamedType = propType switch
+                        {
+                            INamedTypeSymbol namedType => namedType,
+                            IArrayTypeSymbol array when array.ElementType is INamedTypeSymbol elem => elem,
+                            _ => null
+                        };
 
-                    if (viewModelDeclaredProperties.Contains(prop.Name))
-                    {
-                        logs.Add($"  ⏭️ Skip {prop.Name} (VM already declares)");
-                        continue;
-                    }
+                        if (propNamedType == null || viewModelDeclaredProperties.Contains(prop.Name)) continue;
 
-                    // 🔹 精确计算源属性是否可空
-                    bool sourceIsNullable;
-                    if (propType.IsReferenceType || propType is IArrayTypeSymbol)
-                    {
-                        // 引用类型：只要没有明确标记为 NotAnnotated，就认为是可空的
-                        sourceIsNullable = prop.NullableAnnotation != NullableAnnotation.NotAnnotated;
-                    }
-                    else
-                    {
-                        // 值类型：只有 Nullable<T> 是可空的
-                        sourceIsNullable = propType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
-                    }
+                        bool sourceIsNullable = propType.IsReferenceType || propType is IArrayTypeSymbol
+                            ? prop.NullableAnnotation != NullableAnnotation.NotAnnotated
+                            : propType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
 
-                    // 🔹 计算 VM 属性是否可空 (用于生成 VM 属性声明)
-                    bool vmIsNullable = propType.IsReferenceType ||
-                                        (propType is IArrayTypeSymbol) ||
-                                        prop.NullableAnnotation == NullableAnnotation.Annotated;
+                        bool vmIsNullable = propType.IsReferenceType || (propType is IArrayTypeSymbol) || prop.NullableAnnotation == NullableAnnotation.Annotated;
+                        bool isWritable = prop.SetMethod != null;
 
-                    bool isWritable = prop.SetMethod != null;
-                    bool isString = propType.SpecialType == SpecialType.System_String;
-                    bool isValueType = propType.IsValueType;
+                        var (isNested, vmType) = propType is IArrayTypeSymbol
+                            ? (false, null)
+                            : CheckNestedViewModelPattern(targetClass, prop.Name, propNamedType);
 
-                    var (isNested, vmType) = propType is IArrayTypeSymbol
-                        ? (false, null)
-                        : CheckNestedViewModelPattern(targetClass, prop.Name, propNamedType);
+                        var vmTypeName = isNested && vmType != null
+                            ? vmType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                            : propTypeString;
 
-                    var vmTypeName = isNested && vmType != null
-                        ? vmType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        : propTypeString;
+                        var propInfo = new PropertyInfo(propTypeString, prop.Name, sourceIsNullable, vmIsNullable, isWritable, isNested, vmTypeName, propType.SpecialType == SpecialType.System_String, propType.IsValueType);
 
-                    var propInfo = new PropertyInfo(
-                        propTypeString,
-                        prop.Name,
-                        sourceIsNullable,
-                        vmIsNullable,
-                        isWritable,
-                        isNested,
-                        vmTypeName,
-                        isString,
-                        isValueType);
-
-                    if (existingInHierarchy.Contains(prop.Name))
-                    {
-                        propertiesToAssignOnly.Add(propInfo);
-                        logs.Add($"     ➡️ AssignOnly");
-                    }
-                    else
-                    {
-                        propertiesToGenerate.Add(propInfo);
-                        logs.Add($"     ➡️ Generate");
+                        if (existingInHierarchy.Contains(prop.Name)) propertiesToAssignOnly.Add(propInfo);
+                        else propertiesToGenerate.Add(propInfo);
                     }
                 }
+                currentType = currentType.BaseType;
             }
-            currentType = currentType.BaseType;
         }
 
-        logs.Add($"[End] Generate={propertiesToGenerate.Count} | AssignOnly={propertiesToAssignOnly.Count}");
-
-        if (propertiesToGenerate.Count == 0 && propertiesToAssignOnly.Count == 0)
-            return null;
+        if (propertiesToGenerate.Count == 0 && propertiesToAssignOnly.Count == 0) return null;
 
         bool needsINPC = true, hasAutoBase = false;
         var baseType = targetClass.BaseType;
-
         while (baseType != null && baseType.SpecialType != SpecialType.System_Object)
         {
-            if (baseType.AllInterfaces.Any(i => i.Name == "IViewModel" && i.TypeArguments.Length == 2))
-            {
-                needsINPC = false;
-                hasAutoBase = true;
-                break;
-            }
-            else if (baseType.Name.Contains("ObservableObject"))
-            {
-                needsINPC = false;
-                hasAutoBase = false;
-                break;
-            }
+            if (baseType.AllInterfaces.Any(i => i.Name == "IViewModel" && i.TypeArguments.Length == 2)) { needsINPC = false; hasAutoBase = true; break; }
+            else if (baseType.Name.Contains("ObservableObject")) { needsINPC = false; hasAutoBase = false; break; }
             baseType = baseType.BaseType;
         }
 
-        bool hasManualEquals = false;
-        var checkType = targetClass;
-        while (checkType != null && checkType.SpecialType != SpecialType.System_Object)
-        {
-            if (checkType.GetMembers("Equals").OfType<IMethodSymbol>().Any(m =>
-                m.Parameters.Length == 1 &&
-                SymbolEqualityComparer.Default.Equals(m.Parameters[0].Type, sourceType)))
-            {
-                hasManualEquals = true;
-                break;
-            }
-            checkType = checkType.BaseType;
-        }
+        bool hasManualEquals = targetClass.GetMembers("Equals").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 1 && SymbolEqualityComparer.Default.Equals(m.Parameters[0].Type, sourceType));
+        bool hasManualGetHashCode = targetClass.GetMembers("GetHashCode").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 0);
+        bool hasManualObjectEquals = targetClass.GetMembers("Equals").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 1 && m.Parameters[0].Type.SpecialType == SpecialType.System_Object && m.IsOverride);
 
-        bool hasManualGetHashCode = false;
-        var checkTypeForHash = targetClass;
-        while (checkTypeForHash != null && checkTypeForHash.SpecialType != SpecialType.System_Object)
-        {
-            if (checkTypeForHash.GetMembers("GetHashCode").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 0))
-            {
-                hasManualGetHashCode = true;
-                break;
-            }
-            checkTypeForHash = checkTypeForHash.BaseType;
-        }
-
-        bool hasManualObjectEquals = false;
-        var checkTypeForObjEq = targetClass;
-        while (checkTypeForObjEq != null && checkTypeForObjEq.SpecialType != SpecialType.System_Object)
-        {
-            if (checkTypeForObjEq.GetMembers("Equals").OfType<IMethodSymbol>().Any(m =>
-                m.Parameters.Length == 1 &&
-                m.Parameters[0].Type.SpecialType == SpecialType.System_Object &&
-                m.IsOverride))
-            {
-                hasManualObjectEquals = true;
-                break;
-            }
-            checkTypeForObjEq = checkTypeForObjEq.BaseType;
-        }
-
-        logs.Add($"最终 needsINPC = {needsINPC} | hasManualEquals = {hasManualEquals} | 类名：{targetClass.Name}");
-
-        return new GenerationModel(className, ns, sourceTypeName,
+        return new GenerationModel(className, ns, sourceTypeName, nullableParamTypeString, nonNullableTypeString, comparerTypeString,
             propertiesToGenerate, propertiesToAssignOnly, needsINPC, hasAutoBase,
-            hasManualEquals, hasManualGetHashCode, hasManualObjectEquals, sourceType.IsReferenceType, logs);
+            hasManualEquals, hasManualGetHashCode, hasManualObjectEquals, isWrapperType, canBeNull, logs);
     }
 
     private static string GenerateSource(GenerationModel model)
     {
 #if DEBUG
-        var debugHeader = string.Join("\n",
-    new[] { "// 🔍 ===== AutoViewModel Debug Info =====" }
-    .Concat(model.DebugLogs.Select(l => $"// {l}"))
-    .Concat(new[] { "// =====================================\n" }));
+        var debugHeader = string.Join("\n", new[] { "// 🔍 ===== AutoViewModel Debug Info =====" }
+            .Concat(model.DebugLogs.Select(l => $"// {l}"))
+            .Concat(new[] { "// =====================================\n" }));
 #else
         var debugHeader = "";
 #endif
-
         var inpcBlock = model.NeedsINPC ? """
-    public event PropertyChangedEventHandler? PropertyChanged;
-    protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-    public void SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-    {
-        if (!global::System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
+        public void SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
-            field = value;
-            OnPropertyChanged(propertyName);
+            if (!global::System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
+            {
+                field = value;
+                OnPropertyChanged(propertyName);
+            }
         }
-    }
-""" : "";
+        """ : "";
 
-        var fillAssignments = GenerateAssignments(model.PropertiesToGenerate, model.PropertiesToAssignOnly, "val");
+        var assignments = new List<string>();
+        if (model.IsWrapperType) assignments.Add("Value = v;");
+        else foreach (var prop in model.PropertiesToGenerate.Concat(model.PropertiesToAssignOnly)) assignments.Add(prop.GetFillAssignment("v"));
+        string assignmentsBlock = string.Join("\n            ", assignments);
 
         var generatedProperties = string.Join("\n\n", model.PropertiesToGenerate.Select(prop =>
         {
             var typeName = prop.GetViewModelPropertyTypeString();
-            return $$"""
-
-        public {{typeName}} {{prop.Name}} { get => field; set => SetProperty(ref field, value); }
-  
-""";
+            return $"\n    public {typeName} {prop.Name} {{ get => field; set => SetProperty(ref field, value); }}";
         }));
 
-        var buildInitializers = string.Join("\n\t\t\t\t",
+        var buildInitializers = string.Join("\n                ",
             model.PropertiesToGenerate.Concat(model.PropertiesToAssignOnly)
-                .Where(p => p.IsWritable)
-                .Select(p => p.GetBuildInitializer())
-                .Where(s => !string.IsNullOrEmpty(s)));
+                .Where(p => p.IsWritable).Select(p => p.GetBuildInitializer()).Where(s => !string.IsNullOrEmpty(s)));
 
         var namespaceOpen = !string.IsNullOrEmpty(model.Namespace) ? $"namespace {model.Namespace}\n{{" : "";
         var namespaceClose = !string.IsNullOrEmpty(model.Namespace) ? "}" : "";
         var inpcInheritance = model.NeedsINPC ? " : INotifyPropertyChanged" : "";
-        var overnew = model.HasAutoBase ? "new" : "";
+        var overnew = model.HasAutoBase ? "new " : "";
+
+        // 🔹 优化：根据 CanBeNull 决定是否需要 if 判断，消除非空值类型的 "always true" 警告
+        string ctorBody;
+        if (model.CanBeNull)
+        {
+            ctorBody = $$"""
+                if (val is {{model.NonNullableTypeString}} v)
+                {
+                    {{assignmentsBlock}}
+                }
+            """;
+        }
+        else
+        {
+            ctorBody = assignmentsBlock.Replace("v", "val");
+        }
+
+        string fillByBody;
+        if (model.CanBeNull)
+        {
+            fillByBody = $$"""
+                if (obj is {{model.NonNullableTypeString}} val)
+                {
+                    {{assignmentsBlock.Replace("v", "val")}}
+                }
+                return this;
+            """;
+        }
+        else
+        {
+            fillByBody = $$"""
+                {{assignmentsBlock.Replace("v", "obj")}}
+                return this;
+            """;
+        }
 
         var equalsBlock = "";
         if (!model.HasManualEquals)
         {
             var equalsLines = new List<string>();
-            var paramType = model.SourceTypeIsReferenceType ? $"{model.SourceTypeName}?" : model.SourceTypeName;
-
-            equalsLines.Add($"        public bool Equals({paramType} other)");
+            equalsLines.Add($"        public bool Equals({model.NullableParamTypeString} other)");
             equalsLines.Add("        {");
-            if (model.SourceTypeIsReferenceType)
-            {
-                equalsLines.Add("            if (other is null) return false;");
-            }
+            if (model.CanBeNull) equalsLines.Add("            if (other is null) return false;");
 
-            var allProps = model.PropertiesToGenerate.Concat(model.PropertiesToAssignOnly);
-            foreach (var prop in allProps)
+            if (model.IsWrapperType)
             {
-                if (prop.IsNestedViewModel)
+                equalsLines.Add($"            if (!global::System.Collections.Generic.EqualityComparer<{model.ComparerTypeString}>.Default.Equals(Value, other)) return false;");
+            }
+            else
+            {
+                foreach (var prop in model.PropertiesToGenerate.Concat(model.PropertiesToAssignOnly))
                 {
-                    if (prop.VmIsNullable)
+                    if (prop.IsNestedViewModel)
                     {
-                        equalsLines.Add($"            if (!global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.Equals({prop.Name}?.Build(), other.{prop.Name})) return false;");
+                        var nullOp = prop.VmIsNullable ? "?" : "!";
+                        equalsLines.Add($"            if (!global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.Equals({prop.Name}{nullOp}.Build(), other.{prop.Name})) return false;");
                     }
                     else
                     {
-                        equalsLines.Add($"            if (!global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.Equals({prop.Name}!.Build(), other.{prop.Name})) return false;");
+                        equalsLines.Add($"            if (!global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.Equals({prop.Name}, other.{prop.Name})) return false;");
                     }
-                }
-                else
-                {
-                    equalsLines.Add($"            if (!global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.Equals({prop.Name}, other.{prop.Name})) return false;");
                 }
             }
             equalsLines.Add("            return true;");
@@ -347,172 +310,114 @@ public class IViewModelIncrementalGenerator : IIncrementalGenerator
         if (!model.HasManualEquals && !model.HasManualObjectEquals)
         {
             objectEqualsBlock = $$"""
-        public override bool Equals(object? obj)
-        {
-            return obj is {{model.SourceTypeName}} other && Equals(other);
-        }
-""";
+            public override bool Equals(object? obj)
+            {
+                return obj is {{model.NonNullableTypeString}} other && Equals(other);
+            }
+            """;
         }
 
         var getHashCodeBlock = "";
         if (!model.HasManualGetHashCode)
         {
-            var hashCodeLines = new List<string>();
-            hashCodeLines.Add("        public override int GetHashCode()");
-            hashCodeLines.Add("        {");
-            hashCodeLines.Add("            unchecked");
-            hashCodeLines.Add("            {");
-            hashCodeLines.Add("                int hash = 17;");
-
-            var allProps = model.PropertiesToGenerate.Concat(model.PropertiesToAssignOnly);
-            foreach (var prop in allProps)
+            var allProps = model.PropertiesToGenerate.Concat(model.PropertiesToAssignOnly).ToList();
+            if (allProps.Count == 1 && model.IsWrapperType)
             {
-                if (prop.IsNestedViewModel)
+                var nullForgiving = model.CanBeNull ? "!" : "";
+                getHashCodeBlock = $$"""
+                public override int GetHashCode()
                 {
-                    if (prop.VmIsNullable)
-                        hashCodeLines.Add($"                hash = hash * 31 + global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.GetHashCode({prop.Name}?.Build()!);");
-                    else
-                        hashCodeLines.Add($"                hash = hash * 31 + global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.GetHashCode({prop.Name}!.Build()!);");
+                    return global::System.Collections.Generic.EqualityComparer<{{model.ComparerTypeString}}>.Default.GetHashCode(Value{{nullForgiving}});
                 }
-                else
-                {
-                    hashCodeLines.Add($"                hash = hash * 31 + global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.GetHashCode({prop.Name}!);");
-                }
+                """;
             }
-
-            hashCodeLines.Add("                return hash;");
-            hashCodeLines.Add("            }");
-            hashCodeLines.Add("        }");
-            getHashCodeBlock = string.Join("\n", hashCodeLines);
+            else
+            {
+                var hashCodeLines = new List<string> { "public override int GetHashCode()", "{", "    unchecked", "    {", "        int hash = 17;" };
+                foreach (var prop in allProps)
+                {
+                    var nullForgiving = (prop.SourceIsNullable || prop.VmIsNullable || !prop.IsValueType) ? "!" : "";
+                    if (prop.IsNestedViewModel)
+                        hashCodeLines.Add($"        hash = hash * 31 + global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.GetHashCode({prop.Name}{(prop.VmIsNullable ? "?" : "!")}.Build()!);");
+                    else
+                        hashCodeLines.Add($"        hash = hash * 31 + global::System.Collections.Generic.EqualityComparer<{prop.SourceTypeName}>.Default.GetHashCode({prop.Name}{nullForgiving});");
+                }
+                hashCodeLines.AddRange(new[] { "        return hash;", "    }", "}" });
+                getHashCodeBlock = string.Join("\n", hashCodeLines);
+            }
         }
 
         var transMethods = $$"""
-        public static {{model.SourceTypeName}} Trans({{model.ClassName}} vm)
-        {
-            if (vm is null) return default!;
-            return vm.Build();
-        }
+            public static {{model.SourceTypeName}} Trans({{model.ClassName}} vm)
+            {
+                if (vm is null) return default!;
+                return vm.Build();
+            }
 
-        public static {{model.ClassName}} Trans({{model.SourceTypeName}}? val)
-        {
-            var vm = new {{model.ClassName}}();
-            vm.FillBy(val);
-            return vm;
-        }
-""";
+            public static {{model.ClassName}} Trans({{model.NullableParamTypeString}} val)
+            {
+                return new {{model.ClassName}}(val);
+            }
+        """;
+
+        string buildBlock = model.IsWrapperType
+            ? $"public {overnew}{model.SourceTypeName} Build()\n{{\n    return Value;\n}}"
+            : $"public {overnew}{model.SourceTypeName} Build()\n{{\n    var result = new {model.SourceTypeName}\n    {{\n        {buildInitializers}\n    }};\n    return result;\n}}";
 
         return $$"""
-#nullable enable
-{{debugHeader}}
-using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-
-{{namespaceOpen}}
-    public partial class {{model.ClassName}}{{inpcInheritance}}
-    {
-{{inpcBlock}}
-        public {{model.ClassName}}() { }
-
-        public {{model.ClassName}}({{model.SourceTypeName}}? val)
+        #nullable enable
+        {{debugHeader}}
+        using System;
+        using System.ComponentModel;
+        using System.Runtime.CompilerServices;
+        {{namespaceOpen}}
+        public partial class {{model.ClassName}}{{inpcInheritance}}
         {
-             if(val is not null)
-                FillBy(val);
+        {{inpcBlock}}
+            public {{model.ClassName}}() { }
+            
+            public {{model.ClassName}}({{model.NullableParamTypeString}} val)
+            {
+                {{ctorBody}}
+            }
+            
+        {{transMethods}}
+        {{equalsBlock}}
+        {{objectEqualsBlock}}
+        {{getHashCodeBlock}}
+            
+            public {{model.ClassName}} FillBy({{model.NullableParamTypeString}} obj)
+            {
+                {{fillByBody}}
+            }
+            
+        {{buildBlock}}
+        {{generatedProperties}}
         }
-
-{{transMethods}}
-
-{{equalsBlock}}
-
-{{objectEqualsBlock}}
-
-{{getHashCodeBlock}}
-
-        public {{model.ClassName}} FillBy({{model.SourceTypeName}}? obj)
-        {
-             if(obj is {{model.SourceTypeName}} val)
-              {
-{{fillAssignments}}
-              }
-              return this;
-        }
-
-        public {{overnew}} {{model.SourceTypeName}} Build()
-        {
-            var result = new {{model.SourceTypeName}}
-             {
-                {{buildInitializers}}
-             };
-            return result;
-        }
-
-{{generatedProperties}}
-    }
-{{namespaceClose}}
-""";
+        {{namespaceClose}}
+        """;
     }
 
-    private static string GenerateAssignments(
-        List<PropertyInfo> toGenerate,
-        List<PropertyInfo> toAssignOnly,
-        string sourceVar)
-    {
-        var lines = new List<string>();
-
-        foreach (var prop in toGenerate)
-            lines.Add($"                {prop.GetFillAssignment(sourceVar)}");
-
-        foreach (var prop in toAssignOnly)
-            lines.Add($"                {prop.GetFillAssignment(sourceVar)}");
-
-        return string.Join("\n", lines);
-    }
-
-    private static (bool IsMatch, INamedTypeSymbol? ViewModelType) CheckNestedViewModelPattern(
-        INamedTypeSymbol viewModelClass,
-        string propertyName,
-        INamedTypeSymbol sourcePropertyType)
+    private static (bool IsMatch, INamedTypeSymbol? ViewModelType) CheckNestedViewModelPattern(INamedTypeSymbol viewModelClass, string propertyName, INamedTypeSymbol sourcePropertyType)
     {
         INamedTypeSymbol? current = viewModelClass;
         IPropertySymbol? vmProperty = null;
-
         while (current != null && current.SpecialType != SpecialType.System_Object)
         {
-            vmProperty = current.GetMembers(propertyName)
-                .OfType<IPropertySymbol>()
-                .FirstOrDefault(p => p.DeclaredAccessibility == Accessibility.Public);
-
-            if (vmProperty != null)
-                break;
-
+            vmProperty = current.GetMembers(propertyName).OfType<IPropertySymbol>().FirstOrDefault(p => p.DeclaredAccessibility == Accessibility.Public);
+            if (vmProperty != null) break;
             current = current.BaseType;
         }
-
-        if (vmProperty?.Type is not INamedTypeSymbol vmPropertyType)
-            return (false, null);
-
+        if (vmProperty?.Type is not INamedTypeSymbol vmPropertyType) return (false, null);
         var expectedVmTypeName = sourcePropertyType.Name + "ViewModel";
-
-        if (vmPropertyType.Name == expectedVmTypeName &&
-            HasConstructorWithSourceType(vmPropertyType, sourcePropertyType))
-        {
+        if (vmPropertyType.Name == expectedVmTypeName && HasConstructorWithSourceType(vmPropertyType, sourcePropertyType))
             return (true, vmPropertyType);
-        }
-
         return (false, null);
     }
 
     private static bool HasConstructorWithSourceType(INamedTypeSymbol viewModelType, INamedTypeSymbol sourceType)
     {
-        foreach (var ctor in viewModelType.Constructors)
-        {
-            if (ctor.Parameters.Length == 1 &&
-                SymbolEqualityComparer.Default.Equals(ctor.Parameters[0].Type, sourceType))
-            {
-                return true;
-            }
-        }
-        return false;
+        return viewModelType.Constructors.Any(ctor => ctor.Parameters.Length == 1 && SymbolEqualityComparer.Default.Equals(ctor.Parameters[0].Type, sourceType));
     }
 
     private class GenerationModel
@@ -520,6 +425,9 @@ using System.Runtime.CompilerServices;
         public string ClassName { get; }
         public string Namespace { get; }
         public string SourceTypeName { get; }
+        public string NullableParamTypeString { get; }
+        public string NonNullableTypeString { get; }
+        public string ComparerTypeString { get; }
         public List<PropertyInfo> PropertiesToGenerate { get; }
         public List<PropertyInfo> PropertiesToAssignOnly { get; }
         public bool NeedsINPC { get; }
@@ -527,35 +435,19 @@ using System.Runtime.CompilerServices;
         public bool HasManualEquals { get; }
         public bool HasManualGetHashCode { get; }
         public bool HasManualObjectEquals { get; }
-        public bool SourceTypeIsReferenceType { get; }
+        public bool IsWrapperType { get; }
+        public bool CanBeNull { get; }
         public List<string> DebugLogs { get; }
 
-        public GenerationModel(
-            string className,
-            string @namespace,
-            string sourceTypeName,
-            List<PropertyInfo> propertiesToGenerate,
-            List<PropertyInfo> propertiesToAssignOnly,
-            bool needsINPC,
-            bool hasAutoBase,
-            bool hasManualEquals,
-            bool hasManualGetHashCode,
-            bool hasManualObjectEquals,
-            bool sourceTypeIsReferenceType,
-            List<string> logs)
+        public GenerationModel(string className, string @namespace, string sourceTypeName, string nullableParamTypeString, string nonNullableTypeString, string comparerTypeString,
+            List<PropertyInfo> propertiesToGenerate, List<PropertyInfo> propertiesToAssignOnly, bool needsINPC, bool hasAutoBase,
+            bool hasManualEquals, bool hasManualGetHashCode, bool hasManualObjectEquals, bool isWrapperType, bool canBeNull, List<string> logs)
         {
-            ClassName = className;
-            Namespace = @namespace;
-            SourceTypeName = sourceTypeName;
-            PropertiesToGenerate = propertiesToGenerate;
-            PropertiesToAssignOnly = propertiesToAssignOnly;
-            NeedsINPC = needsINPC;
-            HasAutoBase = hasAutoBase;
-            HasManualEquals = hasManualEquals;
-            HasManualGetHashCode = hasManualGetHashCode;
-            HasManualObjectEquals = hasManualObjectEquals;
-            SourceTypeIsReferenceType = sourceTypeIsReferenceType;
-            DebugLogs = logs;
+            ClassName = className; Namespace = @namespace; SourceTypeName = sourceTypeName;
+            NullableParamTypeString = nullableParamTypeString; NonNullableTypeString = nonNullableTypeString; ComparerTypeString = comparerTypeString;
+            PropertiesToGenerate = propertiesToGenerate; PropertiesToAssignOnly = propertiesToAssignOnly; NeedsINPC = needsINPC;
+            HasAutoBase = hasAutoBase; HasManualEquals = hasManualEquals; HasManualGetHashCode = hasManualGetHashCode;
+            HasManualObjectEquals = hasManualObjectEquals; IsWrapperType = isWrapperType; CanBeNull = canBeNull; DebugLogs = logs;
         }
     }
 
@@ -564,72 +456,43 @@ using System.Runtime.CompilerServices;
         public string SourceTypeName { get; }
         public string ViewModelTypeName { get; }
         public string Name { get; }
-        public bool SourceIsNullable { get; } // 源属性是否可空
-        public bool VmIsNullable { get; }     // VM 属性是否可空
+        public bool SourceIsNullable { get; }
+        public bool VmIsNullable { get; }
         public bool IsWritable { get; }
         public bool IsNestedViewModel { get; }
         public bool IsString { get; }
         public bool IsValueType { get; }
 
-        public PropertyInfo(string sourceTypeName, string name, bool sourceIsNullable, bool vmIsNullable, bool isWritable,
-            bool isNestedViewModel, string viewModelTypeName, bool isString, bool isValueType)
+        public PropertyInfo(string sourceTypeName, string name, bool sourceIsNullable, bool vmIsNullable, bool isWritable, bool isNestedViewModel, string viewModelTypeName, bool isString, bool isValueType)
         {
-            SourceTypeName = sourceTypeName;
-            Name = name;
-            SourceIsNullable = sourceIsNullable;
-            VmIsNullable = vmIsNullable;
-            IsWritable = isWritable;
-            IsNestedViewModel = isNestedViewModel;
-            ViewModelTypeName = viewModelTypeName;
-            IsString = isString;
-            IsValueType = isValueType;
+            SourceTypeName = sourceTypeName; Name = name; SourceIsNullable = sourceIsNullable; VmIsNullable = vmIsNullable;
+            IsWritable = isWritable; IsNestedViewModel = isNestedViewModel; ViewModelTypeName = viewModelTypeName; IsString = isString; IsValueType = isValueType;
         }
 
         public string GetViewModelPropertyTypeString()
         {
             var typeName = IsNestedViewModel ? ViewModelTypeName : SourceTypeName;
+            if (typeName.EndsWith("?") || typeName.Contains("Nullable<")) return typeName;
             return VmIsNullable ? $"{typeName}?" : typeName;
         }
 
         public string GetFillAssignment(string sourceVar)
         {
             if (IsNestedViewModel)
-            {
-                return VmIsNullable
-                    ? $"{Name} = {sourceVar}.{Name} != null ? new {ViewModelTypeName}({sourceVar}.{Name}) : null;"
-                    : $"{Name} = new {ViewModelTypeName}({sourceVar}.{Name});";
-            }
+                return VmIsNullable ? $"{Name} = {sourceVar}.{Name} != null ? new {ViewModelTypeName}({sourceVar}.{Name}) : null;" : $"{Name} = new {ViewModelTypeName}({sourceVar}.{Name});";
             return $"{Name} = {sourceVar}.{Name};";
         }
 
         public string GetBuildInitializer()
         {
-            if (IsNestedViewModel)
-            {
-                return VmIsNullable
-                    ? $"{Name} = {Name}?.Build(),"
-                    : $"{Name} = {Name}!.Build(),";
-            }
-
-            if (!IsWritable)
-                return string.Empty;
-
-            // 🔹 核心逻辑：如果源属性不可空，但 VM 属性可空，需要处理 null 值
+            if (IsNestedViewModel) return VmIsNullable ? $"{Name} = {Name}?.Build()," : $"{Name} = {Name}!.Build(),";
+            if (!IsWritable) return string.Empty;
             if (!SourceIsNullable && VmIsNullable)
             {
-                if (IsString)
-                {
-                    return $"{Name} = {Name} ?? string.Empty,";
-                }
-                if (IsValueType)
-                {
-                    return $"{Name} = {Name} ?? default,";
-                }
-                // 对于非可空引用类型，直接强制赋值以消除 nullable 警告
+                if (IsString) return $"{Name} = {Name} ?? string.Empty,";
+                if (IsValueType) return $"{Name} = {Name} ?? default,";
                 return $"{Name} = {Name}!,";
             }
-
-            // 🔹 如果源属性本身可空，或者 VM 属性不可空，直接赋值
             return $"{Name} = {Name},";
         }
     }

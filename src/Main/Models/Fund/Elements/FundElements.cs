@@ -468,4 +468,21 @@ public partial class FundElements
 
         ShareClasses!.SetValue(old.DistinctBy(x => x.Id).ToArray(), flowId);
     }
+
+
+
+    private partial void PostToFactors(List<IFundFactor> factors)
+    {
+        foreach (var item in factors.Where(x=>x.FactorId == FactorFields.FundModeInfo).ToArray())
+        {
+            factors.Remove(item);
+        }
+        if (this.FundModeInfo is Mutable<global::FMO.Models.DataExtra<global::FMO.Models.FundMode>> m_FundModeInfo && m_FundModeInfo.Changes.Count > 0)
+        {
+            foreach (var (flowId, value) in m_FundModeInfo.Changes)
+            {
+                factors.Add(new FundFactor<FundModeInfo> { FundId = Id, FlowId = flowId, ShareId = ShareClass.Singleton, FactorId = FactorFields.FundModeInfo, Data = new FundModeInfo { Mode = value.Data ?? default, Other = value.Extra } });
+            }
+        } 
+    }
 }

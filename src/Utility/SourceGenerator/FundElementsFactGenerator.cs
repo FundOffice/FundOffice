@@ -82,8 +82,12 @@ public class FundElementsFactorGenerator : IIncrementalGenerator
             {{GenerateMutableToFactor(mutableProps)}}
 
             {{GeneratePortionToFactor(portionProps)}}
+                        
+                        PostToFactors(Factors);
                         return Factors.ToArray();
                     }
+
+                    private partial void PostToFactors(List<IFundFactor> factors);
 
                     public static FundElements From(IFundFactor[] Factors)
                     {
