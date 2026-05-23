@@ -638,4 +638,128 @@
 
         </DataTemplate.Triggers>
     </DataTemplate>
+
+
+    <DataTemplate x:Key="DT.LongText">
+        <TextBox
+            MinWidth="200"
+            MinHeight="22"
+            AcceptsReturn="True"
+            Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+            TextWrapping="Wrap" />
+    </DataTemplate>
+
+
+    <DataTemplate x:Key="DT.Agency">
+        <WrapPanel
+            VerticalAlignment="Center"
+            Background="Transparent"
+            DataContext="{Binding NewValue}">
+
+            <CheckBox
+                Margin="5,0"
+                VerticalContentAlignment="Center"
+                Content="{Binding Label}"
+                IsChecked="{Binding HasAgency}" />
+
+
+            <hc:AutoCompleteTextBox
+                MinWidth="180"
+                MinHeight="22"
+                HorizontalContentAlignment="Center"
+                ItemsSource="{x:Static local:ElementsViewModel.TrusteeNames}"
+                SelectedItem="{Binding Name, Mode=OneTime}"
+                Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                Visibility="{Binding HasAgency, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+            <CheckBox
+                Margin="10,0,0,0"
+                Content="费用"
+                IsChecked="{Binding HasFee}" />
+
+            <ComboBox
+                Width="90"
+                Margin="4,0"
+                ItemsSource="{Binding DataContext.FundFeeTypes, RelativeSource={RelativeSource AncestorType=local:ElementsView}}"
+                SelectedItem="{Binding FeeType}"
+                Style="{StaticResource ComboBox.Small}"
+                Visibility="{Binding HasFee, Converter={StaticResource Boolean2VisibilityConverter}}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+
+            <DockPanel Visibility="{Binding HasFee, Converter={StaticResource Boolean2VisibilityConverter}}">
+                <TextBox
+                    x:Name="mon"
+                    MinWidth="40"
+                    HorizontalContentAlignment="Center"
+                    Text="{Binding Fee, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                <TextBlock
+                    x:Name="a"
+                    Margin="4,0"
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    Text="%" />
+                <TextBlock
+                    x:Name="b"
+                    Margin="4,0"
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    Text="元"
+                    Visibility="Collapsed" />
+                <TextBox
+                    x:Name="other"
+                    MinWidth="300"
+                    Text="{Binding Other, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                    Visibility="Collapsed" />
+            </DockPanel>
+
+            <DockPanel Visibility="{Binding HasFee, Converter={StaticResource Boolean2VisibilityConverter}}">
+                <CheckBox
+                    Margin="4,0"
+                    Content="保底"
+                    IsChecked="{Binding HasGuaranteedFee}" />
+
+
+                <TextBox
+                    x:Name="gr"
+                    MinWidth="60"
+                    HorizontalContentAlignment="Center"
+                    Text="{Binding GuaranteedFee, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                    Visibility="{Binding HasGuaranteedFee, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                <TextBlock
+                    x:Name="ad"
+                    Margin="4,0"
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    Text="元"
+                    Visibility="{Binding HasGuaranteedFee, Converter={StaticResource Boolean2VisibilityConverter}}" />
+            </DockPanel>
+        </WrapPanel>
+
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding NewValue.Type}" Value="Other">
+                <Setter TargetName="other" Property="Visibility" Value="Visible" />
+                <Setter TargetName="mon" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding NewValue.Type}" Value="Ratio">
+                <Setter TargetName="a" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding NewValue.Type}" Value="Fix">
+                <Setter TargetName="b" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+
+
+
+
+
+
 </ResourceDictionary>

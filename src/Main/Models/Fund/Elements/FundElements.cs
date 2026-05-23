@@ -473,7 +473,7 @@ public partial class FundElements
 
     private partial void PostToFactors(List<IFundFactor> factors)
     {
-        foreach (var item in factors.Where(x=>x.FactorId == FactorFields.FundModeInfo).ToArray())
+        foreach (var item in factors.Where(x => x.FactorId == FactorFields.FundModeInfo).ToArray())
         {
             factors.Remove(item);
         }
@@ -483,6 +483,93 @@ public partial class FundElements
             {
                 factors.Add(new FundFactor<FundModeInfo> { FundId = Id, FlowId = flowId, ShareId = ShareClass.Singleton, FactorId = FactorFields.FundModeInfo, Data = new FundModeInfo { Mode = value.Data ?? default, Other = value.Extra } });
             }
-        } 
+        }
+
+
+
+        // 托管外包
+        void MergeFundFeeToAgencyInfo(AgencyInfo agencyInfo, FundFeeInfo feeInfo)
+        {
+            if (agencyInfo == null || feeInfo == null) return;
+
+            agencyInfo.FeeType = feeInfo.Type;
+            agencyInfo.HasFee = feeInfo.HasFee;
+            agencyInfo.Fee = feeInfo.Fee;
+            agencyInfo.HasGuaranteedFee = feeInfo.HasGuaranteedFee;
+            agencyInfo.GuaranteedFee = feeInfo.GuaranteedFee;
+            agencyInfo.Other = feeInfo.Other;
+        }
+
+
+        if (this.TrusteeFee is Mutable<global::FMO.Models.FundFeeInfo> m_TrusteeFee && m_TrusteeFee.Changes.Count > 0)
+        {
+            foreach (var (flowId, value) in m_TrusteeFee.Changes)
+            {
+                // 🔑 核心：查找 同FlowId、同托管信息 的已有因子
+                var oldFactor = factors.FirstOrDefault(x =>
+                    x.FundId == Id &&
+                    x.FlowId == flowId &&
+                    x.ShareId == ShareClass.Singleton &&
+                    x.FactorId == FactorFields.TrusteeInfo) as FundFactor<AgencyInfo>;
+
+                if (oldFactor != null)
+                {
+                    // ✅ 找到：直接将 Fee 合并到已有的 AgencyInfo 中（不新增）
+                    MergeFundFeeToAgencyInfo(oldFactor.Data, value);
+                }
+                else
+                {
+                    // ❌ 没找到：新建 AgencyInfo，合并 Fee 后添加
+                    var mergedAgency = new AgencyInfo();
+                    MergeFundFeeToAgencyInfo(mergedAgency, value);
+
+                    factors.Add(new FundFactor<AgencyInfo>
+                    {
+                        FundId = Id,
+                        FlowId = flowId,
+                        ShareId = ShareClass.Singleton,
+                        FactorId = FactorFields.TrusteeInfo,
+                        Data = mergedAgency
+                    });
+                }
+            }
+        }
+
+        if (this.OutsourcingFee is Mutable<global::FMO.Models.FundFeeInfo> m_OutsourcingFee && m_OutsourcingFee.Changes.Count > 0)
+        {
+            foreach (var (flowId, value) in m_OutsourcingFee.Changes)
+            {
+                // 🔑 核心：查找 同FlowId、同托管信息 的已有因子
+                var oldFactor = factors.FirstOrDefault(x =>
+                    x.FundId == Id &&
+                    x.FlowId == flowId &&
+                    x.ShareId == ShareClass.Singleton &&
+                    x.FactorId == FactorFields.OutsourcingInfo) as FundFactor<AgencyInfo>;
+
+                if (oldFactor != null)
+                {
+                    // ✅ 找到：直接将 Fee 合并到已有的 AgencyInfo 中（不新增）
+                    MergeFundFeeToAgencyInfo(oldFactor.Data, value);
+                }
+                else
+                {
+                    // ❌ 没找到：新建 AgencyInfo，合并 Fee 后添加
+                    var mergedAgency = new AgencyInfo();
+                    MergeFundFeeToAgencyInfo(mergedAgency, value);
+
+                    factors.Add(new FundFactor<AgencyInfo>
+                    {
+                        FundId = Id,
+                        FlowId = flowId,
+                        ShareId = ShareClass.Singleton,
+                        FactorId = FactorFields.OutsourcingInfo,
+                        Data = mergedAgency
+                    });
+                }
+            }
+        }
+
+
+
     }
 }

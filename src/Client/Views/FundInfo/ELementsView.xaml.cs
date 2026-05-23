@@ -210,14 +210,8 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
     [ObservableProperty]
     public partial ChangeableViewModel<FundElements, string>? OpenDayInfo { get; set; }
+     
 
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, AgencyInfoViewModel>? TrusteeInfo { get; set; }
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, AgencyInfoViewModel>? OutsourcingInfo { get; set; }
 
 
     [ObservableProperty]
@@ -269,10 +263,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
 
 
-    [ObservableProperty]
-    public partial ShareElementsViewModel<string, string>? PerformanceFeeStatement { get; set; }
-
-
+ 
     /// <summary>
     /// 单一份额
     /// </summary>
@@ -489,28 +480,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         };
         OutsourcingFee.Init(elements);
 
-        TrusteeInfo = new ChangeableViewModel<FundElements, AgencyInfoViewModel>
-        {
-            Label = "托管机构",
-            InitFunc = x => new(x.TrusteeInfo.GetValue(newValue).Value),
-            InheritedFunc = x => x.TrusteeInfo.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => { if (y is not null) x.TrusteeInfo!.SetValue(y.Build(), newValue); },
-            ClearFunc = x => x.TrusteeInfo.RemoveValue(newValue),
-        };
-        TrusteeInfo.Init(elements);
-
-        OutsourcingInfo = new ChangeableViewModel<FundElements, AgencyInfoViewModel>
-        {
-            Label = "外包机构",
-            InitFunc = x => new(x.OutsourcingInfo.GetValue(newValue).Value),
-            InheritedFunc = x => x.OutsourcingInfo.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => { if (y is not null) x.OutsourcingInfo!.SetValue(y.Build(), newValue); },
-            ClearFunc = x => x.OutsourcingInfo.RemoveValue(newValue),
-        };
-        OutsourcingInfo.Init(elements);
-
-        //PerformanceBenchmarks = new(elements, nameof(FundElements.PerformanceBenchmarks), FlowId, "业绩比较基准");
-        //PerformanceBenchmarks.DisplayGenerator = (a, b) => a switch { true => b, false => "无", _ => ElementItemViewModel.UnsetValue };
+  
 
 
         PerformanceBenchmark = new()
@@ -578,9 +548,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
         #endregion
  
-         
-        PerformanceFeeStatement = new ShareElementsViewModel<string, string>(FundId, FlowId, elements, sc, x => x.PerformanceFeeStatement, x => x!, x => x!);
-
+       
 
 
         CoolingPeriod = new ChangeableViewModel<FundElements, CoolingPeriodInfoViewModel>

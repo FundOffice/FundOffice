@@ -356,13 +356,7 @@
                     Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
             </DataTemplate>
 
-            <DataTemplate x:Key="DT.LongText">
-                <TextBox
-                    MinWidth="200"
-                    AcceptsReturn="True"
-                    Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                    TextWrapping="Wrap" />
-            </DataTemplate>
+
             <DataTemplate x:Key="DT.Strategy">
                 <TextBox
                     AcceptsReturn="True"
@@ -391,48 +385,7 @@
                 </DockPanel>
             </DataTemplate>
 
-            <ControlTemplate x:Key="CT.Agency" TargetType="shared:ChangeableContainer">
-                <DockPanel
-                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                    Background="Transparent"
-                    DataContext="{Binding ., RelativeSource={RelativeSource Mode=TemplatedParent}}"
-                    LastChildFill="True">
 
-                    <shared:ChangeableControlButtons DockPanel.Dock="Right" />
-
-                    <Grid>
-                        <CheckBox
-                            VerticalContentAlignment="Center"
-                            Content="{Binding Binding.Label}"
-                            IsChecked="{Binding Binding.NewValue.HasAgency}" />
-                        <TextBlock
-                            HorizontalAlignment="Right"
-                            FontSize="6"
-                            Foreground="Purple"
-                            Text="▼"
-                            Visibility="{Binding Binding.IsInherited, Converter={StaticResource Boolean2VisibilityConverter}}" />
-                    </Grid>
-
-                    <!--<TextBox
-                    MinWidth="180"
-                    HorizontalContentAlignment="Center"
-                    Text="{Binding Binding.NewValue.Name, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                    Visibility="{Binding Binding.NewValue.HasAgency, Converter={StaticResource Boolean2VisibilityConverter}}" />-->
-
-
-                    <hc:AutoCompleteTextBox
-                        MinWidth="180"
-                        HorizontalContentAlignment="Center"
-                        DataContext="{Binding Binding.NewValue}"
-                        ItemsSource="{x:Static local:ElementsViewModel.TrusteeNames}"
-                        SelectedItem="{Binding Name, Mode=OneTime}"
-                        Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                        Visibility="{Binding HasAgency, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-
-                </DockPanel>
-
-            </ControlTemplate>
 
             <!--<DataTemplate x:Key="DT.Agent">
             <DockPanel>
@@ -873,6 +826,11 @@
 
                     <!--#region 费用相关-->
                     <DockPanel>
+                        <DockPanel.Resources>
+                            <Style TargetType="Separator">
+                                <Setter Property="Margin" Value="0,3" />
+                            </Style>
+                        </DockPanel.Resources>
                         <Border Margin="0,0,10,0" Background="Blue">
                             <TextBlock Style="{StaticResource CategoryTab}" Text="费用相关" />
                         </Border>
@@ -891,18 +849,21 @@
                                 Header="支付方式"
                                 Modifier="{Binding ManageFeePay}" />
 
+                            <Separator />
 
                             <shared:FactorModifiableControl
                                 EditTemplate="{StaticResource DT.Subscription}"
                                 Header="认购规则"
                                 Modifier="{Binding SubscriptionRule}" />
 
+                            <Separator />
 
                             <shared:FactorModifiableControl
                                 EditTemplate="{StaticResource DT.Purchase}"
                                 Header="申购规则"
                                 Modifier="{Binding PurchasRule}" />
 
+                            <Separator />
 
 
                             <shared:FactorModifiableControl
@@ -910,34 +871,32 @@
                                 Header="赎回费"
                                 Modifier="{Binding RedemptionFee}" />
 
+                            <Separator />
+
+                            <shared:FactorModifiableControl
+                                EditTemplate="{StaticResource DT.LongText}"
+                                Header="业绩报酬"
+                                Modifier="{Binding PerformanceFeeStatement}" />
 
 
-
-                            <local:PortionElementView
-                                Content="{Binding PerformanceFeeStatement}"
-                                ContentTemplate="{StaticResource DT.LongText}"
-                                Header="业绩报酬" />
-
-
-
+                            <Separator />
 
 
                             <!--  费用  -->
-                            <WrapPanel Margin="{StaticResource LineSpacing}">
-
-                                <shared:ChangeableContainer Binding="{Binding TrusteeInfo}" EditTemplate="{StaticResource CT.Agency}" />
-
-                                <shared:ChangeableContainer
-                                    Margin="20,0"
-                                    Binding="{Binding TrusteeFee}"
-                                    ContentTemplate="{StaticResource DT.Fee}"
-                                    EditTemplate="{StaticResource CT.Fee}"
-                                    Visibility="{Binding TrusteeInfo.NewValue.HasAgency, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                            <shared:ModifiableControl
+                                HorizontalAlignment="Left"
+                                EditTemplate="{StaticResource DT.Agency}"
+                                Header="托管机构"
+                                Modifier="{Binding TrusteeInfo}" />
 
 
-                            </WrapPanel>
 
-                            <WrapPanel>
+                            <shared:ModifiableControl
+                                HorizontalAlignment="Left"
+                                EditTemplate="{StaticResource DT.Agency}"
+                                Header="外包机构"
+                                Modifier="{Binding OutsourcingInfo}" />
+                            <!--<WrapPanel>
 
                                 <shared:ChangeableContainer Binding="{Binding OutsourcingInfo}" EditTemplate="{StaticResource CT.Agency}" />
 
@@ -947,7 +906,7 @@
                                     ContentTemplate="{StaticResource DT.Fee}"
                                     EditTemplate="{StaticResource CT.Fee}"
                                     Visibility="{Binding OutsourcingInfo.NewValue.HasAgency, Converter={StaticResource Boolean2VisibilityConverter}}" />
-                            </WrapPanel>
+                            </WrapPanel>-->
 
 
 

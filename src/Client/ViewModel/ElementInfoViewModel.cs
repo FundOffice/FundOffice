@@ -364,12 +364,11 @@ public partial class PartFeeViewModel : ObservableObject, IViewModel<PartRedempt
 public partial class LockingRuleViewModel;
 
 
-[AutoChangeableViewModel(typeof(AgencyInfo))]
-public partial class AgencyInfoViewModel : IDataValidation
+public partial class AgencyInfoViewModel : IDataValidation, IViewModel<AgencyInfo?, AgencyInfoViewModel>
 {
     public bool IsValid() => !HasAgency || !string.IsNullOrWhiteSpace(Name);
 
-    public override string ToString() => HasAgency switch { true => Name!, _ => "-" };
+    public override string ToString() => HasAgency switch { true when !string.IsNullOrWhiteSpace(Name) => Name!, false => "-", _ => "未设置" };
 }
 
 [AutoChangeableViewModel(typeof(TemporarilyOpenInfo))]
