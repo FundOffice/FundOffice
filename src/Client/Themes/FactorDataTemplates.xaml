@@ -989,4 +989,16 @@
             HorizontalContentAlignment="Center"
             Text="{Binding Modifier.NewValue, RelativeSource={RelativeSource AncestorType=shared:ModifiableControl}, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
     </DataTemplate>
+
+    <DataTemplate DataType="{x:Type local:PerformanceBenchmarkViewModel}">
+        <DockPanel>
+            <CheckBox IsChecked="{Binding Has}" />
+            <TextBox
+                MinWidth="100"
+                HorizontalAlignment="Stretch"
+                Text="{Binding Benchmark, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                Visibility="{Binding Has, Converter={StaticResource Boolean2VisibilityConverter}}" />
+        </DockPanel>
+    </DataTemplate>
+
 </ResourceDictionary>
