@@ -165,16 +165,8 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     [ObservableProperty]
     public partial ShareFactorViewModel<RedemptionFeeInfo?, RedemptionFeeInfoViewMdoel>? RedemptionFee { get; set; } = null!;
 
+      
      
-
-
-
-
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsSealingFund))]
-    public partial FactorModifiableViewModel<FundModeInfo?, FundModeViewModel> FundModeInfo { get; private set; } = null!;
-
 
 
     //[ObservableProperty]
@@ -192,43 +184,15 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     public partial ChangeableViewModel<FundElements, string>? OpenDayInfo { get; set; }
 
 
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, FundFeeInfoViewModel>? TrusteeFee { get; set; }
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, FundFeeInfoViewModel>? OutsourcingFee { get; set; }
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, string>? InvestmentManagers { get; set; }
-
-
+     
 
 
 
     //[ObservableProperty]
     //public partial ElementRefrenceWithBooleanViewModel<string>? PerformanceBenchmarks { get; set; }
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, PerformanceBenchmarkViewModel>? PerformanceBenchmark { get; set; }
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, string>? InvestmentObjective { get; set; }
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, string>? InvestmentScope { get; set; }
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, string>? InvestmentStrategy { get; set; }
-
-
  
+     
+      
 
 
 
@@ -373,83 +337,9 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         };
         OpenDayInfo.Init(elements);
 
-        TrusteeFee = new ChangeableViewModel<FundElements, FundFeeInfoViewModel>
-        {
-            Label = "托管费",
-            InitFunc = x => new(x.TrusteeFee.GetValue(newValue).Value),
-            InheritedFunc = x => x.TrusteeFee.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.TrusteeFee.SetValue(y!.Build(), newValue),
-            ClearFunc = x => x.TrusteeFee.RemoveValue(newValue),
-            DisplayFunc = x => x?.ToString() ?? "-"
-        };
-        TrusteeFee.Init(elements);
-
-
-        OutsourcingFee = new ChangeableViewModel<FundElements, FundFeeInfoViewModel>
-        {
-            Label = "外包费",
-            InitFunc = x => new(x.OutsourcingFee.GetValue(newValue).Value),
-            InheritedFunc = x => x.OutsourcingFee.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.OutsourcingFee.SetValue(y!.Build(), newValue),
-            ClearFunc = x => x.OutsourcingFee.RemoveValue(newValue),
-            DisplayFunc = x => x is null ? "-" : x.ToString()
-        };
-        OutsourcingFee.Init(elements);
-
-
-
-
-        PerformanceBenchmark = new()
-        {
-            Label = "业绩比较基准",
-            InitFunc = x => new(x.PerformanceBenchmark.GetValue(newValue).Value),
-            InheritedFunc = x => x.PerformanceBenchmark.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => { if (y is not null) x.PerformanceBenchmark!.SetValue(y.Build(), newValue); },
-            ClearFunc = x => x.PerformanceBenchmark.RemoveValue(newValue),
-            DisplayFunc = x => x?.Has == true ? x.Benchmark : "-"
-        };
-        PerformanceBenchmark.Init(elements);
-
-        InvestmentObjective = new ChangeableViewModel<FundElements, string>
-        {
-            Label = "投资目标",
-            InitFunc = x => x.InvestmentObjective.GetValue(newValue).Value,
-            InheritedFunc = x => x.InvestmentObjective.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => { if (y is not null) x.InvestmentObjective!.SetValue(y, newValue); },
-            ClearFunc = x => x.InvestmentObjective.RemoveValue(newValue),
-        };
-        InvestmentObjective.Init(elements);
-
-
-        InvestmentScope = new ChangeableViewModel<FundElements, string>
-        {
-            Label = "投资范围",
-            InitFunc = x => x.InvestmentScope.GetValue(newValue).Value,
-            InheritedFunc = x => x.InvestmentScope.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => { if (y is not null) x.InvestmentScope!.SetValue(y, newValue); },
-            ClearFunc = x => x.InvestmentScope.RemoveValue(newValue),
-        };
-        InvestmentScope.Init(elements);
-
-        InvestmentStrategy = new ChangeableViewModel<FundElements, string>
-        {
-            Label = "投资策略",
-            InitFunc = x => x.InvestmentStrategy.GetValue(newValue).Value,
-            InheritedFunc = x => x.InvestmentStrategy.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => { if (y is not null) x.InvestmentStrategy!.SetValue(y, newValue); },
-            ClearFunc = x => x.InvestmentStrategy.RemoveValue(newValue),
-        };
-        InvestmentStrategy.Init(elements);
-
-        InvestmentManagers = new ChangeableViewModel<FundElements, string>
-        {
-            Label = "投资经理",
-            InitFunc = x => x.InvestmentManager.GetValue(newValue).Value,
-            InheritedFunc = x => x.InvestmentManager.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => { if (y is not null) x.InvestmentManager!.SetValue(y, newValue); },
-            ClearFunc = x => x.InvestmentManager.RemoveValue(newValue),
-        };
-        InvestmentManagers.Init(elements);
+ 
+         
+  
 
 
 

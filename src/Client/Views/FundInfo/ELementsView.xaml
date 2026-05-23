@@ -1116,11 +1116,41 @@
                             </DockPanel>
 
 
-                            <shared:ChangeableContainer
+                            <shared:ModifiableControl
                                 Margin="0,0,30,0"
                                 HorizontalContentAlignment="Stretch"
-                                Binding="{Binding PerformanceBenchmark}" />
+                                Header="业绩比较基准"
+                                Modifier="{Binding PerformanceBenchmark}" />
 
+                            <shared:ModifiableControl
+                                HorizontalContentAlignment="Stretch"
+                                EditTemplate="{StaticResource DT.LongText}"
+                                Header="投资目标"
+                                Modifier="{Binding InvestmentObjective}" />
+
+
+                            <shared:ModifiableControl
+                                HorizontalContentAlignment="Stretch"
+                                EditTemplate="{StaticResource DT.LongText}"
+                                Header="投资范围"
+                                Modifier="{Binding InvestmentScope}" />
+
+                            <Separator />
+
+                            <shared:ModifiableControl
+                                HorizontalContentAlignment="Stretch"
+                                EditTemplate="{StaticResource DT.LongText}"
+                                Header="投资策略"
+                                Modifier="{Binding InvestmentStrategy}" />
+
+
+                            <Separator />
+
+                            <shared:ModifiableControl
+                                HorizontalContentAlignment="Stretch"
+                                EditTemplate="{StaticResource DT.LongText}"
+                                Header="投资经理"
+                                Modifier="{Binding InvestmentManager}" />
 
                             <!--<shared:ChangeableContainer
                                 HorizontalContentAlignment="Stretch"

@@ -42,9 +42,21 @@ public partial class FundFactors
     {
         if (rawShares == null || rawShares.Length == 0) return [];
 
-        var dict = new Dictionary<int, InheritMap[]>();
+
 
         var result = new Dictionary<int, InheritMap>();
+        var dict = new Dictionary<int, InheritMap[]>();
+
+        foreach (var item in rawShares)
+        {
+            foreach (var sc in item.Shares)
+            {
+                result[sc.Id] = new InheritMap(sc.Id, item.FlowId, sc.Inherit);
+            }
+        }
+
+        return result.ToImmutableDictionary();
+
 
         // 📌 按 FlowId 升序：保证后定义的配置能覆盖先定义（业务上"最新优先"）
         var sorted = rawShares.OrderBy(x => x.FlowId).ToArray();

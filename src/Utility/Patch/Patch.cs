@@ -58,29 +58,77 @@ public static partial class DatabaseAssist
         [125] = MoveMissionDll,
         [126] = MiggreateToNewDisclosure,
         [127] = ChangeLockingRule,
-        [139] = MoveToFact,
+        [143] = MoveToFact,
     };
 
     private static void MoveToFact(BaseDatabase database)
     {
         database.DropCollection("IFundFactor");
         var ele = database.GetCollection<FundElements>().FindAll().ToList();//.SelectMany(x => x);
+        var flowi = database.GetCollection<FundFlow>().FindAll().ToList().Where(x => x is ContractFlow).OrderBy(x => x.Id).GroupBy(x => x.FundId).Select(x => (x.Key, x.First().Id)).ToDictionary();
 
+        List<IFundFactor> fundFactors = [];
         foreach (var item in ele)
         {
-            foreach (var sc in item.ShareClasses.Changes)
+            var factors = item.ToFactors();
+
+            var minFlow = flowi[item.Id];
+            Dictionary<int, int> scMap = [];
+            Dictionary<int, int> flowSc = [];
+            int last = -1;
+            List<(int FlowId, ShareClass[] Shares)> fs = [];
+
+            foreach (var (k, v) in item.ShareClasses.Changes)
             {
-                if (sc.Value.Length == 1 && sc.Value[0].Name == ShareClass.DefaultShare.Name)
-                    sc.Value[0].Id = -1;
+                if (k < minFlow) continue;
+
+                // 单份额
+                if (v.Length == 1 && (fs.Count == 0 || fs[^1].Shares.Length > 0))
+                    fs.Add((k, v));
+                else if(v.Length > 1) 
+                    fs.Add((k, v));
             }
+
+            if (fs.Count == 0 || fs[0].FlowId > minFlow)
+                fs.Insert(0, (minFlow, [new ShareClass { Id = -1, Name = "单一份额"}]));
+
+            // 改id
+            for (int i = 0; i < fs.Count; i++)
+            {
+                var flowId = fs[i].FlowId;
+                var shares = fs[i].Shares;
+                int idx = 1;
+                foreach (var sc in shares)
+                {
+                    int v = flowId * 1000 + idx++;
+                    if (sc.Id != -1)
+                        scMap[sc.Id] = v;
+                     
+                    sc.Id = v;
+
+                    sc.Inherit = last;
+                }
+                if(shares.Length == 1)
+                    flowSc[flowId] = shares[0].Id;
+
+                last = shares[0].Id;
+            }
+
+
+            foreach (var f in factors.Where(x => x.FlowId >= minFlow))
+            {
+                f.ShareId = f.ShareId == -1 ? flowSc.First(x => x.Key <= f.FlowId).Value : scMap[f.ShareId];
+            }
+
+          
+            fundFactors.AddRange(factors.Where(x => x.FlowId >= minFlow && x.FactorId != FactorFields.ShareClasses));
+            fundFactors.AddRange(fs.Select(x => new FundFactor<ShareClass[]> { FundId = item.Id, FlowId = x.FlowId, FactorId = FactorFields.ShareClasses, Data = x.Shares }));
+
+            var ff = fundFactors.Where(x => x.FlowId == 27).ToArray();
         }
-        var wrongSingletonShare = ele.SelectMany(x => x.ShareClasses.Changes.Select(y => y.Value)).SelectMany(x => x).Where(x => x.Name == ShareClass.DefaultShare.Name).ToArray();
- 
-        var facts = ele.SelectMany(x => x.ToFactors());
 
-        var ff = new FundFactors(facts.Where(x=>x.FundId == 9));
 
-        database.GetCollection<IFundFactor>().InsertBulk(facts);
+        database.GetCollection<IFundFactor>().InsertBulk(fundFactors);
 
     }
 

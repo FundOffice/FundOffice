@@ -645,7 +645,7 @@
             MinWidth="200"
             MinHeight="22"
             AcceptsReturn="True"
-            Text="{Binding ., UpdateSourceTrigger=PropertyChanged, Delay=200}"
+            Text="{Binding Modifier.NewValue, RelativeSource={RelativeSource AncestorType=shared:ModifiableControl}, UpdateSourceTrigger=PropertyChanged, Delay=200}"
             TextWrapping="Wrap" />
     </DataTemplate>
 
@@ -906,7 +906,7 @@
                     TextWrapping="Wrap" />
             </Button>
 
-            <StackPanel>
+            <StackPanel MinWidth="400">
                 <StackPanel.Resources>
                     <Style TargetType="TextBlock">
                         <Setter Property="Foreground" Value="Gray" />
@@ -948,7 +948,7 @@
     </DataTemplate>
 
     <DataTemplate DataType="{x:Type local:BankAccountInfoViewModel}">
-        <StackPanel>
+        <StackPanel MinWidth="400">
             <StackPanel.Resources>
                 <Style TargetType="TextBlock">
                     <Setter Property="MinWidth" Value="70" />

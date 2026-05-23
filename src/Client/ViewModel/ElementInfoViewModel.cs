@@ -379,9 +379,12 @@ public partial class TemporarilyOpenInfoViewModel : IDataValidation, IViewModel<
     public override string ToString() => !IsAllowed ? "不允许临开" : (IsLimited ? "仅合同变更、法规变更时，" : "") + $"允许{(AllowPurchase ? "申购" : "")}{(AllowRedemption ? "赎回" : "")}";
 }
 
-[AutoChangeableViewModel(typeof(PerformanceBenchmark))]
-public partial class PerformanceBenchmarkViewModel
+
+public partial class PerformanceBenchmarkViewModel : IViewModel<PerformanceBenchmark?, PerformanceBenchmarkViewModel>, IDisplay<string>, IDataValidation
 {
+    public bool IsValid() => !Has || Benchmark?.Length > 2;
+
+    public string Transfrom() => Has switch { true when Benchmark?.Length > 0 => Benchmark, _ => "未设置" };
 }
 
 
