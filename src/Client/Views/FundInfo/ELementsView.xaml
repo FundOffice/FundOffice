@@ -897,15 +897,12 @@
 
 
                             <!--  回访  -->
-                            <shared:ChangeableContainer Binding="{Binding Callback}">
-                                <shared:ChangeableContainer.ContentTemplate>
-                                    <DataTemplate>
-                                        <DockPanel>
-                                            <CheckBox HorizontalContentAlignment="Center" IsChecked="{Binding NewValue.IsRequired}" />
-                                        </DockPanel>
-                                    </DataTemplate>
-                                </shared:ChangeableContainer.ContentTemplate>
-                            </shared:ChangeableContainer>
+                            <shared:ModifiableControl
+                                HorizontalAlignment="Left"
+                                Header="回访"
+                                Modifier="{Binding Callback}" />
+
+
                         </StackPanel>
                     </DockPanel>
                     <!--#endregion-->

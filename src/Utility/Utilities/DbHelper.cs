@@ -85,7 +85,7 @@ public class BaseDatabase : LiteDatabase
 
     public FundFactors QueryFactor(int fundId)
     {
-        var flowIds = GetCollection<FundFlow>().Query().Where(x => x.FundId == fundId).Select(x => x.Id).ToArray();
+        var flowIds = GetCollection<FundFlow>().Query().Where(x => x.FundId == fundId).Where(Query.Contains("_type", "Contract")).Select(x => x.Id).ToArray();
 
         var factors = GetCollection<IFundFactor>().Query().Where(x => x.FundId == fundId).Where(Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x => new BsonValue(x)))).ToArray();
 

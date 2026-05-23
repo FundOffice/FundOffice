@@ -185,7 +185,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
     [ObservableProperty]
     public partial ChangeableViewModel<FundElements, decimal?>? WarningLine { get; set; }
-     
+
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSealingFund))]
@@ -221,7 +221,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     [ObservableProperty]
     public partial ChangeableViewModel<FundElements, string>? InvestmentManagers { get; set; }
 
-     
+
 
 
 
@@ -244,13 +244,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     public partial ChangeableViewModel<FundElements, string>? InvestmentStrategy { get; set; }
 
 
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, CallbackInfoViewModel>? Callback { get; set; }
-
-
-
-
-
+ 
 
 
 
@@ -314,14 +308,13 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         using var db = DbHelper.Base();
         var fund = db.GetCollection<Fund>().FindById(FundId);
         var flow = db.GetCollection<FundFlow>().FindById(newValue);
-        var flowIds = db.GetCollection<FundFlow>().Query().Where(x => x.FundId == FundId).Select(x => x.Id).ToArray();
         bool isori = flow is ContractFinalizeFlow;
         var elements = db.GetCollection<FundElements>().FindById(FundId);
 
         if (elements is null)
             elements = new FundElements { Id = FundId };
 
-         
+
 
         //IFundFactor[] factories = db.GetCollection<IFundFactor>().Query().Where(x => x.FundId == FundId).Where(LiteDB.Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x=> new LiteDB.BsonValue(x)))).ToArray();
         FundFactors facts = db.QueryFactor(Id);
@@ -369,7 +362,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
             DataHub.Push(new EntityChanged<FundElements, DateOnly, int>(Id, nameof(FundElements.ExpirationDate), e.OldValue ?? default, e.NewValue ?? default));
 
         // 开放/封闭切换
-        FundModeInfo.Changed += e => OnPropertyChanged(nameof(IsSealingFund)); 
+        FundModeInfo.Changed += e => OnPropertyChanged(nameof(IsSealingFund));
 
 
         #region MyRegion
@@ -420,7 +413,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         };
         WarningLine.Init(elements);
 
- 
+
         //FundModeInfo = new ElementItemFundModeViewModel(elements, nameof(FundElements.FundModeInfo), FlowId, "运作方式");
 
         //SealingRule = new ElementItemViewModelSealing(elements, nameof(FundElements.SealingRule), FlowId, "封闭期");
@@ -517,23 +510,11 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         };
         InvestmentManagers.Init(elements);
 
- 
+
 
         #endregion
 
-
-
- 
-
-        Callback = new ChangeableViewModel<FundElements, CallbackInfoViewModel>
-        {
-            Label = "回访",
-            InitFunc = x => new(x.Callback!.GetValue(newValue).Value),
-            InheritedFunc = x => x.Callback.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.Callback!.SetValue(y!.Build(), newValue),
-            ClearFunc = x => x.Callback!.RemoveValue(newValue),
-        };
-        Callback.Init(elements);
+         
 
         // InitElementsOfShare(elements);
 

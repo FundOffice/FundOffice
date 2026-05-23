@@ -882,4 +882,10 @@
         </DataTemplate.Triggers>
     </DataTemplate>
 
+
+    <DataTemplate DataType="{x:Type local:CallbackInfoViewModel}">
+        <DockPanel>
+            <CheckBox HorizontalContentAlignment="Center" IsChecked="{Binding IsRequired}" />
+        </DockPanel>
+    </DataTemplate>
 </ResourceDictionary>
