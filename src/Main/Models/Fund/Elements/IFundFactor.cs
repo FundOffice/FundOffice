@@ -66,7 +66,8 @@ public class FundFactor<T> : FundFactor
 }
 
 
-public class SingletonFactorItem<T>
+
+public class SingletonFactorItem<T>  
 {
     protected readonly ImmutableArray<(int FlowId, FundFactor<T> Fact)> _flowGroupCache;
 
@@ -79,6 +80,9 @@ public class SingletonFactorItem<T>
 
     public static implicit operator T?(SingletonFactorItem<T> instance) => instance._flowGroupCache.FirstOrDefault().Fact is { } f ? f.Data : default;
 }
+
+
+
 
 public class ShareClassFactorItem(IEnumerable<FundFactor<ShareClass[]>> data) : SingletonFactorItem<ShareClass[]>(data)
 {

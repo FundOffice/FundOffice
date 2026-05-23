@@ -113,8 +113,8 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
     public partial TValue? OldValue { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsInherited))]
     public partial TViewModel NewValue { get; set; }
+
     [ObservableProperty] public partial TValue? FallbackValue { get; set; }
 
     [ObservableProperty]
@@ -137,7 +137,7 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
     public bool CanReset => !NewValue?.Equals(OldValue) ?? OldValue is not null;
 
     // 仅当：无未保存修改，且旧值本身不是回退状态（说明之前确实设置过值）
-    public bool CanClear => !CanReset && !IsInherited;
+    public bool CanClear => !CanReset && !NewValue.Equals(FallbackValue);
 
     partial void OnNewValueChanged(TViewModel oldValue, TViewModel newValue)
     {
@@ -152,9 +152,10 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
     {
         // FallbackValue 是null / 默认值，不认为是继承
         if (FallbackValue is string s && string.IsNullOrWhiteSpace(s)) return false;
-        else if (FallbackValue is not { }) return false;
-
-        return EqualityComparer<TValue?>.Default.Equals(OldValue, FallbackValue);
+        if (FallbackValue is null) return false;
+         
+        bool isDefault = FallbackValue switch { int d => d == 0, bool b => !b, DateOnly d => d.DayNumber == 0, var x => EqualityComparer<object>.Default.Equals(x, default(TValue)) };
+        return !isDefault && EqualityComparer<TValue?>.Default.Equals(OldValue, FallbackValue);
     }
 
     private void UpdateState()
@@ -172,6 +173,9 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
             false when !oldIsFallback && newIsFallback => ValueChangeKind.Deleted, // 自定义值 → 清空回继承
             _ => ValueChangeKind.Modified                                        // 自定义值A → 自定义值B
         };
+        OnPropertyChanged(nameof(NewValueIsWell));
+        OnPropertyChanged(nameof(IsInherited));
+        OnPropertyChanged(nameof(CanConfirm));
     }
 
     private void AttachDeepNotify(TViewModel? value)
@@ -190,16 +194,18 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
     [RelayCommand]
     public void Apply()
     {
+        var kind = ChangeKind;
         OldValue = TViewModel.Trans(NewValue); // 触发 OnOldValueChanged → ChangeKind = None
-        NotifyChanged(ChangeKind, NewValue);
+        NotifyChanged(kind, NewValue);
     }
 
     /// <summary>还原：放弃当前编辑，回退到已确认的旧值</summary>
     [RelayCommand]
     public void Reset()
     {
+        var kind = ChangeKind;
         NewValue = TViewModel.Trans(OldValue); // 触发 OnNewValueChanged → ChangeKind = None
-        NotifyChanged(ChangeKind, NewValue);
+        NotifyChanged(kind, NewValue);
     }
 
     /// <summary>清空/删除：将新值设为回退值，标记为 Deleted</summary>
@@ -207,9 +213,9 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
     public void Clear()
     {
         if (!CanClear) return;
-
+        
         NewValue = TViewModel.Trans(FallbackValue); // 触发 OnNewValueChanged → ChangeKind = Deleted
-        NotifyChanged(ChangeKind, NewValue);
+        NotifyChanged(ValueChangeKind.Deleted, NewValue);
     }
 
     protected virtual void NotifyChanged(ValueChangeKind kind, TViewModel value) => Changed?.Invoke(new ValueChangeEventArgs<TValue>(ChangeKind, TViewModel.Trans(value)));
@@ -226,7 +232,6 @@ public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModif
     public partial TValue? OldValue { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsInherited))]
     public partial TValue? NewValue { get; set; }
 
     [ObservableProperty] public partial TValue? FallbackValue { get; set; }
@@ -251,7 +256,7 @@ public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModif
     public bool CanReset => !EqualityComparer<TValue?>.Default.Equals(OldValue, NewValue);
 
     // 仅当：无未保存修改，且旧值本身不是回退状态（说明之前确实设置过值）
-    public bool CanClear => !CanReset && !IsInherited;
+    public bool CanClear => !CanReset && !EqualityComparer<TValue?>.Default.Equals(FallbackValue, NewValue);
 
     partial void OnNewValueChanged(TValue? oldValue, TValue? newValue)
     {
@@ -264,11 +269,12 @@ public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModif
 
     private bool CheckInherited()
     {
-        // FallbackValue 是null / 默认值，不认为是继承
         if (FallbackValue is string s && string.IsNullOrWhiteSpace(s)) return false;
-        else if (FallbackValue is not { }) return false;
+        if (FallbackValue is null) return false;
 
-        return EqualityComparer<TValue?>.Default.Equals(OldValue, FallbackValue);
+        bool isDefault = FallbackValue switch { int d => d == 0, bool b => !b, DateOnly d => d.DayNumber == 0, var x => EqualityComparer<object>.Default.Equals(x, default(TValue)) };
+
+        return !isDefault && EqualityComparer<TValue?>.Default.Equals(OldValue, FallbackValue);
     }
 
     private void UpdateState()
@@ -286,6 +292,9 @@ public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModif
             false when !oldIsFallback && newIsFallback => ValueChangeKind.Deleted, // 自定义值 → 清空回继承
             _ => ValueChangeKind.Modified                                        // 自定义值A → 自定义值B
         };
+
+        OnPropertyChanged(nameof(NewValueIsWell));
+        OnPropertyChanged(nameof(IsInherited));
     }
 
     private void AttachDeepNotify(TValue? value)
@@ -306,16 +315,18 @@ public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModif
     [RelayCommand]
     public void Apply()
     {
+        var kind = ChangeKind;
         OldValue = CloneHelper.CloneValue(NewValue); // 触发 OnOldValueChanged → ChangeKind = None
-        NotifyChanged(ChangeKind, NewValue);
+        NotifyChanged(kind, NewValue);
     }
 
     /// <summary>还原：放弃当前编辑，回退到已确认的旧值</summary>
     [RelayCommand]
     public void Reset()
     {
+        var kind = ChangeKind;
         NewValue = CloneHelper.CloneValue(OldValue);// 触发 OnNewValueChanged → ChangeKind = None
-        NotifyChanged(ChangeKind, NewValue);
+        NotifyChanged(kind, NewValue);
     }
 
     /// <summary>清空/删除：将新值设为回退值，标记为 Deleted</summary>
@@ -325,7 +336,7 @@ public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModif
         if (!CanClear) return;
 
         NewValue = FallbackValue; // 触发 OnNewValueChanged → ChangeKind = Deleted
-        NotifyChanged(ChangeKind, NewValue);
+        NotifyChanged(ValueChangeKind.Deleted, NewValue);
     }
 
     protected virtual void NotifyChanged(ValueChangeKind kind, TValue? value) => Changed?.Invoke(new ValueChangeEventArgs<TValue>(ChangeKind, value));

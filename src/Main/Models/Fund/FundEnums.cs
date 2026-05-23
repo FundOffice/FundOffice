@@ -102,7 +102,7 @@ public enum FundOpenType
 [TypeConverter(nameof(EnumDescriptionTypeConverter))]
 public enum SecurityFundType
 {
-    [Description("请选择")] Unk,
+    [Description("未设置")] Unk,
 
     /// <summary>
     /// 固定收益类基金（如债券型基金）

@@ -22,11 +22,11 @@ public readonly record struct PropertyMeta(
     /// 初始化代码片段
     /// </summary>
     public string InitCode => IsFactorItem
-        ? $"{Name} = new(Filter<{GenericArg}>(FactorFields.{FieldKey}, g), _shareConfigMap);"
-        : $"{Name} = new(Filter<{GenericArg}>(FactorFields.{FieldKey}, g));";
+        ? $"{Name} = new(Filter<{GenericArg.Replace("?", "")}>(FactorFields.{FieldKey}, g), _shareConfigMap);"
+        : $"{Name} = new(Filter<{GenericArg.Replace("?", "")}>(FactorFields.{FieldKey}, g));";
 }
 
-
+//
 
 
 
@@ -167,7 +167,7 @@ public class FundFactorsCtorGenerator : IIncrementalGenerator
         sb.AppendLine($"public partial class {TargetClass}");
         sb.AppendLine("{");
 
- 
+
         sb.AppendLine();
 
         sb.AppendLine("    [global::System.Diagnostics.CodeAnalysis.SuppressMessage(\"Style\", \"IDE0055\", Justification = \"Generated\")]");

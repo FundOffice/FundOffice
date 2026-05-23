@@ -155,12 +155,14 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
 
 
-
-
     [ObservableProperty]
     public partial FactorModifiableViewModel<int?, FundDurationViewModel> DurationInMonths { get; private set; } = null!;
 
- 
+    [ObservableProperty]
+    public partial FactorModifiableViewModel<DateOnly?, FundExpireDateViewModel> ExpirationDate { get; private set; } = null!;
+
+
+
 
 
     [ObservableProperty]
@@ -190,15 +192,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     [NotifyPropertyChangedFor(nameof(IsSealingFund))]
     public partial FactorModifiableViewModel<FundModeInfo, FundModeViewModel> FundModeInfo { get; set; } = null!;
 
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, SealingInfoViewModel>? SealingRule { get; set; }
-
-
-
-    [ObservableProperty]
-    public partial ShareElementsViewModel<SealingRule, SealingInfoViewModel>? LockingRule { get; set; }
-
+ 
 
     //[ObservableProperty]
     //public partial ElementItemViewModelSealing? LockingRule { get; set; }
@@ -298,18 +292,6 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     public partial bool OnlyOneShare { get; set; }
 
 
-    void SaveChange<T>(int fundId, string factId, int flowId, int shareId, T data)
-    {
-        using var db = DbHelper.Base();
-        db.GetCollection<IFundFactor>().Upsert(new FundFactor<T>(factId, fundId, flowId, shareId, data));
-    }
-
-    void RemoveFact(int fundId, string factId, int flowId, int shareId)
-    {
-        using var db = DbHelper.Base();
-        db.GetCollection<IFundFactor>().Delete($"{fundId}.{flowId}.{shareId}.{factId}");
-    }
-
     #endregion
 
     //private void FillBy(FundFactors factors, int flowId)
@@ -405,11 +387,11 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         {
             if (e.NewValue >= 999)
             {
-                ExpirationDate?.NewValue = new(2099, 12, 31);
+                ExpirationDate?.NewValue = new FundExpireDateViewModel(new(2099, 12, 31));
             }
-            else if (e.NewValue is int d)
+            else if (e.NewValue is int d && d > 0)
             {
-                ExpirationDate?.NewValue = SetupDate.AddMonths(d).AddDays(-1);
+                ExpirationDate?.NewValue = new FundExpireDateViewModel(SetupDate.AddMonths(d).AddDays(-1));
             }
         };
 
@@ -421,22 +403,6 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         #region MyRegion
 
  
-
-        SealingRule = new ChangeableViewModel<FundElements, SealingInfoViewModel>
-        {
-            Label = "封闭期",
-            InitFunc = x => new(x.SealingRule!.GetValue(newValue).Value),
-            InheritedFunc = x => x.SealingRule.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.SealingRule!.SetValue(y!.Build(), newValue),
-            ClearFunc = x => x.SealingRule!.RemoveValue(newValue),
-            DisplayFunc = x => x?.Type switch { SealingType.No => "无", SealingType.Has => $"{x.Month}个月", SealingType.Other => x.Other, _ => "-" }
-        };
-        SealingRule.Init(elements);
-
-
-        LockingRule = new ShareElementsViewModel<SealingRule, SealingInfoViewModel>(FundId, FlowId, elements, sc, x => x.LockingRule, x => new(x), x => x!.Build(), x => x?.Type switch { SealingType.No => "无", SealingType.Has => $"{x.Month}个月", SealingType.Other => x.Other, _ => "未设置" });
-
-
 
         CollectionAccount = new BankChangeableViewModel<FundElements>
         {

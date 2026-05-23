@@ -303,7 +303,7 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
             foreach (var p in propsToDeclare)
             {
                 sb.Append($$"""
-    public {{p.BaseTypeStr}} {{p.Name}} { get => field; set => SetProperty(ref field, value); }
+    public {{p.BaseTypeStr}} {{p.Name}} { get => field; set => SetProperty(ref field, value); } = null!;
 
 """);
             }

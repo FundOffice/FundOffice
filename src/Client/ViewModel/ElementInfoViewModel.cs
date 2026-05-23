@@ -71,40 +71,18 @@ public partial class DataExtraViewModel<T> : ObservableObject, IEquatable<DataEx
 
 
 
-public partial class SealingInfoViewModel : ObservableObject, IEquatable<SealingInfoViewModel>
+
+[ForceNull(nameof(SealingRule.Type))]
+public partial class SealingInfoViewModel : ObservableObject, IViewModel<SealingRule, SealingInfoViewModel>, IDisplay<string>, IDataValidation
 {
-    [ObservableProperty]
-    public partial SealingType? Type { get; set; }
-
-    [ObservableProperty]
-    public partial int? Month { get; set; }
-
-    [ObservableProperty]
-    public partial string? Other { get; set; }
-
-
-    public SealingInfoViewModel() { }
-
-    public SealingInfoViewModel(SealingRule? info)
+    public bool IsValid()
     {
-        Type = info?.Type;
-        Month = info?.Month;
-        Other = info?.Extra;
+        return Type switch { SealingType.Has => Month > 0, SealingType.Other => Extra?.Length > 0, null => false, _ => true };
     }
 
-    public bool Equals(SealingInfoViewModel? other)
+    public string Transfrom()
     {
-        return Type == other?.Type && Month == other?.Month && Other == other?.Other;
-    }
-
-    internal SealingRule Build()
-    {
-        return new SealingRule { Type = Type ?? default, Month = Month ?? 0, Extra = Other };
-    }
-
-    public override string ToString()
-    {
-        return Type switch { SealingType.Has => $"{Month}月", SealingType.No => "无", _ => Other ?? "" };
+        return Type switch { SealingType.Has => $"{Month}个月", SealingType.No => "无", _ => Extra ?? "未设置" };
     }
 }
 
@@ -375,9 +353,6 @@ public partial class FeePayInfoViewModel : IViewModel<FeePayInfo, FeePayInfoView
     }
 
 
-    //public override bool Equals(object? obj) => obj switch { FeePayInfoViewModel v => v.Type == this.Type && v.Other == this.Other, _ => false };
-
-
 }
 
 
@@ -410,17 +385,22 @@ public partial class FundDurationViewModel : ObservableObject, IViewModel<int?, 
 
     public string Transfrom()
     {
-        return Value switch { >= 999 => "无固定期限", var m when m % 12 == 0 => $"{Value / 12}年", > 0 => $"{Value}个月", _ => "未设置" };
+        return Value switch { >= 999 => "无固定期限", var m when m > 0 && m % 12 == 0 => $"{Value / 12}年", > 0 => $"{Value}个月", _ => "未设置" };
     }
 }
 
 
 public partial class FundModeViewModel : ObservableObject, IViewModel<FundModeInfo, FundModeViewModel>, IDisplay<string>
 {
- 
+
 
     public string Transfrom()
     {
         return Mode switch { FundMode.Open => "开放式", FundMode.Close => "封闭式", FundMode.Other => Other ?? "未设置", _ => "未设置" };
     }
+}
+
+public partial class FundExpireDateViewModel : ObservableObject, IViewModel<DateOnly?, FundExpireDateViewModel>, IDisplay<string>
+{
+    public string Transfrom() => Value switch { DateOnly d => d > DateOnly.MinValue ? $"{d: yyyy/M/d}" : "未设置", _ => "未设置" };
 }

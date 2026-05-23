@@ -4,6 +4,8 @@ namespace FMO.Models;
 
 public enum SealingType
 {
+    None,
+
     [Description("无")] No,
 
     [Description("有")] Has,

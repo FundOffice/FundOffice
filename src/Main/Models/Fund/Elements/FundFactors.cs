@@ -84,27 +84,7 @@ public partial class FundFactors
     // ................其它类型
 
     private IEnumerable<FundFactor<T>> Filter<T>(string field, Dictionary<string, IEnumerable<IFundFactor>> g)
-    {
-        // fundmode
-        //if (field == FactorFields.FundModeInfo)
-        //{
-        //    if (g.TryGetValue(field, out var v))
-        //    {
-        //        // 旧版
-        //        var old = v.OfType<FundFactor<DataExtra<FundMode>>>().Select(x => new FundFactor<FundModeInfo>
-        //        {
-        //            Data = new FundModeInfo { Mode = x.Data?.Data ?? default, Other = x.Data?.Extra },
-        //            FundId = x.FundId,
-        //            FlowId = x.FlowId,
-        //            ShareId = x.ShareId,
-        //            FactorId = x.FactorId
-        //        });
-        //        return v.OfType<FundFactor<T>>().Union(old.Cast<FundFactor<T>>()).ToArray();
-        //    }
-        //    else return [];
-        //}
-
-
+    { 
         return g.TryGetValue(field, out var d) ? d.OfType<FundFactor<T>>() : [];
     }
 

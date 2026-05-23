@@ -44,14 +44,14 @@
             <TextBox
                 Width="50"
                 HorizontalContentAlignment="Center"
-                Text="{Binding NewValue.Value, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                Text="{Binding NewValue.Value, TargetNullValue='', UpdateSourceTrigger=PropertyChanged, Delay=300}" />
             <TextBlock VerticalAlignment="Center" Text="个月" />
         </DockPanel>
     </DataTemplate>
 
 
     <DataTemplate x:Key="DT.ExpirationDate">
-        <DatePicker Width="100" SelectedDate="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
+        <DatePicker Width="100" SelectedDate="{Binding NewValue.Value, UpdateSourceTrigger=PropertyChanged, Delay=300, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
     </DataTemplate>
 
 
@@ -79,6 +79,53 @@
         <DataTemplate.Triggers>
             <DataTrigger Binding="{Binding NewValue.Mode}" Value="Other">
                 <Setter TargetName="other" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+
+
+    <DataTemplate x:Key="DT.Sealing">
+        <DockPanel LastChildFill="False">
+
+            <ComboBox
+                Width="70"
+                Margin="4,0"
+                ItemsSource="{Binding DataContext.SealingTypes, RelativeSource={RelativeSource AncestorType=local:ElementsView}}"
+                SelectedItem="{Binding NewValue.Type}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+
+            <Grid x:Name="mon" Visibility="Collapsed">
+                <TextBox
+                    MinWidth="60"
+                    Padding="6,0,30,0"
+                    Text="{Binding NewValue.Month, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                <TextBlock
+                    Margin="6,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Text="个月" />
+            </Grid>
+
+            <TextBox
+                x:Name="other"
+                MinWidth="100"
+                Text="{Binding NewValue.Extra, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                Visibility="Collapsed" />
+
+        </DockPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding NewValue.Type}" Value="Other">
+                <Setter TargetName="other" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding NewValue.Type}" Value="Has">
+                <Setter TargetName="mon" Property="Visibility" Value="Visible" />
             </DataTrigger>
         </DataTemplate.Triggers>
     </DataTemplate>

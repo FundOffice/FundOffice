@@ -133,7 +133,7 @@ public partial class FactorModifiableViewModel<TValue, TViewModel> : ModifiableV
     protected override void NotifyChanged(ValueChangeKind kind, TViewModel value)
     {
         if (kind is ValueChangeKind.Added or ValueChangeKind.Modified)
-            SaveChange(FundId, FactorId, FlowId, ShareId, value);
+            SaveChange(FundId, FactorId, FlowId, ShareId, TViewModel.Trans(value));
         else if (kind is ValueChangeKind.Deleted)
             RemoveFact(FundId, FactorId, FlowId, ShareId);
 
