@@ -524,36 +524,6 @@
 
 
 
-            <DataTemplate x:Key="DT.Cool">
-                <DockPanel DataContext="{Binding NewValue}" LastChildFill="False">
-                    <ComboBox
-                        Width="90"
-                        Margin="4,0"
-                        ItemsSource="{Binding DataContext.CoolingPeriodTypes, RelativeSource={RelativeSource AncestorType=local:ElementsView}}"
-                        SelectedItem="{Binding Type}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-
-
-                    <TextBox
-                        x:Name="other"
-                        MinWidth="300"
-                        Text="{Binding Other, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                        Visibility="Collapsed" />
-
-
-                </DockPanel>
-                <DataTemplate.Triggers>
-                    <DataTrigger Binding="{Binding NewValue.Type}" Value="Other">
-                        <Setter TargetName="other" Property="Visibility" Value="Visible" />
-                    </DataTrigger>
-
-                </DataTemplate.Triggers>
-            </DataTemplate>
 
 
             <DataTemplate x:Key="DT.Portion" d:DataType="local:ShareElementsViewModel">
@@ -920,7 +890,11 @@
 
 
                             <!--  冷静期  -->
-                            <shared:ChangeableContainer Binding="{Binding CoolingPeriod}" ContentTemplate="{StaticResource DT.Cool}" />
+                            <shared:ModifiableControl
+                                HorizontalAlignment="Left"
+                                Header="冷静期"
+                                Modifier="{Binding CoolingPeriod}" />
+
 
                             <!--  回访  -->
                             <shared:ChangeableContainer Binding="{Binding Callback}">

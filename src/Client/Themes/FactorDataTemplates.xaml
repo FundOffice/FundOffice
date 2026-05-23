@@ -849,4 +849,37 @@
 
         </DockPanel>
     </DataTemplate>
+
+
+    <DataTemplate DataType="{x:Type local:CoolingPeriodInfoViewModel}">
+        <DockPanel LastChildFill="False">
+            <ComboBox
+                Width="90"
+                Margin="4,0"
+                ItemsSource="{Binding DataContext.CoolingPeriodTypes, RelativeSource={RelativeSource AncestorType=local:ElementsView}}"
+                SelectedItem="{Binding Type}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+
+            <TextBox
+                x:Name="other"
+                MinWidth="300"
+                Text="{Binding Other, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                Visibility="Collapsed" />
+
+
+        </DockPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Type}" Value="Other">
+                <Setter TargetName="other" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
 </ResourceDictionary>

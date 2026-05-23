@@ -243,8 +243,6 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     [ObservableProperty]
     public partial ChangeableViewModel<FundElements, string>? InvestmentStrategy { get; set; }
 
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, CoolingPeriodInfoViewModel>? CoolingPeriod { get; set; }
 
     [ObservableProperty]
     public partial ChangeableViewModel<FundElements, CallbackInfoViewModel>? Callback { get; set; }
@@ -316,6 +314,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         using var db = DbHelper.Base();
         var fund = db.GetCollection<Fund>().FindById(FundId);
         var flow = db.GetCollection<FundFlow>().FindById(newValue);
+        var flowIds = db.GetCollection<FundFlow>().Query().Where(x => x.FundId == FundId).Select(x => x.Id).ToArray();
         bool isori = flow is ContractFinalizeFlow;
         var elements = db.GetCollection<FundElements>().FindById(FundId);
 
@@ -323,8 +322,9 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
             elements = new FundElements { Id = FundId };
 
          
-        IFundFactor[] factories = db.GetCollection<IFundFactor>().Find(x => x.FundId == FundId).ToArray();
-        FundFactors facts = new FundFactors(factories);
+
+        //IFundFactor[] factories = db.GetCollection<IFundFactor>().Query().Where(x => x.FundId == FundId).Where(LiteDB.Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x=> new LiteDB.BsonValue(x)))).ToArray();
+        FundFactors facts = db.QueryFactor(Id);
 
         FillBy(facts, newValue);
 
@@ -523,16 +523,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
 
 
-
-        CoolingPeriod = new ChangeableViewModel<FundElements, CoolingPeriodInfoViewModel>
-        {
-            Label = "冷静期",
-            InitFunc = x => new(x.CoolingPeriod!.GetValue(newValue).Value),
-            InheritedFunc = x => x.CoolingPeriod.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.CoolingPeriod!.SetValue(y!.Build(), newValue),
-            ClearFunc = x => x.CoolingPeriod!.RemoveValue(newValue),
-        };
-        CoolingPeriod.Init(elements);
+ 
 
         Callback = new ChangeableViewModel<FundElements, CallbackInfoViewModel>
         {

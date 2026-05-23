@@ -429,10 +429,8 @@ public partial class FeePayInfoViewModel : IViewModel<FeePayInfo?, FeePayInfoVie
 }
 
 
-
-
-[AutoChangeableViewModel(typeof(CoolingPeriodInfo))]
-public partial class CoolingPeriodInfoViewModel
+ 
+public partial class CoolingPeriodInfoViewModel: IViewModel<CoolingPeriodInfo?, CoolingPeriodInfoViewModel>
 {
     public override string? ToString()
     {
