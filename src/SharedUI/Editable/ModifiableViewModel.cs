@@ -107,6 +107,7 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
 {
     public event ValueChangedHandler<TValue>? Changed;
 
+
     [ObservableProperty] public partial string? Label { get; set; }
 
     [ObservableProperty]
@@ -146,6 +147,7 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
         UpdateState();
     }
     partial void OnOldValueChanged(TValue? oldValue, TValue? newValue) => UpdateState();
+
     partial void OnFallbackValueChanged(TValue? oldValue, TValue? newValue) => UpdateState();
 
     private bool CheckInherited()
@@ -173,7 +175,6 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
             false when !oldIsFallback && newIsFallback => ValueChangeKind.Deleted, // 自定义值 → 清空回继承
             _ => ValueChangeKind.Modified                                        // 自定义值A → 自定义值B
         };
-        OnPropertyChanged(nameof(NewValueIsWell));
         OnPropertyChanged(nameof(IsInherited));
         OnPropertyChanged(nameof(CanConfirm));
     }
@@ -188,7 +189,12 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
         if (value is INotifyPropertyChanged npc)
             npc.PropertyChanged -= OnDeepPropertyChanged;
     }
-    private void OnDeepPropertyChanged(object? sender, PropertyChangedEventArgs e) => UpdateState();
+    private void OnDeepPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(NewValueIsWell));
+        UpdateState();
+    }
+
 
     /// <summary>确认修改：新值固化到旧值，状态归零</summary>
     [RelayCommand]
@@ -292,9 +298,9 @@ public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModif
             false when !oldIsFallback && newIsFallback => ValueChangeKind.Deleted, // 自定义值 → 清空回继承
             _ => ValueChangeKind.Modified                                        // 自定义值A → 自定义值B
         };
-
-        OnPropertyChanged(nameof(NewValueIsWell));
+         
         OnPropertyChanged(nameof(IsInherited));
+        OnPropertyChanged(nameof(CanConfirm));
     }
 
     private void AttachDeepNotify(TValue? value)
@@ -307,8 +313,11 @@ public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModif
         if (value is INotifyPropertyChanged npc)
             npc.PropertyChanged -= OnDeepPropertyChanged;
     }
-    private void OnDeepPropertyChanged(object? sender, PropertyChangedEventArgs e) => UpdateState();
-
+    private void OnDeepPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(NewValueIsWell));
+        UpdateState();
+    }
 
 
     /// <summary>确认修改：新值固化到旧值，状态归零</summary>

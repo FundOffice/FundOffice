@@ -53,7 +53,7 @@ public class FundPurchaseRule
     public string? PayOther { get; set; }
 
 
-    public string FeeStatement => HasFee ? PayMethod switch { FundFeePayType.Out => "价外收取", FundFeePayType.Extra => "额外收取", FundFeePayType.Other => PayOther, _ => "" } +
-                                            Type switch { FundFeeType.Ratio => $"{Fee}%", FundFeeType.Fix => $"{Fee}元", FundFeeType.Other => Other, _ => "未知费用" } +
-                                            HasGuaranteedFee switch { true => $"  保底 {GuaranteedFee}元", _ => "" } : "-";
+    //public string FeeStatement => HasFee ? PayMethod switch { FundFeePayType.Out => "价外收取", FundFeePayType.Extra => "额外收取", FundFeePayType.Other => PayOther, _ => "" } +
+    //                                        Type switch { FundFeeType.Ratio => $"{Fee}%", FundFeeType.Fix => $"{Fee}元", FundFeeType.Other => Other, _ => "未知费用" } +
+    //                                        HasGuaranteedFee switch { true => $"  保底 {GuaranteedFee}元", _ => "" } : "-";
 }

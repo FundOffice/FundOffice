@@ -9,41 +9,6 @@ using System.Text;
 
 namespace SG;
 
-
-
-
-
-/*
-
-public partial class IntViewModel : IViewModel<int, IntViewModel>
-public partial class IntViewModel : IViewModel<int?, IntViewModel>
-public partial class IntViewModel : IViewModel<string, IntViewModel>
-public partial class IntViewModel : IViewModel<string?, IntViewModel>
-
-
-public class FundModeInfo
-{
-    public FundMode Mode { get; set; }
-
-    public string? Other { get; set; }
-}
-
-[ForceNull("Mode")] // 强制 FundMode? Mode
-public partial class FundModeViewModel
-{
-    
-}
-
-public partial class FundModeViewModel
-{
-    支持手写// ..  FundMode Mode..
-    支持手写// ..  FundMode? Mode..
-
-}
-
-*/
- 
-
 [Generator]
 public class IViewModelIncrementalGenerator : IIncrementalGenerator
 {
@@ -93,7 +58,6 @@ internal static class ViewModelAnalyzer
         string nullableParamTypeString = GetNullableTypeString(sourceType);
         string nonNullableTypeString = sourceTypeName.EndsWith("?") ? sourceTypeName.Substring(0, sourceTypeName.Length - 1) : sourceTypeName;
 
-        // 👇 修复：Wrapper 模式下的 ComparerTypeString 计算
         string comparerTypeString;
         if (sourceType.IsValueType)
         {
@@ -113,7 +77,6 @@ internal static class ViewModelAnalyzer
 
         bool canBeNull = sourceType.IsReferenceType || sourceType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
 
-        // 1. 收集 [ForceNull] 特性
         var forceNullProps = new HashSet<string>(StringComparer.Ordinal);
         foreach (var attr in targetClass.GetAttributes())
         {
@@ -126,7 +89,6 @@ internal static class ViewModelAnalyzer
             }
         }
 
-        // 2. 收集基类和接口中已存在的属性，避免重复生成
         var existingInHierarchy = new HashSet<string>(StringComparer.Ordinal);
         INamedTypeSymbol? current = targetClass.BaseType;
         while (current != null && current.SpecialType != SpecialType.System_Object)
@@ -147,7 +109,6 @@ internal static class ViewModelAnalyzer
             current = current.BaseType;
         }
 
-        // 3. 收集当前 ViewModel 中已手写的属性及 MVVM 生成的属性
         var vmMembers = new Dictionary<string, VmMemberInfo>(StringComparer.Ordinal);
         INamedTypeSymbol? currentTypeForVmProps = targetClass;
         while (currentTypeForVmProps != null && currentTypeForVmProps.SpecialType != SpecialType.System_Object)
@@ -209,7 +170,11 @@ internal static class ViewModelAnalyzer
                 isString: sourceType.SpecialType == SpecialType.System_String,
                 isValueType: sourceType.IsValueType,
                 isWrapperValue: true,
-                isGenerated: !hasVmValue
+                isGenerated: !hasVmValue,
+                isCollection: false,
+                sourceCollectionElementTypeString: null,
+                vmCollectionElementTypeString: null,
+                isNestedCollection: false
             ));
         }
         else
@@ -228,15 +193,99 @@ internal static class ViewModelAnalyzer
             baseType = baseType.BaseType;
         }
 
-        bool hasManualEquals = targetClass.GetMembers("Equals").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 1 && SymbolEqualityComparer.Default.Equals(m.Parameters[0].Type, sourceType));
-        bool hasManualGetHashCode = targetClass.GetMembers("GetHashCode").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 0);
-        bool hasManualObjectEquals = targetClass.GetMembers("Equals").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 1 && m.Parameters[0].Type.SpecialType == SpecialType.System_Object && m.IsOverride);
+        bool hasManualDefaultCtor = false;
+        bool hasManualParamCtor = false;
+        bool hasManualFillBy = false;
+        bool hasManualBuild = false;
+        bool hasManualTrans = false;
+        bool hasManualEquals = false;
+        bool hasManualGetHashCode = false;
+        bool hasManualObjectEquals = false;
+
+        var currentCheck = targetClass;
+        while (currentCheck != null && currentCheck.SpecialType != SpecialType.System_Object)
+        {
+            if (!hasManualDefaultCtor && currentCheck.InstanceConstructors.Any(c => c.Parameters.Length == 0 && c.DeclaredAccessibility == Accessibility.Public && !c.IsImplicitlyDeclared))
+                hasManualDefaultCtor = true;
+
+            if (!hasManualParamCtor && currentCheck.InstanceConstructors.Any(c => c.Parameters.Length == 1 && c.DeclaredAccessibility == Accessibility.Public && !c.IsImplicitlyDeclared && IsTypeMatch(c.Parameters[0].Type, sourceType)))
+                hasManualParamCtor = true;
+
+            if (!hasManualFillBy && currentCheck.GetMembers("FillBy").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 1 && m.DeclaredAccessibility == Accessibility.Public && IsTypeMatch(m.Parameters[0].Type, sourceType)))
+                hasManualFillBy = true;
+
+            if (!hasManualBuild && currentCheck.GetMembers("Build").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 0 && m.DeclaredAccessibility == Accessibility.Public))
+                hasManualBuild = true;
+
+            if (!hasManualTrans && currentCheck.GetMembers("Trans").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 1 && m.IsStatic && m.DeclaredAccessibility == Accessibility.Public && (IsTypeMatch(m.Parameters[0].Type, sourceType) || SymbolEqualityComparer.Default.Equals(m.Parameters[0].Type, targetClass))))
+                hasManualTrans = true;
+
+            if (!hasManualEquals && currentCheck.GetMembers("Equals").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 1 && IsTypeMatch(m.Parameters[0].Type, sourceType)))
+                hasManualEquals = true;
+
+            if (!hasManualGetHashCode && currentCheck.GetMembers("GetHashCode").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 0 && !m.IsImplicitlyDeclared))
+                hasManualGetHashCode = true;
+
+            if (!hasManualObjectEquals && currentCheck.GetMembers("Equals").OfType<IMethodSymbol>().Any(m => m.Parameters.Length == 1 && m.Parameters[0].Type.SpecialType == SpecialType.System_Object && m.IsOverride))
+                hasManualObjectEquals = true;
+
+            currentCheck = currentCheck.BaseType;
+        }
 
         return new GenerationModel(
             className, ns, sourceTypeName, nullableParamTypeString, nonNullableTypeString, comparerTypeString,
             properties, needsINPC, hasAutoBase, hasManualEquals, hasManualGetHashCode, hasManualObjectEquals,
-            isWrapperType, canBeNull, logs
+            isWrapperType, canBeNull, logs,
+            hasManualDefaultCtor, hasManualParamCtor, hasManualFillBy, hasManualBuild, hasManualTrans
         );
+    }
+
+    private static bool IsTypeMatch(ITypeSymbol paramType, ITypeSymbol targetType)
+    {
+        if (SymbolEqualityComparer.Default.Equals(paramType, targetType)) return true;
+        if (targetType.IsValueType && targetType.OriginalDefinition.SpecialType != SpecialType.System_Nullable_T && paramType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
+        {
+            if (SymbolEqualityComparer.Default.Equals(((INamedTypeSymbol)paramType).TypeArguments[0], targetType)) return true;
+        }
+        if (targetType.IsReferenceType)
+        {
+            if (SymbolEqualityComparer.Default.Equals(paramType.WithNullableAnnotation(NullableAnnotation.NotAnnotated), targetType.WithNullableAnnotation(NullableAnnotation.NotAnnotated))) return true;
+        }
+        return false;
+    }
+
+    private static bool IsCollectionType(ITypeSymbol type)
+    {
+        if (type is IArrayTypeSymbol) return true;
+        if (type.SpecialType == SpecialType.System_String) return false;
+
+        if (type is INamedTypeSymbol namedType)
+        {
+            foreach (var iface in namedType.AllInterfaces)
+            {
+                if (iface.OriginalDefinition?.ToDisplayString() == "System.Collections.Generic.IEnumerable<T>")
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static ITypeSymbol? GetCollectionElementType(ITypeSymbol type)
+    {
+        if (type is IArrayTypeSymbol arrayType) return arrayType.ElementType;
+        if (type is INamedTypeSymbol namedType)
+        {
+            foreach (var iface in namedType.AllInterfaces)
+            {
+                if (iface.OriginalDefinition?.ToDisplayString() == "System.Collections.Generic.IEnumerable<T>" && iface is INamedTypeSymbol enumerableNamed)
+                {
+                    return enumerableNamed.TypeArguments[0];
+                }
+            }
+        }
+        return null;
     }
 
     private static List<PropertyMapping> AnalyzeProperties(
@@ -289,7 +338,55 @@ internal static class ViewModelAnalyzer
                     }
 
                     bool isNested = false;
-                    if (propType is not IArrayTypeSymbol && propType.TypeKind != TypeKind.TypeParameter)
+                    bool isCollection = IsCollectionType(propType);
+                    bool isNestedCollection = false;
+                    string? sourceCollectionElementTypeString = null;
+                    string? vmCollectionElementTypeString = null;
+
+                    if (isCollection)
+                    {
+                        // 🔽 修复：分别获取源端和VM端的集合元素类型
+                        var sourceElementType = GetCollectionElementType(propType);
+                        if (sourceElementType != null)
+                        {
+                            sourceCollectionElementTypeString = sourceElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        }
+
+                        // 如果手写了对应的VM属性，从VM属性类型获取元素类型
+                        if (hasVmMember && vmMember != null)
+                        {
+                            var vmElementType = GetCollectionElementType(vmMember.Type);
+                            if (vmElementType != null)
+                            {
+                                vmCollectionElementTypeString = vmElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+                                // 检查是否为嵌套ViewModel集合
+                                if (vmElementType is not IArrayTypeSymbol && vmElementType.TypeKind != TypeKind.TypeParameter)
+                                {
+                                    var nestedVmType = FindNestedVmType(vmElementType, compilation);
+                                    if (nestedVmType != null)
+                                    {
+                                        isNestedCollection = true;
+                                        vmCollectionElementTypeString = nestedVmType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // 没有手写VM属性，尝试查找嵌套ViewModel
+                            if (sourceElementType != null && sourceElementType is not IArrayTypeSymbol && sourceElementType.TypeKind != TypeKind.TypeParameter)
+                            {
+                                var nestedVmType = FindNestedVmType(sourceElementType, compilation);
+                                if (nestedVmType != null)
+                                {
+                                    isNestedCollection = true;
+                                    vmCollectionElementTypeString = nestedVmType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                                }
+                            }
+                        }
+                    }
+                    else if (propType is not IArrayTypeSymbol && propType.TypeKind != TypeKind.TypeParameter)
                     {
                         var nestedVmType = FindNestedVmType(propType, compilation);
                         if (nestedVmType != null)
@@ -309,7 +406,6 @@ internal static class ViewModelAnalyzer
                         vmTypeString += "?";
                     }
 
-                    // 👇 修复：精确计算 ComparerTypeString，支持 Nullable<T> 与 T 的安全比较
                     string comparerTypeString;
                     if (propType.IsValueType)
                     {
@@ -344,7 +440,11 @@ internal static class ViewModelAnalyzer
                         isString: propType.SpecialType == SpecialType.System_String,
                         isValueType: propType.IsValueType,
                         isWrapperValue: false,
-                        isGenerated: isGenerated
+                        isGenerated: isGenerated,
+                        isCollection: isCollection,
+                        sourceCollectionElementTypeString: sourceCollectionElementTypeString,
+                        vmCollectionElementTypeString: vmCollectionElementTypeString,
+                        isNestedCollection: isNestedCollection
                     ));
                 }
             }
@@ -429,6 +529,9 @@ internal static class SourceCodeBuilder
         sb.AppendLine("using System;");
         sb.AppendLine("using System.ComponentModel;");
         sb.AppendLine("using System.Runtime.CompilerServices;");
+        sb.AppendLine("using System.Linq;");
+        sb.AppendLine("using System.Collections.Generic;");
+        sb.AppendLine("using System.Collections.ObjectModel;");
 
         if (!string.IsNullOrEmpty(model.Namespace))
         {
@@ -481,45 +584,55 @@ internal static class SourceCodeBuilder
     private static string GenerateConstructors(GenerationModel model)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"public {model.ClassName}() {{ }}");
-        sb.AppendLine();
-        sb.AppendLine($"public {model.ClassName}({model.NullableParamTypeString} val)");
-        sb.AppendLine("{");
 
-        if (model.CanBeNull)
+        if (!model.HasManualDefaultCtor)
         {
-            sb.AppendLine("    if (val is null)");
-            sb.AppendLine("    {");
-            foreach (var prop in model.Properties)
-            {
-                if (prop.VmIsWritable)
-                    sb.AppendLine($"        {prop.GetResetExpr()}");
-            }
-            sb.AppendLine("    }");
-            sb.AppendLine("    else");
-            sb.AppendLine("    {");
-            foreach (var prop in model.Properties)
-            {
-                if (prop.VmIsWritable)
-                    sb.AppendLine($"        {prop.GetAssignFromSourceExpr("val")}");
-            }
-            sb.AppendLine("    }");
-        }
-        else
-        {
-            foreach (var prop in model.Properties)
-            {
-                if (prop.VmIsWritable)
-                    sb.AppendLine($"    {prop.GetAssignFromSourceExpr("val")}");
-            }
+            sb.AppendLine($"public {model.ClassName}() {{ }}");
+            sb.AppendLine();
         }
 
-        sb.AppendLine("}");
+        if (!model.HasManualParamCtor)
+        {
+            sb.AppendLine($"public {model.ClassName}({model.NullableParamTypeString} val)");
+            sb.AppendLine("{");
+
+            if (model.CanBeNull)
+            {
+                sb.AppendLine("    if (val is null)");
+                sb.AppendLine("    {");
+                foreach (var prop in model.Properties)
+                {
+                    if (prop.VmIsWritable)
+                        sb.AppendLine($"        {prop.GetResetExpr()}");
+                }
+                sb.AppendLine("    }");
+                sb.AppendLine("    else");
+                sb.AppendLine("    {");
+                foreach (var prop in model.Properties)
+                {
+                    if (prop.VmIsWritable)
+                        sb.AppendLine($"        {prop.GetAssignFromSourceExpr("val")}");
+                }
+                sb.AppendLine("    }");
+            }
+            else
+            {
+                foreach (var prop in model.Properties)
+                {
+                    if (prop.VmIsWritable)
+                        sb.AppendLine($"    {prop.GetAssignFromSourceExpr("val")}");
+                }
+            }
+
+            sb.AppendLine("}");
+        }
         return sb.ToString();
     }
 
     private static string GenerateTransMethods(GenerationModel model)
     {
+        if (model.HasManualTrans) return string.Empty;
+
         var sb = new StringBuilder();
         sb.AppendLine($@"public static {model.NullableParamTypeString} Trans({model.ClassName} vm)
 {{
@@ -537,6 +650,8 @@ internal static class SourceCodeBuilder
 
     private static string GenerateFillMethod(GenerationModel model)
     {
+        if (model.HasManualFillBy) return string.Empty;
+
         var sb = new StringBuilder();
         sb.AppendLine($"public {model.ClassName} FillBy({model.NullableParamTypeString} obj)");
         sb.AppendLine("{");
@@ -567,6 +682,8 @@ internal static class SourceCodeBuilder
 
     private static string GenerateBuildMethod(GenerationModel model)
     {
+        if (model.HasManualBuild) return string.Empty;
+
         var sb = new StringBuilder();
         string overnew = model.HasAutoBase ? "new " : "";
 
@@ -608,7 +725,6 @@ internal static class SourceCodeBuilder
             sb.AppendLine($"public bool Equals({model.NullableParamTypeString} other)");
             sb.AppendLine("{");
 
-            // 👇 修复：当 other 为 null 时，判断自身属性是否均为默认值
             if (model.CanBeNull)
             {
                 if (model.IsWrapperType)
@@ -625,7 +741,7 @@ internal static class SourceCodeBuilder
                     }
                     else
                     {
-                        var checks = model.Properties.Select(p => $"global::System.Collections.Generic.EqualityComparer<{p.ComparerTypeString}>.Default.Equals({p.Name}, default)");
+                        var checks = model.Properties.Select(p => p.GetNullCheckExpr());
                         sb.AppendLine($"        return {string.Join(" &&\n               ", checks)};");
                     }
                     sb.AppendLine("    }");
@@ -724,15 +840,28 @@ internal class GenerationModel
     public bool CanBeNull { get; }
     public List<string> DebugLogs { get; }
 
+    public bool HasManualDefaultCtor { get; }
+    public bool HasManualParamCtor { get; }
+    public bool HasManualFillBy { get; }
+    public bool HasManualBuild { get; }
+    public bool HasManualTrans { get; }
+
     public GenerationModel(string className, string @namespace, string sourceTypeName, string nullableParamTypeString, string nonNullableTypeString, string comparerTypeString,
         List<PropertyMapping> properties, bool needsINPC, bool hasAutoBase,
-        bool hasManualEquals, bool hasManualGetHashCode, bool hasManualObjectEquals, bool isWrapperType, bool canBeNull, List<string> logs)
+        bool hasManualEquals, bool hasManualGetHashCode, bool hasManualObjectEquals, bool isWrapperType, bool canBeNull, List<string> logs,
+        bool hasManualDefaultCtor, bool hasManualParamCtor, bool hasManualFillBy, bool hasManualBuild, bool hasManualTrans)
     {
         ClassName = className; Namespace = @namespace; SourceTypeName = sourceTypeName;
         NullableParamTypeString = nullableParamTypeString; NonNullableTypeString = nonNullableTypeString; ComparerTypeString = comparerTypeString;
         Properties = properties; NeedsINPC = needsINPC;
         HasAutoBase = hasAutoBase; HasManualEquals = hasManualEquals; HasManualGetHashCode = hasManualGetHashCode;
         HasManualObjectEquals = hasManualObjectEquals; IsWrapperType = isWrapperType; CanBeNull = canBeNull; DebugLogs = logs;
+
+        HasManualDefaultCtor = hasManualDefaultCtor;
+        HasManualParamCtor = hasManualParamCtor;
+        HasManualFillBy = hasManualFillBy;
+        HasManualBuild = hasManualBuild;
+        HasManualTrans = hasManualTrans;
     }
 }
 
@@ -752,20 +881,65 @@ internal class PropertyMapping
     public bool IsWrapperValue { get; }
     public bool IsGenerated { get; }
 
+    // 🔽 修复：分别存储源端和VM端的集合元素类型
+    public bool IsCollection { get; }
+    public string? SourceCollectionElementTypeString { get; }  // 源类型集合的元素类型，如: global::FMO.Models.PartRedemptionFee
+    public string? VmCollectionElementTypeString { get; }      // VM类型集合的元素类型，如: global::FMO.ViewModels.PartFeeViewModel
+    public bool IsNestedCollection { get; }
+
     public PropertyMapping(string name, string sourceTypeString, string vmTypeString, string comparerTypeString,
         bool isNested, bool sourceIsNullable, bool vmIsNullable, bool sourceIsWritable, bool vmIsWritable,
-        bool isString, bool isValueType, bool isWrapperValue, bool isGenerated)
+        bool isString, bool isValueType, bool isWrapperValue, bool isGenerated,
+        bool isCollection = false, string? sourceCollectionElementTypeString = null, string? vmCollectionElementTypeString = null, bool isNestedCollection = false)
     {
         Name = name; SourceTypeString = sourceTypeString; VmTypeString = vmTypeString; ComparerTypeString = comparerTypeString;
         IsNested = isNested; SourceIsNullable = sourceIsNullable; VmIsNullable = vmIsNullable;
         SourceIsWritable = sourceIsWritable; VmIsWritable = vmIsWritable;
         IsString = isString; IsValueType = isValueType; IsWrapperValue = isWrapperValue;
         IsGenerated = isGenerated;
+
+        IsCollection = isCollection;
+        SourceCollectionElementTypeString = sourceCollectionElementTypeString;
+        VmCollectionElementTypeString = vmCollectionElementTypeString;
+        IsNestedCollection = isNestedCollection;
     }
 
     public string GetAssignFromSourceExpr(string sourceObjVar)
     {
         string srcAccess = IsWrapperValue ? sourceObjVar : $"{sourceObjVar}.{Name}";
+
+        // 🔽 修复：集合类型处理 - 使用 VM 端元素类型
+        if (IsCollection)
+        {
+            string vmElementType = VmCollectionElementTypeString ?? SourceCollectionElementTypeString ?? "object";
+
+            if (IsNestedCollection)
+            {
+                // 嵌套 ViewModel 集合：List<Source> -> ObservableCollection<VM>
+                if (SourceIsNullable)
+                {
+                    string fallback = VmIsNullable ? "null" : $"new global::System.Collections.ObjectModel.ObservableCollection<{vmElementType}>()";
+                    return $"{Name} = {srcAccess} != null ? new global::System.Collections.ObjectModel.ObservableCollection<{vmElementType}>({srcAccess}.Select(x => new {vmElementType}(x))) : {fallback};";
+                }
+                else
+                {
+                    return $"{Name} = new global::System.Collections.ObjectModel.ObservableCollection<{vmElementType}>({srcAccess}.Select(x => new {vmElementType}(x)));";
+                }
+            }
+            else
+            {
+                // 普通集合：使用 VM 端元素类型创建新集合
+                if (SourceIsNullable)
+                {
+                    string fallback = VmIsNullable ? "null" : $"new global::System.Collections.ObjectModel.ObservableCollection<{vmElementType}>()";
+                    return $"{Name} = {srcAccess} != null ? new global::System.Collections.ObjectModel.ObservableCollection<{vmElementType}>({srcAccess}) : {fallback};";
+                }
+                else
+                {
+                    return $"{Name} = new global::System.Collections.ObjectModel.ObservableCollection<{vmElementType}>({srcAccess});";
+                }
+            }
+        }
 
         if (IsNested)
         {
@@ -792,6 +966,12 @@ internal class PropertyMapping
 
     public string GetResetExpr()
     {
+        if (IsCollection)
+        {
+            string vmElementType = VmCollectionElementTypeString ?? SourceCollectionElementTypeString ?? "object";
+            if (VmIsNullable) return $"{Name} = default;";
+            return $"{Name} = new global::System.Collections.ObjectModel.ObservableCollection<{vmElementType}>();";
+        }
         if (VmIsNullable) return $"{Name} = default;";
         if (IsNested) return $"{Name} = default!;";
         if (IsValueType) return $"{Name} = default;";
@@ -801,6 +981,39 @@ internal class PropertyMapping
     public string GetBuildExpr()
     {
         if (!SourceIsWritable) return "";
+
+        // 🔽 修复：集合类型 Build - 使用源端元素类型
+        if (IsCollection)
+        {
+            string srcElementType = SourceCollectionElementTypeString ?? VmCollectionElementTypeString ?? "object";
+
+            if (IsNestedCollection)
+            {
+                // ObservableCollection<VM> -> List<Source>
+                if (VmIsNullable)
+                {
+                    if (!SourceIsNullable) return $"{Name} = {Name}?.Select(x => x.Build()).ToList() ?? default!,";
+                    return $"{Name} = {Name}?.Select(x => x.Build()).ToList(),";
+                }
+                else
+                {
+                    return $"{Name} = {Name}.Select(x => x.Build()).ToList(),";
+                }
+            }
+            else
+            {
+                // ObservableCollection<T> -> List<T> (类型相同或兼容)
+                if (VmIsNullable)
+                {
+                    if (!SourceIsNullable) return $"{Name} = {Name}?.ToList() ?? default!,";
+                    return $"{Name} = {Name}?.ToList(),";
+                }
+                else
+                {
+                    return $"{Name} = {Name}.ToList(),";
+                }
+            }
+        }
 
         if (IsNested)
         {
@@ -829,10 +1042,42 @@ internal class PropertyMapping
     {
         string otherAccess = IsWrapperValue ? otherVar : $"{otherVar}.{Name}";
 
+        // 🔽 修复：集合类型使用显式泛型的 SequenceEqual
+        if (IsCollection)
+        {
+            if (IsNestedCollection)
+            {
+                // 嵌套 ViewModel 集合比较 - 使用 VM 端元素类型
+                string elemType = VmCollectionElementTypeString ?? SourceCollectionElementTypeString ?? "object";
+
+                if (VmIsNullable || SourceIsNullable)
+                {
+                    return $"if (!({Name} is null ? {otherAccess} is null : {otherAccess} is null ? false : global::System.Linq.Enumerable.SequenceEqual<{elemType}>({Name}.Select(x => x.Build()), {otherAccess}.Select(x => x)))) return false;";
+                }
+                else
+                {
+                    return $"if (!global::System.Linq.Enumerable.SequenceEqual<{elemType}>({Name}.Select(x => x.Build()), {otherAccess}.Select(x => x))) return false;";
+                }
+            }
+            else
+            {
+                // 普通集合比较 - 使用 VM 端元素类型
+                string elemType = VmCollectionElementTypeString ?? SourceCollectionElementTypeString ?? "object";
+
+                if (VmIsNullable || SourceIsNullable)
+                {
+                    return $"if (!({Name} is null ? {otherAccess} is null : {otherAccess} is null ? false : global::System.Linq.Enumerable.SequenceEqual<{elemType}>({Name}, {otherAccess}))) return false;";
+                }
+                else
+                {
+                    return $"if (!global::System.Linq.Enumerable.SequenceEqual<{elemType}>({Name}, {otherAccess})) return false;";
+                }
+            }
+        }
+
         if (IsNested)
         {
             string thisBuild = VmIsNullable ? $"{Name}?.Build()" : $"{Name}.Build()";
-            // 👇 修复：otherAccess 是 Source 端的属性，其是否可空由 SourceIsNullable 决定
             string otherBuild = SourceIsNullable ? $"{otherAccess}?.Build()" : $"{otherAccess}.Build()";
             return $"if (!global::System.Collections.Generic.EqualityComparer<{ComparerTypeString}>.Default.Equals({thisBuild}, {otherBuild})) return false;";
         }
@@ -842,8 +1087,33 @@ internal class PropertyMapping
         }
     }
 
+    public string GetNullCheckExpr()
+    {
+        if (IsCollection)
+        {
+            return $"({Name} is null || !{Name}.Any())";
+        }
+        return $"global::System.Collections.Generic.EqualityComparer<{ComparerTypeString}>.Default.Equals({Name}, default)";
+    }
+
     public string GetHashCodeExpr()
     {
+        // 🔽 修复：集合类型 GetHashCode - 使用 VM 端元素类型
+        if (IsCollection)
+        {
+            string elemType = VmCollectionElementTypeString ?? SourceCollectionElementTypeString ?? "object";
+
+            if (IsNestedCollection)
+            {
+                string seqExpr = VmIsNullable ? $"{Name}?.Select(x => x.Build())" : $"{Name}.Select(x => x.Build())";
+                return $"if ({Name} != null) {{ foreach (var item in {seqExpr}!) {{ hash = hash * 31 + global::System.Collections.Generic.EqualityComparer<{elemType}>.Default.GetHashCode(item!); }} }}";
+            }
+            else
+            {
+                return $"if ({Name} != null) {{ foreach (var item in {Name}!) {{ hash = hash * 31 + global::System.Collections.Generic.EqualityComparer<{elemType}>.Default.GetHashCode(item!); }} }}";
+            }
+        }
+
         if (IsNested)
         {
             string buildExpr = VmIsNullable ? $"{Name}?.Build()" : $"{Name}.Build()";

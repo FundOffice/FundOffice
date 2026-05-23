@@ -28,11 +28,11 @@ public class FundFeeInfo
 
 public class PartRedemptionFee
 {
-    public int Month { get; set; }
+    public int? Month { get; set; }
 
     public bool Include { get; set; }
 
-    public decimal Fee { get; set; }
+    public decimal? Fee { get; set; }
 }
 
 

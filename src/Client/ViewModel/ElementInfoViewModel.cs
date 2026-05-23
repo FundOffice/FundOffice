@@ -156,7 +156,7 @@ public partial class FundFeeInfoViewModel : IDataValidation, IViewModel<FundFeeI
     }
 }
 
-public partial class RedemptionFeeInfoViewMdoel : ObservableObject, IDataValidation, IEquatable<RedemptionFeeInfoViewMdoel>
+public partial class RedemptionFeeInfoViewMdoel : ObservableObject, IDataValidation, IViewModel<RedemptionFeeInfo?, RedemptionFeeInfoViewMdoel>
 {
     public RedemptionFeeInfoViewMdoel()
     {
@@ -190,7 +190,7 @@ public partial class RedemptionFeeInfoViewMdoel : ObservableObject, IDataValidat
     [ObservableProperty]
     public partial string? Other { get; set; }
 
-    public ObservableCollection<PartFeeViewModel> Parts { get; init; }
+    public ObservableCollection<PartFeeViewModel> Parts { get; private set; }
 
     public RedemptionFeeInfo Build()
     {
@@ -266,41 +266,99 @@ public partial class RedemptionFeeInfoViewMdoel : ObservableObject, IDataValidat
         OnPropertyChanged(nameof(Parts));
     }
 
-    public partial class PartFeeViewModel : ObservableObject, IEquatable<PartFeeViewModel>
+
+
+    public bool Equals(global::FMO.Models.RedemptionFeeInfo? other)
     {
-        public PartFeeViewModel()
+        if (other is null)
         {
+            return EqualityComparer<global::FMO.Models.FundFeeType?>.Default.Equals(Type, default) &&
+                   EqualityComparer<bool>.Default.Equals(HasFee, default) &&
+                   EqualityComparer<decimal?>.Default.Equals(Fee, default) &&
+                   EqualityComparer<string>.Default.Equals(Other, default) &&
+                   (Parts is null || !Parts.Any());
         }
+        if (!EqualityComparer<global::FMO.Models.FundFeeType?>.Default.Equals(Type, other.Type)) return false;
+        if (!EqualityComparer<bool>.Default.Equals(HasFee, other.HasFee)) return false;
+        if (!EqualityComparer<decimal?>.Default.Equals(Fee, other.Fee)) return false;
+        if (!EqualityComparer<string>.Default.Equals(Other, other.Other)) return false;
+        if ((Parts?.Count ?? 0) != (other?.Parts?.Count ?? 0)) return false;
 
-        public PartFeeViewModel(PartRedemptionFee obj)
+        if (Parts?.Count > 0)
+            for (int i = 0; i < Parts.Count; i++)
+            {
+                var a = Parts[i];
+                var b = other!.Parts![i];
+
+                if (!a.Equals(b)) return false;
+            }
+
+
+        return true;
+    }
+
+
+
+
+    public RedemptionFeeInfoViewMdoel FillBy(global::FMO.Models.RedemptionFeeInfo? obj)
+    {
+        if (obj is null)
         {
-            Month = obj.Month switch { 0 => null, var x => x };
-            Include = obj.Include;
-            Fee = obj.Fee;
+            Type = default;
+            HasFee = default;
+            Fee = default;
+            Other = default;
+            Parts = [];
+            return this;
         }
-
-
-
-        [ObservableProperty]
-        public partial int? Month { get; set; }
-
-        [ObservableProperty]
-        public partial bool Include { get; set; }
-
-        [ObservableProperty]
-        public partial decimal? Fee { get; set; }
-
-        [ObservableProperty]
-        public partial bool IsLast { get; set; }
-
-        public bool Equals(PartFeeViewModel? other)
-        {
-            if (other is null) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return Month == other.Month && Include == other.Include && Fee == other.Fee;
-        }
+        Type = obj.Type;
+        HasFee = obj.HasFee;
+        Fee = obj.Fee;
+        Other = obj.Other;
+        Parts = obj?.Parts is null ? new() : new(obj.Parts.Select(x => new PartFeeViewModel(x)));
+        if (Parts.Count > 0)
+            Parts[^1].IsLast = true;
+        return this;
     }
 }
+
+
+public partial class PartFeeViewModel : ObservableObject, IViewModel<PartRedemptionFee, PartFeeViewModel>
+{
+
+
+    public PartFeeViewModel(PartRedemptionFee obj)
+    {
+        Month = obj.Month;
+        Include = obj.Include;
+        Fee = obj.Fee;
+    }
+
+
+
+    [ObservableProperty]
+    public partial bool IsLast { get; set; }
+
+    public bool Equals(PartFeeViewModel? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Month == other.Month && Include == other.Include && Fee == other.Fee;
+    }
+
+
+    public bool Equals(PartRedemptionFee? other)
+    {
+        if (other is null)
+            return Month is null or 0 && !Include && Fee is null or 0;
+
+        if ((Month ?? 0) != (other.Month ?? 0)) return false;
+        if (Include != other.Include) return false;
+        if ((Fee ?? 0) != (other.Fee ?? 0)) return false;
+        return true;
+    }
+}
+
 
 [AutoChangeableViewModel(typeof(SealingRule))]
 public partial class LockingRuleViewModel;
@@ -328,19 +386,35 @@ public partial class PerformanceBenchmarkViewModel
 }
 
 
-[AutoChangeableViewModel(typeof(FundPurchaseRule))]
-public partial class FundPurchaseRuleViewModel : IDataValidation
+//[ForceNull(nameof(FundPurchaseRule.MinDeposit))]
+public partial class FundPurchaseRuleViewModel : ObservableObject, IDataValidation, IViewModel<FundPurchaseRule?, FundPurchaseRuleViewModel>, IDisplay<string>
 {
+    [ObservableProperty]
+    public partial int? MinDeposit { get; set; } = 1000000;
+
     public string? FeeName { get; set; }
 
-    public bool IsValid() => !HasFee || Type switch { FundFeeType.Ratio or FundFeeType.Fix => Fee > 0, FundFeeType.Other => Other?.Length > 0, _ => false };
-
-    public override string ToString()
+    public bool IsValid()
     {
-        var a = MinDeposit is null ? "未设置" : $"{MinDeposit / 10000}万起投" + (AdditionalDeposit > 0 ? $"，追加{AdditionalDeposit / 10000}万起" : "") + (HasRequirement ? Statement : "");
-        var b = HasFee ? $"   {FeeName}：" + PayMethod switch { FundFeePayType.Out => "价外收取", FundFeePayType.Extra => "额外收取", FundFeePayType.Other => PayOther, _ => "" } + Type switch { FundFeeType.Ratio => $"{Fee}%", FundFeeType.Fix => $"{Fee}元", FundFeeType.Other => Other, _ => "未知费用" } : "";
-        var c = HasGuaranteedFee ? $"  保底 {GuaranteedFee}元" : "";
-        return a + b + c;
+        if (MinDeposit is null or < 10000) return false;
+        if (HasFee && Type is FundFeeType.Ratio or FundFeeType.Fix && Fee <= 0) return false;
+        if (Type is FundFeeType.Other && Other?.Length == 0) return false;
+
+        return true;
+    }
+
+    public string Transfrom()
+    {
+        var a = MinDeposit is null ? null : $"{MinDeposit / 10000}万起投" + (AdditionalDeposit > 0 ? $"，追加{AdditionalDeposit / 10000}万起" : "") + (HasRequirement ? Statement : "");
+        var b = HasFee ? $"   " + PayMethod switch { FundFeePayType.Out => "价外收取", FundFeePayType.Extra => "额外收取", FundFeePayType.Other => PayOther, _ => "" } + Type switch { FundFeeType.Ratio => $"{Fee}%", FundFeeType.Fix => $"{Fee}元", FundFeeType.Other => Other, _ => "未知费用" } : null;
+        var c = HasGuaranteedFee ? $"  保底 {GuaranteedFee}元" : null;
+        return (a + b + c) switch { null or "" => "未设置", var x => x };
+    }
+
+    [RelayCommand]
+    public void SetDefault()
+    {
+        MinDeposit = 1000000;
     }
 }
 

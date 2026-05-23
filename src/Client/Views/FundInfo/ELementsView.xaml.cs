@@ -150,7 +150,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
 
     [ObservableProperty]
-    public partial ShareFactorViewModel<FundFeeInfo?, FundFeeInfoViewModel>? ManageFee { get; set; }
+    public partial ShareFactorViewModel<FundFeeInfo?, FundFeeInfoViewModel>? ManageFee { get; set; } = null!;
 
 
 
@@ -161,6 +161,9 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     [ObservableProperty]
     public partial FactorModifiableViewModel<DateOnly?, FundExpireDateViewModel> ExpirationDate { get; private set; } = null!;
 
+
+    [ObservableProperty]
+    public partial ShareFactorViewModel<RedemptionFeeInfo?, RedemptionFeeInfoViewMdoel>? RedemptionFee { get; set; } = null!;
 
 
 
@@ -261,23 +264,8 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
 
 
-
-
-
-
-    [ObservableProperty]
-    public partial ShareElementsViewModel<FundPurchaseRule, FundPurchaseRuleViewModel>? SubscriptionRule { get; set; }
-
-
-
-
-    [ObservableProperty]
-    public partial ShareElementsViewModel<FundPurchaseRule, FundPurchaseRuleViewModel>? PurchasRule { get; set; }
-
-
-
-    [ObservableProperty]
-    public partial ShareElementsViewModel<RedemptionFeeInfo, RedemptionFeeInfoViewMdoel>? RedemptionFee { get; set; }
+     
+      
 
 
 
@@ -589,24 +577,8 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         TemporarilyOpenInfo.Init(elements);
 
         #endregion
-
-        //SubscriptionFee = new ShareElementsViewModel2<FundFeeInfo, FundFeeInfoViewModel>(FundId, FlowId, elements, sc, x => x.SubscriptionFee, x => new(x), x => x!.Build());
-        SubscriptionRule = new ShareElementsViewModel<FundPurchaseRule, FundPurchaseRuleViewModel>(FundId, FlowId, elements, sc, x => x.SubscriptionRule, x => new(x) { FeeName = "认购费" }, x => x!.Build());
-        foreach (var item in SubscriptionRule.Data)
-        {
-            if (item.NewValue?.MinDeposit is null or 0)
-                item.NewValue?.MinDeposit = 1000000;
-        }
-
-        //PurchaseFee = new ShareElementsViewModel2<FundFeeInfo, FundFeeInfoViewModel>(FundId, FlowId, elements, sc, x => x.PurchaseFee, x => new(x), x => x!.Build());
-        PurchasRule = new ShareElementsViewModel<FundPurchaseRule, FundPurchaseRuleViewModel>(FundId, FlowId, elements, sc, x => x.PurchasRule, x => new(x) { FeeName = "申购费" }, x => x!.Build());
-        foreach (var item in PurchasRule.Data)
-        {
-            if (item.NewValue!.MinDeposit == 0 || item.NewValue.MinDeposit is null)
-                item.NewValue.MinDeposit = 1000000;
-        }
-
-        RedemptionFee = new ShareElementsViewModel<RedemptionFeeInfo, RedemptionFeeInfoViewMdoel>(FundId, FlowId, elements, sc, x => x.RedemptionFee, x => new(x), x => x!.Build());
+ 
+         
         PerformanceFeeStatement = new ShareElementsViewModel<string, string>(FundId, FlowId, elements, sc, x => x.PerformanceFeeStatement, x => x!, x => x!);
 
 
