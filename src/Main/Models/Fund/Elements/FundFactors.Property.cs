@@ -76,7 +76,7 @@ public partial class FundFactors
     /// <summary>
     /// 巨额赎回比例
     /// </summary>
-    public SingletonValueFactorItem<decimal> HugeRedemptionRatio { get; private set; } = null!;
+    public SingletonFactorItem<HugeRedemptionRule> HugeRedemption { get; private set; } = null!;
 
 
     // ==================== 开放/赎回规则 ====================

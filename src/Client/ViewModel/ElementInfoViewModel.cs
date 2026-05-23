@@ -371,7 +371,7 @@ public partial class AgencyInfoViewModel : IDataValidation, IViewModel<AgencyInf
     public override string ToString() => HasAgency switch { true when !string.IsNullOrWhiteSpace(Name) => Name!, false => "-", _ => "未设置" };
 }
 
- 
+
 public partial class TemporarilyOpenInfoViewModel : IDataValidation, IViewModel<TemporarilyOpenInfo?, TemporarilyOpenInfoViewModel>
 {
     public bool IsValid() => !IsAllowed || (AllowPurchase || AllowRedemption);
@@ -476,4 +476,14 @@ public partial class FundModeViewModel : ObservableObject, IViewModel<FundModeIn
 public partial class FundExpireDateViewModel : ObservableObject, IViewModel<DateOnly?, FundExpireDateViewModel>, IDisplay<string>
 {
     public string Transfrom() => Value switch { DateOnly d => d > DateOnly.MinValue ? $"{d: yyyy/M/d}" : "未设置", _ => "未设置" };
+}
+
+
+public partial class HugeRedemptionRuleViewModel : IViewModel<HugeRedemptionRule?, HugeRedemptionRuleViewModel>, IDisplay<string>
+{
+    public string Transfrom() => Has switch
+    {
+        true when Ratio > 0 => $"{Ratio * 100}%",
+        _ => "未设置"
+    };
 }

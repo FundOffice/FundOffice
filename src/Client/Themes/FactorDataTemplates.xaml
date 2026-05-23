@@ -763,10 +763,11 @@
                 IsChecked="{Binding IsLimited}"
                 Visibility="{Binding IsAllowed, Converter={StaticResource Boolean2VisibilityConverter}}" />
             <CheckBox
+                x:Name="buy"
                 Content="申购"
                 IsChecked="{Binding AllowPurchase}"
                 IsEnabled="{Binding IsAllowed}"
-                Visibility="Collapsed" x:Name="buy"/>
+                Visibility="Collapsed" />
             <CheckBox
                 Content="赎回"
                 IsChecked="{Binding AllowRedemption}"
@@ -776,10 +777,10 @@
         <DataTemplate.Triggers>
             <MultiDataTrigger>
                 <MultiDataTrigger.Conditions>
-                    <Condition Binding="{Binding IsAllowed}" Value="True"/>
-                    <Condition Binding="{Binding IsLimited}" Value="False"/>
+                    <Condition Binding="{Binding IsAllowed}" Value="True" />
+                    <Condition Binding="{Binding IsLimited}" Value="False" />
                 </MultiDataTrigger.Conditions>
-                <Setter Property="Visibility" Value="Visible"  TargetName="buy"/>
+                <Setter TargetName="buy" Property="Visibility" Value="Visible" />
             </MultiDataTrigger>
         </DataTemplate.Triggers>
     </DataTemplate>
@@ -817,5 +818,35 @@
             </DataTrigger>
 
         </DataTemplate.Triggers>
+    </DataTemplate>
+
+
+    <DataTemplate DataType="{x:Type local:HugeRedemptionRuleViewModel}">
+        <DockPanel>
+            <CheckBox IsChecked="{Binding Has}" />
+            <TextBox
+                Width="50"
+                HorizontalContentAlignment="Center"
+                Text="{Binding Ratio, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+            <TextBlock
+                Margin="4,0"
+                Foreground="Gray"
+                Text="0 - 1 之间" />
+
+            <CheckBox
+                Margin="10,0,0,0"
+                Content="单个投资人规则"
+                IsChecked="{Binding HasRuleForInvestor}" />
+            <TextBox
+                Width="50"
+                HorizontalContentAlignment="Center"
+                Text="{Binding RatioPerInvestor, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+            <TextBlock
+                Margin="4,0"
+                Foreground="Gray"
+                Text="0 - 1 之间" />
+
+
+        </DockPanel>
     </DataTemplate>
 </ResourceDictionary>

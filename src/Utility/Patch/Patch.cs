@@ -58,7 +58,7 @@ public static partial class DatabaseAssist
         [125] = MoveMissionDll,
         [126] = MiggreateToNewDisclosure,
         [127] = ChangeLockingRule,
-        [138] = MoveToFact,
+        [139] = MoveToFact,
     };
 
     private static void MoveToFact(BaseDatabase database)

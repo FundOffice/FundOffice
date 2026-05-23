@@ -185,11 +185,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
     [ObservableProperty]
     public partial ChangeableViewModel<FundElements, decimal?>? WarningLine { get; set; }
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, decimal?>? HugeRedemptionRatio { get; set; }
-
+     
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSealingFund))]
@@ -424,17 +420,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         };
         WarningLine.Init(elements);
 
-
-        HugeRedemptionRatio = new ChangeableViewModel<FundElements, decimal?>
-        {
-            Label = "巨额赎回比例",
-            InitFunc = x => ValueFormat(x.HugeRedemptionRatio.GetValue(newValue).Value),
-            InheritedFunc = x => x.HugeRedemptionRatio.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => { if (y is not null) x.HugeRedemptionRatio!.SetValue(y.Value, newValue); },
-            ClearFunc = x => x.HugeRedemptionRatio.RemoveValue(newValue),
-            DisplayFunc = x => x?.ToString("P")
-        };
-        HugeRedemptionRatio.Init(elements);
+ 
         //FundModeInfo = new ElementItemFundModeViewModel(elements, nameof(FundElements.FundModeInfo), FlowId, "运作方式");
 
         //SealingRule = new ElementItemViewModelSealing(elements, nameof(FundElements.SealingRule), FlowId, "封闭期");

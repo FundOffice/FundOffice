@@ -82,3 +82,22 @@ public class RedemptionFeeInfo
         return s;
     }
 }
+
+public class HugeRedemptionRule
+{
+    public bool Has { get; set; }
+
+    /// <summary>
+    /// 巨额赎回比例
+    /// </summary>
+    public decimal Ratio { get; set; }
+
+    /// <summary>
+    /// 单一投资人规则 
+    /// </summary>
+    public bool HasRuleForInvestor { get; set; }
+
+
+    public decimal RatioPerInvestor { get; set; }
+
+}

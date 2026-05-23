@@ -911,22 +911,13 @@
 
 
                             <!--  巨额赎回  -->
-                            <shared:ChangeableContainer Binding="{Binding HugeRedemptionRatio}">
-                                <shared:ChangeableContainer.ContentTemplate>
-                                    <DataTemplate>
-                                        <DockPanel>
-                                            <TextBox
-                                                Width="50"
-                                                HorizontalContentAlignment="Center"
-                                                Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
-                                            <TextBlock
-                                                Margin="4,0"
-                                                Foreground="Gray"
-                                                Text="0 - 1 之间" />
-                                        </DockPanel>
-                                    </DataTemplate>
-                                </shared:ChangeableContainer.ContentTemplate>
-                            </shared:ChangeableContainer>
+
+                            <shared:ModifiableControl
+                                HorizontalAlignment="Left"
+                                Header="巨额赎回"
+                                Modifier="{Binding HugeRedemption}" />
+
+
 
                             <!--  冷静期  -->
                             <shared:ChangeableContainer Binding="{Binding CoolingPeriod}" ContentTemplate="{StaticResource DT.Cool}" />

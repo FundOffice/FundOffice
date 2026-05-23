@@ -1,231 +1,231 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
-using System;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Text;
+﻿//using Microsoft.CodeAnalysis;
+//using Microsoft.CodeAnalysis.CSharp;
+//using Microsoft.CodeAnalysis.CSharp.Syntax;
+//using Microsoft.CodeAnalysis.Text;
+//using System;
+//using System.Collections.Immutable;
+//using System.Linq;
+//using System.Text;
 
-namespace SG;
+//namespace SG;
 
-[Generator]
-public class FundElementsFactorGenerator : IIncrementalGenerator
-{
-    public void Initialize(IncrementalGeneratorInitializationContext context)
-    {
-        // 🔹 收集 FundElements 中的 Mutable/PortionMutable 属性
-        var propertyProvider = context.SyntaxProvider
-            .CreateSyntaxProvider(
-                predicate: (s, _) => s is PropertyDeclarationSyntax { Parent: ClassDeclarationSyntax { Identifier.Text: "FundElements" } },
-                transform: (ctx, _) =>
-                {
-                    var prop = (PropertyDeclarationSyntax)ctx.Node;
-                    if (prop.Parent is not ClassDeclarationSyntax classDecl) return null;
+//[Generator]
+//public class FundElementsFactorGenerator : IIncrementalGenerator
+//{
+//    public void Initialize(IncrementalGeneratorInitializationContext context)
+//    {
+//        // 🔹 收集 FundElements 中的 Mutable/PortionMutable 属性
+//        var propertyProvider = context.SyntaxProvider
+//            .CreateSyntaxProvider(
+//                predicate: (s, _) => s is PropertyDeclarationSyntax { Parent: ClassDeclarationSyntax { Identifier.Text: "FundElements" } },
+//                transform: (ctx, _) =>
+//                {
+//                    var prop = (PropertyDeclarationSyntax)ctx.Node;
+//                    if (prop.Parent is not ClassDeclarationSyntax classDecl) return null;
 
-                    var classSymbol = ctx.SemanticModel.GetDeclaredSymbol(classDecl);
-                    if (classSymbol is null || classSymbol.Name != "FundElements") return null;
+//                    var classSymbol = ctx.SemanticModel.GetDeclaredSymbol(classDecl);
+//                    if (classSymbol is null || classSymbol.Name != "FundElements") return null;
 
-                    var symbol = ctx.SemanticModel.GetDeclaredSymbol(prop);
-                    if (symbol is null) return null;
+//                    var symbol = ctx.SemanticModel.GetDeclaredSymbol(prop);
+//                    if (symbol is null) return null;
 
-                    var type = symbol.Type;
-                    if (type is not INamedTypeSymbol { Arity: 1 } named) return null;
-                    if (named.Name != "Mutable" && named.Name != "PortionMutable") return null;
+//                    var type = symbol.Type;
+//                    if (type is not INamedTypeSymbol { Arity: 1 } named) return null;
+//                    if (named.Name != "Mutable" && named.Name != "PortionMutable") return null;
 
-                    var argType = named.TypeArguments[0];
-                    bool needsNullCheck = argType.IsReferenceType || argType.NullableAnnotation == NullableAnnotation.Annotated;
+//                    var argType = named.TypeArguments[0];
+//                    bool needsNullCheck = argType.IsReferenceType || argType.NullableAnnotation == NullableAnnotation.Annotated;
 
-                    // 🔍 解析自定义 FactorKey：优先读取 FactorFieldAttribute，否则回退到属性名
-                    string FactorKey = ResolveFactorKey(symbol);
+//                    // 🔍 解析自定义 FactorKey：优先读取 FactorFieldAttribute，否则回退到属性名
+//                    string FactorKey = ResolveFactorKey(symbol);
 
-                    return new PropertyModel(
-                        symbol.Name,
-                        argType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                        named.Name == "PortionMutable",
-                        needsNullCheck,
-                        FactorKey);
-                })
-            .Where(p => p != null)
-            .Collect();
+//                    return new PropertyModel(
+//                        symbol.Name,
+//                        argType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+//                        named.Name == "PortionMutable",
+//                        needsNullCheck,
+//                        FactorKey);
+//                })
+//            .Where(p => p != null)
+//            .Collect();
 
-        context.RegisterSourceOutput(propertyProvider, (ctx, props) =>
-        {
-            if (props.Length == 0) return;
+//        context.RegisterSourceOutput(propertyProvider, (ctx, props) =>
+//        {
+//            if (props.Length == 0) return;
 
-            var mutableProps = props.Where(p => !p!.IsPortion).OfType<PropertyModel>().ToImmutableArray();
-            var portionProps = props.Where(p => p!.IsPortion).OfType<PropertyModel>().ToImmutableArray();
+//            var mutableProps = props.Where(p => !p!.IsPortion).OfType<PropertyModel>().ToImmutableArray();
+//            var portionProps = props.Where(p => p!.IsPortion).OfType<PropertyModel>().ToImmutableArray();
 
-            // 🔹 生成 FactorFields 常量类 + ToFactors/From 方法
-            var source = $$"""
-            // <auto-generated/>
-            #nullable enable
-            using System;
-            using System.Collections.Generic;
-            using System.Linq;
+//            // 🔹 生成 FactorFields 常量类 + ToFactors/From 方法
+//            var source = $$"""
+//            // <auto-generated/>
+//            #nullable enable
+//            using System;
+//            using System.Collections.Generic;
+//            using System.Linq;
 
-            namespace FMO.Models
-            {
+//            namespace FMO.Models
+//            {
 
 
-                public partial class FundElements
-                {
+//                public partial class FundElements
+//                {
                     
 
-                    public IFundFactor[] ToFactors()
-                    {
+//                    public IFundFactor[] ToFactors()
+//                    {
                        
 
-                        var Factors = new List<IFundFactor>();
-                        var fundId = this.Id;
+//                        var Factors = new List<IFundFactor>();
+//                        var fundId = this.Id;
 
-            {{GenerateMutableToFactor(mutableProps)}}
+//            {{GenerateMutableToFactor(mutableProps)}}
 
-            {{GeneratePortionToFactor(portionProps)}}
+//            {{GeneratePortionToFactor(portionProps)}}
                         
-                        PostToFactors(Factors);
-                        return Factors.ToArray();
-                    }
+//                        PostToFactors(Factors);
+//                        return Factors.ToArray();
+//                    }
 
-                    private partial void PostToFactors(List<IFundFactor> factors);
+//                    private partial void PostToFactors(List<IFundFactor> factors);
 
-                    public static FundElements From(IFundFactor[] Factors)
-                    {
-                        if (Factors == null || Factors.Length == 0)
-                            return new FundElements();
+//                    public static FundElements From(IFundFactor[] Factors)
+//                    {
+//                        if (Factors == null || Factors.Length == 0)
+//                            return new FundElements();
 
-                        var fundId = Factors[0].FundId;
-                        foreach (var f in Factors)
-                        {
-                            if (f.FundId != fundId)
-                                throw new ArgumentException($"All Factors must belong to the same fund. Expected FundId: {fundId}, but found: {f.FundId}");
-                        }
+//                        var fundId = Factors[0].FundId;
+//                        foreach (var f in Factors)
+//                        {
+//                            if (f.FundId != fundId)
+//                                throw new ArgumentException($"All Factors must belong to the same fund. Expected FundId: {fundId}, but found: {f.FundId}");
+//                        }
 
-                        var elements = new FundElements { Id = fundId };
-                        var FactorGroups = Factors.GroupBy(f => f.FactorId).ToDictionary(g => g.Key, g => g.ToList());
+//                        var elements = new FundElements { Id = fundId };
+//                        var FactorGroups = Factors.GroupBy(f => f.FactorId).ToDictionary(g => g.Key, g => g.ToList());
 
-            {{GenerateMutableFromFactor(mutableProps)}}
+//            {{GenerateMutableFromFactor(mutableProps)}}
 
-            {{GeneratePortionFromFactor(portionProps)}}
-                        return elements;
-                    }
-                }
-            }
-            """;
-            ctx.AddSource("FundElements.Factors.Generated.cs", SourceText.From(source, Encoding.UTF8));
-        });
-    }
+//            {{GeneratePortionFromFactor(portionProps)}}
+//                        return elements;
+//                    }
+//                }
+//            }
+//            """;
+//            ctx.AddSource("FundElements.Factors.Generated.cs", SourceText.From(source, Encoding.UTF8));
+//        });
+//    }
 
-    /// <summary>
-    /// 提取 FactorKey：优先读取 FactorFieldAttribute，否则回退到属性名
-    /// </summary>
-    private static string ResolveFactorKey(IPropertySymbol symbol)
-    {
-        foreach (var attr in symbol.GetAttributes())
-        {
-            var className = attr.AttributeClass?.Name ?? "";
-            // 兼容 FactorFieldAttribute / FactorFiledAttribute（拼写容错）
-            if (className.StartsWith("FactorField", StringComparison.Ordinal))
-            {
-                var arg = attr.ConstructorArguments.FirstOrDefault();
-                if (arg.Kind == TypedConstantKind.Primitive && arg.Type?.SpecialType == SpecialType.System_String && arg.Value is string s)
-                    return s;
-            }
-        }
-        return symbol.Name;
-    }
+//    /// <summary>
+//    /// 提取 FactorKey：优先读取 FactorFieldAttribute，否则回退到属性名
+//    /// </summary>
+//    private static string ResolveFactorKey(IPropertySymbol symbol)
+//    {
+//        foreach (var attr in symbol.GetAttributes())
+//        {
+//            var className = attr.AttributeClass?.Name ?? "";
+//            // 兼容 FactorFieldAttribute / FactorFiledAttribute（拼写容错）
+//            if (className.StartsWith("FactorField", StringComparison.Ordinal))
+//            {
+//                var arg = attr.ConstructorArguments.FirstOrDefault();
+//                if (arg.Kind == TypedConstantKind.Primitive && arg.Type?.SpecialType == SpecialType.System_String && arg.Value is string s)
+//                    return s;
+//            }
+//        }
+//        return symbol.Name;
+//    }
 
-    // ==================== 代码生成模板 ====================
+//    // ==================== 代码生成模板 ====================
 
 
-    /// <summary>
-    /// 生成 Mutable 属性的 ToFactors 代码
-    /// </summary>
-    private static string GenerateMutableToFactor(ImmutableArray<PropertyModel> props) => string.Join("\n", props.Select(p =>
-    {
-        return $$"""
-                if (this.{{p.Name}} is Mutable<{{p.Type}}> m_{{p.Name}} && m_{{p.Name}}.Changes.Count > 0)
-                {
-                    foreach (var (flowId, value) in m_{{p.Name}}.Changes)
-                    {
-                        Factors.Add(new FundFactor<{{p.Type}}> { FundId = fundId, FlowId = flowId, ShareId = ShareClass.Singleton, FactorId = FactorFields.{{p.Name}}, Data = value });
-                    }
-                }
-    """;
-    }));
+//    /// <summary>
+//    /// 生成 Mutable 属性的 ToFactors 代码
+//    /// </summary>
+//    private static string GenerateMutableToFactor(ImmutableArray<PropertyModel> props) => string.Join("\n", props.Select(p =>
+//    {
+//        return $$"""
+//                if (this.{{p.Name}} is Mutable<{{p.Type}}> m_{{p.Name}} && m_{{p.Name}}.Changes.Count > 0)
+//                {
+//                    foreach (var (flowId, value) in m_{{p.Name}}.Changes)
+//                    {
+//                        Factors.Add(new FundFactor<{{p.Type}}> { FundId = fundId, FlowId = flowId, ShareId = ShareClass.Singleton, FactorId = FactorFields.{{p.Name}}, Data = value });
+//                    }
+//                }
+//    """;
+//    }));
 
-    /// <summary>
-    /// 生成 PortionMutable 属性的 ToFactors 代码
-    /// </summary>
-    private static string GeneratePortionToFactor(ImmutableArray<PropertyModel> props) => string.Join("\n", props.Select(p => $$"""
-                if (this.{{p.Name}} is PortionMutable<{{p.Type}}> pm_{{p.Name}} && pm_{{p.Name}}.Changes.Count > 0)
-                {
-                    foreach (var (flowId, shareDict) in pm_{{p.Name}}.Changes)
-                    {
-                        foreach (var (shareId, value) in shareDict)
-                        {
-                            Factors.Add(new FundFactor<{{p.Type}}> { FundId = fundId, FlowId = flowId, ShareId = shareId, FactorId = FactorFields.{{p.Name}}, Data = value });
-                        }
-                    }
-                }
-    """));
+//    /// <summary>
+//    /// 生成 PortionMutable 属性的 ToFactors 代码
+//    /// </summary>
+//    private static string GeneratePortionToFactor(ImmutableArray<PropertyModel> props) => string.Join("\n", props.Select(p => $$"""
+//                if (this.{{p.Name}} is PortionMutable<{{p.Type}}> pm_{{p.Name}} && pm_{{p.Name}}.Changes.Count > 0)
+//                {
+//                    foreach (var (flowId, shareDict) in pm_{{p.Name}}.Changes)
+//                    {
+//                        foreach (var (shareId, value) in shareDict)
+//                        {
+//                            Factors.Add(new FundFactor<{{p.Type}}> { FundId = fundId, FlowId = flowId, ShareId = shareId, FactorId = FactorFields.{{p.Name}}, Data = value });
+//                        }
+//                    }
+//                }
+//    """));
 
-    /// <summary>
-    /// 生成 Mutable 属性的 From 代码
-    /// </summary>
-    private static string GenerateMutableFromFactor(ImmutableArray<PropertyModel> props) => string.Join("\n", props.Select(p =>
-    {
-        var typeCheck = $$"""
-                    if (f is not FundFactor<{{p.Type}}> ff)
-                            throw new InvalidOperationException($"Factor type mismatch for FactorId 'FactorFields.{{p.Name}}': expected FundFactor<{{p.Type}}>, but got '{f.GetType().Name}'. FundId: {f.FundId}, FlowId: {f.FlowId}");
-        """;
-        var nullCheck = p.NeedsNullCheck ? $$"""
-                    if (ff.Data == null)
-                            throw new InvalidOperationException($"Factor data is null for FactorId 'FactorFields.{{p.Name}}'. FundId: {f.FundId}, FlowId: {f.FlowId}");
-        """ : "";
-        var setValue = $"            target.SetValue(ff.Data!, f.FlowId);";
+//    /// <summary>
+//    /// 生成 Mutable 属性的 From 代码
+//    /// </summary>
+//    private static string GenerateMutableFromFactor(ImmutableArray<PropertyModel> props) => string.Join("\n", props.Select(p =>
+//    {
+//        var typeCheck = $$"""
+//                    if (f is not FundFactor<{{p.Type}}> ff)
+//                            throw new InvalidOperationException($"Factor type mismatch for FactorId 'FactorFields.{{p.Name}}': expected FundFactor<{{p.Type}}>, but got '{f.GetType().Name}'. FundId: {f.FundId}, FlowId: {f.FlowId}");
+//        """;
+//        var nullCheck = p.NeedsNullCheck ? $$"""
+//                    if (ff.Data == null)
+//                            throw new InvalidOperationException($"Factor data is null for FactorId 'FactorFields.{{p.Name}}'. FundId: {f.FundId}, FlowId: {f.FlowId}");
+//        """ : "";
+//        var setValue = $"            target.SetValue(ff.Data!, f.FlowId);";
 
-        return $$"""
-                if (FactorGroups.TryGetValue(FactorFields.{{p.Name}}, out var g_{{p.Name}}))
-                {
-                    var target = elements.{{p.Name}};
-                    target.Changes.Clear();
-                    foreach (var f in g_{{p.Name}})
-                    {
-            {{typeCheck}}
-            {{nullCheck}}
-            {{setValue}}
-                    }
-                }
-        """;
-    }));
+//        return $$"""
+//                if (FactorGroups.TryGetValue(FactorFields.{{p.Name}}, out var g_{{p.Name}}))
+//                {
+//                    var target = elements.{{p.Name}};
+//                    target.Changes.Clear();
+//                    foreach (var f in g_{{p.Name}})
+//                    {
+//            {{typeCheck}}
+//            {{nullCheck}}
+//            {{setValue}}
+//                    }
+//                }
+//        """;
+//    }));
 
-    private static string GeneratePortionFromFactor(ImmutableArray<PropertyModel> props) => string.Join("\n", props.Select(p =>
-    {
-        var typeCheck = $$"""
-                 if (f is not FundFactor<{{p.Type}}> ff)
-                        throw new InvalidOperationException($"Factor type mismatch for FactorId 'FactorFields.{{p.Name}}': expected FundFactor<{{p.Type}}>, but got '{f.GetType().Name}'. FundId: {f.FundId}, FlowId: {f.FlowId}, ShareId: {f.ShareId}");
-        """;
-        var nullCheck = p.NeedsNullCheck ? $$"""
-                 if (ff.Data == null)
-                        throw new InvalidOperationException($"Factor data is null for FactorId 'FactorFields.{{p.Name}}'. FundId: {f.FundId}, FlowId: {f.FlowId}, ShareId: {f.ShareId}");
-        """ : "";
-        var setValue = $"               target.SetValue(f.ShareId, ff.Data!, f.FlowId);";
+//    private static string GeneratePortionFromFactor(ImmutableArray<PropertyModel> props) => string.Join("\n", props.Select(p =>
+//    {
+//        var typeCheck = $$"""
+//                 if (f is not FundFactor<{{p.Type}}> ff)
+//                        throw new InvalidOperationException($"Factor type mismatch for FactorId 'FactorFields.{{p.Name}}': expected FundFactor<{{p.Type}}>, but got '{f.GetType().Name}'. FundId: {f.FundId}, FlowId: {f.FlowId}, ShareId: {f.ShareId}");
+//        """;
+//        var nullCheck = p.NeedsNullCheck ? $$"""
+//                 if (ff.Data == null)
+//                        throw new InvalidOperationException($"Factor data is null for FactorId 'FactorFields.{{p.Name}}'. FundId: {f.FundId}, FlowId: {f.FlowId}, ShareId: {f.ShareId}");
+//        """ : "";
+//        var setValue = $"               target.SetValue(f.ShareId, ff.Data!, f.FlowId);";
 
-        return $$"""
-                if (FactorGroups.TryGetValue(FactorFields.{{p.Name}}, out var pg_{{p.Name}}))
-                {
-                    var target = elements.{{p.Name}};
-                    target.Changes.Clear();
-                    foreach (var f in pg_{{p.Name}})
-                    {
-                {{typeCheck}}
-                {{nullCheck}}
-                {{setValue}}
-                    }
-                }
-        """;
-    }));
+//        return $$"""
+//                if (FactorGroups.TryGetValue(FactorFields.{{p.Name}}, out var pg_{{p.Name}}))
+//                {
+//                    var target = elements.{{p.Name}};
+//                    target.Changes.Clear();
+//                    foreach (var f in pg_{{p.Name}})
+//                    {
+//                {{typeCheck}}
+//                {{nullCheck}}
+//                {{setValue}}
+//                    }
+//                }
+//        """;
+//    }));
 
-    private sealed record PropertyModel(string Name, string Type, bool IsPortion, bool NeedsNullCheck, string FactorKey);
-}
+//    private sealed record PropertyModel(string Name, string Type, bool IsPortion, bool NeedsNullCheck, string FactorKey);
+//}
