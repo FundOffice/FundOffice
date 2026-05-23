@@ -170,14 +170,6 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
 
 
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, decimal?>? StopLine { get; set; }
-
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, decimal?>? WarningLine { get; set; }
-
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSealingFund))]
@@ -360,28 +352,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         #region MyRegion
 
 
- 
-
-
-        StopLine = new ChangeableViewModel<FundElements, decimal?>
-        {
-            Label = "止损线",
-            InitFunc = x => ValueFormat(x.StopLine.GetValue(newValue).Value),
-            InheritedFunc = x => x.StopLine.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => { if (y is not null) x.StopLine!.SetValue(y.Value, newValue); },
-            ClearFunc = x => x.StopLine.RemoveValue(newValue),
-        };
-        StopLine.Init(elements);
-
-        WarningLine = new ChangeableViewModel<FundElements, decimal?>
-        {
-            Label = "预警线",
-            InitFunc = x => ValueFormat(x.WarningLine.GetValue(newValue).Value),
-            InheritedFunc = x => x.WarningLine.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => { if (y is not null) x.WarningLine!.SetValue(y.Value, newValue); },
-            ClearFunc = x => x.WarningLine.RemoveValue(newValue),
-        };
-        WarningLine.Init(elements);
+  
 
 
         //FundModeInfo = new ElementItemFundModeViewModel(elements, nameof(FundElements.FundModeInfo), FlowId, "运作方式");

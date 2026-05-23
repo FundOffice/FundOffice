@@ -471,12 +471,6 @@
 
 
 
-            <DataTemplate x:Key="DT.StopLine">
-                <TextBox
-                    Width="50"
-                    HorizontalContentAlignment="Center"
-                    Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
-            </DataTemplate>
 
 
             <DataTemplate x:Key="DT.Strategy">
@@ -1035,61 +1029,6 @@
 
                     <!--  账户  -->
                     <DockPanel Margin="{StaticResource LineSpacing}">
-                        <DockPanel.Resources>
-
-
-                            <ControlTemplate x:Key="CT.Bank" TargetType="shared:ChangeableContainer">
-                                <DockPanel
-                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                    Background="Transparent"
-                                    LastChildFill="True">
-
-                                    <Grid DockPanel.Dock="Top">
-
-                                        <DockPanel HorizontalAlignment="Center" LastChildFill="False">
-
-                                            <shared:ChangeableControlButtons DataContext="{Binding ., RelativeSource={RelativeSource AncestorType=shared:ChangeableContainer}}" DockPanel.Dock="Right" />
-
-
-                                            <Button
-                                                hc:IconElement.Geometry="{StaticResource f.clipboard}"
-                                                Command="{Binding SetBankFromClipboardCommand}"
-                                                CommandParameter="{Binding Binding, RelativeSource={RelativeSource TemplatedParent}}"
-                                                DockPanel.Dock="Right"
-                                                Foreground="Green"
-                                                Style="{StaticResource ButtonIcon}" />
-
-                                            <Grid>
-                                                <TextBlock
-                                                    VerticalAlignment="Center"
-                                                    DockPanel.Dock="Left"
-                                                    Text="{Binding Binding.Label, RelativeSource={RelativeSource TemplatedParent}}" />
-
-                                                <TextBlock
-                                                    HorizontalAlignment="Right"
-                                                    FontSize="6"
-                                                    Foreground="Purple"
-                                                    Text="▼"
-                                                    Visibility="{Binding Binding.IsInherited, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
-                                            </Grid>
-
-                                        </DockPanel>
-                                    </Grid>
-
-                                    <DockPanel HorizontalAlignment="Stretch">
-
-                                        <ContentPresenter
-                                            Margin="4,0"
-                                            HorizontalAlignment="Stretch"
-                                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                            Content="{Binding Binding, RelativeSource={RelativeSource AncestorType=shared:ChangeableContainer}}"
-                                            ContentTemplate="{TemplateBinding ContentTemplate}" />
-
-                                    </DockPanel>
-                                </DockPanel>
-
-                            </ControlTemplate>
-                        </DockPanel.Resources>
                         <Border Margin="0,0,10,0" Background="SaddleBrown">
                             <TextBlock Style="{StaticResource CategoryTab}" Text="账户信息" />
                         </Border>
@@ -1151,11 +1090,6 @@
 
 
                 <StackPanel Grid.Column="2">
-                    <StackPanel.Resources>
-                        <Style TargetType="Separator">
-                            <Setter Property="Margin" Value="0,10" />
-                        </Style>
-                    </StackPanel.Resources>
 
 
                     <!--#region 投资相关-->
@@ -1167,13 +1101,18 @@
                         <hc:UniformSpacingPanel Orientation="Vertical" VerticalSpacing="5">
 
                             <DockPanel>
-                                <shared:ChangeableContainer Binding="{Binding StopLine}" ContentTemplate="{StaticResource DT.StopLine}" />
 
+                                <shared:ModifiableControl
+                                    HorizontalAlignment="Left"
+                                    EditTemplate="{StaticResource DT.StopLine}"
+                                    Header="止损线"
+                                    Modifier="{Binding StopLine}" />
 
-                                <shared:ChangeableContainer
-                                    Margin="20,0,0,0"
-                                    Binding="{Binding WarningLine}"
-                                    ContentTemplate="{StaticResource DT.StopLine}" />
+                                <shared:ModifiableControl
+                                    HorizontalAlignment="Left"
+                                    EditTemplate="{StaticResource DT.StopLine}"
+                                    Header="预警线"
+                                    Modifier="{Binding WarningLine}" />
                             </DockPanel>
 
 
@@ -1183,7 +1122,7 @@
                                 Binding="{Binding PerformanceBenchmark}" />
 
 
-                            <shared:ChangeableContainer
+                            <!--<shared:ChangeableContainer
                                 HorizontalContentAlignment="Stretch"
                                 Binding="{Binding InvestmentObjective}"
                                 ContentTemplate="{StaticResource DT.InvestmentObjective}" />
@@ -1223,7 +1162,7 @@
                             <shared:ChangeableContainer
                                 HorizontalContentAlignment="Stretch"
                                 Binding="{Binding InvestmentManagers}"
-                                ContentTemplate="{StaticResource DT.LongText}" />
+                                ContentTemplate="{StaticResource DT.LongText}" />-->
                         </hc:UniformSpacingPanel>
                     </DockPanel>
                     <!--#endregion-->

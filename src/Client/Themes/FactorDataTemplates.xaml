@@ -8,7 +8,7 @@
 
 
     <DataTemplate x:Key="DT.TextBox.Center">
-        <TextBox HorizontalContentAlignment="Center" Text="{Binding ., UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+        <TextBox HorizontalContentAlignment="Center" Text="{Binding Modifier.NewValue, RelativeSource={RelativeSource AncestorType=shared:ModifiableControl}, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
     </DataTemplate>
 
 
@@ -37,7 +37,7 @@
         <ComboBox
             Width="60"
             ItemsSource="{Binding Source={x:Static local:ElementsViewModel.RiskLevels}}"
-            SelectedItem="{Binding .}" />
+            SelectedItem="{Binding Modifier.NewValue, RelativeSource={RelativeSource AncestorType=shared:ModifiableControl}}" />
     </DataTemplate>
 
     <DataTemplate x:Key="DT.DurationInMonths">
@@ -982,4 +982,11 @@
         </StackPanel>
     </DataTemplate>
 
+
+    <DataTemplate x:Key="DT.StopLine">
+        <TextBox
+            Width="50"
+            HorizontalContentAlignment="Center"
+            Text="{Binding Modifier.NewValue, RelativeSource={RelativeSource AncestorType=shared:ModifiableControl}, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+    </DataTemplate>
 </ResourceDictionary>
