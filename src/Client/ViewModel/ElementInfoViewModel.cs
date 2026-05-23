@@ -73,7 +73,7 @@ public partial class DataExtraViewModel<T> : ObservableObject, IEquatable<DataEx
 
 
 [ForceNull(nameof(SealingRule.Type))]
-public partial class SealingInfoViewModel : ObservableObject, IViewModel<SealingRule, SealingInfoViewModel>, IDisplay<string>, IDataValidation
+public partial class SealingInfoViewModel : ObservableObject, IViewModel<SealingRule?, SealingInfoViewModel>, IDisplay<string>, IDataValidation
 {
     public bool IsValid()
     {
@@ -146,7 +146,7 @@ public partial class BankChangeableViewModel<T> : ChangeableViewModel<T, BankAcc
 
 
 
-public partial class FundFeeInfoViewModel : IDataValidation, IViewModel<FundFeeInfo, FundFeeInfoViewModel>
+public partial class FundFeeInfoViewModel : IDataValidation, IViewModel<FundFeeInfo?, FundFeeInfoViewModel>
 {
     public bool IsValid() => Type switch { FundFeeType.Ratio or FundFeeType.Fix => Fee > 0, FundFeeType.Other => Other?.Length > 0, _ => false };
 
@@ -345,7 +345,7 @@ public partial class FundPurchaseRuleViewModel : IDataValidation
 }
 
 //[AutoChangeableViewModel(typeof(FeePayInfo))]
-public partial class FeePayInfoViewModel : IViewModel<FeePayInfo, FeePayInfoViewModel>//, IEquatable<FeePayInfoViewModel>
+public partial class FeePayInfoViewModel : IViewModel<FeePayInfo?, FeePayInfoViewModel>
 {
     public override string? ToString()
     {
@@ -390,7 +390,7 @@ public partial class FundDurationViewModel : ObservableObject, IViewModel<int?, 
 }
 
 
-public partial class FundModeViewModel : ObservableObject, IViewModel<FundModeInfo, FundModeViewModel>, IDisplay<string>
+public partial class FundModeViewModel : ObservableObject, IViewModel<FundModeInfo?, FundModeViewModel>, IDisplay<string>
 {
 
 

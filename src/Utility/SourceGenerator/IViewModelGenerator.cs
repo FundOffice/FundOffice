@@ -521,7 +521,7 @@ internal static class SourceCodeBuilder
     private static string GenerateTransMethods(GenerationModel model)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($@"public static {model.SourceTypeName} Trans({model.ClassName} vm)
+        sb.AppendLine($@"public static {model.NullableParamTypeString} Trans({model.ClassName} vm)
 {{
     if (vm is null) return default!;
     return vm.Build();
@@ -607,7 +607,30 @@ internal static class SourceCodeBuilder
         {
             sb.AppendLine($"public bool Equals({model.NullableParamTypeString} other)");
             sb.AppendLine("{");
-            if (model.CanBeNull) sb.AppendLine("    if (other is null) return false;");
+
+            // 👇 修复：当 other 为 null 时，判断自身属性是否均为默认值
+            if (model.CanBeNull)
+            {
+                if (model.IsWrapperType)
+                {
+                    sb.AppendLine($"    if (other is null) return global::System.Collections.Generic.EqualityComparer<{model.ComparerTypeString}>.Default.Equals(Value, default);");
+                }
+                else
+                {
+                    sb.AppendLine("    if (other is null)");
+                    sb.AppendLine("    {");
+                    if (model.Properties.Count == 0)
+                    {
+                        sb.AppendLine("        return true;");
+                    }
+                    else
+                    {
+                        var checks = model.Properties.Select(p => $"global::System.Collections.Generic.EqualityComparer<{p.ComparerTypeString}>.Default.Equals({p.Name}, default)");
+                        sb.AppendLine($"        return {string.Join(" &&\n               ", checks)};");
+                    }
+                    sb.AppendLine("    }");
+                }
+            }
 
             if (model.IsWrapperType)
             {

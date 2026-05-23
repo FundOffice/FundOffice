@@ -12,8 +12,9 @@ public interface IViewModel<T>
 }
 
 
-public interface IViewModel<TValue, TViewModel>: IEquatable<TValue>
+public interface IViewModel<TValue, TViewModel>: IEquatable<TValue> where TViewModel : IViewModel<TValue, TViewModel>
 {
-    static abstract TValue Trans(TViewModel vm);
+    static abstract TValue? Trans(TViewModel vm);
+
     static abstract TViewModel Trans(TValue? vm);
 }

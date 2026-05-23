@@ -26,16 +26,14 @@ public readonly record struct PropertyMeta(
         : $"{Name} = new(Filter<{GenericArg.Replace("?", "")}>(FactorFields.{FieldKey}, g));";
 }
 
-//
-
-
-
 [Generator]
 public class FundFactorsCtorGenerator : IIncrementalGenerator
 {
     private const string TargetClass = "FundFactors";
     private const string SingletonMetadataName = "FMO.Models.SingletonFactorItem`1";
+    private const string SingletonValueMetadataName = "FMO.Models.SingletonValueFactorItem`1";
     private const string FactorItemMetadataName = "FMO.Models.FactorItem`1";
+    private const string ValueFactorItemMetadataName = "FMO.Models.ValueFactorItem`1";
     private const string FactFieldAttrName = "FactFieldAttribute";
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
@@ -78,14 +76,16 @@ public class FundFactorsCtorGenerator : IIncrementalGenerator
 
         var compilation = ctx.SemanticModel.Compilation;
         var singletonDef = compilation.GetTypeByMetadataName(SingletonMetadataName);
+        var singletonValueDef = compilation.GetTypeByMetadataName(SingletonValueMetadataName);
         var factorItemDef = compilation.GetTypeByMetadataName(FactorItemMetadataName);
+        var valueFactorItemDef = compilation.GetTypeByMetadataName(ValueFactorItemMetadataName);
 
         var builder = ImmutableArray.CreateBuilder<PropertyMeta>();
         foreach (var member in classSymbol.GetMembers().OfType<IPropertySymbol>())
         {
             if (member.IsStatic || member.IsIndexer || member.Type.TypeKind == TypeKind.Error) continue;
 
-            if (TryExtractProperty(member, singletonDef, factorItemDef, out var meta))
+            if (TryExtractProperty(member, singletonDef, singletonValueDef, factorItemDef, valueFactorItemDef, out var meta))
                 builder.Add(meta);
         }
 
@@ -95,7 +95,9 @@ public class FundFactorsCtorGenerator : IIncrementalGenerator
     private static bool TryExtractProperty(
         IPropertySymbol prop,
         INamedTypeSymbol? singletonDef,
+        INamedTypeSymbol? singletonValueDef,
         INamedTypeSymbol? factorItemDef,
+        INamedTypeSymbol? valueFactorItemDef,
         out PropertyMeta meta)
     {
         meta = default;
@@ -105,19 +107,25 @@ public class FundFactorsCtorGenerator : IIncrementalGenerator
         bool isFactorItem = false;
         bool isMatch = false;
 
-        if (singletonDef != null && namedType.OriginalDefinition.Equals(singletonDef, SymbolEqualityComparer.Default))
+        // 统一使用遍历基类的方式，兼容直接声明或继承自这些基类的派生类（如 ShareClassFactorItem）
+        var current = namedType;
+        while (current != null)
         {
-            isMatch = true; isFactorItem = false;
-        }
-        else if (factorItemDef != null)
-        {
-            var current = namedType;
-            while (current != null)
-            {
-                if (current.OriginalDefinition.Equals(factorItemDef, SymbolEqualityComparer.Default))
-                { isMatch = true; isFactorItem = true; break; }
-                current = current.BaseType;
-            }
+            var def = current.OriginalDefinition;
+
+            if (singletonDef != null && def.Equals(singletonDef, SymbolEqualityComparer.Default))
+            { isMatch = true; isFactorItem = false; break; }
+
+            if (singletonValueDef != null && def.Equals(singletonValueDef, SymbolEqualityComparer.Default))
+            { isMatch = true; isFactorItem = false; break; }
+
+            if (factorItemDef != null && def.Equals(factorItemDef, SymbolEqualityComparer.Default))
+            { isMatch = true; isFactorItem = true; break; }
+
+            if (valueFactorItemDef != null && def.Equals(valueFactorItemDef, SymbolEqualityComparer.Default))
+            { isMatch = true; isFactorItem = true; break; }
+
+            current = current.BaseType;
         }
 
         if (!isMatch) return false;
@@ -167,7 +175,6 @@ public class FundFactorsCtorGenerator : IIncrementalGenerator
         sb.AppendLine($"public partial class {TargetClass}");
         sb.AppendLine("{");
 
-
         sb.AppendLine();
 
         sb.AppendLine("    [global::System.Diagnostics.CodeAnalysis.SuppressMessage(\"Style\", \"IDE0055\", Justification = \"Generated\")]");
@@ -183,13 +190,6 @@ public class FundFactorsCtorGenerator : IIncrementalGenerator
         sb.AppendLine("        ShareClasses = new(Filter<ShareClass[]>(FactorFields.ShareClasses, g));");
         sb.AppendLine("        var _shareConfigMap = BuildInheritedShareConfigMap(ShareClasses.GetShares());\n");
 
-        //if (!shareTypes.Equals(default(PropertyMeta)))
-        //{
-        //    sb.AppendLine($"        ShareTypes = new(Filter<{shareTypes.GenericArg}>(FactorFields.{shareTypes.FieldKey}, g));");
-        //    sb.AppendLine("        _shareConfigMap = BuildInheritedShareConfigMap(ShareTypes.GetShares());");
-        //    sb.AppendLine();
-        //}
-
         foreach (var p in others)
         {
             sb.AppendLine($"        {p.InitCode}");
@@ -201,7 +201,6 @@ public class FundFactorsCtorGenerator : IIncrementalGenerator
         // ✅ 固定 hintName，因 .Collect() 保证全局只执行一次，不会冲突
         ctx.AddSource("FundFactors.AutoInit.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
     }
-
 
     /// <summary>
     /// 生成 FactorFields 常量类内容

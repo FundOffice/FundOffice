@@ -150,7 +150,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
 
     [ObservableProperty]
-    public partial ShareFactorViewModel<FundFeeInfo, FundFeeInfoViewModel>? ManageFee { get; set; }
+    public partial ShareFactorViewModel<FundFeeInfo?, FundFeeInfoViewModel>? ManageFee { get; set; }
 
 
 
@@ -190,7 +190,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSealingFund))]
-    public partial FactorModifiableViewModel<FundModeInfo, FundModeViewModel> FundModeInfo { get; set; } = null!;
+    public partial FactorModifiableViewModel<FundModeInfo?, FundModeViewModel> FundModeInfo { get; private set; } = null!;
 
  
 
@@ -354,7 +354,8 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         //var facts = db.GetCollection<IFundFact>().Find(x => x.FundId == FundId).OrderByDescending(x => x.FlowId).GroupBy(x => x.FactId).ToDictionary(x => x.Key, x => x.AsEnumerable());
 
         // var firstFlow = db.GetCollection<FundFlow>().Query().Where(x => x.FundId == FundId).OrderBy(x => x.Id).Select(x => x.Id).FirstOrDefault();
-        FundFactors facts = new FundFactors(db.GetCollection<IFundFactor>().Find(x => x.FundId == FundId).ToArray());
+        IFundFactor[] factories = db.GetCollection<IFundFactor>().Find(x => x.FundId == FundId).ToArray();
+        FundFactors facts = new FundFactors(factories);
 
         FillBy(facts, newValue);
 

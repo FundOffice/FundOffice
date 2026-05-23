@@ -20,7 +20,7 @@ public partial class FundFactors
     /// <summary>
     /// 证券基金类型
     /// </summary>
-    public SingletonFactorItem<SecurityFundType> SecurityFundType { get; private set; } = null!;
+    public SingletonValueFactorItem<SecurityFundType> SecurityFundType { get; private set; } = null!;
 
     /// <summary>
     /// 运作方式
@@ -35,17 +35,17 @@ public partial class FundFactors
     /// <summary>
     /// 风险等级
     /// </summary>
-    public SingletonFactorItem<RiskLevel> RiskLevel { get; private set; } = null!;
+    public SingletonValueFactorItem<RiskLevel> RiskLevel { get; private set; } = null!;
 
     /// <summary>
     /// 存续期（月）
     /// </summary>
-    public SingletonFactorItem<int> DurationInMonths { get; private set; } = null!;
+    public SingletonValueFactorItem<int> DurationInMonths { get; private set; } = null!;
 
     /// <summary>
     /// 结束日期
     /// </summary>
-    public SingletonFactorItem<DateOnly> ExpirationDate { get; private set; } = null!;
+    public SingletonValueFactorItem<DateOnly> ExpirationDate { get; private set; } = null!;
 
 
     // ==================== 账户信息 ====================
@@ -66,17 +66,17 @@ public partial class FundFactors
     /// <summary>
     /// 止损线
     /// </summary>
-    public SingletonFactorItem<decimal> StopLine { get; private set; } = null!;
+    public SingletonValueFactorItem<decimal> StopLine { get; private set; } = null!;
 
     /// <summary>
     /// 预警线
     /// </summary>
-    public SingletonFactorItem<decimal> WarningLine { get; private set; } = null!;
+    public SingletonValueFactorItem<decimal> WarningLine { get; private set; } = null!;
 
     /// <summary>
     /// 巨额赎回比例
     /// </summary>
-    public SingletonFactorItem<decimal> HugeRedemptionRatio { get; private set; } = null!;
+    public SingletonValueFactorItem<decimal> HugeRedemptionRatio { get; private set; } = null!;
 
 
     // ==================== 开放/赎回规则 ====================

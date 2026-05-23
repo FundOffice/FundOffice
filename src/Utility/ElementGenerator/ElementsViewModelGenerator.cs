@@ -9,13 +9,18 @@ namespace SG;
 
 [Generator]
 public class ElementsViewModelGenerator : IIncrementalGenerator
-{
+{ 
+
     // [核心修复] 自定义格式：获取全限定名但不包含泛型参数（如 <T>），防止拼接时出现 <T><string> 的错误
     private static readonly SymbolDisplayFormat FullyQualifiedWithoutGenericsFormat = new SymbolDisplayFormat(
         globalNamespaceStyle: SymbolDisplayGlobalNamespaceStyle.Included,
         typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
         genericsOptions: SymbolDisplayGenericsOptions.None,
         miscellaneousOptions: SymbolDisplayMiscellaneousOptions.UseSpecialTypes | SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers | SymbolDisplayMiscellaneousOptions.UseErrorTypeSymbolName);
+
+    // [新增] 包含可空引用类型修饰符（?）的全限定名格式，专门用于精准还原手写属性的泛型参数
+    private static readonly SymbolDisplayFormat FullyQualifiedWithNullableFormat = SymbolDisplayFormat.FullyQualifiedFormat
+        .AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -132,8 +137,13 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
 
             debug = debug with { HasFundFactors = true, FundFactors = fundFactorsSymbol.ToDisplayString() };
 
+            // [修改点 1] 增加对 Value 类型因子的查找
             var singletonBase = FindTypeGlobally(compilation, "SingletonFactorItem");
+            var singletonValueBase = FindTypeGlobally(compilation, "SingletonValueFactorItem");
             var factorBase = FindTypeGlobally(compilation, "FactorItem");
+            var valueFactorBase = FindTypeGlobally(compilation, "ValueFactorItem");
+
+            var supportedBases = new[] { singletonBase, singletonValueBase, factorBase, valueFactorBase };
 
             debug = debug with
             {
@@ -184,14 +194,18 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
                     continue;
                 }
 
-                var matchedBase = FindMatchingGenericBase(prop.Type, singletonBase, factorBase);
+                // [修改点 2] 传入所有支持的基类数组
+                var matchedBase = FindMatchingGenericBase(prop.Type, supportedBases);
                 if (matchedBase is null)
                 {
                     excludedProps.Add($"{prop.Name} (Not a supported Factor type)");
                     continue;
                 }
 
-                bool isSingleton = SymbolEqualityComparer.Default.Equals(matchedBase.OriginalDefinition, singletonBase);
+                // [修改点 3] 更新 isSingleton 的判断逻辑，包含 SingletonValueFactorItem
+                bool isSingleton = SymbolEqualityComparer.Default.Equals(matchedBase.OriginalDefinition, singletonBase) ||
+                                   SymbolEqualityComparer.Default.Equals(matchedBase.OriginalDefinition, singletonValueBase);
+
                 var tSymbol = matchedBase.TypeArguments[0];
                 string tName = tSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
@@ -216,14 +230,14 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
                 if (isSingleton)
                 {
                     baseTypeStr = isDoubleTemplate
-                        ? $"{fmvFullName}<{tNameForGeneric}, {vmName}>"
-                        : $"{fmvFullName}<{tNameForGeneric}>";
+                        ? $"{fmvFullName}<{tNameForGeneric}?, {vmName}>"
+                        : $"{fmvFullName}<{tNameForGeneric}?>";
                 }
                 else
                 {
                     baseTypeStr = isDoubleTemplate
-                        ? $"{sfvFullName}<{tNameForGeneric}, {vmName}>"
-                        : $"{sfvFullName}<{tNameForGeneric}>";
+                        ? $"{sfvFullName}<{tNameForGeneric}?, {vmName}>"
+                        : $"{sfvFullName}<{tNameForGeneric}?>";
                 }
 
                 var meta = new PropertyMeta(prop.Name, isSingleton, tName, vmName, isDoubleTemplate, baseTypeStr);
@@ -241,21 +255,24 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
                             includeInFillBy = true;
 
                             // [核心修复] 对于手写属性，必须使用开发者在 ViewModel 中实际声明的泛型参数，
-                            // 否则会导致生成的 new() 实例化代码泛型参数不匹配（例如丢失双泛型或可空类型标识）。
+                            // 否则会导致生成的 new() 实例化代码泛型参数不匹配（例如丢失双泛型或可空类型标识 ?）。
                             var typeArgs = vmPropType.TypeArguments;
-                            string manualTName = typeArgs[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                            string manualVmName = typeArgs.Length > 1 ? typeArgs[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) : manualTName;
+
+                            // 修复点：使用 FullyQualifiedWithNullableFormat 确保保留 ? 后缀
+                            string manualTName = typeArgs[0].ToDisplayString(FullyQualifiedWithNullableFormat);
+                            string manualVmName = typeArgs.Length > 1 ? typeArgs[1].ToDisplayString(FullyQualifiedWithNullableFormat) : manualTName;
                             bool manualIsDoubleTemplate = typeArgs.Length > 1;
 
                             var validTypeArgs = typeArgs.Length > 2 ? typeArgs.Take(2) : typeArgs;
                             string manualBaseTypeStr;
                             if (isSingleton)
                             {
-                                manualBaseTypeStr = $"{fmvFullName}<{string.Join(", ", validTypeArgs.Select(t => t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))}>";
+                                manualBaseTypeStr = $"{fmvFullName}<{string.Join(", ", validTypeArgs.Select(t => t.ToDisplayString(FullyQualifiedWithNullableFormat)))}>";
                             }
                             else
                             {
-                                manualBaseTypeStr = $"{sfvFullName}<{string.Join(", ", validTypeArgs.Select(t => t.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)))}>";
+                                var args = validTypeArgs.Select(t => t.ToDisplayString(FullyQualifiedWithNullableFormat));
+                                manualBaseTypeStr = $"{sfvFullName}<{string.Join(", ", args)}>";
                             }
 
                             meta = meta with
@@ -473,7 +490,8 @@ public partial class ElementsViewModel{{inpcInheritance}}
         return null;
     }
 
-    private static INamedTypeSymbol? FindMatchingGenericBase(ITypeSymbol type, INamedTypeSymbol? singletonBase, INamedTypeSymbol? factorBase)
+    // [修改点 4] 支持传入多个基类进行匹配
+    private static INamedTypeSymbol? FindMatchingGenericBase(ITypeSymbol type, INamedTypeSymbol?[] bases)
     {
         var current = type as INamedTypeSymbol;
         while (current is not null)
@@ -481,10 +499,11 @@ public partial class ElementsViewModel{{inpcInheritance}}
             if (current.IsGenericType)
             {
                 var def = current.OriginalDefinition;
-                if (singletonBase is not null && SymbolEqualityComparer.Default.Equals(def, singletonBase))
-                    return current;
-                if (factorBase is not null && SymbolEqualityComparer.Default.Equals(def, factorBase))
-                    return current;
+                foreach (var b in bases)
+                {
+                    if (b is not null && SymbolEqualityComparer.Default.Equals(def, b))
+                        return current;
+                }
             }
             current = current.BaseType;
         }

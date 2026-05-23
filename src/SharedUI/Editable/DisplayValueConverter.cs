@@ -13,6 +13,7 @@ public class DisplayValueConverter : IValueConverter
         {
             IDisplay t => t.Transfrom(),
             Enum e => EnumDescriptionTypeConverter.GetEnumDescription(e),
+            null => "未设置",
             _ => value?.ToString() ?? ""
         };
     }

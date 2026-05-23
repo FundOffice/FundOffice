@@ -14,17 +14,17 @@ namespace FMO.Shared;
 public class FactorChangeEventArgs<TProperty>
 {
 
-    public FactorChangeEventArgs(FactorModifiableViewModel<TProperty> sender, ValueChangeKind kind)
-    {
-        Kind = kind;
-        ShareId = sender.ShareId;
-        FlowId = sender.FlowId;
-        FundId = sender.FundId;
-        FactorId = sender.FactorId;
-        NewValue = sender.NewValue;
-        OldValue = sender.OldValue;
-        FallbackValue = sender.FallbackValue;
-    }
+    //public FactorChangeEventArgs(FactorModifiableViewModel<TProperty> sender, ValueChangeKind kind)
+    //{
+    //    Kind = kind;
+    //    ShareId = sender.ShareId;
+    //    FlowId = sender.FlowId;
+    //    FundId = sender.FundId;
+    //    FactorId = sender.FactorId;
+    //    NewValue = sender.NewValue;
+    //    OldValue = sender.OldValue;
+    //    FallbackValue = sender.FallbackValue;
+    //}
 
     public FactorChangeEventArgs(ValueChangeKind kind, int shareId, int flowId, int fundId, TProperty? oldValue, TProperty? newValue, TProperty? fallbackValue)
     {
@@ -75,7 +75,7 @@ public class FactorChangeEventArgs<TProperty>
 
 public delegate void FactorChangedHandler<T>(FactorChangeEventArgs<T> e);
 
-public partial class FactorModifiableViewModel<TValue> : ModifiableViewModel<TValue>, IValueModifier
+public partial class FactorModifiableViewModel<TValue> : ModifiableViewModel<TValue?>, IValueModifier
 {
 
     public string Id => $"{FundId}.{FlowId}.{ShareId}.{FactorId}";
@@ -92,8 +92,8 @@ public partial class FactorModifiableViewModel<TValue> : ModifiableViewModel<TVa
 
     protected override void NotifyChanged(ValueChangeKind kind, TValue? value)
     {
-        if (kind is ValueChangeKind.Added or ValueChangeKind.Modified)
-            SaveChange(FundId, FactorId, FlowId, ShareId, value);
+        if (kind is ValueChangeKind.Added or ValueChangeKind.Modified && value is not null)
+            SaveChange(FundId, FactorId, FlowId, ShareId, (dynamic)value!);
         else if (kind is ValueChangeKind.Deleted)
             RemoveFact(FundId, FactorId, FlowId, ShareId);
 
@@ -101,11 +101,25 @@ public partial class FactorModifiableViewModel<TValue> : ModifiableViewModel<TVa
     }
 
 
-    void SaveChange<T>(int fundId, string factId, int flowId, int shareId, T data)
+
+    // 定义两个重载方法，编译器会根据 TValue 是 struct 还是 class 自动选择
+
+    void SaveChange<T>(int fundId, string factId, int flowId, int shareId, T value) 
     {
+        // 走引用类型逻辑：直接取值
         using var db = DbHelper.Base();
-        db.GetCollection<IFundFactor>().Upsert(new FundFactor<T>(factId, fundId, flowId, shareId, data));
+        db.GetCollection<IFundFactor>().Upsert(new FundFactor<T>(factId, fundId, flowId, shareId, value));
     }
+
+    //void SaveChange<T>(int fundId, string factId, int flowId, int shareId, T? source) where T : struct
+    //{
+    //    if (source is null) return;
+
+    //    var value = source.Value;
+    //    using var db = DbHelper.Base();
+    //    db.GetCollection<IFundFactor>().Upsert(new FundFactor<T>(factId, fundId, flowId, shareId, value));
+    //}
+
 
     void RemoveFact(int fundId, string factId, int flowId, int shareId)
     {
@@ -114,7 +128,7 @@ public partial class FactorModifiableViewModel<TValue> : ModifiableViewModel<TVa
     }
 }
 
-public partial class FactorModifiableViewModel<TValue, TViewModel> : ModifiableViewModel<TValue, TViewModel>, IValueModifier where TViewModel : IViewModel<TValue, TViewModel>
+public partial class FactorModifiableViewModel<TValue, TViewModel> : ModifiableViewModel<TValue?, TViewModel>, IValueModifier where TViewModel : IViewModel<TValue?, TViewModel>
 {
 
 
@@ -132,8 +146,8 @@ public partial class FactorModifiableViewModel<TValue, TViewModel> : ModifiableV
 
     protected override void NotifyChanged(ValueChangeKind kind, TViewModel value)
     {
-        if (kind is ValueChangeKind.Added or ValueChangeKind.Modified)
-            SaveChange(FundId, FactorId, FlowId, ShareId, TViewModel.Trans(value));
+        if (kind is ValueChangeKind.Added or ValueChangeKind.Modified && TViewModel.Trans(value) is TValue val)
+            SaveChange(FundId, FactorId, FlowId, ShareId, (dynamic)val!);
         else if (kind is ValueChangeKind.Deleted)
             RemoveFact(FundId, FactorId, FlowId, ShareId);
 
@@ -158,7 +172,7 @@ public partial class FactorModifiableViewModel<TValue, TViewModel> : ModifiableV
 
 /// <summary>
 public partial class ShareFactorViewModel<TValue> : ObservableObject, IFactorModifier
-{ 
+{
 
     [SetsRequiredMembers]
     public ShareFactorViewModel(int fundId, int flowId, string factorId, ShareClass[] sc, (TValue? Old, TValue? New)[] data)
@@ -303,18 +317,18 @@ public partial class ShareFactorViewModel<TValue> : ObservableObject, IFactorMod
         unit.ShareId = -1;
         unit.ShareName = null;
 
- 
+
         Data.Clear();
         Data.Add(unit);
     }
 
-    
+
 }
 
 
 
-public partial class ShareFactorViewModel<TValue, TViewModel> : ObservableObject, IFactorModifier where TViewModel : IViewModel<TValue, TViewModel>
-{ 
+public partial class ShareFactorViewModel<TValue, TViewModel> : ObservableObject, IFactorModifier where TViewModel : IViewModel<TValue?, TViewModel>
+{
 
     [SetsRequiredMembers]
     public ShareFactorViewModel(int fundId, int flowId, string factorId, ShareClass[] sc, (TValue? Old, TValue? New)[] data)
@@ -330,7 +344,7 @@ public partial class ShareFactorViewModel<TValue, TViewModel> : ObservableObject
         {
             CanDivide = sc.Length > 1;
             CanMerge = false;
-            var u = new FactorModifiableViewModel<TValue, TViewModel>
+            var u = new FactorModifiableViewModel<TValue?, TViewModel>
             {
                 FundId = fundId,
                 FlowId = flowId,
@@ -351,7 +365,7 @@ public partial class ShareFactorViewModel<TValue, TViewModel> : ObservableObject
             for (int i = 0; i < sc.Length; i++)
             {
                 var c = sc[i];
-                var u = new FactorModifiableViewModel<TValue, TViewModel>
+                var u = new FactorModifiableViewModel<TValue?, TViewModel>
                 {
                     FundId = fundId,
                     FlowId = flowId,
@@ -369,7 +383,7 @@ public partial class ShareFactorViewModel<TValue, TViewModel> : ObservableObject
     }
 
 
-    public ObservableCollection<FactorModifiableViewModel<TValue, TViewModel>> Data { get; } = new();
+    public ObservableCollection<FactorModifiableViewModel<TValue?, TViewModel>> Data { get; } = new();
 
     public int FlowId { get; }
     public string FactorId { get; }
@@ -423,7 +437,7 @@ public partial class ShareFactorViewModel<TValue, TViewModel> : ObservableObject
         for (int i = 0; i < sc.Length; i++)
         {
             var c = sc[i];
-            var u = new FactorModifiableViewModel<TValue, TViewModel>
+            var u = new FactorModifiableViewModel<TValue?, TViewModel>
             {
                 FundId = FundId,
                 FlowId = FlowId,
@@ -441,7 +455,7 @@ public partial class ShareFactorViewModel<TValue, TViewModel> : ObservableObject
     }
 
     [RelayCommand]
-    public void Unify(FactorModifiableViewModel<TValue, TViewModel> unit)
+    public void Unify(FactorModifiableViewModel<TValue?, TViewModel> unit)
     {
         CanDivide = true;
         CanMerge = false;
@@ -450,7 +464,7 @@ public partial class ShareFactorViewModel<TValue, TViewModel> : ObservableObject
 
         ///更新到数据库，删除所有要素
         using var db = DbHelper.Base();
-        var e = db.GetCollection<IFundFactor>().DeleteMany(x=> x.FlowId == FlowId && x.FactorId == FactorId && x.FundId == FundId);
+        var e = db.GetCollection<IFundFactor>().DeleteMany(x => x.FlowId == FlowId && x.FactorId == FactorId && x.FundId == FundId);
         db.GetCollection<IFundFactor>().Insert(new FundFactor<TValue>(FactorId, FundId, FlowId, unit.OldValue!));
 
 
@@ -461,5 +475,5 @@ public partial class ShareFactorViewModel<TValue, TViewModel> : ObservableObject
         Data.Clear();
         Data.Add(unit);
     }
-     
+
 }
