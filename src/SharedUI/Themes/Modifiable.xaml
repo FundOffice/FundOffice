@@ -371,7 +371,7 @@
                                     <ContentPresenter
                                         HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                         VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                        Content="{Binding Modifier, RelativeSource={RelativeSource TemplatedParent}}"
+                                        Content="{Binding Modifier.NewValue, RelativeSource={RelativeSource TemplatedParent}}"
                                         ContentTemplate="{TemplateBinding EditTemplate}" />
 
                                 </DockPanel>

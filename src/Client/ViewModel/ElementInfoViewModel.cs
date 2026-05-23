@@ -371,8 +371,8 @@ public partial class AgencyInfoViewModel : IDataValidation, IViewModel<AgencyInf
     public override string ToString() => HasAgency switch { true when !string.IsNullOrWhiteSpace(Name) => Name!, false => "-", _ => "未设置" };
 }
 
-[AutoChangeableViewModel(typeof(TemporarilyOpenInfo))]
-public partial class TemporarilyOpenInfoViewModel : IDataValidation
+ 
+public partial class TemporarilyOpenInfoViewModel : IDataValidation, IViewModel<TemporarilyOpenInfo?, TemporarilyOpenInfoViewModel>
 {
     public bool IsValid() => !IsAllowed || (AllowPurchase || AllowRedemption);
 

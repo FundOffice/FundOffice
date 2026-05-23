@@ -195,7 +195,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     [NotifyPropertyChangedFor(nameof(IsSealingFund))]
     public partial FactorModifiableViewModel<FundModeInfo?, FundModeViewModel> FundModeInfo { get; private set; } = null!;
 
- 
+
 
     //[ObservableProperty]
     //public partial ElementItemViewModelSealing? LockingRule { get; set; }
@@ -203,14 +203,14 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     [ObservableProperty]
     public partial SealingType[]? SealingTypes { get; set; } = [SealingType.No, SealingType.Has, SealingType.Other];
 
-    [ObservableProperty]
-    public partial bool IsSealingFund { get; set; }
+
+    public bool IsSealingFund => FundModeInfo.OldValue?.Mode == FundMode.Close;
 
 
 
     [ObservableProperty]
     public partial ChangeableViewModel<FundElements, string>? OpenDayInfo { get; set; }
-     
+
 
 
 
@@ -225,10 +225,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     [ObservableProperty]
     public partial ChangeableViewModel<FundElements, string>? InvestmentManagers { get; set; }
 
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, TemporarilyOpenInfoViewModel>? TemporarilyOpenInfo { get; set; }
+     
 
 
 
@@ -258,12 +255,12 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
 
 
-     
-      
 
 
 
- 
+
+
+
     /// <summary>
     /// 单一份额
     /// </summary>
@@ -329,10 +326,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         if (elements is null)
             elements = new FundElements { Id = FundId };
 
-
-        //var facts = db.GetCollection<IFundFact>().Find(x => x.FundId == FundId).OrderByDescending(x => x.FlowId).GroupBy(x => x.FactId).ToDictionary(x => x.Key, x => x.AsEnumerable());
-
-        // var firstFlow = db.GetCollection<FundFlow>().Query().Where(x => x.FundId == FundId).OrderBy(x => x.Id).Select(x => x.Id).FirstOrDefault();
+         
         IFundFactor[] factories = db.GetCollection<IFundFactor>().Find(x => x.FundId == FundId).ToArray();
         FundFactors facts = new FundFactors(factories);
 
@@ -378,11 +372,13 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         ExpirationDate.Changed += e =>
             DataHub.Push(new EntityChanged<FundElements, DateOnly, int>(Id, nameof(FundElements.ExpirationDate), e.OldValue ?? default, e.NewValue ?? default));
 
+        // 开放/封闭切换
+        FundModeInfo.Changed += e => OnPropertyChanged(nameof(IsSealingFund)); 
 
 
         #region MyRegion
 
- 
+
 
         CollectionAccount = new BankChangeableViewModel<FundElements>
         {
@@ -480,7 +476,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         };
         OutsourcingFee.Init(elements);
 
-  
+
 
 
         PerformanceBenchmark = new()
@@ -535,20 +531,11 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         };
         InvestmentManagers.Init(elements);
 
-
-        TemporarilyOpenInfo = new ChangeableViewModel<FundElements, TemporarilyOpenInfoViewModel>
-        {
-            Label = "临开规则",
-            InitFunc = x => new(x.TemporarilyOpenInfo.GetValue(newValue).Value),
-            InheritedFunc = x => x.TemporarilyOpenInfo.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => { if (y is not null) x.TemporarilyOpenInfo!.SetValue(y.Build(), newValue); },
-            ClearFunc = x => x.TemporarilyOpenInfo.RemoveValue(newValue),
-        };
-        TemporarilyOpenInfo.Init(elements);
+ 
 
         #endregion
- 
-       
+
+
 
 
         CoolingPeriod = new ChangeableViewModel<FundElements, CoolingPeriodInfoViewModel>

@@ -24,7 +24,7 @@
             </DataTemplate>
 
             <DataTemplate x:Key="FactorEditTemplate">
-                <ContentPresenter VerticalAlignment="Center" Content="{Binding NewValue}" />
+                <ContentPresenter VerticalAlignment="Center" Content="{Binding}" />
             </DataTemplate>
 
             <Style BasedOn="{StaticResource {x:Type shared:FactorModifiableControl}}" TargetType="shared:FactorModifiableControl">
@@ -523,38 +523,6 @@
 
 
 
-            <DataTemplate x:Key="DT.FeePay">
-                <DockPanel DataContext="{Binding NewValue}" LastChildFill="False">
-                    <ComboBox
-                        Width="90"
-                        Margin="4,0"
-                        BorderThickness="0"
-                        ItemsSource="{Binding DataContext.FeePayFrequencies, RelativeSource={RelativeSource AncestorType=local:ElementsView}}"
-                        SelectedItem="{Binding Type}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-
-
-                    <TextBox
-                        x:Name="other"
-                        MinWidth="300"
-                        Text="{Binding Other, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                        Visibility="Collapsed" />
-
-
-                </DockPanel>
-                <DataTemplate.Triggers>
-                    <DataTrigger Binding="{Binding NewValue.Type}" Value="Other">
-                        <Setter TargetName="other" Property="Visibility" Value="Visible" />
-                    </DataTrigger>
-
-                </DataTemplate.Triggers>
-            </DataTemplate>
-
 
             <DataTemplate x:Key="DT.Cool">
                 <DockPanel DataContext="{Binding NewValue}" LastChildFill="False">
@@ -896,18 +864,6 @@
                                 EditTemplate="{StaticResource DT.Agency}"
                                 Header="外包机构"
                                 Modifier="{Binding OutsourcingInfo}" />
-                            <!--<WrapPanel>
-
-                                <shared:ChangeableContainer Binding="{Binding OutsourcingInfo}" EditTemplate="{StaticResource CT.Agency}" />
-
-                                <shared:ChangeableContainer
-                                    Margin="20,0"
-                                    Binding="{Binding OutsourcingFee}"
-                                    ContentTemplate="{StaticResource DT.Fee}"
-                                    EditTemplate="{StaticResource CT.Fee}"
-                                    Visibility="{Binding OutsourcingInfo.NewValue.HasAgency, Converter={StaticResource Boolean2VisibilityConverter}}" />
-                            </WrapPanel>-->
-
 
 
 
@@ -927,7 +883,7 @@
                             <TextBlock Style="{StaticResource CategoryTab}" Text="申赎相关" />
                         </Border>
                         <StackPanel>
-                            <DockPanel LastChildFill="False">
+                            <DockPanel LastChildFill="False" Visibility="{Binding IsSealingFund, Converter={StaticResource Boolean2VisibilityReConverter}}">
                                 <TextBlock
                                     VerticalAlignment="Center"
                                     Foreground="Gray"
@@ -947,49 +903,12 @@
 
                             </DockPanel>
 
-                            <shared:ChangeableContainer Binding="{Binding TemporarilyOpenInfo}">
-                                <shared:ChangeableContainer.EditTemplate>
-                                    <ControlTemplate TargetType="shared:ChangeableContainer">
-                                        <DockPanel
-                                            HorizontalAlignment="Left"
-                                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                            Background="Transparent"
-                                            DataContext="{Binding ., RelativeSource={RelativeSource Mode=TemplatedParent}}"
-                                            LastChildFill="False">
 
-                                            <shared:ChangeableControlButtons DockPanel.Dock="Right" />
+                            <shared:ModifiableControl
+                                HorizontalAlignment="Left"
+                                Header="临时开放"
+                                Modifier="{Binding TemporarilyOpenInfo}" />
 
-                                            <CheckBox
-                                                VerticalContentAlignment="Center"
-                                                Content="临时开放"
-                                                IsChecked="{Binding Binding.NewValue.IsAllowed}" />
-
-                                            <ContentPresenter
-                                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                Content="{Binding Binding}"
-                                                ContentTemplate="{TemplateBinding ContentTemplate}"
-                                                Visibility="{Binding NewValue.IsAllowed, Converter={StaticResource Boolean2VisibilityConverter}}" />
-                                        </DockPanel>
-                                    </ControlTemplate>
-                                </shared:ChangeableContainer.EditTemplate>
-                                <shared:ChangeableContainer.ContentTemplate>
-                                    <DataTemplate>
-                                        <DockPanel Margin="10,0,0,0" LastChildFill="False">
-                                            <CheckBox Content="仅按新规开放" IsChecked="{Binding NewValue.IsLimited}" />
-                                            <CheckBox
-                                                Margin="5,0,0,0"
-                                                Content="申购"
-                                                IsChecked="{Binding NewValue.AllowPurchase}"
-                                                IsEnabled="{Binding NewValue.IsAllowed}" />
-                                            <CheckBox
-                                                Margin="5,0,0,0"
-                                                Content="赎回"
-                                                IsChecked="{Binding NewValue.AllowRedemption}"
-                                                IsEnabled="{Binding NewValue.IsAllowed}" />
-                                        </DockPanel>
-                                    </DataTemplate>
-                                </shared:ChangeableContainer.ContentTemplate>
-                            </shared:ChangeableContainer>
 
                             <!--  巨额赎回  -->
                             <shared:ChangeableContainer Binding="{Binding HugeRedemptionRatio}">

@@ -8,7 +8,7 @@
 
 
     <DataTemplate x:Key="DT.TextBox.Center">
-        <TextBox HorizontalContentAlignment="Center" Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+        <TextBox HorizontalContentAlignment="Center" Text="{Binding ., UpdateSourceTrigger=PropertyChanged, Delay=300}" />
     </DataTemplate>
 
 
@@ -16,7 +16,7 @@
         <ComboBox
             Width="120"
             ItemsSource="{Binding Source={x:Static local:ElementsViewModel.SecurityFundTypes}}"
-            SelectedItem="{Binding NewValue}">
+            SelectedItem="{Binding .}">
             <ComboBox.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
@@ -29,7 +29,7 @@
         <ComboBox
             Width="60"
             ItemsSource="{Binding Source={x:Static local:ElementsViewModel.SecurityFundTypes}}"
-            SelectedItem="{Binding NewValue}" />
+            SelectedItem="{Binding .}" />
     </DataTemplate>
 
 
@@ -37,7 +37,7 @@
         <ComboBox
             Width="60"
             ItemsSource="{Binding Source={x:Static local:ElementsViewModel.RiskLevels}}"
-            SelectedItem="{Binding NewValue}" />
+            SelectedItem="{Binding .}" />
     </DataTemplate>
 
     <DataTemplate x:Key="DT.DurationInMonths">
@@ -45,14 +45,14 @@
             <TextBox
                 Width="50"
                 HorizontalContentAlignment="Center"
-                Text="{Binding NewValue.Value, TargetNullValue='', UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                Text="{Binding Value, TargetNullValue='', UpdateSourceTrigger=PropertyChanged, Delay=300}" />
             <TextBlock VerticalAlignment="Center" Text="个月" />
         </DockPanel>
     </DataTemplate>
 
 
     <DataTemplate x:Key="DT.ExpirationDate">
-        <DatePicker Width="100" SelectedDate="{Binding NewValue.Value, UpdateSourceTrigger=PropertyChanged, Delay=300, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
+        <DatePicker Width="100" SelectedDate="{Binding Value, UpdateSourceTrigger=PropertyChanged, Delay=300, Converter={StaticResource DataTimeDateOnlySwitchConverter}}" />
     </DataTemplate>
 
 
@@ -62,7 +62,7 @@
                 Width="80"
                 Margin="4,0,0,0"
                 ItemsSource="{Binding Source={x:Static local:ElementsViewModel.FundModes}}"
-                SelectedItem="{Binding NewValue.Mode}">
+                SelectedItem="{Binding Mode}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
@@ -73,12 +73,12 @@
             <TextBox
                 x:Name="other"
                 MinWidth="100"
-                Text="{Binding NewValue.Other, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                Text="{Binding Other, UpdateSourceTrigger=PropertyChanged, Delay=300}"
                 Visibility="Collapsed" />
 
         </DockPanel>
         <DataTemplate.Triggers>
-            <DataTrigger Binding="{Binding NewValue.Mode}" Value="Other">
+            <DataTrigger Binding="{Binding Mode}" Value="Other">
                 <Setter TargetName="other" Property="Visibility" Value="Visible" />
             </DataTrigger>
         </DataTemplate.Triggers>
@@ -93,7 +93,7 @@
                 Width="70"
                 Margin="4,0"
                 ItemsSource="{Binding DataContext.SealingTypes, RelativeSource={RelativeSource AncestorType=local:ElementsView}}"
-                SelectedItem="{Binding NewValue.Type}">
+                SelectedItem="{Binding Type}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
@@ -106,7 +106,7 @@
                 <TextBox
                     MinWidth="60"
                     Padding="6,0,30,0"
-                    Text="{Binding NewValue.Month, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                    Text="{Binding Month, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
                 <TextBlock
                     Margin="6,0"
                     HorizontalAlignment="Right"
@@ -117,15 +117,15 @@
             <TextBox
                 x:Name="other"
                 MinWidth="100"
-                Text="{Binding NewValue.Extra, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                Text="{Binding Extra, UpdateSourceTrigger=PropertyChanged, Delay=300}"
                 Visibility="Collapsed" />
 
         </DockPanel>
         <DataTemplate.Triggers>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Other">
+            <DataTrigger Binding="{Binding Type}" Value="Other">
                 <Setter TargetName="other" Property="Visibility" Value="Visible" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Has">
+            <DataTrigger Binding="{Binding Type}" Value="Has">
                 <Setter TargetName="mon" Property="Visibility" Value="Visible" />
             </DataTrigger>
         </DataTemplate.Triggers>
@@ -135,7 +135,7 @@
 
 
     <DataTemplate x:Key="DT.Subscription">
-        <WrapPanel DataContext="{Binding NewValue}">
+        <WrapPanel>
             <DockPanel Margin="0,0,10,0">
                 <DockPanel.Resources>
                     <Style TargetType="TextBlock">
@@ -262,13 +262,13 @@
                 <Setter TargetName="fill" Property="Visibility" Value="Visible" />
                 <Setter TargetName="yuan" Property="Visibility" Value="Collapsed" />
             </Trigger>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Ratio">
+            <DataTrigger Binding="{Binding Type}" Value="Ratio">
                 <Setter TargetName="a" Property="Visibility" Value="Visible" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Fix">
+            <DataTrigger Binding="{Binding Type}" Value="Fix">
                 <Setter TargetName="b" Property="Visibility" Value="Visible" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding NewValue.PayMethod}" Value="Other">
+            <DataTrigger Binding="{Binding PayMethod}" Value="Other">
                 <Setter TargetName="po" Property="Visibility" Value="Visible" />
             </DataTrigger>
         </DataTemplate.Triggers>
@@ -276,7 +276,7 @@
 
 
     <DataTemplate x:Key="DT.Purchase">
-        <WrapPanel DataContext="{Binding NewValue}">
+        <WrapPanel>
             <DockPanel Margin="0,0,10,0">
                 <DockPanel.Resources>
                     <Style TargetType="TextBlock">
@@ -413,13 +413,13 @@
                 <Setter TargetName="fill" Property="Visibility" Value="Visible" />
                 <Setter TargetName="yuan" Property="Visibility" Value="Collapsed" />
             </Trigger>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Ratio">
+            <DataTrigger Binding="{Binding Type}" Value="Ratio">
                 <Setter TargetName="a" Property="Visibility" Value="Visible" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Fix">
+            <DataTrigger Binding="{Binding Type}" Value="Fix">
                 <Setter TargetName="b" Property="Visibility" Value="Visible" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding NewValue.PayMethod}" Value="Other">
+            <DataTrigger Binding="{Binding PayMethod}" Value="Other">
                 <Setter TargetName="po" Property="Visibility" Value="Visible" />
             </DataTrigger>
         </DataTemplate.Triggers>
@@ -428,7 +428,7 @@
 
 
     <DataTemplate x:Key="DT.Fee">
-        <WrapPanel DataContext="{Binding NewValue}">
+        <WrapPanel>
             <CheckBox IsChecked="{Binding HasFee}" />
 
             <ComboBox
@@ -496,21 +496,21 @@
             </DockPanel>
         </WrapPanel>
         <DataTemplate.Triggers>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Other">
+            <DataTrigger Binding="{Binding Type}" Value="Other">
                 <Setter TargetName="other" Property="Visibility" Value="Visible" />
                 <Setter TargetName="mon" Property="Visibility" Value="Collapsed" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Ratio">
+            <DataTrigger Binding="{Binding Type}" Value="Ratio">
                 <Setter TargetName="a" Property="Visibility" Value="Visible" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Fix">
+            <DataTrigger Binding="{Binding Type}" Value="Fix">
                 <Setter TargetName="b" Property="Visibility" Value="Visible" />
             </DataTrigger>
         </DataTemplate.Triggers>
     </DataTemplate>
 
     <DataTemplate x:Key="DT.RedemptionFee">
-        <WrapPanel DataContext="{Binding NewValue}">
+        <WrapPanel>
             <CheckBox IsChecked="{Binding HasFee}" />
 
             <ComboBox
@@ -620,17 +620,17 @@
 
         </WrapPanel>
         <DataTemplate.Triggers>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Other">
+            <DataTrigger Binding="{Binding Type}" Value="Other">
                 <Setter TargetName="other" Property="Visibility" Value="Visible" />
                 <Setter TargetName="mon" Property="Visibility" Value="Collapsed" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Ratio">
+            <DataTrigger Binding="{Binding Type}" Value="Ratio">
                 <Setter TargetName="a" Property="Visibility" Value="Visible" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Fix">
+            <DataTrigger Binding="{Binding Type}" Value="Fix">
                 <Setter TargetName="b" Property="Visibility" Value="Visible" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="ByTime">
+            <DataTrigger Binding="{Binding Type}" Value="ByTime">
                 <Setter TargetName="byt" Property="Visibility" Value="Visible" />
                 <Setter TargetName="bytm" Property="Visibility" Value="Visible" />
                 <Setter TargetName="normal" Property="Visibility" Value="Collapsed" />
@@ -645,21 +645,17 @@
             MinWidth="200"
             MinHeight="22"
             AcceptsReturn="True"
-            Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+            Text="{Binding ., UpdateSourceTrigger=PropertyChanged, Delay=200}"
             TextWrapping="Wrap" />
     </DataTemplate>
 
 
     <DataTemplate x:Key="DT.Agency">
-        <WrapPanel
-            VerticalAlignment="Center"
-            Background="Transparent"
-            DataContext="{Binding NewValue}">
+        <WrapPanel VerticalAlignment="Center" Background="Transparent">
 
             <CheckBox
                 Margin="5,0"
                 VerticalContentAlignment="Center"
-                Content="{Binding Label}"
                 IsChecked="{Binding HasAgency}" />
 
 
@@ -743,14 +739,14 @@
         </WrapPanel>
 
         <DataTemplate.Triggers>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Other">
+            <DataTrigger Binding="{Binding FeeType}" Value="Other">
                 <Setter TargetName="other" Property="Visibility" Value="Visible" />
                 <Setter TargetName="mon" Property="Visibility" Value="Collapsed" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Ratio">
+            <DataTrigger Binding="{Binding FeeType}" Value="Ratio">
                 <Setter TargetName="a" Property="Visibility" Value="Visible" />
             </DataTrigger>
-            <DataTrigger Binding="{Binding NewValue.Type}" Value="Fix">
+            <DataTrigger Binding="{Binding FeeType}" Value="Fix">
                 <Setter TargetName="b" Property="Visibility" Value="Visible" />
             </DataTrigger>
         </DataTemplate.Triggers>
@@ -758,8 +754,68 @@
 
 
 
+    <DataTemplate DataType="{x:Type local:TemporarilyOpenInfoViewModel}">
+        <hc:UniformSpacingPanel Spacing="12">
+            <CheckBox IsChecked="{Binding IsAllowed}" />
+
+            <CheckBox
+                Content="仅按新规开放"
+                IsChecked="{Binding IsLimited}"
+                Visibility="{Binding IsAllowed, Converter={StaticResource Boolean2VisibilityConverter}}" />
+            <CheckBox
+                Content="申购"
+                IsChecked="{Binding AllowPurchase}"
+                IsEnabled="{Binding IsAllowed}"
+                Visibility="Collapsed" x:Name="buy"/>
+            <CheckBox
+                Content="赎回"
+                IsChecked="{Binding AllowRedemption}"
+                IsEnabled="{Binding IsAllowed}"
+                Visibility="{Binding IsAllowed, Converter={StaticResource Boolean2VisibilityConverter}}" />
+        </hc:UniformSpacingPanel>
+        <DataTemplate.Triggers>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding IsAllowed}" Value="True"/>
+                    <Condition Binding="{Binding IsLimited}" Value="False"/>
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Visibility" Value="Visible"  TargetName="buy"/>
+            </MultiDataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
 
 
 
 
+    <DataTemplate x:Key="DT.FeePay">
+        <DockPanel LastChildFill="False">
+            <ComboBox
+                Width="90"
+                Margin="4,0"
+                BorderThickness="0"
+                ItemsSource="{Binding DataContext.FeePayFrequencies, RelativeSource={RelativeSource AncestorType=local:ElementsView}}"
+                SelectedItem="{Binding Type}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+
+            <TextBox
+                x:Name="other"
+                MinWidth="300"
+                Text="{Binding Other, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                Visibility="Collapsed" />
+
+
+        </DockPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Type}" Value="Other">
+                <Setter TargetName="other" Property="Visibility" Value="Visible" />
+            </DataTrigger>
+
+        </DataTemplate.Triggers>
+    </DataTemplate>
 </ResourceDictionary>
