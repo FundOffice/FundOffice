@@ -43,6 +43,128 @@
             </Style>
 
 
+            <Style
+                x:Key="Modifiable.Bank"
+                BasedOn="{StaticResource {x:Type shared:ModifiableControl}}"
+                TargetType="{x:Type shared:ModifiableControl}">
+                <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
+                <Setter Property="ContentTemplate" Value="{StaticResource DT.Bank.Display}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type shared:ModifiableControl}">
+                            <Border
+                                x:Name="RootBorder"
+                                Padding="{TemplateBinding Padding}"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                CornerRadius="4">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <!--  Header 区域（可定制）  -->
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <!--  内容区域（只读/编辑自动切换）  -->
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!--  🔹 Header：支持 Header + HeaderTemplate  -->
+                                    <hc:SimplePanel VerticalAlignment="Center">
+                                        <TextBlock
+                                            Width="14"
+                                            VerticalAlignment="Center"
+                                            Text="{TemplateBinding Header}"
+                                            TextElement.FontWeight="Medium"
+                                            TextWrapping="Wrap" />
+
+                                        <Viewbox
+                                            Height="7.5"
+                                            Margin="-5,0"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Visibility="{Binding Modifier.IsInherited, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                            <Path Data="{StaticResource f.arrow-turn-down}" Fill="Brown" />
+                                        </Viewbox>
+                                    </hc:SimplePanel>
+
+
+                                    <!--  🔹 内容区域：根据 IsReadOnly 切换模板  -->
+
+                                    <ContentPresenter
+                                        Grid.Column="1"
+                                        Margin="5,0,0,0"
+                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        Content="{Binding Modifier.NewValue, RelativeSource={RelativeSource TemplatedParent}}"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}"
+                                        Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                                    <ContentPresenter
+                                        Grid.Column="1"
+                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        Content="{Binding Modifier.NewValue, RelativeSource={RelativeSource TemplatedParent}}"
+                                        ContentTemplate="{TemplateBinding EditTemplate}"
+                                        Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                                    <Border
+                                        Grid.Column="2"
+                                        Margin="5,0"
+                                        VerticalAlignment="Center"
+                                        BorderBrush="Gray"
+                                        CornerRadius="5"
+                                        Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                        <StackPanel Margin="2,0">
+
+                                            <hc:SimplePanel
+                                                x:Name="clpanel"
+                                                DockPanel.Dock="Right"
+                                                Visibility="Collapsed">
+                                                <Button
+                                                    x:Name="clear"
+                                                    Padding="2,1"
+                                                    hc:IconElement.Geometry="{StaticResource f.circle-xmark}"
+                                                    hc:IconElement.Height="14"
+                                                    Command="{Binding Modifier.ClearCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                    Foreground="Red"
+                                                    Style="{StaticResource ButtonIcon.Small}"
+                                                    ToolTip="清空"
+                                                    Visibility="{Binding Modifier.CanClear, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource TemplatedParent}}" />
+                                            </hc:SimplePanel>
+
+                                            <Button
+                                                Command="{Binding Modifier.ApplyCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                DockPanel.Dock="Right"
+                                                Style="{StaticResource SaveButton}"
+                                                ToolTip="确认修改"
+                                                Visibility="{Binding Modifier.CanConfirm, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                                            <Button
+                                                Command="{Binding Modifier.ResetCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                                DockPanel.Dock="Right"
+                                                Style="{StaticResource ResetButton}"
+                                                ToolTip="还原"
+                                                Visibility="{Binding Modifier.CanReset, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </Border>
+
+                            <!--  🔑 状态驱动触发器  -->
+                            <ControlTemplate.Triggers>
+
+
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="clpanel" Property="Visibility" Value="Visible" />
+                                </Trigger>
+
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+
 
             <Style BasedOn="{StaticResource {x:Type shared:ChangeableContainer}}" TargetType="shared:ChangeableContainer">
                 <Setter Property="Margin" Value="0,1" />
@@ -914,40 +1036,7 @@
                     <!--  账户  -->
                     <DockPanel Margin="{StaticResource LineSpacing}">
                         <DockPanel.Resources>
-                            <DataTemplate x:Key="DT.Bank">
-                                <StackPanel>
-                                    <StackPanel.Resources>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="MinWidth" Value="70" />
-                                            <Setter Property="TextAlignment" Value="Right" />
-                                            <Setter Property="VerticalAlignment" Value="Center" />
-                                            <Setter Property="Margin" Value="0,0,4,0" />
-                                        </Style>
 
-                                    </StackPanel.Resources>
-                                    <DockPanel>
-                                        <TextBlock Text="户名" />
-                                        <TextBox Text="{Binding NewValue.Name, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
-                                    </DockPanel>
-                                    <DockPanel>
-                                        <TextBlock Text="账号" />
-                                        <TextBox Text="{Binding NewValue.Number, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
-                                    </DockPanel>
-                                    <DockPanel>
-                                        <TextBlock Text="开户行" />
-                                        <TextBox Text="{Binding NewValue.Deposit, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
-                                    </DockPanel>
-
-                                    <DockPanel>
-                                        <TextBlock Text="大额支付号" />
-                                        <TextBox Text="{Binding NewValue.LargePayNo, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
-                                    </DockPanel>
-                                    <DockPanel>
-                                        <TextBlock Text="Swift" />
-                                        <TextBox Text="{Binding NewValue.SwiftCode, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
-                                    </DockPanel>
-                                </StackPanel>
-                            </DataTemplate>
 
                             <ControlTemplate x:Key="CT.Bank" TargetType="shared:ChangeableContainer">
                                 <DockPanel
@@ -1026,7 +1115,25 @@
                         </TextBlock>
 
                         <StackPanel>
-                            <shared:ChangeableContainer
+
+
+                            <shared:ModifiableControl
+                                HorizontalAlignment="Left"
+                                Header="募集账户"
+                                Modifier="{Binding CollectionAccount}"
+                                Style="{StaticResource Modifiable.Bank}" />
+
+                            <Separator />
+
+                            <shared:ModifiableControl
+                                HorizontalAlignment="Left"
+                                Header="托管账户"
+                                Modifier="{Binding CustodyAccount}"
+                                Style="{StaticResource Modifiable.Bank}" />
+
+
+
+                            <!--<shared:ChangeableContainer
                                 Binding="{Binding CollectionAccount}"
                                 ContentTemplate="{StaticResource DT.Bank}"
                                 EditTemplate="{StaticResource CT.Bank}" />
@@ -1035,7 +1142,7 @@
                             <shared:ChangeableContainer
                                 Binding="{Binding CustodyAccount}"
                                 ContentTemplate="{StaticResource DT.Bank}"
-                                EditTemplate="{StaticResource CT.Bank}" />
+                                EditTemplate="{StaticResource CT.Bank}" />-->
 
                         </StackPanel>
                     </DockPanel>

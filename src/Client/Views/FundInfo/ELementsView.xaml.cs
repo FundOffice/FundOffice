@@ -165,15 +165,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     [ObservableProperty]
     public partial ShareFactorViewModel<RedemptionFeeInfo?, RedemptionFeeInfoViewMdoel>? RedemptionFee { get; set; } = null!;
 
-
-
-
-    [ObservableProperty]
-    public partial BankChangeableViewModel<FundElements>? CollectionAccount { get; set; }
-
-
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, BankAccountInfoViewModel>? CustodyAccount { get; set; }
+     
 
 
 
@@ -368,29 +360,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         #region MyRegion
 
 
-
-        CollectionAccount = new BankChangeableViewModel<FundElements>
-        {
-            Label = "募集账户",
-            InitFunc = x => new(x.CollectionAccount.GetValue(newValue).Value),
-            InheritedFunc = x => x.CollectionAccount.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.CollectionAccount.SetValue(y!.Build(), newValue),
-            ClearFunc = x => x.CollectionAccount.RemoveValue(newValue),
-            DisplayFunc = x => BankString(x)
-        };
-        CollectionAccount.Init(elements);
-
-
-        CustodyAccount = new ChangeableViewModel<FundElements, BankAccountInfoViewModel>
-        {
-            Label = "托管账户",
-            InitFunc = x => new(x.CustodyAccount.GetValue(newValue).Value),
-            InheritedFunc = x => x.CustodyAccount.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.CustodyAccount.SetValue(y!.Build(), newValue),
-            ClearFunc = x => x.CustodyAccount.RemoveValue(newValue),
-            DisplayFunc = x => BankString(x)
-        };
-        CustodyAccount.Init(elements);
+ 
 
 
         StopLine = new ChangeableViewModel<FundElements, decimal?>

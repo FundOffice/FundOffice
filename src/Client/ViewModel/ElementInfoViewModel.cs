@@ -5,6 +5,7 @@ using FMO.Shared;
 using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows;
 
 namespace FMO;
 
@@ -90,9 +91,8 @@ public partial class SealingInfoViewModel : ObservableObject, IViewModel<Sealing
 public partial class InvestmentManagerInfoViewModel;
 
 
-
-[AutoChangeableViewModel(typeof(BankAccount))]
-public partial class BankAccountInfoViewModel : IDataValidation, IViewModel<BankAccount>
+ 
+public partial class BankAccountInfoViewModel : ObservableObject, IDataValidation, IViewModel<BankAccount?, BankAccountInfoViewModel>
 {
 
     private string? _Deposit;
@@ -136,14 +136,14 @@ public partial class BankAccountInfoViewModel : IDataValidation, IViewModel<Bank
 
         return builder.ToString();
     }
+
+    [RelayCommand]
+    public void CopyAll()
+    {
+        Clipboard.SetText(ToString());
+    }
 }
-
-public partial class BankChangeableViewModel<T> : ChangeableViewModel<T, BankAccountInfoViewModel>
-{
-    //public override bool CanConfirm => base.CanConfirm && (NewValue?.IsValid() ?? false);
-}
-
-
+ 
 
 
 public partial class FundFeeInfoViewModel : IDataValidation, IViewModel<FundFeeInfo?, FundFeeInfoViewModel>
