@@ -2,6 +2,9 @@
 
 public partial class FundFactors
 {
+    /// <summary>
+    /// 份额类别
+    /// </summary>
     public ShareClassFactorItem ShareClasses { get; private set; } = null!;
 
 

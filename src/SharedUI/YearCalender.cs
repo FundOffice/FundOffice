@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using FMO.Models;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace FMO.Shared;

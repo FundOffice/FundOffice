@@ -583,11 +583,11 @@ public partial class FundElements
                 Factors.Add(new FundFactor<string> { FundId = fundId, FlowId = flowId, ShareId = ShareClass.Singleton, FactorId = FactorFields.OpenDayInfo, Data = value });
             }
         }
-        if (this.FundOpenRule is Mutable<global::FMO.OpenRule> m_FundOpenRule && m_FundOpenRule.Changes.Count > 0)
+        if (this.FundOpenRule is Mutable<global::FMO.Models.OpenRule> m_FundOpenRule && m_FundOpenRule.Changes.Count > 0)
         {
             foreach (var (flowId, value) in m_FundOpenRule.Changes)
             {
-                Factors.Add(new FundFactor<global::FMO.OpenRule> { FundId = fundId, FlowId = flowId, ShareId = ShareClass.Singleton, FactorId = FactorFields.FundOpenRule, Data = value });
+                Factors.Add(new FundFactor<global::FMO.Models.OpenRule> { FundId = fundId, FlowId = flowId, ShareId = ShareClass.Singleton, FactorId = FactorFields.FundOpenRule, Data = value });
             }
         }
         if (this.TrusteeInfo is Mutable<global::FMO.Models.AgencyInfo> m_TrusteeInfo && m_TrusteeInfo.Changes.Count > 0)
@@ -1033,7 +1033,7 @@ public partial class FundElements
             target.Changes.Clear();
             foreach (var f in g_FundOpenRule)
             {
-                if (f is not FundFactor<global::FMO.OpenRule> ff)
+                if (f is not FundFactor<OpenRule> ff)
                     throw new InvalidOperationException($"Factor type mismatch for FactorId 'FactorFields.FundOpenRule': expected FundFactor<global::FMO.OpenRule>, but got '{f.GetType().Name}'. FundId: {f.FundId}, FlowId: {f.FlowId}");
                 if (ff.Data == null)
                     throw new InvalidOperationException($"Factor data is null for FactorId 'FactorFields.FundOpenRule'. FundId: {f.FundId}, FlowId: {f.FlowId}");
