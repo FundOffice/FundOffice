@@ -23,6 +23,8 @@ public class ShareClass
 
     public const int Singleton = -1;
 
+    public const string SingletonName = "单一份额";
+
     public static ShareClass DefaultShare { get; } = new ShareClass { Id = -1, Name = FundElements.SingleShareKey };
 
     public static ShareClass[] Default { get; } = [DefaultShare];
@@ -33,8 +35,8 @@ public class ShareClass
     /// </summary>
     public ShareClass() { }
 
-
-
+    public static int GetFlow(int id) => id / 1000;
+     
 }
 
 

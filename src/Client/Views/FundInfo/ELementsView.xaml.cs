@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Logging;
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
@@ -8,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using Utilities;
 
 namespace FMO;
 
@@ -24,7 +26,7 @@ public partial class ElementsView : UserControl
 
 
 
-public partial class ElementsViewModel : EditableControlViewModelBase<FundElements>, IRecipient<ElementChangedBackgroundMessage>
+public partial class ElementsViewModel : ObservableObject, IRecipient<ElementChangedBackgroundMessage>
 {
     public ElementsViewModel()
     {
@@ -115,11 +117,15 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
     public static SecurityFundType[] SecurityFundTypes = Enum.GetValues<SecurityFundType>();
 
+    public int Id => FundId;
+
+    [ObservableProperty]
+    public partial bool IsReadOnly { get; set; } = true;
+
     /// <summary>
     /// 
-    /// </summary>
-    [ObservableProperty]
-    public partial int FundId { get; set; }
+    /// </summary> 
+    public int FundId { get; init; }
 
 
     [ObservableProperty]
@@ -165,8 +171,8 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     [ObservableProperty]
     public partial ShareFactorViewModel<RedemptionFeeInfo?, RedemptionFeeInfoViewMdoel>? RedemptionFee { get; set; } = null!;
 
-      
-     
+
+
 
 
     //[ObservableProperty]
@@ -184,15 +190,15 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     public partial ChangeableViewModel<FundElements, string>? OpenDayInfo { get; set; }
 
 
-     
+
 
 
 
     //[ObservableProperty]
     //public partial ElementRefrenceWithBooleanViewModel<string>? PerformanceBenchmarks { get; set; }
- 
-     
-      
+
+
+
 
 
 
@@ -252,7 +258,6 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
     partial void OnFlowIdChanged(int oldValue, int newValue)
     {
-        Id = FundId;
         using var db = DbHelper.Base();
         var fund = db.GetCollection<Fund>().FindById(FundId);
         var flow = db.GetCollection<FundFlow>().FindById(newValue);
@@ -269,10 +274,12 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
         FillBy(facts, newValue);
 
+        IsSharesInherited = !facts.ShareClasses[newValue].Any(x=> ShareClass.GetFlow(x.Id) == newValue);
+
         var type = GetType();
         SetupDate = fund.SetupDate;
         var cinfo = elements.ShareClasses.GetValue(newValue);
-        IsSharesInherited = cinfo.FlowId < newValue;
+     
         var sc = cinfo.Value ?? [ShareClass.DefaultShare];
 
 
@@ -316,7 +323,7 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         #region MyRegion
 
 
-  
+
 
 
         //FundModeInfo = new ElementItemFundModeViewModel(elements, nameof(FundElements.FundModeInfo), FlowId, "运作方式");
@@ -337,15 +344,15 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
         };
         OpenDayInfo.Init(elements);
 
- 
-         
-  
+
+
+
 
 
 
         #endregion
 
-         
+
 
         // InitElementsOfShare(elements);
 
@@ -400,18 +407,53 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     [RelayCommand]
     public void BeginChangedShare(FrameworkElement panel)
     {
-        var wnd = new ModifyShareClassWindow();
-        wnd.DataContext = new ModifyShareClassWindowViewModel(FundId, FlowId, Shares.ToArray());
-        wnd.Owner = App.Current.MainWindow;
-        Window window = Window.GetWindow(panel);
-        Point point = panel.TransformToAncestor(window).Transform(new Point(panel.ActualWidth / 2, panel.ActualHeight / 2));
+        try
+        {
+            var wnd = new ModifyShareClassWindow();
+            wnd.DataContext = new ModifyShareClassWindowViewModel(FundId, FlowId, Shares.Select(x => new ShareClassViewModel(FlowId, x.Build())).ToArray());
+            wnd.Owner = App.Current.MainWindow;
+            Window window = Window.GetWindow(panel);
+            Point point = panel.TransformToAncestor(window).Transform(new Point(panel.ActualWidth / 2, panel.ActualHeight / 2));
 
-        wnd.Left = window.Left + point.X - wnd.Width / 2;
-        wnd.Top = window.Top + point.Y + panel.ActualHeight;
+            wnd.Left = window.Left + point.X - wnd.Width / 2;
+            wnd.Top = window.Top + point.Y + panel.ActualHeight;
 
-        var r = wnd.ShowDialog();
+            var r = wnd.ShowDialog();
 
-        if (r ?? false) OnFlowIdChanged(FlowId, FlowId);
+            if (r ?? false) OnFlowIdChanged(FlowId, FlowId);
+        }
+        catch (Exception e)
+        {
+            LogEx.Error(e);
+            Toast.Warning("出错了");
+        }
+    }
+
+
+    [RelayCommand]
+    public void ModifyInherit()
+    {
+        try
+        {
+            var wnd = new ModifyInheritWindow();
+            var context = new ModifyInheritWindowViewModel(FundId);
+            wnd.DataContext = context;
+            wnd.Owner = App.Current.MainWindow;
+
+            var r = wnd.ShowDialog();
+
+            if(context.Changed)
+            {
+                using var db = DbHelper.Base();
+            }
+
+            if (r ?? false) OnFlowIdChanged(FlowId, FlowId);
+        }
+        catch (Exception e)
+        { 
+            LogEx.Error(e);
+            Toast.Warning("出错了");
+        }
     }
 
 
@@ -468,8 +510,6 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
     //    //  OnFlowIdChanged(0, FlowId);
     //}
 
-    protected override FundElements InitNewEntity() => throw new NotImplementedException();
-
     private T? ValueFormat<T>(T d) where T : struct
     {
         return default(T).Equals(d) ? null : d;
@@ -481,39 +521,24 @@ public partial class ElementsViewModel : EditableControlViewModelBase<FundElemen
 
 
 
-    protected override void ModifyOverride(IPropertyModifier unit)
-    {
-        base.ModifyOverride(unit);
-        if (unit == CollectionAccount)
-            WeakReferenceMessenger.Default.Send(new FundAccountChangedMessage(FundId, FundAccountType.Collection));
-        else if (unit == CustodyAccount)
-            WeakReferenceMessenger.Default.Send(new FundAccountChangedMessage(FundId, FundAccountType.Custody));
-
-    }
-
-
-    protected override void DeleteOverride(IPropertyModifier unit)
-    {
-        base.DeleteOverride(unit);
-    }
-
-    protected override void SaveOverride()
+    [RelayCommand]
+    protected void Save()
     {
         var ps = GetType().GetProperties();
         foreach (var p in ps)
         {
-            if (p.PropertyType.IsAssignableTo(typeof(IPropertyModifier)) && p.GetValue(this) is IPropertyModifier v && v.IsValueChanged)
-                Modify(v);
+            if (p.PropertyType.IsAssignableTo(typeof(IValueModifier)) && p.GetValue(this) is IValueModifier v && v.CanConfirm)
+                v.Apply();
 
-            if (p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof(ShareElementsViewModel<,>))
+            if (p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof(ShareFactorViewModel<,>))
             {
                 var obj = p.GetValue(this);
                 if (obj is not null)
                 {
                     var pi = obj.GetType().GetProperty("Data");
-                    if (pi!.GetValue(obj, null) is IEnumerable<IPropertyModifier> e)
+                    if (pi!.GetValue(obj, null) is IEnumerable<IValueModifier> e)
                         foreach (var item in e)
-                            Modify(item);
+                            item.Apply();
                 }
             }
         }

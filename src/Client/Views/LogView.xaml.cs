@@ -1,7 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LiteDB;
-using Microsoft.Xaml.Behaviors;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -33,11 +32,15 @@ public partial class LogViewModel : ObservableObject
     {
         using var db = new LiteDatabase($@"FileName=logs.db;Connection=Shared");
 
-        CommonLogs = [.. db.GetCollection("logex").Query().OrderByDescending(x => x["_t"].AsDateTime).Limit(100).ToList().
-            Select(x => new LogMessage(x["_t"].AsDateTime, x[nameof(LogMessage.File)].AsString, x[nameof(LogMessage.Method)].AsString, x[nameof(LogMessage.Line)].AsInt32, x["_m"].AsString))];
+        CommonLogs = [.. db.GetCollection("logex").Query().OrderByDescending(x => x["_t"].AsDateTime).Limit(100).ToEnumerable().Select(x => To(x))];
 
     }
 
+
+    private static LogMessage To(BsonDocument x)
+    {
+        return new LogMessage(x["_t"].AsDateTime, x[nameof(LogMessage.File)].AsString, x[nameof(LogMessage.Method)].AsString, x[nameof(LogMessage.Line)].AsInt32, x["_m"].AsString);
+    }
 
     [RelayCommand]
     public void ScrollToEnd()

@@ -190,9 +190,9 @@
 
 
 
- 
 
-      
+
+
 
 
 
@@ -207,8 +207,8 @@
                 <Setter Property="TextWrapping" Value="Wrap" />
             </Style>
 
-  
- 
+
+
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -321,6 +321,21 @@
                                     Foreground="Gray"
                                     Text="基金份额" />
 
+                                <Viewbox
+                                    Grid.Column="1"
+                                    Height="7.5"
+                                    VerticalAlignment="Top"
+                                    Visibility="{Binding IsSharesInherited, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                    <Path Data="{StaticResource f.arrow-turn-down}" Fill="Brown" />
+                                </Viewbox>
+
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.bezier-curve}"
+                                    Command="{Binding ModifyInheritCommand}"
+                                    Foreground="RoyalBlue"
+                                    Style="{StaticResource ButtonIcon.Small}" />
+
+
                                 <Button
                                     hc:IconElement.Geometry="{StaticResource f.pencil}"
                                     Command="{Binding BeginChangedShareCommand}"
@@ -349,7 +364,8 @@
                                                 <TextBlock
                                                     x:Name="tb2"
                                                     MinWidth="80"
-                                                    Text="{Binding Requirement}" />
+                                                    Text="{Binding Requirement}"
+                                                    TextWrapping="Wrap" />
                                             </DockPanel>
 
                                             <DataTemplate.Triggers>
@@ -362,6 +378,7 @@
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
+
                             </DockPanel>
                         </StackPanel>
                     </DockPanel>

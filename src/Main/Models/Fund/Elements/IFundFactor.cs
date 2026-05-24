@@ -65,10 +65,10 @@ public class FundFactor<T> : FundFactor
     public required T Data { get; set; }
 }
 
- 
 
 
-public class SingletonValueFactorItem<T>  where T : struct
+
+public class SingletonValueFactorItem<T> where T : struct
 {
     protected readonly ImmutableArray<(int FlowId, FundFactor<T> Fact)> _flowGroupCache;
     public SingletonValueFactorItem(IEnumerable<FundFactor<T>> data)
@@ -169,12 +169,15 @@ public class FactorItem<T> where T : class
         // 从 targetFlowId 开始，按时间倒序遍历所有有数据的 Flow
         foreach (var (flowId, facts) in _flowGroupCache.Where(x => x.FlowId <= targetFlowId).OrderByDescending(x => x.FlowId))
         {
-            var map = _shares[currentLookupId];
-            while (flowId < map.FlowId) // 当前share无效了，因为没有定义
+            while (flowId < ShareClass.GetFlow(currentLookupId)) // 当前share无效了，因为没有定义
             {
-                currentLookupId = map.Inherit;
-                map = _shares[currentLookupId];
+                if (_shares.TryGetValue(currentLookupId, out var map) && _shares.ContainsKey(map.Inherit) && map.Inherit < currentLookupId)
+                    currentLookupId = map.Inherit;
+                else // 没有更上层的 Inherit 定义了，直接跳出循环
+                    break; 
             }
+            if (flowId < ShareClass.GetFlow(currentLookupId))// 当前share无效了，因为没有定义
+                return default;
 
             // 🥇 优先级1：当前 Flow 精确匹配目标份额
             if (facts.FirstOrDefault(f => f.ShareId == currentLookupId) is FundFactor<T> exactMatch)

@@ -47,47 +47,55 @@ public partial class FundFactors
         var result = new Dictionary<int, InheritMap>();
         var dict = new Dictionary<int, InheritMap[]>();
 
-        foreach (var item in rawShares)
+        for (int i = 0; i < rawShares.Length; i++)
         {
+            var item = rawShares[i];
+            if (item.Shares == null || item.Shares.Length == 0) continue;
+
             foreach (var sc in item.Shares)
             {
+                // 检查inherit穿越
+                if (i > 1 && ShareClass.GetFlow(sc.Inherit) < rawShares[i - 1].FlowId && rawShares[i - 1].Shares.Length == 1)
+                    sc.Inherit = rawShares[i - 1].Shares[0].Id;
+
                 result[sc.Id] = new InheritMap(sc.Id, item.FlowId, sc.Inherit);
             }
         }
+         
 
         return result.ToImmutableDictionary();
 
 
-        // 📌 按 FlowId 升序：保证后定义的配置能覆盖先定义（业务上"最新优先"）
-        var sorted = rawShares.OrderBy(x => x.FlowId).ToArray();
+        //// 📌 按 FlowId 升序：保证后定义的配置能覆盖先定义（业务上"最新优先"）
+        //var sorted = rawShares.OrderBy(x => x.FlowId).ToArray();
 
-        foreach (var (flowId, shares) in sorted)
-        {
-            if (shares == null || shares.Length == 0) continue;
+        //foreach (var (flowId, shares) in sorted)
+        //{
+        //    if (shares == null || shares.Length == 0) continue;
 
-            // 🔍 冲突检测：Singleton 不能与其他份额共存
-            bool hasSingleton = shares.Any(s => s.Id == ShareClass.Singleton);
-            bool hasOthers = shares.Any(s => s.Id != ShareClass.Singleton);
+        //    // 🔍 冲突检测：Singleton 不能与其他份额共存
+        //    bool hasSingleton = shares.Any(s => s.Id == ShareClass.Singleton);
+        //    bool hasOthers = shares.Any(s => s.Id != ShareClass.Singleton);
 
-            if (hasSingleton && hasOthers)
-            {
-                LogEx.Error($"FlowId={flowId}: 份额配置冲突，同时存在 Singleton 和其他份额。该配置将被忽略，查询时自动向前追溯。");
-                continue; // 跳过此配置，让查询逻辑按继承链向前找
-            }
+        //    if (hasSingleton && hasOthers)
+        //    {
+        //        LogEx.Error($"FlowId={flowId}: 份额配置冲突，同时存在 Singleton 和其他份额。该配置将被忽略，查询时自动向前追溯。");
+        //        continue; // 跳过此配置，让查询逻辑按继承链向前找
+        //    }
 
-            // ✅ 为每个份额创建/更新继承映射 不覆盖
-            foreach (var share in shares)
-                result.TryAdd(share.Id, new InheritMap(ShareId: share.Id, FlowId: flowId, Inherit: share.Inherit));
+        //    // ✅ 为每个份额创建/更新继承映射 不覆盖
+        //    foreach (var share in shares)
+        //        result.TryAdd(share.Id, new InheritMap(ShareId: share.Id, FlowId: flowId, Inherit: share.Inherit));
 
-        }
+        //}
 
-        // 🛡️ 兜底：确保 Singleton 有默认映射（防止空查询时崩溃）
-        if (!result.ContainsKey(ShareClass.Singleton))
-        {
-            result[ShareClass.Singleton] = new InheritMap(ShareId: ShareClass.Singleton, FlowId: 0, Inherit: ShareClass.Singleton);
-        }
+        //// 🛡️ 兜底：确保 Singleton 有默认映射（防止空查询时崩溃）
+        //if (!result.ContainsKey(ShareClass.Singleton))
+        //{
+        //    result[ShareClass.Singleton] = new InheritMap(ShareId: ShareClass.Singleton, FlowId: 0, Inherit: ShareClass.Singleton);
+        //}
 
-        return result.ToImmutableDictionary();
+        //return result.ToImmutableDictionary();
     }
 
 
@@ -96,7 +104,7 @@ public partial class FundFactors
     // ................其它类型
 
     private IEnumerable<FundFactor<T>> Filter<T>(string field, Dictionary<string, IEnumerable<IFundFactor>> g)
-    { 
+    {
         return g.TryGetValue(field, out var d) ? d.OfType<FundFactor<T>>() : [];
     }
 

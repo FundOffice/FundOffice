@@ -738,12 +738,8 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
             return;
 
         using var db = DbHelper.Base();
-        var ele = db.GetCollection<FundElements>().FindById(FundId);
-        if (ele is not null)
-        {
-            //ele.Remove(flow.FlowId);
-            db.GetCollection<FundElements>().Update(ele);
-        }
+        db.GetCollection<IFundFactor>().DeleteMany(x => x.FundId == FundId && x.FlowId == flow.FlowId);
+
 
         db.GetCollection<FundFlow>().Delete(flow.FlowId);
         if (flow is LiquidationFlowViewModel && FundStatus <= FundStatus.StartLiquidation)

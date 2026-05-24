@@ -332,7 +332,7 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
     {
         var sc = factors.ShareClasses[flowId];
         var classIds = sc.Select(x => x.Id).ToArray();
-        Shares = new(sc.Select(x => new {{shareClassVmFullName}}(x)));
+        Shares = new(sc.Select(x => new {{shareClassVmFullName}}(flowId, x)));
 
 """);
 
