@@ -10,25 +10,7 @@
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
-    <UserControl.Resources>
-        <Style BasedOn="{StaticResource {x:Type shared:ChangeableControl}}" TargetType="shared:ChangeableControl">
-            <Setter Property="Entity" Value="{Binding .}" />
-            <Setter Property="IsReadOnly" Value="False" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="HeaderTemplate">
-                <Setter.Value>
-                    <DataTemplate>
-                        <TextBlock
-                            Width="60"
-                            Margin="0,0,4,0"
-                            VerticalAlignment="Center"
-                            Text="{Binding}"
-                            TextAlignment="Right" />
-                    </DataTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </UserControl.Resources>
+
     <DockPanel>
 
         <shared:ModifiableControl

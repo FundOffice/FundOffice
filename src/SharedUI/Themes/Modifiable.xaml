@@ -107,7 +107,7 @@
                                 Margin="5,0,0,0"
                                 HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                Content="{Binding Modifier.NewValue, Converter={StaticResource DisplayValueConverter}, RelativeSource={RelativeSource TemplatedParent}}"
+                                Content="{Binding Modifier.OldValue, Converter={StaticResource DisplayValueConverter}, RelativeSource={RelativeSource TemplatedParent}}"
                                 ContentTemplate="{TemplateBinding ContentTemplate}"
                                 Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
@@ -246,7 +246,7 @@
                                 Margin="5,0,0,0"
                                 HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                Content="{Binding Modifier.NewValue, Converter={StaticResource DisplayValueConverter}, RelativeSource={RelativeSource TemplatedParent}}"
+                                Content="{Binding Modifier.OldValue, Converter={StaticResource DisplayValueConverter}, RelativeSource={RelativeSource TemplatedParent}}"
                                 ContentTemplate="{TemplateBinding ContentTemplate}"
                                 Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
@@ -327,7 +327,7 @@
                                 Margin="5,0,0,0"
                                 HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                Content="{Binding Modifier.NewValue, Converter={StaticResource DisplayValueConverter}, RelativeSource={RelativeSource TemplatedParent}}"
+                                Content="{Binding Modifier.OldValue, Converter={StaticResource DisplayValueConverter}, RelativeSource={RelativeSource TemplatedParent}}"
                                 ContentTemplate="{TemplateBinding ContentTemplate}"
                                 Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
 

@@ -27,10 +27,6 @@
 
             <SolidColorBrush x:Key="LabelBrush">Gray</SolidColorBrush>
 
-            <Style BasedOn="{StaticResource {x:Type shared:ChangeableControl}}" TargetType="shared:ChangeableControl">
-                <Setter Property="Entity" Value="{Binding RelativeSource={RelativeSource AncestorType=local:ManagerPage}, Path=DataContext}" />
-                <Setter Property="IsReadOnly" Value="{Binding RelativeSource={RelativeSource AncestorType=local:ManagerPage}, Path=DataContext.IsReadOnly}" />
-            </Style>
 
             <DataTemplate x:Key="DT.Text.Cap">
                 <TextBox

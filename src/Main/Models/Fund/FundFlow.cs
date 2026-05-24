@@ -105,7 +105,7 @@ public class ContractFinalizeFlow : ContractFlow
     public override string Name { get => "合同定稿"; set { } }
 }
 
-public struct DateRange
+public class DateRange
 {
     public DateOnly Begin { get; set; }
 
@@ -145,17 +145,17 @@ public class SetupFlow : FundFlow
     /// <summary>
     /// 募集开始日期
     /// </summary>
-    public DateOnly RaisingStartDate { get; set; }
+    //public DateOnly RaisingStartDate { get; set; }
 
     /// <summary>
     /// 募集结束日期
     /// </summary>
-    public DateOnly RaisingEndDate { get; set; }
+    //public DateOnly RaisingEndDate { get; set; }
 
     /// <summary>
     /// 募集期
     /// </summary>
-    public DateRange RasingPeriod { get; set; }
+    public DateRange? RasingPeriod { get; set; }
 
 
     public decimal InitialAsset { get; set; }

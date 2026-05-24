@@ -186,10 +186,6 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
 
 
 
-    [ObservableProperty]
-    public partial ChangeableViewModel<FundElements, string>? OpenDayInfo { get; set; }
-
-
 
 
 
@@ -319,42 +315,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         // 开放/封闭切换
         FundModeInfo.Changed += e => OnPropertyChanged(nameof(IsSealingFund));
 
-
-        #region MyRegion
-
-
-
-
-
-        //FundModeInfo = new ElementItemFundModeViewModel(elements, nameof(FundElements.FundModeInfo), FlowId, "运作方式");
-
-        //SealingRule = new ElementItemViewModelSealing(elements, nameof(FundElements.SealingRule), FlowId, "封闭期");
-        //// LockingRule = new ElementItemViewModelSealing(elements, nameof(FundElements.LockingRule), FlowId, "锁定期");
-
-
-        //IsSealingFund = FundModeInfo.Data.New == Models.FundMode.Close;
-
-        OpenDayInfo = new ChangeableViewModel<FundElements, string>
-        {
-            Label = "固定开放日",
-            InitFunc = x => x.OpenDayInfo.GetValue(newValue).Value,
-            InheritedFunc = x => x.OpenDayInfo.GetValue(newValue).FlowId switch { -1 => false, int i => i < newValue },
-            UpdateFunc = (x, y) => x.OpenDayInfo.SetValue(y!, newValue),
-            ClearFunc = x => x.OpenDayInfo.RemoveValue(newValue)
-        };
-        OpenDayInfo.Init(elements);
-
-
-
-
-
-
-
-        #endregion
-
-
-
-        // InitElementsOfShare(elements);
+ 
 
     }
 
@@ -386,7 +347,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
 
 
     [RelayCommand]
-    public void SetBankFromClipboard(ChangeableViewModel<FundElements, BankAccountInfoViewModel> v)
+    public void SetBankFromClipboard(ModifiableViewModel<BankAccount?, BankAccountInfoViewModel> v)
     {
         try
         {

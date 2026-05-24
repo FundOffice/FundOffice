@@ -7,6 +7,11 @@ using System.Text.Json;
 namespace FMO.Shared;
 
 
+
+public interface IDataValidation
+{
+    bool IsValid();
+}
 public enum ValueChangeKind { None, Added, Modified, Deleted }
 
 public class ValueChangeEventArgs

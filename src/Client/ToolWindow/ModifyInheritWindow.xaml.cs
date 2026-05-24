@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
@@ -12,7 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shapes; 
+using System.Windows.Shapes;
 using static FMO.ModifyInheritWindowViewModel;
 
 namespace FMO;
@@ -29,17 +28,17 @@ internal class DragPayload
 /// ModifyInheritWindow.xaml 的交互逻辑
 /// </summary>
 
-  
+
 public partial class ModifyInheritWindow : Window
 {
     public ModifyInheritWindow() => InitializeComponent();
 
     // --- 拖拽状态 ---
     private bool _isDragging;
-    private ShareItem _dragSource;
-    private Border _hoverBorder;
-    private ShareItem _hoverTarget;
-    private Path _tempLine;
+    private ShareItem? _dragSource;
+    private Border? _hoverBorder;
+    private ShareItem? _hoverTarget;
+    private Path? _tempLine;
 
     // --- 元素缓存 ---
     private readonly List<Border> _cardBorders = new();
@@ -72,7 +71,7 @@ public partial class ModifyInheritWindow : Window
 
     private void TopPoint_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        if (!_isDragging) return;
+        if (!_isDragging || _dragSource is null) return;
 
         // 🌟 松开鼠标时才真正修改数据
         if (_hoverTarget != null && IsValidTarget(_dragSource, _hoverTarget))
@@ -148,9 +147,10 @@ public partial class ModifyInheritWindow : Window
         }
 
         // 4. 绘制虚线
-        DrawBezier(_tempLine, startPos, endPos, isValid);
+        if (_tempLine is not null)
+            DrawBezier(_tempLine, startPos, endPos, isValid);
     }
-     
+
 
     #endregion
 

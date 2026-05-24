@@ -4,8 +4,6 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:FMO.Shared">
     <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/SharedUI;component/Themes/ChangeableControls.xaml" />
-        <ResourceDictionary Source="/SharedUI;component/Themes/Editable.xaml" />
         <ResourceDictionary Source="/SharedUI;component/Themes/Copyable.xaml" />
         <ResourceDictionary Source="/SharedUI;component/Themes/NewFileControl.xaml" />
         <ResourceDictionary Source="/SharedUI;component/Themes/YearCalender.xaml" />

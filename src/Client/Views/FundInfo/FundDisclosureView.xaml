@@ -20,56 +20,6 @@
             <Setter Property="Margin" Value="0,1" />
         </Style>
 
-        <DataTemplate x:Key="DT.Announcement">
-            <Border Margin="0,1" Background="WhiteSmoke">
-                <DockPanel>
-                    <ToggleButton
-                        DockPanel.Dock="Right"
-                        IsChecked="{Binding IsReadOnly}"
-                        Style="{StaticResource EditSwitch.Small}" />
-
-
-
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="auto" />
-                            <ColumnDefinition />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition />
-                            <RowDefinition />
-                        </Grid.RowDefinitions>
-                        <shared:ChangeableControl
-                            Binding="{Binding Date}"
-                            Entity="{Binding .}"
-                            IsReadOnly="{Binding IsReadOnly}">
-                            <shared:ChangeableControl.EditTemplate>
-                                <DataTemplate>
-                                    <DatePicker
-                                        Width="100"
-                                        SelectedDate="{Binding NewValue}"
-                                        Style="{StaticResource DatePicker.Small}" />
-                                </DataTemplate>
-                            </shared:ChangeableControl.EditTemplate>
-                        </shared:ChangeableControl>
-
-                        <shared:ChangeableControl
-                            Grid.Row="1"
-                            HorizontalContentAlignment="Stretch"
-                            Binding="{Binding Title}"
-                            Entity="{Binding .}"
-                            IsReadOnly="{Binding IsReadOnly}" />
-
-                        <shared:FileView
-                            Grid.Column="1"
-                            Content="{Binding File}"
-                            IsReadOnly="{Binding IsReadOnly}"
-                            Style="{StaticResource DualFileStyle}" />
-                    </Grid>
-                </DockPanel>
-            </Border>
-        </DataTemplate>
-
 
         <DataTemplate x:Key="QuarterlyUpdateItem">
             <Border MinWidth="240">
@@ -127,11 +77,11 @@
 
                 </DockPanel>
             </Border>
-            <ListBox
+            <!--<ListBox
                 shared:MaskService.IsMask="True"
                 ItemTemplate="{StaticResource DT.Announcement}"
                 ItemsSource="{Binding Announcements}"
-                Style="{StaticResource ListBoxCustom}" />
+                Style="{StaticResource ListBoxCustom}" />-->
         </StackPanel>
 
         <DockPanel Margin="1,0,0,0" Background="WhiteSmoke">

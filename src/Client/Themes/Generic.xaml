@@ -138,72 +138,7 @@
 
 
 
-    <ControlTemplate x:Key="Tpl.Changeable.Element" TargetType="shared:ChangeableContainer">
-        <DockPanel
-            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-            Background="Transparent"
-            LastChildFill="True">
-
-            <Grid>
-                <TextBlock
-                    VerticalAlignment="Center"
-                    DockPanel.Dock="Left"
-                    FontStyle="Italic"
-                    Foreground="{DynamicResource LabelBrush}"
-                    Text="{Binding Binding.Label, RelativeSource={RelativeSource TemplatedParent}}" />
-
-                <TextBlock
-                    Margin="0,-4,0,0"
-                    HorizontalAlignment="Right"
-                    FontSize="6"
-                    Foreground="Purple"
-                    Text="▼"
-                    Visibility="{Binding Binding.IsInherited, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
-            </Grid>
-
-            <DockPanel HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}">
-                <DockPanel>
-                    <shared:ChangeableControlButtons DataContext="{Binding ., RelativeSource={RelativeSource Mode=TemplatedParent}}" DockPanel.Dock="Right" />
-
-                    <ContentPresenter
-                        Margin="4,0"
-                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                        Content="{Binding Binding, RelativeSource={RelativeSource TemplatedParent}}"
-                        ContentTemplate="{TemplateBinding ContentTemplate}" />
-                </DockPanel>
-            </DockPanel>
-        </DockPanel>
-    </ControlTemplate>
-
-
-    <DataTemplate x:Key="DTpl.PortionElement">
-        <DockPanel LastChildFill="False">
-            <DockPanel Visibility="{Binding DataContext.IsReadOnly, RelativeSource={RelativeSource AncestorType=local:ElementsView}, Converter={StaticResource Boolean2VisibilityReConverter}}">
-                <hc:SimplePanel Visibility="{Binding CanDivide, RelativeSource={RelativeSource AncestorType=local:PortionElementView}, Converter={StaticResource Boolean2VisibilityConverter}}">
-                    <Button
-                        hc:IconElement.Geometry="{StaticResource f.knife}"
-                        Command="{Binding DataContext.DivideCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                        Style="{StaticResource ButtonIcon.Small}"
-                        Visibility="{Binding DataContext.UnifiedClass, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityConverter}}" />
-                </hc:SimplePanel>
-                <Button
-                    hc:IconElement.Geometry="{StaticResource f.code-merge}"
-                    Command="{Binding DataContext.UnifyCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                    CommandParameter="{Binding .}"
-                    Style="{StaticResource ButtonIcon.Small}"
-                    ToolTip="以此为基准，合并要素"
-                    Visibility="{Binding DataContext.UnifiedClass, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-            </DockPanel>
-
-            <shared:ChangeableContainer
-                VerticalContentAlignment="Center"
-                Binding="{Binding .}"
-                ContentTemplate="{Binding ContentTemplate, RelativeSource={RelativeSource AncestorType=local:PortionElementView}}"
-                EditTemplate="{Binding EditTemplate, RelativeSource={RelativeSource AncestorType=local:PortionElementView}}" />
-
-        </DockPanel>
-    </DataTemplate>
+    
 
 
     <Style
@@ -444,50 +379,6 @@
 
 
 
-    <ControlTemplate x:Key="Tpl.ChangeableControl.Complex" TargetType="shared:ChangeableControl">
-        <StackPanel VerticalAlignment="{TemplateBinding VerticalContentAlignment}" Background="Transparent">
-            <DockPanel
-                Margin="4"
-                HorizontalAlignment="Center"
-                LastChildFill="False">
-                <Grid>
-                    <TextBlock
-                        VerticalAlignment="Center"
-                        DockPanel.Dock="Left"
-                        Foreground="{DynamicResource LabelBrush}"
-                        Text="{Binding Binding.Label, RelativeSource={RelativeSource TemplatedParent}}" />
-
-                    <TextBlock
-                        Margin="0,-4,0,0"
-                        HorizontalAlignment="Right"
-                        FontSize="6"
-                        Foreground="Purple"
-                        Text="▼"
-                        Visibility="{Binding Binding.IsInherited, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
-                </Grid>
-
-                <shared:ChangeableControlButtons DataContext="{Binding ., RelativeSource={RelativeSource TemplatedParent}}" DockPanel.Dock="Right" />
-
-            </DockPanel>
-
-
-            <ContentPresenter
-                x:Name="PART_Content"
-                Margin="4,0"
-                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                Content="{Binding Binding, RelativeSource={RelativeSource TemplatedParent}}" />
-
-        </StackPanel>
-        <ControlTemplate.Triggers>
-            <Trigger Property="IsReadOnly" Value="True">
-                <Setter TargetName="PART_Content" Property="ContentTemplate" Value="{Binding ContentTemplate, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}" />
-            </Trigger>
-            <Trigger Property="IsReadOnly" Value="False">
-                <Setter TargetName="PART_Content" Property="ContentTemplate" Value="{Binding EditTemplate, RelativeSource={RelativeSource TemplatedParent}, Mode=OneTime}" />
-            </Trigger>
-        </ControlTemplate.Triggers>
-    </ControlTemplate>
 
     <Style
         x:Key="ListBoxItem.AllaysFocus"

@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.Disclosure;
 using FMO.Models;
@@ -12,10 +13,13 @@ using System.Windows;
 
 namespace FMO;
 
-public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityViewModel//, IFileSetter
+
+[EntityModifiable(typeof(DividendFlow))]
+public partial class DividendFlowViewModel : FlowViewModel
 {
     public static DividendType[] Types = [DividendType.PerUnitDividend, DividendType.TargetNetValue, DividendType.SpecifiedAmount];
     public static DividendMethod[] Methods = [DividendMethod.Cash, DividendMethod.Reinvestment, DividendMethod.Manual];
+    private readonly DividendFlow _flow;
 
 
     /// <summary>
@@ -26,20 +30,26 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
     ///②按指定金额分红：指定本次分红的总金额，系统会根据权益进行计算本次分红应该扣减的净值。
     ///③按单位净值归目标净值分配：系统自动计算本次分红金额，使分红结果尽可能为设定的目标净值。 
     /// </summary>
-    public ChangeableViewModel<DividendFlow, DividendType> Type { get; }
+    //public ModifiableViewModel<DividendType?> Type { get; }
 
-    public ChangeableViewModel<DividendFlow, decimal?> Target { get; set; }
-
-
-    public ChangeableViewModel<DividendFlow, DividendMethod> Method { get; }
+    public ModifiableViewModel<decimal?> Target { get; set; } = null!;
 
 
+    //public ModifiableViewModel<DividendMethod?> Method { get; }
 
 
-    public ChangeableViewModel<DividendFlow, DateTime?> DividendReferenceDate { get; }
-    public ChangeableViewModel<DividendFlow, DateTime?> RecordDate { get; }
-    public ChangeableViewModel<DividendFlow, DateTime?> ExDividendDate { get; }
-    public ChangeableViewModel<DividendFlow, DateTime?> CashPaymentDate { get; }
+
+    [ObservableProperty]
+    public partial ModifiableViewModel<DateOnly?> DividendReferenceDate { get; set; } = null!;
+
+    [ObservableProperty]
+    public partial ModifiableViewModel<DateOnly?> RecordDate { get; set; } = null!;
+
+    [ObservableProperty]
+    public partial ModifiableViewModel<DateOnly?> ExDividendDate { get; set; } = null!;
+
+    [ObservableProperty]
+    public partial ModifiableViewModel<DateOnly?> CashPaymentDate { get; set; } = null!;
 
 
     /// <summary>
@@ -54,74 +64,10 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
     [SetsRequiredMembers]
     public DividendFlowViewModel(DividendFlow flow) : base(flow)
     {
-        Type = new()
-        {
-            InitFunc = x => x.Type,
-            UpdateFunc = (x, y) => x.Type = y,
-            ClearFunc = x => x.Type = DividendType.PerUnitDividend,
-        };
-        Type.Init(flow);
+        _flow = flow;
 
-        Target = new()
-        {
-            Label = "目标值",
-            InitFunc = x => x.Target == 0 ? null : x.Target,
-            UpdateFunc = (x, y) => x.Target = y ?? 0,
-            ClearFunc = x => x.Type = 0,
-        };
-        Target.Init(flow);
+        FillBy(flow);
 
-        Method = new()
-        {
-            Label = "分红方式",
-            InitFunc = x => x.Method,
-            UpdateFunc = (x, y) => x.Method = y,
-            ClearFunc = x => x.Method = DividendMethod.Cash,
-        };
-        Method.Init(flow);
-
-        DividendReferenceDate = new()
-        {
-            Label = "分红基准日",
-            InitFunc = x => x.DividendReferenceDate == default ? null : new DateTime(x.DividendReferenceDate, default),
-            UpdateFunc = (x, y) => x.DividendReferenceDate = y is null ? default : DateOnly.FromDateTime(y.Value),
-            ClearFunc = x => x.DividendReferenceDate = default,
-            DisplayFunc = x => x?.ToString("yyyy-MM-dd")
-        };
-        DividendReferenceDate.Init(flow);
-
-
-        RecordDate = new()
-        {
-            Label = "权益登记日",
-            InitFunc = x => x.RecordDate == default ? null : new DateTime(x.RecordDate, default),
-            UpdateFunc = (x, y) => x.RecordDate = y is null ? default : DateOnly.FromDateTime(y.Value),
-            ClearFunc = x => x.RecordDate = default,
-            DisplayFunc = x => x?.ToString("yyyy-MM-dd")
-        };
-        RecordDate.Init(flow);
-
-
-        ExDividendDate = new()
-        {
-            Label = "除息日",
-            InitFunc = x => x.ExDividendDate == default ? null : new DateTime(x.ExDividendDate, default),
-            UpdateFunc = (x, y) => x.ExDividendDate = y is null ? default : DateOnly.FromDateTime(y.Value),
-            ClearFunc = x => x.ExDividendDate = default,
-            DisplayFunc = x => x?.ToString("yyyy-MM-dd")
-        };
-        ExDividendDate.Init(flow);
-
-
-        CashPaymentDate = new()
-        {
-            Label = "现金红利发放日",
-            InitFunc = x => x.CashPaymentDate == default ? null : new DateTime(x.CashPaymentDate, default),
-            UpdateFunc = (x, y) => x.CashPaymentDate = y is null ? default : DateOnly.FromDateTime(y.Value),
-            ClearFunc = x => x.CashPaymentDate = default,
-            DisplayFunc = x => x?.ToString("yyyy-MM-dd")
-        };
-        CashPaymentDate.Init(flow);
 
 
         Announcement = new(flow.Announcement) { Label = "分红公告", Filter = "文档|*.docx;*.doc;*.pdf", };
@@ -155,96 +101,42 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
     }
 
 
+    public partial void OnEntityChanged()
+    {
+        using var db = DbHelper.Base();
+        db.GetCollection<FundFlow>().Update(_flow);
+    }
+
     protected override void CanLockOverride(ref bool ok, List<string> err)
     {
-        if (Target.NewValue is not > 0)
+        if (Target.OldValue is not > 0)
         {
             ok = false;
             err.Add("未设置分红目标");
         }
-        if (DividendReferenceDate.NewValue.GetValueOrDefault() == default)
+        if (DividendReferenceDate.OldValue == default)
         {
             ok = false;
             err.Add("未设置分红基准日");
         }
-        if (RecordDate.NewValue.GetValueOrDefault() == default)
+        if (RecordDate.OldValue == default)
         {
             ok = false;
             err.Add("未设置权益登记日");
         }
-        if (ExDividendDate.NewValue.GetValueOrDefault() == default)
+        if (ExDividendDate.OldValue == default)
         {
             ok = false;
             err.Add("未设置除息日");
         }
-        if (CashPaymentDate.NewValue.GetValueOrDefault() == default)
+        if (CashPaymentDate.OldValue == default)
         {
             ok = false;
             err.Add("现金红利发放日");
         }
 
     }
-
-
-
-
-    [RelayCommand]
-    public void Delete(IPropertyModifier unit)
-    {
-        if (unit is IEntityModifier<DividendFlow> entity)
-        {
-            using var db = DbHelper.Base();
-            var v = db.GetCollection<FundFlow>().FindById(FlowId) as DividendFlow;
-
-            if (v is not null)
-            {
-                entity.RemoveValue(v);
-                entity.Init(v);
-                db.GetCollection<FundFlow>().Update(v);
-
-                WeakReferenceMessenger.Default.Send(v);
-            }
-        }
-    }
-
-
-    [RelayCommand]
-    public void Reset(IPropertyModifier unit)
-    {
-        unit.Reset();
-    }
-
-
-
-    [RelayCommand]
-    public void Modify(IPropertyModifier unit)
-    {
-        if (unit is IEntityModifier<DividendFlow> property)
-        {
-            using var db = DbHelper.Base();
-            var v = db.GetCollection<FundFlow>().FindById(FlowId) as DividendFlow;
-
-            property.UpdateEntity(v!);
-            db.GetCollection<FundFlow>().Update(v!);
-        }
-        unit.Apply();
-    }
-
-
-    [RelayCommand]
-    public void Save()
-    {
-        var ps = GetType().GetProperties();
-        foreach (var p in ps)
-        {
-            if (p.PropertyType.IsAssignableTo(typeof(IPropertyModifier)) && p.GetValue(this) is IPropertyModifier v && v.IsValueChanged)
-                Modify(v);
-        }
-        IsReadOnly = true;
-    }
-
-
-
+     
 
     [RelayCommand]
     public void GenerateFile(DualFileViewModel v)
@@ -260,6 +152,8 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
 
                 var anndate = Date is null ? DateTime.Today : (DateTime.Today < Date ? DateTime.Today : Date);
 
+                var today = DateOnly.FromDateTime(DateTime.Today);
+
                 var data = new
                 {
                     ManagerName = manager.Name,
@@ -268,10 +162,10 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
                     FundTrustee = fund.Trustee,
                     ModeTarget = Type.OldValue switch { DividendType.PerUnitDividend => "每单位红利", DividendType.TargetNetValue => "分红后净值", DividendType.SpecifiedAmount => "分红总金额", _ => "" },
                     TargetValue = Target.OldValue,
-                    DividendReferenceDate = $"{DividendReferenceDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
-                    RecordDate = $"{RecordDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
-                    ExDividendDate = $"{ExDividendDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
-                    CashPaymentDate = $"{CashPaymentDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
+                    DividendReferenceDate = $"{DividendReferenceDate.OldValue ?? today:yyyy年MM月dd日}",
+                    RecordDate = $"{RecordDate.OldValue ?? today:yyyy年MM月dd日}",
+                    ExDividendDate = $"{ExDividendDate.OldValue ?? today:yyyy年MM月dd日}",
+                    CashPaymentDate = $"{CashPaymentDate.OldValue ?? today:yyyy年MM月dd日}",
                     AnnouncementDate = $"{anndate:yyyy年MM月dd日}",
                     Mail = manager.Email
                 };
@@ -293,17 +187,19 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
 
         if (e.PropertyName == nameof(Date) && Date is not null && Initialized)
         {
+            var date = DateOnly.FromDateTime(Date.Value);
+
             if (DividendReferenceDate.NewValue is null)
-                DividendReferenceDate.NewValue = Date;
+                DividendReferenceDate.NewValue = date;
             if (RecordDate.NewValue is null)
-                RecordDate.NewValue = Date;
+                RecordDate.NewValue = date;
             if (ExDividendDate.NewValue is null)
-                ExDividendDate.NewValue = Date;
+                ExDividendDate.NewValue = date;
             if (CashPaymentDate.NewValue is null)
-                CashPaymentDate.NewValue = Date.Value.AddDays(1);
+                CashPaymentDate.NewValue = date.AddDays(1);
         }
 
-        if (e.PropertyName == nameof(IsReadOnly) && IsReadOnly && Date is not null && Date.Value != default(DateTime)) //锁定了
+        if (e.PropertyName == nameof(IsReadOnly) && IsReadOnly && Date is not null && Date.Value != default(DateTime) && Target.OldValue is not null) //锁定了
         {
             // 检查是否存在公告
             using var db = DbHelper.Base();
@@ -317,6 +213,8 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
             var fund = db.GetCollection<Fund>().FindById(FundId);
             var anndate = DateTime.Today < Date ? DateTime.Today : Date;
 
+            var today = DateOnly.FromDateTime(DateTime.Today);
+
             FundDivdendNotice notice = new()
             {
                 FundCode = fund.Code!,
@@ -326,11 +224,11 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
                 PublishDate = DateOnly.FromDateTime(anndate.Value),
                 PublishTime = TimeOnly.FromDateTime(DateTime.Now),
                 DividendType = Type.NewValue,
-                Target = Target.OldValue ?? 1,
+                Target = Target.OldValue.Value,
                 DividendReferenceDate = DividendReferenceDate.OldValue ?? default,
                 RecordDate = RecordDate.OldValue ?? default,
                 ExDividendDate = ExDividendDate.OldValue ?? default,
-                CashPaymentDate = CashPaymentDate.OldValue ?? default, 
+                CashPaymentDate = CashPaymentDate.OldValue ?? default,
             };
 
             var manager = db.GetCollection<Manager>().FindOne(x => x.IsMaster);
@@ -342,10 +240,10 @@ public partial class DividendFlowViewModel : FlowViewModel, IChangeableEntityVie
                 FundTrustee = fund.Trustee,
                 ModeTarget = Type.OldValue switch { DividendType.PerUnitDividend => "每单位红利", DividendType.TargetNetValue => "分红后净值", DividendType.SpecifiedAmount => "分红总金额", _ => "" },
                 TargetValue = Target.OldValue,
-                DividendReferenceDate = $"{DividendReferenceDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
-                RecordDate = $"{RecordDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
-                ExDividendDate = $"{ExDividendDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
-                CashPaymentDate = $"{CashPaymentDate.OldValue ?? DateTime.Today:yyyy年MM月dd日}",
+                DividendReferenceDate = $"{DividendReferenceDate.OldValue ?? today:yyyy年MM月dd日}",
+                RecordDate = $"{RecordDate.OldValue ?? today:yyyy年MM月dd日}",
+                ExDividendDate = $"{ExDividendDate.OldValue ?? today:yyyy年MM月dd日}",
+                CashPaymentDate = $"{CashPaymentDate.OldValue ?? today:yyyy年MM月dd日}",
                 AnnouncementDate = $"{anndate:yyyy年MM月dd日}",
                 Mail = manager.Email
             });

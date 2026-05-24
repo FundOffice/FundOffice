@@ -308,10 +308,10 @@ public class FundDivdendNotice : IFundDisclosureNotice, ITemporaryDisclosureNoti
 
     public DividendMethod Method { get; set; }
 
-    public DateTime DividendReferenceDate { get; set; }
-    public DateTime RecordDate { get; set; }
-    public DateTime ExDividendDate { get; set; }
-    public DateTime CashPaymentDate { get; set; }
+    public DateOnly DividendReferenceDate { get; set; }
+    public DateOnly RecordDate { get; set; }
+    public DateOnly ExDividendDate { get; set; }
+    public DateOnly CashPaymentDate { get; set; }
 
 
 
