@@ -52,8 +52,32 @@ public class FundPurchaseRule
 
     public string? PayOther { get; set; }
 
+    public override string ToString()
+    {
+        var a = MinDeposit == default ? null : $"{MinDeposit / 10000}万起投" + (AdditionalDeposit > 0 ? $"，追加{AdditionalDeposit / 10000}万起" : "") + (HasRequirement ? Statement : "");
+        var b = HasFee ? $"   " + PayMethod switch { FundFeePayType.Out => "价外收取", FundFeePayType.Extra => "额外收取", FundFeePayType.Other => PayOther, _ => "" } + Type switch { FundFeeType.Ratio => $"{Fee}%", FundFeeType.Fix => $"{Fee}元", FundFeeType.Other => Other, _ => "未知费用" } : null;
+        var c = HasGuaranteedFee ? $"  保底 {GuaranteedFee}元" : null;
+        return (a + b + c) switch { null or "" => "未设置", var x => x };
+    }
+}
 
-    //public string FeeStatement => HasFee ? PayMethod switch { FundFeePayType.Out => "价外收取", FundFeePayType.Extra => "额外收取", FundFeePayType.Other => PayOther, _ => "" } +
-    //                                        Type switch { FundFeeType.Ratio => $"{Fee}%", FundFeeType.Fix => $"{Fee}元", FundFeeType.Other => Other, _ => "未知费用" } +
-    //                                        HasGuaranteedFee switch { true => $"  保底 {GuaranteedFee}元", _ => "" } : "-";
+/// <summary>
+/// 存续期
+/// </summary>
+public class FundDuration
+{
+    /// <summary>
+    /// 永续
+    /// </summary>
+    public bool Infinity { get; set; }
+
+
+    public int Month { get; set; }
+
+
+    public override string ToString()
+    {
+        return Infinity ? "无固定期限" : Month switch { var m when m > 0 && m % 12 == 0 => $"{m / 12}年", > 0 => $"{Month}个月", _ => "未设置" };
+    }
+
 }

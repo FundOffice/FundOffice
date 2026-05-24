@@ -40,13 +40,17 @@
             SelectedItem="{Binding Modifier.NewValue, RelativeSource={RelativeSource AncestorType=shared:ModifiableControl}}" />
     </DataTemplate>
 
-    <DataTemplate x:Key="DT.DurationInMonths">
+    <DataTemplate DataType="{x:Type local:FundDurationViewModel}">
         <DockPanel>
-            <TextBox
-                Width="50"
-                HorizontalContentAlignment="Center"
-                Text="{Binding Value, TargetNullValue='', UpdateSourceTrigger=PropertyChanged, Delay=300}" />
-            <TextBlock VerticalAlignment="Center" Text="个月" />
+            <CheckBox Content="永续" IsChecked="{Binding Infinity}" />
+            <DockPanel Visibility="{Binding Infinity, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                <TextBlock Margin="5,0" Text="/" />
+                <TextBox
+                    Width="50"
+                    HorizontalContentAlignment="Center"
+                    Text="{Binding Month, TargetNullValue='', UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                <TextBlock VerticalAlignment="Center" Text="个月" />
+            </DockPanel>
         </DockPanel>
     </DataTemplate>
 

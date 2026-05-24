@@ -59,7 +59,22 @@ public static partial class DatabaseAssist
         [126] = MiggreateToNewDisclosure,
         [127] = ChangeLockingRule,
         [146] = MoveToFact,
+        [147] = FactorDuration,
     };
+
+    private static void FactorDuration(BaseDatabase database)
+    {
+        var flowi = database.GetCollection<IFundFactor>().Find(x => x.FactorId == FactorFields.DurationInMonths)
+            .OfType<FundFactor<int>>().Select(x => new FundFactor<FundDuration>
+            {
+                FundId = x.FundId,
+                FactorId = x.FactorId,
+                FlowId = x.FlowId,
+                ShareId = x.ShareId,
+                Data = new FundDuration { Infinity = x.Data >= 999, Month = x.Data }
+            }).ToArray();
+        database.GetCollection<IFundFactor>().Update(flowi);
+    }
 
     private static void MoveToFact(BaseDatabase database)
     {
@@ -85,12 +100,12 @@ public static partial class DatabaseAssist
                 // 单份额
                 if (v.Length == 1 && (fs.Count == 0 || fs[^1].Shares.Length > 0))
                     fs.Add((k, v));
-                else if(v.Length > 1) 
+                else if (v.Length > 1)
                     fs.Add((k, v));
             }
 
             if (fs.Count == 0 || fs[0].FlowId > minFlow)
-                fs.Insert(0, (minFlow, [new ShareClass { Id = -1, Name = "单一份额"}]));
+                fs.Insert(0, (minFlow, [new ShareClass { Id = -1, Name = "单一份额" }]));
 
             // 改id
             for (int i = 0; i < fs.Count; i++)
@@ -103,12 +118,12 @@ public static partial class DatabaseAssist
                     int v = flowId * 1000 + idx++;
                     if (sc.Id != -1)
                         scMap[sc.Id] = v;
-                     
+
                     sc.Id = v;
 
                     sc.Inherit = last;
                 }
-                if(shares.Length == 1)
+                if (shares.Length == 1)
                     flowSc[flowId] = shares[0].Id;
 
                 last = shares[0].Id;
@@ -120,7 +135,7 @@ public static partial class DatabaseAssist
                 f.ShareId = f.ShareId == -1 ? flowSc.First(x => x.Key <= f.FlowId).Value : scMap[f.ShareId];
             }
 
-          
+
             fundFactors.AddRange(factors.Where(x => x.FlowId >= minFlow && x.FactorId != FactorFields.ShareClasses));
             fundFactors.AddRange(fs.Select(x => new FundFactor<ShareClass[]> { FundId = item.Id, FlowId = x.FlowId, FactorId = FactorFields.ShareClasses, Data = x.Shares }));
 

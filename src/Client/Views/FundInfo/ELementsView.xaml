@@ -268,9 +268,8 @@
                                     Modifier="{Binding RiskLevel}" />
 
                                 <shared:ModifiableControl
-                                    Margin="10,0"
+                                    Margin="20,0"
                                     HorizontalAlignment="Left"
-                                    EditTemplate="{StaticResource DT.DurationInMonths}"
                                     Header="存续期"
                                     Modifier="{Binding DurationInMonths}" />
 

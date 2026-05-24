@@ -159,10 +159,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
     public partial ShareFactorViewModel<FundFeeInfo?, FundFeeInfoViewModel>? ManageFee { get; set; } = null!;
 
 
-
-
-    [ObservableProperty]
-    public partial FactorModifiableViewModel<int?, FundDurationViewModel> DurationInMonths { get; private set; } = null!;
+     
 
     [ObservableProperty]
     public partial FactorModifiableViewModel<DateOnly?, FundExpireDateViewModel> ExpirationDate { get; private set; } = null!;
@@ -299,11 +296,11 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         /// 最大999，认为是永续
         DurationInMonths.Changed += (e) =>
         {
-            if (e.NewValue >= 999)
+            if (e.NewValue?.Infinity ?? false)
             {
                 ExpirationDate?.NewValue = new FundExpireDateViewModel(new(2099, 12, 31));
             }
-            else if (e.NewValue is int d && d > 0)
+            else if (e.NewValue?.Month is int d && d > 0)
             {
                 ExpirationDate?.NewValue = new FundExpireDateViewModel(SetupDate.AddMonths(d).AddDays(-1));
             }

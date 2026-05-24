@@ -74,24 +74,21 @@ public partial class DataExtraViewModel<T> : ObservableObject, IEquatable<DataEx
 
 
 [ForceNull(nameof(SealingRule.Type))]
-public partial class SealingInfoViewModel : ObservableObject, IViewModel<SealingRule?, SealingInfoViewModel>, IDisplay<string>, IDataValidation
+public partial class SealingInfoViewModel : ObservableObject, IViewModel<SealingRule?, SealingInfoViewModel>, IDataValidation
 {
     public bool IsValid()
     {
         return Type switch { SealingType.Has => Month > 0, SealingType.Other => Extra?.Length > 0, null => false, _ => true };
     }
 
-    public string Transfrom()
-    {
-        return Type switch { SealingType.Has => $"{Month}个月", SealingType.No => "无", _ => Extra ?? "未设置" };
-    }
+
 }
 
 [AutoChangeableViewModel(typeof(FundInvestmentManager))]
 public partial class InvestmentManagerInfoViewModel;
 
 
- 
+
 public partial class BankAccountInfoViewModel : ObservableObject, IDataValidation, IViewModel<BankAccount?, BankAccountInfoViewModel>
 {
 
@@ -143,7 +140,7 @@ public partial class BankAccountInfoViewModel : ObservableObject, IDataValidatio
         Clipboard.SetText(ToString());
     }
 }
- 
+
 
 
 public partial class FundFeeInfoViewModel : IDataValidation, IViewModel<FundFeeInfo?, FundFeeInfoViewModel>
@@ -380,16 +377,15 @@ public partial class TemporarilyOpenInfoViewModel : IDataValidation, IViewModel<
 }
 
 
-public partial class PerformanceBenchmarkViewModel : IViewModel<PerformanceBenchmark?, PerformanceBenchmarkViewModel>, IDisplay<string>, IDataValidation
+public partial class PerformanceBenchmarkViewModel : IViewModel<PerformanceBenchmark?, PerformanceBenchmarkViewModel>, IDataValidation
 {
     public bool IsValid() => !Has || Benchmark?.Length > 2;
 
-    public string Transfrom() => Has switch { true when Benchmark?.Length > 0 => Benchmark, _ => "未设置" };
 }
 
 
 //[ForceNull(nameof(FundPurchaseRule.MinDeposit))]
-public partial class FundPurchaseRuleViewModel : ObservableObject, IDataValidation, IViewModel<FundPurchaseRule?, FundPurchaseRuleViewModel>, IDisplay<string>
+public partial class FundPurchaseRuleViewModel : ObservableObject, IDataValidation, IViewModel<FundPurchaseRule?, FundPurchaseRuleViewModel>
 {
     [ObservableProperty]
     public partial int? MinDeposit { get; set; } = 1000000;
@@ -405,13 +401,7 @@ public partial class FundPurchaseRuleViewModel : ObservableObject, IDataValidati
         return true;
     }
 
-    public string Transfrom()
-    {
-        var a = MinDeposit is null ? null : $"{MinDeposit / 10000}万起投" + (AdditionalDeposit > 0 ? $"，追加{AdditionalDeposit / 10000}万起" : "") + (HasRequirement ? Statement : "");
-        var b = HasFee ? $"   " + PayMethod switch { FundFeePayType.Out => "价外收取", FundFeePayType.Extra => "额外收取", FundFeePayType.Other => PayOther, _ => "" } + Type switch { FundFeeType.Ratio => $"{Fee}%", FundFeeType.Fix => $"{Fee}元", FundFeeType.Other => Other, _ => "未知费用" } : null;
-        var c = HasGuaranteedFee ? $"  保底 {GuaranteedFee}元" : null;
-        return (a + b + c) switch { null or "" => "未设置", var x => x };
-    }
+
 
     [RelayCommand]
     public void SetDefault()
@@ -453,25 +443,19 @@ public partial class CallbackInfoViewModel : IViewModel<CallbackInfo?, CallbackI
 }
 
 
-public partial class FundDurationViewModel : ObservableObject, IViewModel<int?, FundDurationViewModel>, IDisplay<string>
+public partial class FundDurationViewModel : ObservableObject, IViewModel<FundDuration?, FundDurationViewModel>
 {
 
 
-    public string Transfrom()
-    {
-        return Value switch { >= 999 => "无固定期限", var m when m > 0 && m % 12 == 0 => $"{Value / 12}年", > 0 => $"{Value}个月", _ => "未设置" };
-    }
+
 }
 
 
-public partial class FundModeViewModel : ObservableObject, IViewModel<FundModeInfo?, FundModeViewModel>, IDisplay<string>
+public partial class FundModeViewModel : ObservableObject, IViewModel<FundModeInfo?, FundModeViewModel>
 {
 
 
-    public string Transfrom()
-    {
-        return Mode switch { FundMode.Open => "开放式", FundMode.Close => "封闭式", FundMode.Other => Other ?? "未设置", _ => "未设置" };
-    }
+
 }
 
 public partial class FundExpireDateViewModel : ObservableObject, IViewModel<DateOnly?, FundExpireDateViewModel>, IDisplay<string>

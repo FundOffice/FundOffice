@@ -40,7 +40,7 @@ public partial class FundFactors
     /// <summary>
     /// 存续期（月）
     /// </summary>
-    public SingletonValueFactorItem<int> DurationInMonths { get; private set; } = null!;
+    public SingletonFactorItem<FundDuration> DurationInMonths { get; private set; } = null!;
 
     /// <summary>
     /// 结束日期

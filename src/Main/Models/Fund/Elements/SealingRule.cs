@@ -30,4 +30,6 @@ public class SealingRule
     /// 其它
     /// </summary>
     public string? Extra { get; set; }
+
+    public override string ToString() => Type switch { SealingType.Has => $"{Month}个月", SealingType.No => "无", _ => Extra ?? "未设置" };
 }
