@@ -1,14 +1,23 @@
 ﻿namespace FMO.Models;
 
+
+
+/// <summary>
+/// SingletonFactorItem SingletonValueFactorItem  与份额无关
+/// FactorItem 与份额相关 
+/// </summary>
 public partial class FundFactors
 {
+    #region 份额类别
+
     /// <summary>
     /// 份额类别
     /// </summary>
     public ShareClassFactorItem ShareClasses { get; private set; } = null!;
 
+    #endregion
 
-    // ==================== 基础信息 ====================
+    #region 基础信息
 
     /// <summary>
     /// 名称
@@ -50,8 +59,9 @@ public partial class FundFactors
     /// </summary>
     public SingletonValueFactorItem<DateOnly> ExpirationDate { get; private set; } = null!;
 
+    #endregion
 
-    // ==================== 账户信息 ====================
+    #region 账户信息
 
     /// <summary>
     /// 主募集账户
@@ -63,8 +73,9 @@ public partial class FundFactors
     /// </summary>
     public SingletonFactorItem<BankAccount> CustodyAccount { get; private set; } = null!;
 
+    #endregion
 
-    // ==================== 风控线 ====================
+    #region 风控线
 
     /// <summary>
     /// 止损线
@@ -81,8 +92,9 @@ public partial class FundFactors
     /// </summary>
     public SingletonFactorItem<HugeRedemptionRule> HugeRedemption { get; private set; } = null!;
 
+    #endregion
 
-    // ==================== 开放/赎回规则 ====================
+    #region 开放/赎回规则
 
     /// <summary>
     /// 开放日规则（文本描述）
@@ -110,8 +122,24 @@ public partial class FundFactors
     /// </summary>
     public SingletonFactorItem<CallbackInfo> Callback { get; private set; } = null!;
 
+    /// <summary>
+    /// 锁定期（对应合同“基金的申购、赎回与转让”/“募集”章节）
+    /// </summary>
+    public FactorItem<SealingRule> LockingRule { get; private set; } = null!;
 
-    // ==================== 机构信息 ====================
+    /// <summary>
+    /// 认购规则（对应合同“基金的募集”章节）
+    /// </summary>
+    public FactorItem<FundPurchaseRule> SubscriptionRule { get; private set; } = null!;
+
+    /// <summary>
+    /// 申购规则（对应合同“基金的申购、赎回与转让”章节）
+    /// </summary>
+    public FactorItem<FundPurchaseRule> PurchasRule { get; private set; } = null!;
+
+    #endregion
+
+    #region 机构信息
 
     /// <summary>
     /// 托管机构信息
@@ -123,8 +151,9 @@ public partial class FundFactors
     /// </summary>
     public SingletonFactorItem<AgencyInfo> OutsourcingInfo { get; private set; } = null!;
 
+    #endregion
 
-    // ==================== 费用信息（单份额） ====================
+    #region 费用信息（单份额）
 
     /// <summary>
     /// 托管费
@@ -141,8 +170,24 @@ public partial class FundFactors
     /// </summary>
     public SingletonFactorItem<FeePayInfo> ManageFeePay { get; private set; } = null!;
 
+    /// <summary>
+    /// 管理费（按份额）（对应合同“基金的费用与税收”章节）
+    /// </summary>
+    public FactorItem<FundFeeInfo> ManageFee { get; private set; } = null!;
 
-    // ==================== 投资经理/策略 ====================
+    /// <summary>
+    /// 赎回费（对应合同“基金的费用与税收”章节）
+    /// </summary>
+    public FactorItem<RedemptionFeeInfo> RedemptionFee { get; private set; } = null!;
+
+    /// <summary>
+    /// 业绩报酬说明（对应合同“基金的费用与税收”章节）
+    /// </summary>
+    public FactorItem<string> PerformanceFeeStatement { get; private set; } = null!;
+
+    #endregion
+
+    #region 投资经理/策略
 
     /// <summary>
     /// 基金经理列表
@@ -174,35 +219,5 @@ public partial class FundFactors
     /// </summary>
     public SingletonFactorItem<string> InvestmentStrategy { get; private set; } = null!;
 
-    // ==================== 份额相关规则（多份额） ====================
-
-    /// <summary>
-    /// 锁定期
-    /// </summary>
-    public FactorItem<SealingRule> LockingRule { get; private set; } = null!;
-
-    /// <summary>
-    /// 管理费（按份额）
-    /// </summary>
-    public FactorItem<FundFeeInfo> ManageFee { get; private set; } = null!;
-
-    /// <summary>
-    /// 认购规则
-    /// </summary>
-    public FactorItem<FundPurchaseRule> SubscriptionRule { get; private set; } = null!;
-
-    /// <summary>
-    /// 申购规则
-    /// </summary>
-    public FactorItem<FundPurchaseRule> PurchasRule { get; private set; } = null!;
-
-    /// <summary>
-    /// 赎回费
-    /// </summary>
-    public FactorItem<RedemptionFeeInfo> RedemptionFee { get; private set; } = null!;
-
-    /// <summary>
-    /// 业绩报酬说明
-    /// </summary>
-    public FactorItem<string> PerformanceFeeStatement { get; private set; } = null!;
+    #endregion
 }
