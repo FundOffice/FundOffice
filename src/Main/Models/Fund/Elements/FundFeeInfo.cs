@@ -100,4 +100,9 @@ public class HugeRedemptionRule
 
     public decimal RatioPerInvestor { get; set; }
 
+    public override string ToString() => Has switch
+    {
+        true when Ratio > 0 => $"{Ratio * 100}%",
+        _ => "未设置"
+    };
 }

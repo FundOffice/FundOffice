@@ -16,14 +16,10 @@ namespace FMO;
 
 [ForceNull(nameof(DateRange.Begin))]
 [ForceNull(nameof(DateRange.End))]
-public partial class DateRangeViewModel : IViewModel<DateRange?, DateRangeViewModel>, IDisplay<string>
+public partial class DateRangeViewModel : IViewModel<DateRange?, DateRangeViewModel>
 {
-    public override string ToString()
-    {
-        return $"{Begin:yyyy-MM-dd} - {End:yyyy-MM-dd}";
-    }
-
-    public string Transfrom() => $"{Begin:yyyy-MM-dd} - {End:yyyy-MM-dd}";
+   
+     
 }
 
 

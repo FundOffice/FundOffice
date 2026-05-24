@@ -46,17 +46,7 @@ public class ValueChangeEventArgs<TProperty> : ValueChangeEventArgs
     public TProperty? FallbackValue { get; set; }
 }
 
-public interface IDisplay
-{
-    object Transfrom();
-}
-
-public interface IDisplay<TDisplay> : IDisplay where TDisplay : notnull
-{
-    new TDisplay Transfrom();
-
-    object IDisplay.Transfrom() => this.Transfrom();
-}
+ 
 
 public interface IValueModifier
 {

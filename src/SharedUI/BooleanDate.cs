@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace FMO.Shared;
 
-public partial class BooleanDate : ObservableObject, IEquatable<BooleanDate>, IDisplay<string>
+public partial class BooleanDate : ObservableObject, IEquatable<BooleanDate>
 {
 
     public DateTime Today => DateTime.Today;
@@ -49,5 +49,5 @@ public partial class BooleanDate : ObservableObject, IEquatable<BooleanDate>, ID
             Date = DateTime.MaxValue;
     }
 
-    public string Transfrom() => IsLongTerm ? "长期" : Date?.ToString("yyyy/MM/dd") ?? "未设置";
+    public override string ToString() => IsLongTerm ? "长期" : Date?.ToString("yyyy/MM/dd") ?? "未设置";
 }

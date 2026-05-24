@@ -207,14 +207,14 @@ public partial class InvestManagerViewModel : ObservableObject
     }
 
 
-    public class PersonInfo(int Id, string Name):IDisplay<string>,IEquatable<PersonInfo>
+    public class PersonInfo(int Id, string Name) :   IEquatable<PersonInfo>
     {
         public int Id { get; } = Id;
         public string Name { get; } = Name;
 
         public bool Equals(PersonInfo? other) => Id == other?.Id;
 
-        public string Transfrom() => Name;
+        public override string ToString() => Name;
 
 
     }

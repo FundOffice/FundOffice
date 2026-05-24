@@ -148,6 +148,8 @@ public record class Identity
     {
         return Type.GetHashCode() ^ (Id ?? "").GetHashCode();
     }
+
+    public override string ToString() => $"{EnumDescriptionTypeConverter.GetEnumDescription(Type)} {Id}";
 }
 
 

@@ -458,17 +458,13 @@ public partial class FundModeViewModel : ObservableObject, IViewModel<FundModeIn
 
 }
 
-public partial class FundExpireDateViewModel : ObservableObject, IViewModel<DateOnly?, FundExpireDateViewModel>, IDisplay<string>
+public partial class FundExpireDateViewModel : ObservableObject, IViewModel<DateOnly?, FundExpireDateViewModel>
 {
-    public string Transfrom() => Value switch { DateOnly d => d > DateOnly.MinValue ? $"{d: yyyy/M/d}" : "未设置", _ => "未设置" };
+    public override string ToString() => Value switch { DateOnly d => d > DateOnly.MinValue ? $"{d: yyyy/M/d}" : "未设置", _ => "未设置" };
 }
 
 
-public partial class HugeRedemptionRuleViewModel : IViewModel<HugeRedemptionRule?, HugeRedemptionRuleViewModel>, IDisplay<string>
+public partial class HugeRedemptionRuleViewModel : IViewModel<HugeRedemptionRule?, HugeRedemptionRuleViewModel> 
 {
-    public string Transfrom() => Has switch
-    {
-        true when Ratio > 0 => $"{Ratio * 100}%",
-        _ => "未设置"
-    };
+    
 }

@@ -998,7 +998,7 @@ public partial class RiskAssessmentViewModel : ObservableObject
 
 
 [AutoViewModel(typeof(Identity))]
-public partial class IdentityViewMdoel : IViewModel<Identity> ,IEquatable<IdentityViewMdoel>, IDataValidation, IDisplay<string>
+public partial class IdentityViewMdoel : IViewModel<Identity> ,IEquatable<IdentityViewMdoel>, IDataValidation 
 {
     public bool Equals(IdentityViewMdoel? other)
     {
@@ -1011,6 +1011,5 @@ public partial class IdentityViewMdoel : IViewModel<Identity> ,IEquatable<Identi
     {
         return $"{EnumDescriptionTypeConverter.GetEnumDescription(Type)} {Id}";
     }
-
-    public string Transfrom() => $"{EnumDescriptionTypeConverter.GetEnumDescription(Type)}   {Id}";
+     
 }
