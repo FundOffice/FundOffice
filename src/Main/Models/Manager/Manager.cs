@@ -5,7 +5,7 @@ public class Manager : Institution
     /// <summary>
     /// Amac中的id
     /// </summary>
-    public required string AmacId { get; set; }
+    public required string AmacId { get; init; }
 
     /// <summary>
     /// 是否是主体

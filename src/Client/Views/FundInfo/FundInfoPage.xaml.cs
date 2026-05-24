@@ -95,7 +95,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         else
         {
             //检查是否有不存在的flow
-            ele.RemoveInvalidFlow(Flows?.Select(x => x.FlowId).ToArray());
+            //ele.RemoveInvalidFlow(Flows?.Select(x => x.FlowId).ToArray());
         }
 
         // 如果已定稿
@@ -748,12 +748,8 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
             return;
 
         using var db = DbHelper.Base();
-        var ele = db.GetCollection<FundElements>().FindById(FundId);
-        if (ele is not null)
-        {
-            ele.Remove(flow.FlowId);
-            db.GetCollection<FundElements>().Update(ele);
-        }
+        db.GetCollection<IFundFactor>().DeleteMany(x => x.FundId == FundId && x.FlowId == flow.FlowId);
+
 
         db.GetCollection<FundFlow>().Delete(flow.FlowId);
         if (flow is LiquidationFlowViewModel && FundStatus <= FundStatus.StartLiquidation)

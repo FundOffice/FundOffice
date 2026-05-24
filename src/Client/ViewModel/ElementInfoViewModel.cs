@@ -5,6 +5,7 @@ using FMO.Shared;
 using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows;
 
 namespace FMO;
 
@@ -71,41 +72,16 @@ public partial class DataExtraViewModel<T> : ObservableObject, IEquatable<DataEx
 
 
 
-public partial class SealingInfoViewModel : ObservableObject, IEquatable<SealingInfoViewModel>
+
+[ForceNull(nameof(SealingRule.Type))]
+public partial class SealingInfoViewModel : ObservableObject, IViewModel<SealingRule?, SealingInfoViewModel>, IDataValidation
 {
-    [ObservableProperty]
-    public partial SealingType? Type { get; set; }
-
-    [ObservableProperty]
-    public partial int? Month { get; set; }
-
-    [ObservableProperty]
-    public partial string? Other { get; set; }
-
-
-    public SealingInfoViewModel() { }
-
-    public SealingInfoViewModel(SealingRule? info)
+    public bool IsValid()
     {
-        Type = info?.Type;
-        Month = info?.Month;
-        Other = info?.Extra;
+        return Type switch { SealingType.Has => Month > 0, SealingType.Other => Extra?.Length > 0, null => false, _ => true };
     }
 
-    public bool Equals(SealingInfoViewModel? other)
-    {
-        return Type == other?.Type && Month == other?.Month && Other == other?.Other;
-    }
 
-    internal SealingRule Build()
-    {
-        return new SealingRule { Type = Type ?? default, Month = Month ?? 0, Extra = Other };
-    }
-
-    public override string ToString()
-    {
-        return Type switch { SealingType.Has => $"{Month}月", SealingType.No => "无", _ => Other ?? "" };
-    }
 }
 
 [AutoChangeableViewModel(typeof(FundInvestmentManager))]
@@ -113,8 +89,7 @@ public partial class InvestmentManagerInfoViewModel;
 
 
 
-[AutoChangeableViewModel(typeof(BankAccount))]
-public partial class BankAccountInfoViewModel : IDataValidation
+public partial class BankAccountInfoViewModel : ObservableObject, IDataValidation, IViewModel<BankAccount?, BankAccountInfoViewModel>
 {
 
     private string? _Deposit;
@@ -158,18 +133,17 @@ public partial class BankAccountInfoViewModel : IDataValidation
 
         return builder.ToString();
     }
+
+    [RelayCommand]
+    public void CopyAll()
+    {
+        Clipboard.SetText(ToString());
+    }
 }
 
-public partial class BankChangeableViewModel<T> : ChangeableViewModel<T, BankAccountInfoViewModel>
-{
-    //public override bool CanConfirm => base.CanConfirm && (NewValue?.IsValid() ?? false);
-}
 
 
-
-
-[AutoChangeableViewModel(typeof(FundFeeInfo))]
-public partial class FundFeeInfoViewModel : IDataValidation
+public partial class FundFeeInfoViewModel : IDataValidation, IViewModel<FundFeeInfo?, FundFeeInfoViewModel>
 {
     public bool IsValid() => Type switch { FundFeeType.Ratio or FundFeeType.Fix => Fee > 0, FundFeeType.Other => Other?.Length > 0, _ => false };
 
@@ -179,7 +153,7 @@ public partial class FundFeeInfoViewModel : IDataValidation
     }
 }
 
-public partial class RedemptionFeeInfoViewMdoel : ObservableObject, IDataValidation, IEquatable<RedemptionFeeInfoViewMdoel>
+public partial class RedemptionFeeInfoViewMdoel : ObservableObject, IDataValidation, IViewModel<RedemptionFeeInfo?, RedemptionFeeInfoViewMdoel>
 {
     public RedemptionFeeInfoViewMdoel()
     {
@@ -213,7 +187,7 @@ public partial class RedemptionFeeInfoViewMdoel : ObservableObject, IDataValidat
     [ObservableProperty]
     public partial string? Other { get; set; }
 
-    public ObservableCollection<PartFeeViewModel> Parts { get; init; }
+    public ObservableCollection<PartFeeViewModel> Parts { get; private set; }
 
     public RedemptionFeeInfo Build()
     {
@@ -289,98 +263,167 @@ public partial class RedemptionFeeInfoViewMdoel : ObservableObject, IDataValidat
         OnPropertyChanged(nameof(Parts));
     }
 
-    public partial class PartFeeViewModel : ObservableObject, IEquatable<PartFeeViewModel>
+
+
+    public bool Equals(global::FMO.Models.RedemptionFeeInfo? other)
     {
-        public PartFeeViewModel()
+        if (other is null)
         {
+            return EqualityComparer<global::FMO.Models.FundFeeType?>.Default.Equals(Type, default) &&
+                   EqualityComparer<bool>.Default.Equals(HasFee, default) &&
+                   EqualityComparer<decimal?>.Default.Equals(Fee, default) &&
+                   EqualityComparer<string>.Default.Equals(Other, default) &&
+                   (Parts is null || !Parts.Any());
         }
+        if (!EqualityComparer<global::FMO.Models.FundFeeType?>.Default.Equals(Type, other.Type)) return false;
+        if (!EqualityComparer<bool>.Default.Equals(HasFee, other.HasFee)) return false;
+        if (!EqualityComparer<decimal?>.Default.Equals(Fee, other.Fee)) return false;
+        if (!EqualityComparer<string>.Default.Equals(Other, other.Other)) return false;
+        if ((Parts?.Count ?? 0) != (other?.Parts?.Count ?? 0)) return false;
 
-        public PartFeeViewModel(PartRedemptionFee obj)
+        if (Parts?.Count > 0)
+            for (int i = 0; i < Parts.Count; i++)
+            {
+                var a = Parts[i];
+                var b = other!.Parts![i];
+
+                if (!a.Equals(b)) return false;
+            }
+
+
+        return true;
+    }
+
+
+
+
+    public RedemptionFeeInfoViewMdoel FillBy(global::FMO.Models.RedemptionFeeInfo? obj)
+    {
+        if (obj is null)
         {
-            Month = obj.Month switch { 0 => null, var x => x };
-            Include = obj.Include;
-            Fee = obj.Fee;
+            Type = default;
+            HasFee = default;
+            Fee = default;
+            Other = default;
+            Parts = [];
+            return this;
         }
-
-
-
-        [ObservableProperty]
-        public partial int? Month { get; set; }
-
-        [ObservableProperty]
-        public partial bool Include { get; set; }
-
-        [ObservableProperty]
-        public partial decimal? Fee { get; set; }
-
-        [ObservableProperty]
-        public partial bool IsLast { get; set; }
-
-        public bool Equals(PartFeeViewModel? other)
-        {
-            if (other is null) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return Month == other.Month && Include == other.Include && Fee == other.Fee;
-        }
+        Type = obj.Type;
+        HasFee = obj.HasFee;
+        Fee = obj.Fee;
+        Other = obj.Other;
+        Parts = obj?.Parts is null ? new() : new(obj.Parts.Select(x => new PartFeeViewModel(x)));
+        if (Parts.Count > 0)
+            Parts[^1].IsLast = true;
+        return this;
     }
 }
+
+
+public partial class PartFeeViewModel : ObservableObject, IViewModel<PartRedemptionFee, PartFeeViewModel>
+{
+
+
+    public PartFeeViewModel(PartRedemptionFee obj)
+    {
+        Month = obj.Month;
+        Include = obj.Include;
+        Fee = obj.Fee;
+    }
+
+
+
+    [ObservableProperty]
+    public partial bool IsLast { get; set; }
+
+    public bool Equals(PartFeeViewModel? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Month == other.Month && Include == other.Include && Fee == other.Fee;
+    }
+
+
+    public bool Equals(PartRedemptionFee? other)
+    {
+        if (other is null)
+            return Month is null or 0 && !Include && Fee is null or 0;
+
+        if ((Month ?? 0) != (other.Month ?? 0)) return false;
+        if (Include != other.Include) return false;
+        if ((Fee ?? 0) != (other.Fee ?? 0)) return false;
+        return true;
+    }
+}
+
 
 [AutoChangeableViewModel(typeof(SealingRule))]
 public partial class LockingRuleViewModel;
 
 
-[AutoChangeableViewModel(typeof(AgencyInfo))]
-public partial class AgencyInfoViewModel : IDataValidation
+public partial class AgencyInfoViewModel : IDataValidation, IViewModel<AgencyInfo?, AgencyInfoViewModel>
 {
     public bool IsValid() => !HasAgency || !string.IsNullOrWhiteSpace(Name);
 
-    public override string ToString() => HasAgency switch { true => Name!, _ => "-" };
+    public override string ToString() => HasAgency switch { true when !string.IsNullOrWhiteSpace(Name) => Name!, false => "-", _ => "未设置" };
 }
 
-[AutoChangeableViewModel(typeof(TemporarilyOpenInfo))]
-public partial class TemporarilyOpenInfoViewModel : IDataValidation
+
+public partial class TemporarilyOpenInfoViewModel : IDataValidation, IViewModel<TemporarilyOpenInfo?, TemporarilyOpenInfoViewModel>
 {
     public bool IsValid() => !IsAllowed || (AllowPurchase || AllowRedemption);
 
     public override string ToString() => !IsAllowed ? "不允许临开" : (IsLimited ? "仅合同变更、法规变更时，" : "") + $"允许{(AllowPurchase ? "申购" : "")}{(AllowRedemption ? "赎回" : "")}";
 }
 
-[AutoChangeableViewModel(typeof(PerformanceBenchmark))]
-public partial class PerformanceBenchmarkViewModel  
-{ 
+
+public partial class PerformanceBenchmarkViewModel : IViewModel<PerformanceBenchmark?, PerformanceBenchmarkViewModel>, IDataValidation
+{
+    public bool IsValid() => !Has || Benchmark?.Length > 2;
+
 }
 
 
-[AutoChangeableViewModel(typeof(FundPurchaseRule))]
-public partial class FundPurchaseRuleViewModel : IDataValidation
+//[ForceNull(nameof(FundPurchaseRule.MinDeposit))]
+public partial class FundPurchaseRuleViewModel : ObservableObject, IDataValidation, IViewModel<FundPurchaseRule?, FundPurchaseRuleViewModel>
 {
+    [ObservableProperty]
+    public partial int? MinDeposit { get; set; } = 1000000;
+
     public string? FeeName { get; set; }
 
-    public bool IsValid() => !HasFee || Type switch { FundFeeType.Ratio or FundFeeType.Fix => Fee > 0, FundFeeType.Other => Other?.Length > 0, _ => false };
-
-    public override string ToString()
+    public bool IsValid()
     {
-        var a = MinDeposit is null ? "未设置" : $"{MinDeposit / 10000}万起投" + (AdditionalDeposit > 0 ? $"，追加{AdditionalDeposit / 10000}万起" : "") + (HasRequirement ? Statement : "");
-        var b = HasFee ? $"   {FeeName}：" + PayMethod switch { FundFeePayType.Out => "价外收取", FundFeePayType.Extra => "额外收取", FundFeePayType.Other => PayOther, _ => "" } + Type switch { FundFeeType.Ratio => $"{Fee}%", FundFeeType.Fix => $"{Fee}元", FundFeeType.Other => Other, _ => "未知费用" } : "";
-        var c = HasGuaranteedFee ? $"  保底 {GuaranteedFee}元" : "";
-        return a + b + c;
+        if (MinDeposit is null or < 10000) return false;
+        if (HasFee && Type is FundFeeType.Ratio or FundFeeType.Fix && Fee <= 0) return false;
+        if (Type is FundFeeType.Other && Other?.Length == 0) return false;
+
+        return true;
+    }
+
+
+
+    [RelayCommand]
+    public void SetDefault()
+    {
+        MinDeposit = 1000000;
     }
 }
 
-[AutoChangeableViewModel(typeof(FeePayInfo))]
-public partial class FeePayInfoViewModel
+//[AutoChangeableViewModel(typeof(FeePayInfo))]
+public partial class FeePayInfoViewModel : IViewModel<FeePayInfo?, FeePayInfoViewModel>
 {
     public override string? ToString()
     {
         return Type switch { FeePayFrequency.Month => "按月支付", FeePayFrequency.Quarter => "按季支付", FeePayFrequency.Other => Other, _ => "未设置" };
     }
+
+
 }
 
 
 
-
-[AutoChangeableViewModel(typeof(CoolingPeriodInfo))]
-public partial class CoolingPeriodInfoViewModel
+public partial class CoolingPeriodInfoViewModel : IViewModel<CoolingPeriodInfo?, CoolingPeriodInfoViewModel>
 {
     public override string? ToString()
     {
@@ -390,11 +433,38 @@ public partial class CoolingPeriodInfoViewModel
 
 
 
-[AutoChangeableViewModel(typeof(CallbackInfo))]
-public partial class CallbackInfoViewModel
+
+public partial class CallbackInfoViewModel : IViewModel<CallbackInfo?, CallbackInfoViewModel>
 {
     public override string? ToString()
     {
         return IsRequired ? "需要" : "不适用";
     }
+}
+
+
+public partial class FundDurationViewModel : ObservableObject, IViewModel<FundDuration?, FundDurationViewModel>
+{
+
+
+
+}
+
+
+public partial class FundModeViewModel : ObservableObject, IViewModel<FundModeInfo?, FundModeViewModel>
+{
+
+
+
+}
+
+public partial class FundExpireDateViewModel : ObservableObject, IViewModel<DateOnly?, FundExpireDateViewModel>
+{
+    public override string ToString() => Value switch { DateOnly d => d > DateOnly.MinValue ? $"{d: yyyy/M/d}" : "未设置", _ => "未设置" };
+}
+
+
+public partial class HugeRedemptionRuleViewModel : IViewModel<HugeRedemptionRule?, HugeRedemptionRuleViewModel> 
+{
+    
 }

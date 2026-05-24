@@ -199,7 +199,7 @@ public class AutoViewModelIncrementalGenerator : IIncrementalGenerator
                 hasAutoBase = true;
                 break;
             }
-            else if(baseType.Name.Contains("ObservableObject"))
+            else if (baseType.Name.Contains("ObservableObject"))
             {
                 needsINPC = false;
                 hasAutoBase = false;
@@ -472,7 +472,7 @@ using System.Runtime.CompilerServices;
             // ✅ 只处理可写属性
             if (!IsWritable)
                 return string.Empty;
-             
+
             // string
             if (SourceTypeName == "string")
                 return $"{Name} = {Name} is not null ? {Name} : String.Empty,";

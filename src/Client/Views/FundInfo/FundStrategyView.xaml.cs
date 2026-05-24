@@ -35,7 +35,7 @@ public partial class FundStrategyViewModel : ObservableObject
     public FundStrategyViewModel(int fundId, DateOnly setupDate)
     {
         using var db = DbHelper.Base();
-        var data = db.GetCollection<FundStrategy>().Find(x => x.FundId == fundId).ToArray(); 
+        var data = db.GetCollection<FundStrategy>().Find(x => x.FundId == fundId).ToArray();
 
         Strategies = new(data.Select(x => new StrategyInfoViewModel(x)));
 
@@ -58,7 +58,7 @@ public partial class FundStrategyViewModel : ObservableObject
         }
         StrategyInfoViewModel st = new(new FundStrategy { FundId = FundId });
         st.IsReadOnly = false;
-        st.Start.NewValue = Strategies.Count == 0 ? new DateTime(FundSetupDate, default) : Strategies.LastOrDefault()?.End?.OldValue?.Date switch { DateTime t => t < DateTime.MaxValue.Date ? t.AddDays(1) : t, _ => null }; //?.AddDays(1); 
+        st.Start.NewValue = Strategies.Count == 0 ? FundSetupDate : Strategies.LastOrDefault()?.End?.OldValue?.Date switch { DateTime t => DateOnly.FromDateTime(t < DateTime.MaxValue.Date ? t.AddDays(1) : t), _ => null }; //?.AddDays(1); 
         Strategies.Add(st);
     }
 
@@ -88,7 +88,7 @@ public partial class FundStrategyViewModel : ObservableObject
         }
         InvestManagerViewModel st = new(new FundInvestmentManager { FundId = FundId });
         st.IsReadOnly = false;
-        st.Start.NewValue = Managers.Count == 0 ? new DateTime(FundSetupDate, default) : Managers.LastOrDefault()?.End?.OldValue?.Date switch { DateTime t => t < DateTime.MaxValue.Date ? t.AddDays(1) : t, _ => null }; 
+        st.Start.NewValue = Managers.Count == 0 ? FundSetupDate : Strategies.LastOrDefault()?.End?.OldValue?.Date switch { DateTime t => DateOnly.FromDateTime(t < DateTime.MaxValue.Date ? t.AddDays(1) : t), _ => null };
         Managers.Add(st);
     }
 
@@ -107,170 +107,76 @@ public partial class FundStrategyViewModel : ObservableObject
     }
 }
 
-public partial class StrategyInfoViewModel : EditableControlViewModelBase<FundStrategy>
+
+[EntityModifiable(typeof(FundStrategy))]
+public partial class StrategyInfoViewModel : ObservableObject
 {
+    private readonly FundStrategy _strategy;
+
+    public int Id { get; }
+
     public StrategyInfoViewModel(FundStrategy strategy)
     {
         Id = strategy.Id;
         FundId = strategy.FundId;
+        _strategy = strategy;
 
-        Name = new ChangeableViewModel<FundStrategy, string>
-        {
-            Label = "策略名称",
-            InitFunc = x => x.Name,
-            UpdateFunc = (a, b) => a.Name = b,
-            ClearFunc = x => x.Name = null
-        };
-        Name.Init(strategy);
+        FillBy(_strategy);
 
-        Start = new ChangeableViewModel<FundStrategy, DateTime?>
-        {
-            Label = "起始日期",
-            InitFunc = x => x.Start == default ? null : new DateTime(x.Start, default),
-            UpdateFunc = (a, b) => a.Start = b.HasValue ? DateOnly.FromDateTime(b.Value) : default,
-            ClearFunc = x => x.Start = default,
-            DisplayFunc = x => x?.ToString("yyyy-MM-dd")
-        };
-        Start.Init(strategy);
-
-        End = new ChangeableViewModel<FundStrategy, BooleanDate>
-        {
-            Label = "终止日期",
-            InitFunc = x => x.End == default ? new BooleanDate() : new BooleanDate { Date = new DateTime(x.End, default), IsLongTerm = x.End == DateOnly.MaxValue },
-            UpdateFunc = (a, b) => a.End = b is null ? default : b.IsLongTerm ? DateOnly.MaxValue : DateOnly.FromDateTime(b.Date ?? default),
-            ClearFunc = x => x.End = default,
-            DisplayFunc = x => x?.IsLongTerm ?? false ? "至今" : x?.Date?.ToString("yyyy-MM-dd")
-        };
-        End.Init(strategy);
-
-        Description = new ChangeableViewModel<FundStrategy, string>
-        {
-            Label = "策略说明",
-            InitFunc = x => x.Description,
-            UpdateFunc = (a, b) => a.Description = b,
-            ClearFunc = x => x.Description = null
-        };
-        Description.Init(strategy);
+        End = new() { NewValue = new(_strategy.End), OldValue = new(_strategy.End) };
+        End.Changed += (e) => { _strategy.End = DateOnly.FromDateTime(End.NewValue?.Date ?? default); OnEntityChanged(); };
     }
 
-    public ChangeableViewModel<FundStrategy, string> Name { get; }
 
-    public ChangeableViewModel<FundStrategy, DateTime?> Start { get; }
+    public ModifiableViewModel<DateOnly?> Start { get; private set; } = null!;
 
-    public ChangeableViewModel<FundStrategy, BooleanDate> End { get; }
+    public ModifiableViewModel<BooleanDate> End { get; private set; } = null!;
 
-    public ChangeableViewModel<FundStrategy, string> Description { get; }
 
 
     public int FundId { get; }
 
-    protected override FundStrategy InitNewEntity()
-    {
-        return new FundStrategy { FundId = FundId };
-    }
+    [ObservableProperty]
+    public partial bool IsReadOnly { get; set; } = true;
 
-    protected override void NotifyChanged()
+    public partial void OnEntityChanged()
     {
+        using var db = DbHelper.Base();
+        db.GetCollection<FundStrategy>().Upsert(_strategy);
+
         WeakReferenceMessenger.Default.Send(new FundStrategyChangedMessage(FundId));
     }
-    //[RelayCommand]
-    //public override void Delete(UnitViewModel unit)
-    //{
-    //    if (unit is IEntityViewModel<FundStrategy> entity)
-    //    {
-    //        using var db = DbHelper.Base();
-    //        var v = db.GetCollection<FundStrategy>().FindById(Id);
-
-    //        if (v is not null)
-    //        {
-    //            entity.RemoveValue(v);
-    //            entity.Init(v);
-    //            db.GetCollection<FundStrategy>().Upsert(v);
-
-    //            WeakReferenceMessenger.Default.Send(v);
-    //        }
-    //    }
-    //}
-
-
-    //[RelayCommand]
-    //public override void Modify(UnitViewModel unit)
-    //{
-    //    if (unit is IEntityViewModel<FundStrategy> property)
-    //    {
-
-    //        using var db = DbHelper.Base();
-    //        var v = db.GetCollection<FundStrategy>().FindById(Id) ?? new();
-
-    //        if (v is not null)
-    //            property.UpdateEntity(v);
-
-    //        if (v is not null)
-    //        {
-    //            db.GetCollection<FundStrategy>().Upsert(v);
-    //            if (Id == 0) Id = v.Id;
-
-    //            //WeakReferenceMessenger.Default.Send(v);
-    //        }
-    //    }
-    //    unit.Apply();
-    //}
 }
 
-
-public partial class InvestManagerViewModel : EditableControlViewModelBase<FundInvestmentManager>
+[EntityModifiable(typeof(FundInvestmentManager))]
+public partial class InvestManagerViewModel : ObservableObject
 {
+    private readonly FundInvestmentManager investmentManager;
+
+    public int Id { get; }
+
     public InvestManagerViewModel(FundInvestmentManager value)
     {
         Id = value.Id;
+        investmentManager = value;
         FundId = value.FundId;
+
+        FillBy(value);
 
         using var db = DbHelper.Base();
         var managers = db.GetCollection<Participant>().FindAll().ToArray().Where(x => x.Role.HasFlag(PersonRole.InvestmentManager));
-        Managers = new(managers.Select(x=>new PersonInfo(x.Id, x.Name!)));
+        Managers = new(managers.Select(x => new PersonInfo(x.Id, x.Name!)));
 
+        End = new() { NewValue = new(investmentManager.End), OldValue = new(investmentManager.End) };
+        End.Changed += (e) => { investmentManager.End = DateOnly.FromDateTime(End.NewValue?.Date ?? default); OnEntityChanged(); };
 
-        Person = new ChangeableViewModel<FundInvestmentManager, PersonInfo>
+        Person = new() { NewValue = Managers.FirstOrDefault(x => x.Id == investmentManager.PersonId), OldValue = Managers.FirstOrDefault(x => x.Id == investmentManager.PersonId) };
+        Person.Changed += (e) =>
         {
-            Label = "投资经理",
-            InitFunc = x => new PersonInfo(x.PersonId, x.Name!),
-            UpdateFunc = (a, b) => { a.Name = b!.Name; a.PersonId = b.Id; },
-            ClearFunc = x => x.Name = null,
-            DisplayFunc = x=>x?.Name
+            investmentManager.PersonId = e.NewValue?.Id ?? 0;
+            OnEntityChanged();
         };
-        Person.Init(value);
 
-
-
-
-        Start = new ChangeableViewModel<FundInvestmentManager, DateTime?>
-        {
-            Label = "起始日期",
-            InitFunc = x => x.Start == default ? null : new DateTime(x.Start, default),
-            UpdateFunc = (a, b) => a.Start = b.HasValue ? DateOnly.FromDateTime(b.Value) : default,
-            ClearFunc = x => x.Start = default,
-            DisplayFunc = x => x?.ToString("yyyy-MM-dd")
-        };
-        Start.Init(value);
-
-        End = new ChangeableViewModel<FundInvestmentManager, BooleanDate>
-        {
-            Label = "终止日期",
-            InitFunc = x => x.End == default ? new BooleanDate() : new BooleanDate { Date = new DateTime(x.End, default), IsLongTerm = x.End == DateOnly.MaxValue },
-            UpdateFunc = (a, b) => a.End = b is null ? default : b.IsLongTerm ? DateOnly.MaxValue : DateOnly.FromDateTime(b.Date ?? default),
-            ClearFunc = x => x.End = default,
-            DisplayFunc = x => x?.IsLongTerm ?? false ? "至今" : x?.Date?.ToString("yyyy-MM-dd")
-        };
-        End.Init(value);
-
-        Profile = new ChangeableViewModel<FundInvestmentManager, string>
-        {
-            Label = "简介",
-            InitFunc = x => x.Profile,
-            UpdateFunc = (a, b) => a.Profile = b,
-            ClearFunc = x => x.Profile = null
-        };
-        Profile.Init(value);
     }
 
 
@@ -279,27 +185,39 @@ public partial class InvestManagerViewModel : EditableControlViewModelBase<FundI
 
     public ObservableCollection<PersonInfo> Managers { get; set; }
 
-    public ChangeableViewModel<FundInvestmentManager, PersonInfo> Person { get; }
+    public ModifiableViewModel<PersonInfo> Person { get; private set; } = null!;
 
-    public ChangeableViewModel<FundInvestmentManager, DateTime?> Start { get; }
+    public ModifiableViewModel<DateOnly?> Start { get; private set; } = null!;
 
-    public ChangeableViewModel<FundInvestmentManager, BooleanDate> End { get; }
+    public ModifiableViewModel<BooleanDate> End { get; private set; } = null!;
 
-    public ChangeableViewModel<FundInvestmentManager, string> Profile { get; }
+
+    [ObservableProperty]
+    public partial bool IsReadOnly { get; set; } = true;
 
 
     public int FundId { get; }
 
-    protected override FundInvestmentManager InitNewEntity()
+
+    public partial void OnEntityChanged()
     {
-        return new FundInvestmentManager { FundId = FundId };
+        using var db = DbHelper.Base();
+        db.GetCollection<FundInvestmentManager>().Upsert(investmentManager);
+
     }
 
-    protected override void NotifyChanged()
-    {
-        WeakReferenceMessenger.Default.Send(new FundStrategyChangedMessage(FundId));
-    }
-     
 
-    public record PersonInfo(int Id, string Name);
+    public class PersonInfo(int Id, string Name) :   IEquatable<PersonInfo>
+    {
+        public int Id { get; } = Id;
+        public string Name { get; } = Name;
+
+        public bool Equals(PersonInfo? other) => Id == other?.Id;
+
+        public override string ToString() => Name;
+
+
+    }
+
+
 }

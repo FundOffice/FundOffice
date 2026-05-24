@@ -28,11 +28,11 @@ public class FundFeeInfo
 
 public class PartRedemptionFee
 {
-    public int Month { get; set; }
+    public int? Month { get; set; }
 
     public bool Include { get; set; }
 
-    public decimal Fee { get; set; }
+    public decimal? Fee { get; set; }
 }
 
 
@@ -81,4 +81,28 @@ public class RedemptionFeeInfo
         }
         return s;
     }
+}
+
+public class HugeRedemptionRule
+{
+    public bool Has { get; set; }
+
+    /// <summary>
+    /// 巨额赎回比例
+    /// </summary>
+    public decimal Ratio { get; set; }
+
+    /// <summary>
+    /// 单一投资人规则 
+    /// </summary>
+    public bool HasRuleForInvestor { get; set; }
+
+
+    public decimal RatioPerInvestor { get; set; }
+
+    public override string ToString() => Has switch
+    {
+        true when Ratio > 0 => $"{Ratio * 100}%",
+        _ => "未设置"
+    };
 }

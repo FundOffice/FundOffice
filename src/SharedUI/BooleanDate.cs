@@ -5,6 +5,9 @@ namespace FMO.Shared;
 
 public partial class BooleanDate : ObservableObject, IEquatable<BooleanDate>
 {
+
+    public DateTime Today => DateTime.Today;
+
     [ObservableProperty]
     public partial DateTime? Date { get; set; }
 
@@ -12,16 +15,28 @@ public partial class BooleanDate : ObservableObject, IEquatable<BooleanDate>
     [ObservableProperty]
     public partial bool IsLongTerm { get; set; }
 
+    public BooleanDate() { }
+
+    public BooleanDate(DateTime date)
+    {
+        Date = date;
+        IsLongTerm = date.Year > 2099;
+    }
+
+    public BooleanDate(DateOnly date)
+    {
+        Date = new(date, TimeOnly.MaxValue);
+        IsLongTerm = date.Year > 2099;
+    }
+
+
+
     public bool Equals(BooleanDate? other)
     {
         if (other is null) return false;
 
-        //if (Date is null && other.Date is not null) return false;
-        //if (Date is not null && other.Date is null) return false;
+        if (IsLongTerm == other.IsLongTerm) return true;
         if (Date != other.Date) return false;
-
-        if (IsLongTerm != other.IsLongTerm) return false;
-
         return true;
     }
 
@@ -30,5 +45,9 @@ public partial class BooleanDate : ObservableObject, IEquatable<BooleanDate>
     {
         if (!value && Date >= DateTime.MaxValue.Date)
             Date = null;
+        else 
+            Date = DateTime.MaxValue;
     }
+
+    public override string ToString() => IsLongTerm ? "长期" : Date?.ToString("yyyy/MM/dd") ?? "未设置";
 }

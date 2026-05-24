@@ -54,11 +54,11 @@ public sealed class Test1
 
         using var db2 = new LiteDatabase("FileName=xx.db");
         //db2.DropCollection(nameof(IFundFact));
-        db2.GetCollection<IFundFact>().Upsert(facts);
+        db2.GetCollection<IFundFactor>().Upsert(facts);
 
-        facts = db2.GetCollection<IFundFact>().FindAll().ToArray();
+        facts = db2.GetCollection<IFundFactor>().FindAll().ToArray();
 
-        var doc = db2.GetCollection(nameof(IFundFact)).FindAll().ToArray();
+        var doc = db2.GetCollection(nameof(IFundFactor)).FindAll().ToArray();
 
 
         var nele = FundElementsFundFactHelper.ToElement(facts, 9);

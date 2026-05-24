@@ -22,7 +22,7 @@
     <ProjectReference Include="..\..\Utility\Utilities\Utilities.csproj" />
 	  <ProjectReference Include="..\..\Utility\Logging\Logging.csproj" />
 	  <ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-	  <ProjectReference Include="..\HookableGenerator\HookableGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	  <ProjectReference Include="..\HookableGenerator\ModelsGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

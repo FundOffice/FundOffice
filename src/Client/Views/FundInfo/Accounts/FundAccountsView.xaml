@@ -997,40 +997,25 @@
                     <Setter Property="Width" Value="85" />
                 </Style>
 
-                <Style BasedOn="{StaticResource {x:Type shared:ChangeableControl}}" TargetType="shared:ChangeableControl">
-                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                    <!--<Setter Property="Width" Value="200" />-->
-                    <Setter Property="Margin" Value="1" />
-                    <Setter Property="HeaderTemplate">
-                        <Setter.Value>
-                            <DataTemplate>
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    DockPanel.Dock="Left"
-                                    Foreground="{DynamicResource LabelBrush}"
-                                    Text="{Binding .}" />
-                            </DataTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
+             
             </UniformGrid.Resources>
 
-            <shared:ChangeableControl
+            <shared:ModifiableControl
                 shared:MaskService.IsMask="True"
-                Binding="{Binding UniversalNo}"
-                Entity="{Binding .}" />
-            <shared:ChangeableControl
+                Header="证券一码通"
+                Modifier="{Binding UniversalNo}" />
+            <shared:ModifiableControl
                 shared:MaskService.IsMask="True"
-                Binding="{Binding CCDCBondAccount}"
-                Entity="{Binding .}" />
-            <shared:ChangeableControl
+                Header="中债登债券账户"
+                Modifier="{Binding CCDCBondAccount}" />
+            <shared:ModifiableControl
                 shared:MaskService.IsMask="True"
-                Binding="{Binding FutureNo}"
-                Entity="{Binding .}" />
-            <shared:ChangeableControl
+                Header="统一开户编码"
+                Modifier="{Binding FutureNo}" />
+            <shared:ModifiableControl
                 shared:MaskService.IsMask="True"
-                Binding="{Binding SHCBondAccount}"
-                Entity="{Binding .}" />
+                Header="上清所债券账户"
+                Modifier="{Binding SHCBondAccount}" />
 
         </UniformGrid>
 

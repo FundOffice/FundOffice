@@ -105,7 +105,7 @@ internal class QualficationJson
 
     public InvestorQualification To()
     {
-        return new InvestorQualification()
+        return new InvestorQualification
         {
             InvestorName = CustomerName,
             IdentityCode = CardNumber,

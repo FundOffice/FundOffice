@@ -6,6 +6,7 @@ using System.Text;
 using Utilities;
 namespace FMO.Utilities;
 
+public record FlowShareInfo(int FlowId, DateOnly Date, string FlowName, ShareClass[] Shares);
 
 
 public class BaseDatabase : LiteDatabase
@@ -77,11 +78,52 @@ public class BaseDatabase : LiteDatabase
         return string.IsNullOrWhiteSpace(shareClas) ? GetCollection<DailyValue>($"fv_{fid}") : GetCollection<DailyValue>($"fv_{fid}_{shareClas}");
     }
 
-    public FundElements QueryElements(int fid) => FundElements.From(GetCollection<IFundFact>().Find(x => x.FundId == fid).ToArray());
+    //public FundElements QueryElements(int fid) => FundElements.From(GetCollection<IFundFactor>().Find(x => x.FundId == fid).ToArray());
 
-    public FundElements QueryElements(int fid, params string[] fields) => FundElements.From(GetCollection<IFundFact>().Query().Where(x => x.FundId == fid).Where(Query.In(nameof(IFundFact.FactId), fields.Select(x => new BsonValue(x)))).ToArray());
+    //public FundElements QueryElements(int fid, params string[] fields) => FundElements.From(GetCollection<IFundFactor>().Query().Where(x => x.FundId == fid).Where(Query.In(nameof(IFundFactor.FactorId), fields.Select(x => new BsonValue(x)))).ToArray());
+    //
+    public FundFactor<T>[] QueryFundFactor<T>(int fundId, string field)
+    {
+        if (fundId <= 0) throw new InvalidDataException("FundId 不正确");
 
-    public T[] QueryFundFact<T>(int fid, string field) => GetCollection<IFundFact>().Find(x => x.FundId == fid && x.FactId == field).OrderByDescending(x=>x.FlowId).OfType<FundFact<T>>().Select(x => x.Data).ToArray();
+        var flowIds = GetCollection<FundFlow>().Query().Where(x => x.FundId == fundId).Where(Query.Contains("_type", "Contract")).Select(x => x.Id).ToArray();
+
+        return GetCollection<IFundFactor>().Query().Where(x => x.FundId == fundId && x.FactorId == field)
+            .Where(Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x => new BsonValue(x))))
+            .OrderByDescending(x => x.FlowId).ToEnumerable().OfType<FundFactor<T>>().ToArray();
+    }
+
+
+    public FlowShareInfo[] QueryFundShares(int fundId)
+    {
+        if (fundId <= 0) throw new InvalidDataException("FundId 不正确");
+        var flowIds = GetCollection<FundFlow>().Query().Where(x => x.FundId == fundId).Where(Query.Contains("_type", "Contract")).Select(x => new { x.Id, x.Date, x.Name }).ToArray();
+
+        var sc = GetCollection<IFundFactor>().Query().Where(x => x.FundId == fundId && x.FactorId == FactorFields.ShareClasses)
+            .Where(Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x => new BsonValue(x.Id))))
+            .OrderByDescending(x => x.FlowId).ToEnumerable().OfType<FundFactor<ShareClass[]>>().ToArray();
+
+
+        return [..from s in sc
+               join f in flowIds on s.FlowId equals f.Id
+               select new FlowShareInfo(s.FlowId, f.Date ?? default, f.Name, s.Data)];
+
+    }
+
+
+    public FundFactors QueryFactor(int fundId)
+    {
+        if (fundId <= 0) throw new InvalidDataException("FundId 不正确");
+
+        var flowIds = GetCollection<FundFlow>().Query().Where(x => x.FundId == fundId).Where(Query.Contains("_type", "Contract")).Select(x => x.Id).ToArray();
+
+        var factors = GetCollection<IFundFactor>().Query().Where(x => x.FundId == fundId).Where(Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x => new BsonValue(x)))).ToArray();
+
+        return new FundFactors(factors);
+    }
+
+
+
 }
 
 public static class DbHelper

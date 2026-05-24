@@ -1,0 +1,491 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO.Shared"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+ 
+    <!--  🔹 默认只读态显示模板（TextBlock）  -->
+    <DataTemplate x:Key="DefaultReadOnlyTemplate">
+        <TextBlock
+            VerticalAlignment="Center"
+            Text="{Binding}"
+            TextTrimming="CharacterEllipsis" />
+    </DataTemplate>
+
+    <!--  🔹 默认只读态显示模板（TextBlock）  -->
+    <DataTemplate x:Key="DefaultHeadTemplate">
+        <TextBlock
+            VerticalAlignment="Center"
+            Foreground="Gray"
+            Text="{Binding}"
+            TextTrimming="CharacterEllipsis" />
+    </DataTemplate>
+
+    <!--  🔹 默认编辑态模板（TextBox，支持字符串）  -->
+    <DataTemplate x:Key="DefaultEditTemplate">
+        <TextBox
+            Padding="5,0"
+            VerticalContentAlignment="Center"
+            BorderThickness="0"
+            Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, Delay=200}"
+            TextWrapping="WrapWithOverflow" />
+    </DataTemplate>
+
+    <Geometry x:Key="resetIcon">M254.7 338.9C254.7 302.7 284.1 273.3 320.3 273.3C356.5 273.3 385.9 302.7 385.9 338.9C385.9 375.1 356.5 404.5 320.3 404.5C284.1 404.5 254.7 375.1 254.7 338.9zM525.4 333.8L525.3 333.8C524.6 304.5 517.6 275.6 504.8 249.2C492 222.8 473.6 199.5 451 180.8L405.6 207C427.6 221.2 445.7 240.8 458.3 263.8C470.9 286.8 477.4 312.6 477.4 338.9C477.4 425.5 406.9 496 320.3 496C233.7 496 163.2 425.5 163.2 338.9C163.2 257 226.2 189.6 306.2 182.5L306.2 221.6L415 158.8L306.2 96L306.2 134.3C199.5 141.5 115.2 230.3 115.2 338.9C115.2 450.5 204.3 541.2 315.3 543.9L315.3 544L525.5 544L525.5 333.8z</Geometry>
+
+    <Style
+        x:Key="SaveButton"
+        BasedOn="{StaticResource ButtonBaseStyle}"
+        TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Height" Value="18" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Foreground" Value="Black" />
+        <Setter Property="hc:IconElement.Geometry" Value="{StaticResource f.circle-check}" />
+        <Setter Property="hc:IconElement.Width" Value="15" />
+    </Style>
+    <Style
+        x:Key="ResetButton"
+        BasedOn="{StaticResource ButtonBaseStyle}"
+        TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="Blue" />
+        <Setter Property="Width" Value="20" />
+        <Setter Property="Height" Value="20" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="hc:IconElement.Geometry" Value="{StaticResource f.rotate-left}" />
+        <Setter Property="hc:IconElement.Width" Value="14" />
+        <Setter Property="hc:IconElement.Height" Value="14" />
+    </Style>
+
+    <!--  🔹 主控件样式  -->
+    <Style TargetType="{x:Type local:ModifiableControl}">
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Header" Value="{Binding Modifier.Label, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="HeaderTemplate" Value="{StaticResource DefaultHeadTemplate}" />
+        <Setter Property="ContentTemplate" Value="{StaticResource DefaultReadOnlyTemplate}" />
+        <!--<Setter Property="EditTemplate" Value="{StaticResource DefaultEditTemplate}" />-->
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:ModifiableControl}">
+                    <Border
+                        x:Name="RootBorder"
+                        Padding="{TemplateBinding Padding}"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="4">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <!--  Header 区域（可定制）  -->
+                                <ColumnDefinition Width="Auto" />
+                                <!--  内容区域（只读/编辑自动切换）  -->
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!--  🔹 Header：支持 Header + HeaderTemplate  -->
+                            <ContentPresenter
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                Content="{TemplateBinding Header}"
+                                ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                TextElement.FontWeight="Medium" />
+
+                            <!--  🔹 内容区域：根据 IsReadOnly 切换模板  -->
+
+                            <ContentPresenter
+                                Grid.Column="1"
+                                Margin="5,0,0,0"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                Content="{Binding Modifier.OldValue, RelativeSource={RelativeSource TemplatedParent}}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                            <Border
+                                Grid.Column="1"
+                                Margin="5,0,0,0"
+                                BorderBrush="Gray"
+                                BorderThickness="1"
+                                CornerRadius="5"
+                                Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                <DockPanel Margin="2,0">
+
+                                    <hc:SimplePanel
+                                        x:Name="clpanel"
+                                        DockPanel.Dock="Right"
+                                        Visibility="Collapsed">
+                                        <Button
+                                            x:Name="clear"
+                                            Padding="2,1"
+                                            hc:IconElement.Geometry="{StaticResource f.circle-xmark}"
+                                            hc:IconElement.Height="14"
+                                            Command="{Binding Modifier.ClearCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                            Foreground="Red"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            ToolTip="清空"
+                                            Visibility="{Binding Modifier.CanClear, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource TemplatedParent}}" />
+                                    </hc:SimplePanel>
+
+                                    <Button
+                                        Command="{Binding Modifier.ApplyCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource SaveButton}"
+                                        ToolTip="确认修改"
+                                        Visibility="{Binding Modifier.CanConfirm, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                                    <Button
+                                        Command="{Binding Modifier.ResetCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource ResetButton}"
+                                        ToolTip="还原"
+                                        Visibility="{Binding Modifier.CanReset, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                                    <ContentPresenter
+                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        Content="{Binding Modifier, RelativeSource={RelativeSource TemplatedParent}}"
+                                        ContentTemplate="{Binding EditTemplate, RelativeSource={RelativeSource TemplatedParent}, TargetNullValue={StaticResource DefaultEditTemplate}}" />
+
+                                </DockPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!--  🔑 状态驱动触发器  -->
+                    <ControlTemplate.Triggers>
+
+
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="clpanel" Property="Visibility" Value="Visible" />
+                        </Trigger>
+
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style
+        x:Key="Modifiable.Vertical"
+        BasedOn="{StaticResource {x:Type local:ModifiableControl}}"
+        TargetType="{x:Type local:ModifiableControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:ModifiableControl}">
+                    <Border
+                        x:Name="RootBorder"
+                        Padding="{TemplateBinding Padding}"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <!--  Header 区域（可定制）  -->
+                                <RowDefinition Height="Auto" />
+                                <!--  内容区域（只读/编辑自动切换）  -->
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <!--  🔹 Header：支持 Header + HeaderTemplate  -->
+                            <hc:SimplePanel>
+                                <ContentPresenter
+                                    VerticalAlignment="Center"
+                                    Content="{TemplateBinding Header}"
+                                    ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                    TextElement.FontWeight="Medium" />
+
+                                <DockPanel
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityReConverter}}">
+
+                                    <Button
+                                        Command="{Binding Modifier.ApplyCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        Style="{StaticResource SaveButton}"
+                                        ToolTip="确认修改"
+                                        Visibility="{Binding Modifier.CanConfirm, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                                    <Button
+                                        Command="{Binding Modifier.ResetCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        Style="{StaticResource ResetButton}"
+                                        ToolTip="还原"
+                                        Visibility="{Binding Modifier.CanReset, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                                    <hc:SimplePanel x:Name="clpanel" Visibility="Collapsed">
+                                        <Button
+                                            x:Name="clear"
+                                            Padding="2,1"
+                                            hc:IconElement.Geometry="{StaticResource f.circle-xmark}"
+                                            hc:IconElement.Height="14"
+                                            Command="{Binding Modifier.ClearCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                            Foreground="Red"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            ToolTip="清空"
+                                            Visibility="{Binding Modifier.CanClear, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource TemplatedParent}}" />
+                                    </hc:SimplePanel>
+
+
+                                </DockPanel>
+                            </hc:SimplePanel>
+
+                            <!--  🔹 内容区域：根据 IsReadOnly 切换模板  -->
+
+                            <ContentPresenter
+                                Grid.Row="1"
+                                Margin="5,0,0,0"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                Content="{Binding Modifier.OldValue, RelativeSource={RelativeSource TemplatedParent}}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                            <Border
+                                Grid.Row="1"
+                                BorderBrush="Gray"
+                                BorderThickness="1"
+                                CornerRadius="5"
+                                Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                <DockPanel Margin="2,0">
+                                    <ContentPresenter
+                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        Content="{Binding Modifier, RelativeSource={RelativeSource TemplatedParent}}"
+                                        ContentTemplate="{TemplateBinding EditTemplate}" />
+
+                                </DockPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!--  🔑 状态驱动触发器  -->
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="clpanel" Property="Visibility" Value="Visible" />
+                        </Trigger>
+
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <Style
+        x:Key="Modifiable.Inherit"
+        BasedOn="{StaticResource {x:Type local:ModifiableControl}}"
+        TargetType="{x:Type local:ModifiableControl}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:ModifiableControl}">
+                    <Border
+                        x:Name="RootBorder"
+                        Padding="{TemplateBinding Padding}"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        CornerRadius="4">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <!--  Header 区域（可定制）  -->
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <!--  内容区域（只读/编辑自动切换）  -->
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!--  🔹 Header：支持 Header + HeaderTemplate  -->
+                            <ContentPresenter
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                Content="{TemplateBinding Header}"
+                                ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                TextElement.FontWeight="Medium" />
+
+                            <Viewbox
+                                Grid.Column="1"
+                                Height="7.5"
+                                VerticalAlignment="Top"
+                                Visibility="{Binding Modifier.IsInherited, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <Path Data="{StaticResource f.arrow-turn-down}" Fill="Brown" />
+                            </Viewbox>
+
+
+                            <!--  🔹 内容区域：根据 IsReadOnly 切换模板  -->
+
+                            <ContentPresenter
+                                Grid.Column="2"
+                                Margin="5,0,0,0"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                Content="{Binding Modifier.OldValue, RelativeSource={RelativeSource TemplatedParent}}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                            <Border
+                                Grid.Column="2"
+                                BorderBrush="Gray"
+                                CornerRadius="5"
+                                Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                <DockPanel Margin="2,0">
+
+                                    <hc:SimplePanel
+                                        x:Name="clpanel"
+                                        DockPanel.Dock="Right"
+                                        Visibility="Collapsed">
+                                        <Button
+                                            x:Name="clear"
+                                            Padding="2,1"
+                                            hc:IconElement.Geometry="{StaticResource f.circle-xmark}"
+                                            hc:IconElement.Height="14"
+                                            Command="{Binding Modifier.ClearCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                            Foreground="Red"
+                                            Style="{StaticResource ButtonIcon.Small}"
+                                            ToolTip="清空"
+                                            Visibility="{Binding Modifier.CanClear, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource TemplatedParent}}" />
+                                    </hc:SimplePanel>
+
+                                    <Button
+                                        Command="{Binding Modifier.ApplyCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource SaveButton}"
+                                        ToolTip="确认修改"
+                                        Visibility="{Binding Modifier.CanConfirm, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                                    <Button
+                                        Command="{Binding Modifier.ResetCommand, RelativeSource={RelativeSource TemplatedParent}}"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource ResetButton}"
+                                        ToolTip="还原"
+                                        Visibility="{Binding Modifier.CanReset, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                                    <ContentPresenter
+                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        Content="{Binding Modifier.NewValue, RelativeSource={RelativeSource TemplatedParent}}"
+                                        ContentTemplate="{TemplateBinding EditTemplate}" />
+
+                                </DockPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!--  🔑 状态驱动触发器  -->
+                    <ControlTemplate.Triggers>
+
+
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="clpanel" Property="Visibility" Value="Visible" />
+                        </Trigger>
+
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+    <!--  PortionElement  -->
+    <DataTemplate x:Key="DTpl.PortionElement">
+        <DockPanel LastChildFill="False">
+            <DockPanel x:Name="btns" Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                <hc:SimplePanel Visibility="{Binding Modifier.CanDivide, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}, Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <Button
+                        hc:IconElement.Geometry="{StaticResource f.knife}"
+                        Command="{Binding Modifier.DivideCommand, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
+                        Style="{StaticResource ButtonIcon.Small}" />
+                </hc:SimplePanel>
+                <Button
+                    hc:IconElement.Geometry="{StaticResource f.code-merge}"
+                    Command="{Binding Modifier.UnifyCommand, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
+                    CommandParameter="{Binding .}"
+                    Style="{StaticResource ButtonIcon.Small}"
+                    ToolTip="以此为基准，合并要素"
+                    Visibility="{Binding Modifier.CanMerge, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}, Converter={StaticResource Boolean2VisibilityConverter}}" />
+            </DockPanel>
+
+            <local:ModifiableControl
+                VerticalContentAlignment="Center"
+                BorderThickness="0"
+                ContentTemplate="{Binding ContentTemplate, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
+                EditTemplate="{Binding EditTemplate, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
+                Header="{Binding ShareName}"
+                IsReadOnly="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
+                Modifier="{Binding .}"
+                Style="{StaticResource Modifiable.Inherit}" />
+
+        </DockPanel>
+
+    </DataTemplate>
+
+
+    <Style
+        x:Key="Style.ListItem.PortionElement"
+        BasedOn="{StaticResource ListBoxItemCustom}"
+        TargetType="ListBoxItem">
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+
+    <Style TargetType="{x:Type local:FactorModifiableControl}">
+        <Setter Property="EditTemplate" Value="{StaticResource Tpl.Changeable.Element}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type local:FactorModifiableControl}">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                        <DockPanel>
+                            <!--  header  -->
+                            <ContentPresenter
+                                VerticalAlignment="Center"
+                                Content="{TemplateBinding Header}"
+                                ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                TextElement.FontWeight="Medium"
+                                TextElement.Foreground="Gray" />
+
+                            <ListBox
+                                x:Name="list"
+                                Margin="5,0,0,0"
+                                Padding="0"
+                                VerticalAlignment="Center"
+                                BorderThickness="0"
+                                ItemContainerStyle="{StaticResource Style.ListItem.PortionElement}"
+                                ItemTemplate="{StaticResource DTpl.PortionElement}"
+                                ItemsSource="{Binding Modifier.Data, RelativeSource={RelativeSource TemplatedParent}}"
+                                Style="{StaticResource ListBoxCustom}" />
+                        </DockPanel>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsReadOnly" Value="True">
+                            <Setter TargetName="list" Property="ItemsPanel">
+                                <Setter.Value>
+                                    <ItemsPanelTemplate>
+                                        <hc:UniformSpacingPanel
+                                            ChildWrapping="Wrap"
+                                            HorizontalSpacing="8"
+                                            IsItemsHost="True"
+                                            VerticalSpacing="2" />
+                                    </ItemsPanelTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+
+
+
+
+</ResourceDictionary>

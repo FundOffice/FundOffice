@@ -117,7 +117,7 @@ public partial class FutureOpenFilesGeneratorWindowViewModel : ObservableObject
             var fund = db.GetCollection<Fund>().FindById(FundId);
             var daily = db.GetDailyCollection(fund.Id).Find(x => x.NetAsset > 0).MaxBy(x => x.Date)!;
             var element = db.GetCollection<FundElements>().FindById(fund.Id);
-            //var element = db.GetElements(fund.Id, FactFields.CustodyAccount, FactFields.TrusteeInfo, FactFields.DurationInMonths);
+            //var element = db.GetElements(fund.Id, FactorFields.CustodyAccount, FactorFields.TrusteeInfo, FactorFields.DurationInMonths);
             var legal = db.GetCollection<Participant>().FindAll().FirstOrDefault(x => x.Role.HasFlag(PersonRole.Legal));
             db.Dispose();
             // 数据

@@ -1,12 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Input; 
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
 using LiteDB;
-using Serilog;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Windows;
 using static FMO.ManagerPageViewModel;
 
@@ -23,77 +21,26 @@ public partial class InstitutionWindow : Window
     }
 }
 
-public partial class InstitutionWindowViewModel : EditableControlViewModelBase<Institution>
+
+[EntityModifiable(typeof(Institution))]
+public partial class InstitutionWindowViewModel : ObservableObject
 {
 
-    /// <summary>
-    /// 管理人名称
-    /// </summary>  
-    public ChangeableViewModel<Institution, string> InstitutionName { get; }
+    public int Id { get; }
 
-    /// <summary>
-    /// 实控人
-    /// </summary>
-    public ChangeableViewModel<Institution, string> ArtificialPerson { get; }
+    private Institution _org;
+
+    public ModifiableViewModel<BooleanDate> ExpireDate { get; }
 
 
-    /// <summary>
-    /// 注册资本
-    /// </summary>
-    public ChangeableViewModel<Institution, decimal?> RegisterCapital { get; }
-
-    /// <summary>
-    /// 实缴
-    /// </summary>
-    public ChangeableViewModel<Institution, decimal?> RealCapital { get; }
-
-    public ChangeableViewModel<Institution, DateTime?> SetupDate { get; }
-
-    public ChangeableViewModel<Institution, BooleanDate?> ExpireDate { get; }
+    public ModifiableViewModel<IdentityViewMdoel> Identity { get; private set; } = null!;
 
 
+    [ObservableProperty]
+    public partial bool IsReadOnly { get; set; } = true;
 
-
-    /// <summary>
-    /// 电话
-    /// </summary> 
-    public ChangeableViewModel<Institution, string> Telephone { get; }
-
-    /// <summary>
-    /// 传真
-    /// </summary> 
-    public ChangeableViewModel<Institution, string> Fax { get; }
-
-    /// <summary>
-    /// 统一信用代码
-    /// </summary>  
-    public ChangeableViewModel<Institution, string> InstitutionCode { get; }
-
-    /// <summary>
-    /// 注册地址
-    /// </summary> 
-    public ChangeableViewModel<Institution, string> RegisterAddress { get; }
-
-
-
-    /// <summary>
-    /// 办公地址
-    /// </summary> 
-    public ChangeableViewModel<Institution, string> OfficeAddress { get; }
-
-
-    /// <summary>
-    /// 经营范围
-    /// </summary> 
-    public ChangeableViewModel<Institution, string> BusinessScope { get; }
-
-
-    /// <summary>
-    /// 官网
-    /// </summary> 
-    public ChangeableViewModel<Institution, string> WebSite { get; }
-
-
+    public IDType[] IDTypes { get; } = [Models.IDType.UnifiedSocialCreditCode, Models.IDType.OrganizationCode, Models.IDType.BusinessLicenseNumber, Models.IDType.RegistrationNumber, Models.IDType.Other];
+           
 
     [ObservableProperty]
     public partial MultiDualFileViewModel? BusinessLicense { get; set; }
@@ -139,10 +86,15 @@ public partial class InstitutionWindowViewModel : EditableControlViewModelBase<I
     public InstitutionWindowViewModel(int id)
     {
         using var db = DbHelper.Base();
-        var org = db.GetCollection<IEntity>().FindById(id) as Institution;
-        if (org is null) throw new Exception();
+        _org = (db.GetCollection<IEntity>().FindById(id) as Institution)!;
+        if (_org is null) throw new Exception();
 
-        Id = org.Id;
+        Id = _org.Id;
+
+        ExpireDate = new() { NewValue = new(_org.ExpireDate), OldValue = new(_org.ExpireDate) };
+        ExpireDate.Changed += e => { _org.ExpireDate = DateOnly.FromDateTime(ExpireDate.NewValue?.Date ?? default); OnEntityChanged(); };
+        FillBy(_org);
+
         var rel = db.GetCollection<Ownership>().Find(x => x.InstitutionId == id).ToArray();
         var entities = db.GetCollection<IEntity>().FindAll().ToArray();
         var relations = rel.Select(x => new RelationViewModel
@@ -151,159 +103,21 @@ public partial class InstitutionWindowViewModel : EditableControlViewModelBase<I
             Holder = entities.FirstOrDefault(y => y.Id == x.HolderId),
             Institution = entities.Select(x => x as Institution).FirstOrDefault(y => y?.Id == x.InstitutionId)!,
             Share = x.Share,
-            Ratio = org.RegisterCapital == 0 ? 0 : x.Share / org!.RegisterCapital
+            Ratio = _org.RegisterCapital == 0 ? 0 : x.Share / _org!.RegisterCapital
         }).ToArray();
 
         ShareRelations = [.. relations];
 
-        db.Dispose();
 
 
-        InstitutionName = new ChangeableViewModel<Institution, string>
+        ShowFileList = !string.IsNullOrWhiteSpace(Identity.OldValue!.Id);
+        Identity.Changed += e =>
         {
-            Label = "机构名",
-            InitFunc = x => x.Name,
-            UpdateFunc = (x, y) => x.Name = y ?? "",
-            ClearFunc = x => x.Name = string.Empty,
+
+            ShowFileList = !string.IsNullOrWhiteSpace(Identity.OldValue!.Id);
+            UpdateFiles();
+
         };
-        InstitutionName.Init(org);
-
-        ArtificialPerson = new ChangeableViewModel<Institution, string>
-        {
-            Label = "实控人",
-            InitFunc = x => x.ArtificialPerson,
-            UpdateFunc = (x, y) => x.ArtificialPerson = y,
-            ClearFunc = x => x.ArtificialPerson = null,
-        };
-        ArtificialPerson.Init(org);
-
-
-
-        RegisterCapital = new ChangeableViewModel<Institution, decimal?>
-        {
-            Label = "注册资本(万)",
-            InitFunc = x => x.RegisterCapital,
-            UpdateFunc = (x, y) => x.RegisterCapital = y ?? 0,
-            ClearFunc = x => x.RegisterCapital = 0,
-            DisplayFunc = x => $"{x}万元"
-        };
-        RegisterCapital.Init(org);
-
-        RealCapital = new ChangeableViewModel<Institution, decimal?>
-        {
-            Label = "实缴资本(万)",
-            InitFunc = x => x.RealCapital switch { 0 => null, var a => a },
-            UpdateFunc = (x, y) => x.RealCapital = y ?? 0,
-            ClearFunc = x => x.RealCapital = 0,
-            DisplayFunc = x => $"{x}万元"
-        };
-        RealCapital.Init(org);
-
-        SetupDate = new ChangeableViewModel<Institution, DateTime?>
-        {
-            Label = "成立日期",
-            InitFunc = x => x.SetupDate == default ? null : new DateTime(x.SetupDate, default),
-            UpdateFunc = (x, y) => x.SetupDate = y is null ? default : DateOnly.FromDateTime(y.Value),
-            ClearFunc = x => x.SetupDate = default,
-            DisplayFunc = x => x?.ToString("yyyy-MM-dd")
-        };
-        SetupDate.Init(org);
-
-
-        ExpireDate = new ChangeableViewModel<Institution, BooleanDate?>
-        {
-            Label = "核销日期",
-            InitFunc = x => new BooleanDate { IsLongTerm = x.ExpireDate == DateOnly.MaxValue, Date = x.ExpireDate == default || x.ExpireDate == DateOnly.MaxValue ? null : new DateTime(x.ExpireDate, default) },
-            UpdateFunc = (x, y) => x.ExpireDate = y is null || y.Date is null ? default : (y.IsLongTerm ? DateOnly.MaxValue : DateOnly.FromDateTime(y.Date.Value)),
-            ClearFunc = x => x.ExpireDate = default,
-            DisplayFunc = x => x?.IsLongTerm switch { null => "未设置", true => "长期", _ => x?.Date?.ToString("yyyy-MM-dd") }
-        };
-        ExpireDate.Init(org);
-
-
-        Telephone = new ChangeableViewModel<Institution, string>
-        {
-            Label = "固定电话",
-            InitFunc = x => x.Telephone,
-            UpdateFunc = (x, y) => x.Telephone = y,
-            ClearFunc = x => x.Telephone = null,
-        };
-        Telephone.Init(org);
-
-        Fax = new ChangeableViewModel<Institution, string>
-        {
-            Label = "传真",
-            InitFunc = x => x.Fax,
-            UpdateFunc = (x, y) => x.Fax = y,
-            ClearFunc = x => x.Fax = null,
-        };
-        Fax.Init(org);
-
-
-
-        InstitutionCode = new ChangeableViewModel<Institution, string>
-        {
-            Label = "统一信用代码",
-            InitFunc = x => x.Identity?.Id,
-            UpdateFunc = (x, y) => x.Identity = new Identity { Id = y!, Type = x.Identity?.Type ?? IDType.UnifiedSocialCreditCode, Other = x.Identity?.Other },
-            ClearFunc = x => x.Identity = new Identity { Id = "", Type = x.Identity?.Type ?? IDType.UnifiedSocialCreditCode, Other = x.Identity?.Other }
-        };
-        InstitutionCode.Init(org);
-
-
-
-        RegisterAddress = new ChangeableViewModel<Institution, string>
-        {
-            Label = "注册地址",
-            InitFunc = x => x.RegisterAddress,
-            UpdateFunc = (x, y) => x.RegisterAddress = y,
-            ClearFunc = x => x.RegisterAddress = null,
-        };
-        RegisterAddress.Init(org);
-
-
-
-        OfficeAddress = new ChangeableViewModel<Institution, string>
-        {
-            Label = "办公地址",
-            InitFunc = x => x.OfficeAddress,
-            UpdateFunc = (x, y) => x.OfficeAddress = y,
-            ClearFunc = x => x.OfficeAddress = null,
-        };
-        OfficeAddress.Init(org);
-
-
-
-        BusinessScope = new ChangeableViewModel<Institution, string>
-        {
-            Label = "经营范围",
-            InitFunc = x => x.BusinessScope,
-            UpdateFunc = (x, y) => x.BusinessScope = y,
-            ClearFunc = x => x.BusinessScope = null,
-        };
-        BusinessScope.Init(org);
-
-        WebSite = new ChangeableViewModel<Institution, string>
-        {
-            Label = "官网",
-            InitFunc = x => x.WebSite,
-            UpdateFunc = (x, y) => x.WebSite = y,
-            ClearFunc = x => x.WebSite = null,
-        };
-        WebSite.Init(org);
-
-
-        ShowFileList = !string.IsNullOrWhiteSpace(InstitutionCode.OldValue);
-        InstitutionCode.PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName == nameof(InstitutionCode.OldValue))
-            {
-                ShowFileList = !string.IsNullOrWhiteSpace(InstitutionCode.OldValue);
-                UpdateFiles();
-            }
-        };
-
-
 
 
 
@@ -312,7 +126,7 @@ public partial class InstitutionWindowViewModel : EditableControlViewModelBase<I
 
     private void UpdateFiles()
     {
-        var id = InstitutionCode.OldValue;
+        var id = Identity.OldValue!.Id;
         if (string.IsNullOrWhiteSpace(id)) return;
 
         using var db = DbHelper.Base();
@@ -353,7 +167,7 @@ public partial class InstitutionWindowViewModel : EditableControlViewModelBase<I
     }
 
 
-  
+
 
 
 
@@ -421,20 +235,10 @@ public partial class InstitutionWindowViewModel : EditableControlViewModelBase<I
 
 
 
-
-    public override Institution? EntityOverride(ILiteDatabase db)
+    public partial void OnEntityChanged()
     {
-        return db.GetCollection<IEntity>().FindById(Id) as Institution;
+        using var db = DbHelper.Base();
+        db.GetCollection<IEntity>().Upsert(_org);
     }
 
-
-    public override void UpdateOverride(ILiteDatabase db, Institution v)
-    {
-        db.GetCollection<IEntity>().Upsert(v);
-    }
-
-    protected override Institution InitNewEntity()
-    {
-        return new Institution { Name = "" };
-    }
 }

@@ -9,6 +9,7 @@
     Title="基金份额"
     Width="400"
     Height="250"
+    d:DataContext="{d:DesignInstance Type=local:ModifyShareClassWindowViewModel}"
     ResizeMode="NoResize"
     SizeToContent="Height"
     WindowStyle="None"
@@ -23,7 +24,8 @@
                         hc:IconElement.Geometry="{StaticResource f.knife}"
                         Command="{Binding DivideSharesCommand}"
                         Style="{StaticResource ButtonDefault.Small}"
-                        ToolTip="拆分" />
+                        ToolTip="拆分"
+                        Visibility="{Binding IsOriginalSingleton, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
                     <Button
                         hc:IconElement.Geometry="{StaticResource f.circle-check}"
@@ -38,7 +40,7 @@
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                         Foreground="Red"
                         Style="{StaticResource ButtonDefault.Small}"
-                        ToolTip="确认" />
+                        ToolTip="取消" />
 
                 </UniformGrid>
 
@@ -76,21 +78,42 @@
                                 BorderBrush="Gray"
                                 BorderThickness="0,0,0,1">
 
-                                <DockPanel>
+                                <DockPanel LastChildFill="False">
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.knife}"
+                                        Command="{Binding DataContext.DivideSharesCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding .}"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        ToolTip="拆分"
+                                        Visibility="{Binding DataContext.IsOriginalSingleton, Converter={StaticResource Boolean2VisibilityReConverter}, RelativeSource={RelativeSource AncestorType=Window}}" />
                                     <Button
                                         x:Name="btn"
                                         hc:IconElement.Geometry="{StaticResource f.xmark}"
                                         Command="{Binding DataContext.DeleteShareCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                         CommandParameter="{Binding .}"
                                         DockPanel.Dock="Right"
-                                        Style="{StaticResource ButtonIcon.Small}" />
-                                    <TextBox
-                                        x:Name="tb"
-                                        MinWidth="70"
-                                        HorizontalContentAlignment="Center"
-                                        BorderThickness="0"
-                                        Style="{StaticResource TextBox.Small}"
-                                        Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="{Binding DataContext.IsOriginalSingleton, Converter={StaticResource Boolean2VisibilityReConverter}, RelativeSource={RelativeSource AncestorType=Window}}" />
+
+                                    <hc:SimplePanel>
+                                        <TextBox
+                                            x:Name="tb"
+                                            MinWidth="70"
+                                            HorizontalContentAlignment="Center"
+                                            BorderThickness="0"
+                                            IsEnabled="{Binding IsInherited, Converter={StaticResource Boolean2BooleanReConverter}}"
+                                            Style="{StaticResource TextBox.Small}"
+                                            Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+
+                                        <Viewbox
+                                            Grid.Column="1"
+                                            Height="7.5"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Top"
+                                            Visibility="{Binding IsInherited, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                            <Path Data="{StaticResource f.arrow-turn-down}" Fill="Brown" />
+                                        </Viewbox>
+                                    </hc:SimplePanel>
 
                                 </DockPanel>
                             </Border>
@@ -102,6 +125,7 @@
                             <TextBox
                                 x:Name="t3"
                                 HorizontalAlignment="Stretch"
+                                IsEnabled="{Binding IsInherited, Converter={StaticResource Boolean2BooleanReConverter}}"
                                 Text="{Binding Requirement, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
                         </DockPanel>
 
