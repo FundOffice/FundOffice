@@ -497,6 +497,11 @@
 
                             </DockPanel>
 
+                            <shared:FactorModifiableControl
+                                ContentTemplate="{StaticResource DT.OpenRules}"
+                                Header="开放规则"
+                                Modifier="{Binding FundOpenRule}" />
+
 
                             <shared:ModifiableControl
                                 HorizontalAlignment="Left"

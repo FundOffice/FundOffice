@@ -33,6 +33,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         WeakReferenceMessenger.Default.RegisterAll(this);
     }
 
+    #region 组
     public static RiskLevel[] RiskLevels { get; } = [Models.RiskLevel.R1, Models.RiskLevel.R2, Models.RiskLevel.R3, Models.RiskLevel.R4, Models.RiskLevel.R5];
 
     public static FundMode[] FundModes { get; } = [Models.FundMode.Open, Models.FundMode.Close, Models.FundMode.Other];
@@ -117,6 +118,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
 
     public static SecurityFundType[] SecurityFundTypes = Enum.GetValues<SecurityFundType>();
 
+    #endregion
     public int Id => FundId;
 
     [ObservableProperty]
@@ -167,6 +169,10 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
 
     [ObservableProperty]
     public partial ShareFactorViewModel<RedemptionFeeInfo?, RedemptionFeeInfoViewMdoel>? RedemptionFee { get; set; } = null!;
+
+    [ObservableProperty]
+    public partial ShareFactorViewModel<OpenRule[]?, FundOpenRuleViewModel>? FundOpenRule { get; set; } = null!;
+
 
 
 
@@ -279,7 +285,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         OnlyOneShare = Shares.Count <= 1;
 
 
-        OpenRule = elements.FundOpenRule.GetValue(newValue).Value;
+        //OpenRule = elements.FundOpenRule.GetValue(newValue).Value;
 
 
 

@@ -318,9 +318,14 @@ public class FundDuration
 
 public enum SequenceOrder { Ascend, Descend }
 
-public class OpenRule
+public class OpenRule : ICloneable
 {
     static string[] weekhead = ["一", "二", "三", "四", "五",];
+
+    public bool AllowBuy { get; set; } = true;
+
+    public bool AllowSell { get; set; } = true;
+
     public FundOpenType Type { get; set; }
 
     /// <summary>
@@ -426,6 +431,9 @@ public class OpenRule
 
     public override string ToString()
     {
+        var pos = AllowBuy && AllowSell ? "" : AllowBuy ? "开放申购" : "开放赎回";
+
+
         switch (Type)
         {
             case FundOpenType.Closed:
@@ -433,28 +441,29 @@ public class OpenRule
             case FundOpenType.Yearly:
                 if (Dates is null || Dates.Length == 0) return "无效的设置";
                 if (Quarters?.Length > 0)
-                    return $"每年第{string.Join('、', Quarters.Select(x => x))}季度的{QuarterStr()}" + (Postpone ? "，非交易日顺延" : "");
+                    return $"每年第{string.Join('、', Quarters.Select(x => x))}季度的{QuarterStr()}{pos}{(Postpone ? "，非交易日顺延" : "")}";
                 else if (Months?.Length > 0)
-                    return $"每年第{string.Join('、', Months.Select(x => x))}月的{MonthStr()}" + (Postpone ? "，非交易日顺延" : "");
+                    return $"每年第{string.Join('、', Months.Select(x => x))}月的{MonthStr()}{pos}{(Postpone ? "，非交易日顺延" : "")}";
                 else if (Weeks?.Length > 0)
-                    return $"每年{(WeekOrder == SequenceOrder.Ascend ? "" : "倒数")}第{string.Join('、', Weeks.Select(x => x + 1))}周的{WeekStr()}" + (Postpone ? "，非交易日顺延" : "");
+                    return $"每年{(WeekOrder == SequenceOrder.Ascend ? "" : "倒数")}第{string.Join('、', Weeks.Select(x => x + 1))}周的{WeekStr()}{pos}{(Postpone ? "，非交易日顺延" : "")}";
                 else
-                    return $"每年{(DayOrder == SequenceOrder.Ascend ? "" : "倒数")}第{string.Join('、', Dates.Select(x => x + 1))}个{(TradeOrNatural ? "交易" : "自然")}日开放" + (Postpone ? "，非交易日顺延" : "");
+                    return $"每年{(DayOrder == SequenceOrder.Ascend ? "" : "倒数")}第{string.Join('、', Dates.Select(x => x + 1))}个{(TradeOrNatural ? "交易" : "自然")}日开放{pos}{(Postpone ? "，非交易日顺延" : "")}";
             case FundOpenType.Quarterly:
                 if (Dates is null || Dates.Length == 0) return "无效的设置";
-                return "每季" + QuarterStr() + (Postpone ? "，非交易日顺延" : "");
+                return $"每季{QuarterStr()}{pos}{(Postpone ? "，非交易日顺延" : "")}";
             case FundOpenType.Monthly:
                 if (Dates is null || Dates.Length == 0) return "无效的设置";
-                return "每月" + MonthStr() + (Postpone ? "，非交易日顺延" : "");
+                return $"每月{MonthStr()}{pos}{(Postpone ? "，非交易日顺延" : "")}";
             case FundOpenType.Weekly:
                 if (Dates is null || Dates.Length == 0) return "无效的设置";
 
-                return "每周" + WeekStr() + (Postpone ? "，非交易日顺延" : "");
+                return $"每周{ WeekStr()}{pos}{(Postpone ? "，非交易日顺延" : "")}";
             case FundOpenType.Daily:
-                return "每日";
+                return $"每日{pos}";
             default:
                 return "-";
         }
+
     }
 
     public bool IsValid()
@@ -998,6 +1007,28 @@ public class OpenRule
 
     private static int QuarterOfDay(DateOnly d) => (d.Month - 1) / 3;
 
+    public object Clone()
+    {
+        return new OpenRule
+        {
+            // 值类型直接复制
+            AllowBuy = this.AllowBuy,
+            AllowSell = this.AllowSell,
+            Type = this.Type,
+            WeekOrder = this.WeekOrder,
+            DayOrder = this.DayOrder,
+            TradeOrNatural = this.TradeOrNatural,
+            Postpone = this.Postpone,
+            CrossWeek = this.CrossWeek,
+
+            // 数组类型 → 深度克隆（避免引用共用）
+            Quarters = this.Quarters?.ToArray(),
+            Months = this.Months?.ToArray(),
+            Weeks = this.Weeks?.ToArray(),
+            Dates = this.Dates?.ToArray()
+        };
+
+    }
 
     public class DateEx : OpenDateSheet
     {

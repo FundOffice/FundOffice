@@ -61,8 +61,24 @@ public static partial class DatabaseAssist
         [146] = MoveToFact,
         [147] = FactorDuration,
         [148] = FixNoticeDate,
-        [150] = MoveFundAccount
+        [150] = MoveFundAccount,
+        [152] = ChangeOpenRule,
+
     };
+
+
+    /// <summary>
+    /// 修改开放规则为份额相关，多规则
+    /// </summary>
+    /// <param name="database"></param>
+    /// <exception cref="NotImplementedException"></exception>
+    private static void ChangeOpenRule(BaseDatabase db)
+    {
+        var old = db.QueryFundFactor<OpenRule>(FactorFields.FundOpenRule);
+        
+        db.GetCollection<IFundFactor>().Upsert(old.Select(x=> new FundFactor<OpenRule[]> { Data = [x.Data], FactorId = x.FactorId, FlowId = x.FlowId , FundId = x.FundId }));
+
+    }
 
     /// <summary>
     /// 迁移stock future accout

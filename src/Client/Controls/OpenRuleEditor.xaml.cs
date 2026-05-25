@@ -315,7 +315,9 @@ public partial class OpenRuleViewModel : ObservableObject
 
     private void UpdateWeekable()
     {
-        if ((SelectedType == FundOpenType.Monthly || Months.Any(x => x.IsSelected) || SelectedType == FundOpenType.Quarterly || Quarters.Any(x => x.IsSelected) || SelectedType == FundOpenType.Yearly) && TradeOrNatrual)
+        if (SelectedType is FundOpenType.Daily or FundOpenType.Weekly)
+            ShowWeekList = false;
+        else if ((SelectedType == FundOpenType.Monthly || Months.Any(x => x.IsSelected) || SelectedType == FundOpenType.Quarterly || Quarters.Any(x => x.IsSelected) || SelectedType == FundOpenType.Yearly) && TradeOrNatrual)
         {
             ShowWeekList = false;
             foreach (var w in Weeks)

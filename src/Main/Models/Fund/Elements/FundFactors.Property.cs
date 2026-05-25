@@ -105,7 +105,7 @@ public partial class FundFactors
     /// 开放日规则（结构化）
     /// </summary>
     [FactField("OpenRule")]
-    public SingletonFactorItem<OpenRule> FundOpenRule { get; private set; } = null!;
+    public FactorItem<OpenRule[]> FundOpenRule { get; private set; } = null!;
 
     /// <summary>
     /// 临时开放信息
