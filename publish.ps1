@@ -5,7 +5,7 @@
 $ErrorActionPreference = "Stop"
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptPath
-$publishDir = Join-Path $scriptPath "publish"
+$publishDir = Join-Path $scriptPath "..\..\Thor"
 $languageFolders = @(
     "cs", "de", "es", "fr", "it", "ja", "ko", "pl", "pt-BR",
     "ru", "tr", "zh-Hans", "zh-Hant", "playwright"
@@ -37,38 +37,118 @@ if (Test-Path $publishDir) {
 Write-Host "发布目录已准备: $publishDir" -ForegroundColor Green
 Write-Host ""
 
-# ========================================
-# 1. 【重构】按项目发布（彻底跳过 Test/tmp）
-# ========================================
+ 
+ 
+
+# 1. 发布核心项目及 src 模块
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "步骤 1: 发布主项目（自动跳过 Test/tmp，避免 slnx 强制发布测试项目）" -ForegroundColor Cyan
+Write-Host "步骤 1: 发布核心项目及 src 模块" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
-# 收集根目录及子目录所有项目，全局过滤 Test 和 tmp
-$mainProjects = Get-ChildItem -Path $scriptPath -Include "*.csproj", "*.vbproj" -Recurse -File |
-    Where-Object {
-        $_.BaseName -notlike "*Test*" -and
-        $_.BaseName -notlike "*tmp*" -and
-        $_.Directory.Name -notmatch "^(Test|Tests|UnitTest|tmp)$"
-    }
+$publishedProjects = @()
 
-# 排除已将在步骤2处理的 Tools 路径，避免重复发布（可选，dotnet publish 覆盖无副作用）
-$toolsPath = Join-Path $scriptPath "src\Tools"
-$mainProjects = $mainProjects | Where-Object { $_.FullName -notlike "$toolsPath*" }
-
-if ($mainProjects.Count -eq 0) {
-    Write-Host "⚠ 未找到任何可发布的主项目文件" -ForegroundColor Yellow
-} else {
-    Write-Host "找到 $($mainProjects.Count) 个主项目（已自动排除 Test/tmp）" -ForegroundColor Green
-    $idx = 1
-    foreach ($project in $mainProjects) {
-        Write-Host "[$idx/$($mainProjects.Count)] 发布: $($project.BaseName)" -ForegroundColor Yellow
-        dotnet publish $project.FullName --configuration Release --output $publishDir --no-restore /p:DebugType=None /p:DebugSymbols=false
-        if ($LASTEXITCODE -eq 0) { Write-Host "  ✓ 成功" -ForegroundColor Green }
-        else { Write-Host "  ✗ 失败 (项目: $($project.BaseName))" -ForegroundColor Red }
-        $idx++
+# 1.1 先发布 src\Client\FundOffice.csproj
+$clientProject = Join-Path $scriptPath "src\Client\FundOffice.csproj"
+if (Test-Path $clientProject) {
+    Write-Host "发布核心项目: src\Client\FundOffice.csproj" -ForegroundColor Yellow
+    dotnet publish $clientProject --configuration Release --output $publishDir --no-restore /p:DebugType=None /p:DebugSymbols=false
+    if ($LASTEXITCODE -eq 0) { 
+        Write-Host "✓ 核心项目发布成功" -ForegroundColor Green 
+        $publishedProjects += $clientProject
+    } else { 
+        Write-Host "✗ 核心项目发布失败" -ForegroundColor Red; exit 1 
     }
+} else { 
+    Write-Host "✗ 未找到核心项目文件: $clientProject" -ForegroundColor Red; exit 1 
 }
+Write-Host ""
+
+# 1.2 找 src 下有 Directory.Build.props 的目录，再按它发布
+$srcPath = Join-Path $scriptPath "src"
+if (Test-Path $srcPath) {
+    # 🔥 规范化 src 路径，防止末尾带不带斜杠导致对比失败
+    $srcPathNormalized = (Get-Item $srcPath).FullName 
+    
+    # 🔥 新增过滤条件：排除直接位于 src 根目录下的 Directory.Build.props
+    $buildPropsFiles = Get-ChildItem -Path $srcPath -Filter "Directory.Build.props" -Recurse -File | 
+                       Where-Object { $_.DirectoryName -ne $srcPathNormalized }
+    
+    if ($buildPropsFiles.Count -gt 0) {
+        Write-Host "找到 $($buildPropsFiles.Count) 个子模块目录（已排除 src 根目录）" -ForegroundColor Green
+        
+        $moduleProjects = @()
+        foreach ($propsFile in $buildPropsFiles) {
+            $moduleDir = $propsFile.DirectoryName
+            # 查找该目录下的所有项目，排除已发布的和 tmp 项目
+            $projects = Get-ChildItem -Path $moduleDir -Include "*.csproj", "*.vbproj" -Recurse -File | 
+                        Where-Object { $_.FullName -notin $publishedProjects -and $_.BaseName -notlike "*tmp" }
+            $moduleProjects += $projects
+        }
+        
+        # 去重（防止多个 Directory.Build.props 嵌套导致重复收集）
+        $moduleProjects = $moduleProjects | Sort-Object FullName -Unique
+        
+        if ($moduleProjects.Count -eq 0) {
+            Write-Host "⚠ 子模块目录下未找到其他需要发布的项目" -ForegroundColor Yellow
+        } else {
+            Write-Host "准备发布子模块目录下的 $($moduleProjects.Count) 个项目" -ForegroundColor Yellow
+            $idx = 1
+            foreach ($project in $moduleProjects) {
+                # 获取相对路径以便更清晰地展示
+                $relativePath = $project.FullName.Substring($scriptPath.Length).TrimStart('\', '/')
+                Write-Host "[$idx/$($moduleProjects.Count)] 发布: $relativePath" -ForegroundColor Yellow
+                
+                dotnet publish $project.FullName --configuration Release --output $publishDir --no-restore /p:DebugType=None /p:DebugSymbols=false
+                if ($LASTEXITCODE -eq 0) { 
+                    Write-Host "  ✓ 成功" -ForegroundColor Green 
+                    $publishedProjects += $project.FullName
+                } else { 
+                    Write-Host "  ✗ 失败" -ForegroundColor Red 
+                }
+                $idx++
+                Write-Host ""
+            }
+        }
+    } else {
+        Write-Host "⚠ 未在 src 的子目录中找到 Directory.Build.props 文件" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "⚠ 未找到 src 目录" -ForegroundColor Yellow
+}
+Write-Host ""
+
+
+
+# 2. 发布 src\Tools 下的所有项目
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "步骤 2: 发布 src\Tools 下的所有项目" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+
+$toolsPath = Join-Path $scriptPath "src\Tools"
+if (Test-Path $toolsPath) {
+    $allProjects = Get-ChildItem -Path $toolsPath -Include "*.csproj", "*.vbproj" -Recurse -File
+    $projectFiles = $allProjects | Where-Object { $_.BaseName -notlike "*tmp" }
+    $excludedProjects = $allProjects | Where-Object { $_.BaseName -like "*tmp" }
+    
+    if ($excludedProjects.Count -gt 0) {
+        Write-Host "排除以下 tmp 项目:" -ForegroundColor Yellow
+        $excludedProjects | ForEach-Object { Write-Host "  - $($_.BaseName)" -ForegroundColor Gray }
+        Write-Host ""
+    }
+    
+    if ($projectFiles.Count -eq 0) { Write-Host "⚠ 未找到任何项目文件" -ForegroundColor Yellow }
+    else {
+        Write-Host "找到 $($projectFiles.Count) 个项目文件（已排除 tmp）" -ForegroundColor Green
+        $idx = 1
+        foreach ($project in $projectFiles) {
+            Write-Host "[$idx/$($projectFiles.Count)] 发布: $($project.BaseName)" -ForegroundColor Yellow
+            dotnet publish $project.FullName --configuration Release --output $publishDir --no-restore /p:DebugType=None /p:DebugSymbols=false
+            if ($LASTEXITCODE -eq 0) { Write-Host "  ✓ 成功" -ForegroundColor Green } else { Write-Host "  ✗ 失败" -ForegroundColor Red }
+            $idx++; Write-Host ""
+        }
+    }
+} else { Write-Host "⚠ 未找到 src\Tools 目录" -ForegroundColor Yellow }
+
 Write-Host ""
 
 # ========================================
