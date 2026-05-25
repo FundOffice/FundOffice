@@ -147,6 +147,7 @@ public abstract class TrusteeApiBase : ITrustee
     public void SaveConfig()
     {
         var config = SaveConfigOverride();
+        config.IsEnabled = IsEnabled;
         using var db = DbHelper.Platform();
         db.GetCollection<IAPIConfig>().Upsert(config);
     }
