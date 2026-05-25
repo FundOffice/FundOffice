@@ -61,7 +61,70 @@ public static partial class DatabaseAssist
         [146] = MoveToFact,
         [147] = FactorDuration,
         [148] = FixNoticeDate,
+        [150] = MoveFundAccount
     };
+
+    /// <summary>
+    /// 迁移stock future accout
+    /// </summary>
+    /// <param name="database"></param>
+    /// <exception cref="NotImplementedException"></exception>
+    private static void MoveFundAccount(BaseDatabase db)
+    {
+        db.DropCollection(nameof(AccountEvent));
+        db.DropCollection(nameof(TradingAccoutOfFund));
+
+        var accounts = db.GetCollection<StockAccount>().FindAll().ToList();
+        accounts.ForEach(x => x.Id = 0);
+        db.GetCollection<TradingAccoutOfFund>().Upsert(accounts);
+
+        accounts.ForEach(x =>
+        {
+            if (x.Common is not null)
+            {
+                x.Common.Name = "基本账户";
+                x.Common.AccountId = x.Id;
+                x.Common.AccountType = nameof(StockAccount);
+                db.GetCollection<AccountEvent>().Upsert(x.Common);
+            }
+            if (x.Credit is not null)
+            {
+                x.Credit.Name = "信用账户";
+                x.Credit.AccountId = x.Id;
+                x.Credit.AccountType = nameof(StockAccount);
+                db.GetCollection<AccountEvent>().Upsert(x.Credit);
+            }
+            foreach (var item in x.Events)
+            {
+                item.AccountId = x.Id;
+                item.AccountType = nameof(StockAccount);
+                db.GetCollection<AccountEvent>().Upsert(item);
+            }
+        });
+
+        var futures = db.GetCollection<FutureAccount>().FindAll().ToList();
+        futures.ForEach(x => x.Id = 0);
+        db.GetCollection<TradingAccoutOfFund>().Upsert(futures);
+
+        futures.ForEach(x =>
+        {
+            if (x.Common is not null)
+            {
+                x.Common.Name = "基本账户";
+                x.Common.AccountId = x.Id;
+                x.Common.AccountType = nameof(StockAccount);
+                db.GetCollection<AccountEvent>().Upsert(x.Common);
+            }
+            if (x.Events is not null)
+                foreach (var item in x.Events)
+                {
+                    item.AccountId = x.Id;
+                    item.AccountType = nameof(StockAccount);
+                    db.GetCollection<AccountEvent>().Upsert(item);
+                }
+        });
+
+    }
 
     private static void FixNoticeDate(BaseDatabase db)
     {

@@ -16,6 +16,8 @@ namespace FMO;
 /// </summary>
 public partial class StockAccountViewModel : ObservableObject
 {
+    private readonly StockAccount _account;
+
     public StockAccountViewModel(StockAccount v)
     {
         Company = v.Company;
@@ -36,25 +38,22 @@ public partial class StockAccountViewModel : ObservableObject
             SZCard = sz?.Card;
         SZCardConnected = !sz?.Detatch ?? false;
 
-        Common = new(v.Id, v.Common);
-        if (v.Credit is not null)
-            Credit = new(v.Id, v.Credit);
+        //Common = new(v.Id, v.Common);
+        //if (v.Credit is not null)
+        //    Credit = new(v.Id, v.Credit);
 
-        Events = [.. v.Events.Select(x => Transfer(x))];
+        var events = db.GetCollection<AccountEvent>().Find(x => x.AccountId == v.Id).ToList();
+
+
+        Events = [.. events.Select(x => Transfer(v.Id, x))];
+        this._account = v;
     }
 
     public int Id { get; set; }
 
     public string? Company { get; set; }
 
-
-    public BasicAccountViewModel Common { get; set; }
-
-    [ObservableProperty]
-    public partial BasicAccountViewModel? Credit { get; set; }
-
-
-
+      
     [ObservableProperty]
     public partial bool IsClosed { get; set; }
 
@@ -94,12 +93,13 @@ public partial class StockAccountViewModel : ObservableObject
         ShowGroupPop = false;
     }
 
-    private AccountEventViewModel Transfer(AccountEvent e)
+    private AccountEventViewModel Transfer(int id, AccountEvent e)
     {
         return e switch
         {
-            AccountCredentialEvent v => new AccountCredentialEventViewModel(Id, v),
-            _ => new AccountEventViewModel(Id, e)
+            AccountCredentialEvent v => new AccountCredentialEventViewModel(v),
+            OpenAccountEvent v => new BasicAccountViewModel(v),
+            _ => throw new NotImplementedException(),
         };
     }
 
@@ -157,19 +157,27 @@ public partial class StockAccountViewModel : ObservableObject
     [RelayCommand]
     public void AddCredit()
     {
-        Credit = new(Id, new OpenAccountEvent { Name = "信用账户" });
-    }
+        if (Events.Any(x => x.Name == "信用账户")) return;
 
+        var ev = new OpenAccountEvent { AccountId = Id, AccountType = nameof(StockAccount), Name = "信用账户" };
+        using var db = DbHelper.Base();
+        db.GetCollection<AccountEvent>().Insert(ev);
+        Events.Add(Transfer(Id, ev));
+        //Credit = new(Id, new OpenAccountEvent { AccountId = 0, AccountType = nameof(StockAccount), Name = "信用账户" });
+    }
+ 
     [RelayCommand]
-    public void DeleteCredit()
+    public void DeleteEvent(AccountEventViewModel ev)
     {
-        if (HandyControl.Controls.MessageBox.Ask($"确认删除 信用账户 吗") == MessageBoxResult.Cancel)
+        if (ev is null || ev.Name == "基本账户") return;
+
+        if (HandyControl.Controls.MessageBox.Ask($"确认删除 {ev.Name} 吗") == MessageBoxResult.Cancel)
             return;
 
+        Events.Remove(ev);
+
         using var db = DbHelper.Base();
-        var dd = BsonMapper.Global.ToDocument(new StockAccount { Credit = null }).ToString();
-        db.GetCollection<StockAccount>().UpdateMany("{\"Credit\":null}", $"_id={Id}");
-        Credit = null;
+        db.GetCollection<AccountEvent>().Delete(ev.Id);
     }
 
 
@@ -178,10 +186,12 @@ public partial class StockAccountViewModel : ObservableObject
     {
         if (Events.Any(x => x.Name == "QMT")) return;
 
-        AccountCredentialEvent ev = new() { Name = "QMT" };
-        Events.Add(new AccountCredentialEventViewModel(Id, ev));
+        AccountCredentialEvent ev = new() { AccountType = nameof(StockAccount), AccountId = Id, Name = "QMT" };
+        Events.Add(new AccountCredentialEventViewModel(ev));
         using var db = DbHelper.Base();
+        db.GetCollection<AccountEvent>().Insert(ev);
         var sa = db.GetCollection<StockAccount>().FindById(Id);
+
 
         if (sa.Events is null)
             sa.Events = [ev];
@@ -202,8 +212,24 @@ public partial class StockAccountViewModel : ObservableObject
 }
 
 
-public partial class AccountEventViewModel : ObservableObject
+public partial class AccountEventModifiableViewModel<TValue, TViewModel> : ModifiableViewModel<TValue, TViewModel>, IValueModifier<AccountEvent> where TValue : AccountEvent where TViewModel : IViewModel<TValue, TViewModel>
 {
+    [ObservableProperty]
+    public partial bool IsReadOnly { get; set; } = true;
+
+    AccountEvent? IValueModifier<AccountEvent>.OldValue { get => this.OldValue; set => this.OldValue = (TValue?)value; }
+}
+
+public abstract partial class AccountEventViewModel : ObservableObject//, IViewModel<AccountEvent, AccountEventViewModel>
+{
+    protected AccountEventViewModel(AccountEvent ae)
+    {
+        Id = ae.Id;
+        Name = ae.Name;
+        AccountId = ae.AccountId;
+        AccountType = ae.AccountType;
+    }
+
     public int Id { get; }
 
     [ObservableProperty]
@@ -213,12 +239,11 @@ public partial class AccountEventViewModel : ObservableObject
     public partial string? Name { get; set; }
 
 
+    public int AccountId { get; set; }
 
-    public AccountEventViewModel(int id, AccountEvent ev)
-    {
-        Id = id;
-        Name = ev.Name;
-    }
+    public string AccountType { get; set; }
+
+
 
 
     [RelayCommand]
@@ -226,7 +251,14 @@ public partial class AccountEventViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Name)) return;
 
-        var folder = Path.Combine(Directory.GetCurrentDirectory(), "files", "accounts", "stock", Id.ToString(), Name, "原始文件");
+        var dir = AccountType switch
+        {
+            nameof(StockAccount) => "stock",
+            nameof(FutureAccount) => "future",
+            _ => "other"
+        };
+
+        var folder = Path.Combine(Directory.GetCurrentDirectory(), "files", "accounts", dir, AccountId.ToString(), Name, "原始文件");
         if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
         try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = folder, UseShellExecute = true }); } catch { }
     }
@@ -237,104 +269,93 @@ public partial class AccountEventViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Name)) return;
 
-        var folder = Path.Combine(Directory.GetCurrentDirectory(), "files", "accounts", "stock", Id.ToString(), Name, "用印文件");
+        var dir = AccountType switch
+        {
+            nameof(StockAccount) => "stock",
+            nameof(FutureAccount) => "future",
+            _ => "other"
+        };
+
+        var folder = Path.Combine(Directory.GetCurrentDirectory(), "files", "accounts", dir, AccountId.ToString(), Name, "用印文件");
         if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
         try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = folder, UseShellExecute = true }); } catch { }
     }
 
 
-
-
 }
 
+
+/// <summary>
+/// 带有账号的Event
+/// </summary>
+[EntityModifiable(typeof(AccountCredentialEvent))]
 public partial class AccountCredentialEventViewModel : AccountEventViewModel
 {
-    /// <summary>
-    ///  账号
-    /// </summary>
-    [ObservableProperty]
-    public partial string? Account { get; set; }
+    private readonly AccountCredentialEvent _event;
 
-    /// <summary>
-    ///  密码
-    /// </summary>
-    [ObservableProperty]
-    public partial string? Password { get; set; }
-
-    public AccountCredentialEventViewModel(int id, AccountCredentialEvent ev) : base(id, ev)
+    public AccountCredentialEventViewModel(AccountCredentialEvent val) : base(val)
     {
-        Account = ev.Account;
-        Password = ev.Password;
+
+        FillBy(val);
+        _event = val;
     }
+
+
+
+
+    [RelayCommand]
+    public void Save()
+    {
+        using var db = DbHelper.Base();
+
+
+        IsReadOnly = true;
+    }
+
+
+    public partial void OnEntityChanged()
+    {
+        using var db = DbHelper.Base();
+        db.GetCollection<AccountEvent>().Update(_event);
+    }
+
+
+
+
 }
 
 
-
-public partial class BasicAccountViewModel : ObservableObject
+[EntityModifiable(typeof(OpenAccountEvent))]
+public partial class BasicAccountViewModel : AccountEventViewModel
 {
-    public BasicAccountViewModel(int id, OpenAccountEvent? common)
+    private readonly OpenAccountEvent _event;
+
+    public BasicAccountViewModel(OpenAccountEvent val) : base(val)
     {
-        Id = id;
-
-        if (common is not null)
-        {
-            IsReadOnly = true;
-            Name = common.Name;
-            Account = common.Account;
-            TradePassword = common.TradePassword;
-            CapitalPassword = common.CapitalPassword;
+        FillBy(val);
 
 
-            BankLetter = new(common.BankLetter);
-            BankLetter.FileChanged += f => UpdateFile(new { BankLetter = f });
+        BankLetter = new(val.BankLetter);
+        BankLetter.FileChanged += f => UpdateFile($"{{ \"BankLetter\" : {BsonMapper.Global.ToDocument(f)} }}");
 
 
-            ServiceAgreement = new(common.ServiceAgreement);
-            ServiceAgreement.FileChanged += f => UpdateFile(new { ServiceAgreement = f });
-
-        }
-
+        ServiceAgreement = new(val.ServiceAgreement);
+        ServiceAgreement.FileChanged += f => UpdateFile($"{{ \"ServiceAgreement\" : {BsonMapper.Global.ToDocument(f)} }}");
+        _event = val;
     }
 
-    private void UpdateFile<T>(T f)
+
+    private void UpdateFile(string expr)
     {
-        if (Id == 0 || f is null) return; // 新建时不保存
-        
+
+        if (Id == 0 || expr is null) return; // 新建时不保存
+
         using var db = DbHelper.Base();
-        var acc = db.GetCollection<StockAccount>().FindById(Id);
-        var eve = Name == acc.Common!.Name ? acc.Common : acc.Credit;
-        if(eve is null) return;
+        db.GetCollection<AccountEvent>().UpdateMany(expr, $"_id={Id}");
 
-        eve!.UpdateFrom(f);
-        db.GetCollection<StockAccount>().Update(acc);
-        
-        //UpdateMany(BsonMapper.Global.ToDocument(f).ToString(), $"_id={Id}");
     }
 
-    [ObservableProperty]
-    public partial bool IsReadOnly { get; set; }
-
-    [ObservableProperty]
-    public partial string? Name { get; set; }
-
-    /// <summary>
-    /// 资金账号
-    /// </summary>
-    [ObservableProperty]
-    public partial string? Account { get; set; }
-
-    /// <summary>
-    /// 交易密码
-    /// </summary>
-    [ObservableProperty]
-    public partial string? TradePassword { get; set; }
-
-    /// <summary>
-    /// 资金密码
-    /// </summary>
-    [ObservableProperty]
-    public partial string? CapitalPassword { get; set; }
-
+     
     /// <summary>
     /// 银证、银期等
     /// </summary>
@@ -345,62 +366,43 @@ public partial class BasicAccountViewModel : ObservableObject
     public SimpleFileViewModel? ServiceAgreement { get; }
 
 
-    public int Id { get; }
-
-
-
-    [RelayCommand]
-    public void OpenRawFolder()
-    {
-        if (string.IsNullOrWhiteSpace(Name)) return;
-
-        var folder = Path.Combine(Directory.GetCurrentDirectory(), "files", "accounts", "stock", Id.ToString(), Name, "原始文件");
-        if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
-        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = folder, UseShellExecute = true }); } catch { }
-    }
-
-
-    [RelayCommand]
-    public void OpenSealFolder()
-    {
-        if (string.IsNullOrWhiteSpace(Name)) return;
-
-        var folder = Path.Combine(Directory.GetCurrentDirectory(), "files", "accounts", "stock", Id.ToString(), Name, "用印文件");
-        if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
-        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = folder, UseShellExecute = true }); } catch { }
-    }
-
-
-
-
-
-    [RelayCommand]
-    public void Save()
+    public partial void OnEntityChanged()
     {
         using var db = DbHelper.Base();
-        var obj = db.GetCollection<StockAccount>().FindById(Id);
-
-        if (Name == obj.Common?.Name)
-        {
-            obj.Common!.Account = Account;
-            obj.Common!.TradePassword = TradePassword;
-            obj.Common!.CapitalPassword = CapitalPassword;
-
-            db.GetCollection<StockAccount>().Update(obj);
-        }
-        else if (Name == "信用账户")
-        {
-            if (obj.Credit is null)
-                obj.Credit = new OpenAccountEvent { Name = "信用账户" };
-
-            obj.Credit.Account = Account;
-            obj.Credit.TradePassword = TradePassword;
-            obj.Credit.CapitalPassword = CapitalPassword;
-
-            db.GetCollection<StockAccount>().Update(obj);
-        }
-
-        IsReadOnly = true;
+        db.GetCollection<AccountEvent>().Update(_event);
     }
+
+    //[RelayCommand]
+    //public void Save()
+    //{
+    //    using var db = DbHelper.Base();
+    //    var obj = db.GetCollection<StockAccount>().FindById(Id);
+
+    //    if (Name == obj.Common?.Name)
+    //    {
+    //        obj.Common!.Account = Account;
+    //        obj.Common!.TradePassword = TradePassword;
+    //        obj.Common!.CapitalPassword = CapitalPassword;
+
+    //        db.GetCollection<StockAccount>().Update(obj);
+    //    }
+    //    else if (Name == "信用账户")
+    //    {
+    //        if (obj.Credit is null)
+    //            obj.Credit = new OpenAccountEvent { AccountId = 0, AccountType = nameof(StockAccount), Name = "信用账户" };
+
+    //        obj.Credit.Account = Account;
+    //        obj.Credit.TradePassword = TradePassword;
+    //        obj.Credit.CapitalPassword = CapitalPassword;
+
+    //        db.GetCollection<StockAccount>().Update(obj);
+    //    }
+
+    //    IsReadOnly = true;
+    //}
+
+
+
+
 
 }

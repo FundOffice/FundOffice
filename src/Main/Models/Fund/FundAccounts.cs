@@ -4,6 +4,12 @@
 
 public class AccountEvent
 {
+    public int Id { get; set; }
+
+    public required int AccountId { get; set; }
+
+    public required string AccountType { get; set; }
+
     public required string Name { get; set; }
 
 
@@ -67,27 +73,34 @@ public record SecurityCardInfo(string? Card, bool Connected);
 
 public record SecurityCardLink(int Id, SecurityCardType Type, string Card, int Account, bool Detatch = false);
 
-
 /// <summary>
-/// 股票账户
+/// 交易账户
 /// </summary>
-public class StockAccount
+public abstract class TradingAccoutOfFund
 {
     public int Id { get; set; }
 
     public int FundId { get; set; }
 
     /// <summary>
-    /// 对应股卡组
-    /// </summary>
-    public int Group { get; set; }
-
-    public string? Company { get; set; }
-
-    /// <summary>
     /// 注销
     /// </summary>
     public bool IsClosed { get; set; }
+
+    public string? Company { get; set; }
+
+}
+
+/// <summary>
+/// 股票账户
+/// </summary>
+public class StockAccount : TradingAccoutOfFund
+{
+
+    /// <summary>
+    /// 对应股卡组
+    /// </summary>
+    public int Group { get; set; }
 
     /// <summary>
     /// 上海股东卡
@@ -110,23 +123,13 @@ public class StockAccount
     public OpenAccountEvent? Credit { get; set; }
 
 
+    //[LiteDB.BsonRef(nameof(AccountEvent))]
     public List<AccountEvent> Events { get; set; } = [];
 
 }
 
-public class FutureAccount
+public class FutureAccount : TradingAccoutOfFund
 {
-    public int Id { get; set; }
-
-    public int FundId { get; set; }
-
-    public string? Company { get; set; }
-
-    /// <summary>
-    /// 注销
-    /// </summary>
-    public bool IsClosed { get; set; }
-
     /// <summary>
     /// 基本户
     /// </summary>
@@ -134,6 +137,7 @@ public class FutureAccount
 
 
 
+    //[LiteDB.BsonRef(nameof(AccountEvent))]
     public List<AccountEvent>? Events { get; set; }
 
 }

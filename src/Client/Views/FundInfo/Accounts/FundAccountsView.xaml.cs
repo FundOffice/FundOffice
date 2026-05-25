@@ -97,12 +97,13 @@ public partial class FundAccountsViewModel : ObservableObject
 
 
 
-        var sa = db.GetCollection<StockAccount>().Find(x => x.FundId == fundId).ToArray();
-        if (sa is not null)
+        var accoutOfFunds = db.GetCollection<TradingAccoutOfFund>().Find(x => x.FundId == fundId).ToArray();
+        if (accoutOfFunds.OfType<StockAccount>() is IEnumerable<StockAccount> sa)
             StockAccounts = new(sa.Select(x => new StockAccountViewModel(x)));
 
-        var fas = db.GetCollection<FutureAccount>().Find(x => x.FundId == fundId).ToArray();
-        if (fas is not null)
+        //var fas = db.GetCollection<FutureAccount>().Find(x => x.FundId == fundId).ToArray();
+        //if (fas is not null)
+        if (accoutOfFunds.OfType<FutureAccount>() is IEnumerable<FutureAccount> fas)
             FutureAccounts = new(fas.Select(x => new FutureAccountViewModel(x)));
 
 
@@ -479,12 +480,12 @@ public partial class FundAccountsViewModel : ObservableObject
             {
                 FundId = FundId,
                 Company = selectedSecurityCompany,
-                Common = new OpenAccountEvent { Name = "基本账户" },
-               // Credit = new OpenAccountEvent { Name = "信用账户" }
             };
 
             using var db = DbHelper.Base();
-            db.GetCollection<StockAccount>().Insert(obj);
+            db.GetCollection<TradingAccoutOfFund>().Insert(obj);
+            db.GetCollection<AccountEvent>().Insert(new OpenAccountEvent { AccountId = obj.Id, AccountType = nameof(StockAccount), Name = "基本账户" });
+
 
 
             if (StockAccounts is null)
@@ -555,12 +556,12 @@ public partial class FundAccountsViewModel : ObservableObject
             var obj = new FutureAccount
             {
                 FundId = FundId,
-                Company = selectedFutureCompany,
-                Common = new OpenAccountEvent { Name = "基本账户" }
+                Company = selectedFutureCompany, 
             };
 
             using var db = DbHelper.Base();
-            db.GetCollection<FutureAccount>().Insert(obj);
+            db.GetCollection<TradingAccoutOfFund>().Insert(obj);
+            db.GetCollection<AccountEvent>().Insert(new OpenAccountEvent { AccountId = obj.Id, AccountType = nameof(FutureAccount), Name = "基本账户" });
 
 
             if (FutureAccounts is null)

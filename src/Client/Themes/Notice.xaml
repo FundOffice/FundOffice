@@ -7,11 +7,16 @@
     xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI">
 
     <Style x:Key="NoArrowExpander" TargetType="Expander">
+        <Setter Property="BorderBrush" Value="LightGray" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Expander">
-                    <Border BorderBrush="LightGray" BorderThickness="1">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
                         <DockPanel LastChildFill="True">
                             <!--  标题区域（无箭头）  -->
                             <ToggleButton

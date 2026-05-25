@@ -7,7 +7,7 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:FMO"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:model="clr-namespace:FMO.Models;assembly=FMO.Models"
+    xmlns:model="clr-namespace:FMO.Models;assembly=Models"
     xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
     d:DataContext="{d:DesignInstance Type=local:FundAccountsViewModel}"
     d:DesignHeight="1450"
@@ -199,117 +199,339 @@
             </DataTemplate.Triggers>
         </DataTemplate>
 
+
+
+        <Style x:Key="EventExpander" TargetType="Expander">
+            <Setter Property="BorderBrush" Value="LightGray" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Expander">
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8">
+                            <DockPanel LastChildFill="True">
+                                <!--  标题区域（无箭头）  -->
+                                <ToggleButton
+                                    HorizontalContentAlignment="Stretch"
+                                    VerticalContentAlignment="Center"
+                                    Background="#eeeeee"
+                                    Content="{TemplateBinding Header}"
+                                    ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                    DockPanel.Dock="Top"
+                                    IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <ToggleButton.Style>
+                                        <Style TargetType="ToggleButton">
+                                            <Setter Property="OverridesDefaultStyle" Value="True" />
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ToggleButton">
+                                                        <Border Background="{TemplateBinding Background}">
+                                                            <ContentPresenter
+                                                                Margin="3,2"
+                                                                HorizontalAlignment="Stretch"
+                                                                VerticalAlignment="Center" />
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ToggleButton.Style>
+                                </ToggleButton>
+
+                                <!--  展开内容区域  -->
+                                <ContentPresenter
+                                    x:Name="ExpandSite"
+                                    DockPanel.Dock="Bottom"
+                                    Visibility="Collapsed" />
+                            </DockPanel>
+                        </Border>
+
+                        <!--  触发展开/折叠动画  -->
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style
+            x:Key="EventModifier"
+            BasedOn="{StaticResource {x:Type shared:ModifiableControl}}"
+            TargetType="shared:ModifiableControl">
+            <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <shared:CopyableTextBlock IsMasked="True" Text="{Binding}" />
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="EditTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBox
+                            Padding="5,0"
+                            VerticalContentAlignment="Center"
+                            BorderThickness="0"
+                            Style="{StaticResource TextBox.Small}"
+                            Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay, Delay=200}"
+                            TextWrapping="WrapWithOverflow" />
+
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
         <DataTemplate DataType="{x:Type local:AccountCredentialEventViewModel}">
-            <DockPanel Margin="0,4">
-                <Border Background="Orange">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 
-                        <TextBlock
-                            Width="20"
-                            Margin="3,0"
-                            Padding="4"
-                            VerticalAlignment="Center"
-                            FontSize="14"
-                            Text="{Binding Name}"
-                            TextWrapping="Wrap" />
-                        <StackPanel HorizontalAlignment="Center">
-                            <ToggleButton
-                                hc:IconElement.Geometry="{StaticResource f.pen}"
-                                DockPanel.Dock="Bottom"
-                                IsChecked="{Binding IsReadOnly, Converter={StaticResource Boolean2BooleanReConverter}}"
-                                Style="{StaticResource ToggleEditable}" />
-
-
+            <Border
+                Background="Transparent"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="6">
+                <StackPanel>
+                    <ToggleButton
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        IsChecked="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"
+                        Style="{StaticResource ToggleButtonCustom}">
+                        <DockPanel>
                             <Button
-                                x:Name="delcredit"
+                                x:Name="del"
                                 hc:IconElement.Geometry="{StaticResource f.trash}"
-                                Command="{Binding DataContext.DeleteCreditCommand, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                                Command="{Binding RelativeSource={RelativeSource AncestorType=ListBox}, Path=DataContext.DeleteEventCommand}"
+                                CommandParameter="{Binding .}"
                                 DockPanel.Dock="Right"
                                 Foreground="Red"
                                 Style="{StaticResource ButtonIcon.Small}"
-                                Visibility="Collapsed" />
-
-                            <Button
-                                hc:IconElement.Geometry="{StaticResource f.floppy-disk}"
-                                Command="{Binding SaveCommand}"
-                                Style="{StaticResource ButtonIcon.Small}"
                                 Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-                        </StackPanel>
+
+
+                            <TextBlock
+                                Margin="3,0"
+                                Padding="4"
+                                VerticalAlignment="Center"
+                                FontSize="14"
+                                Text="{Binding Name}" />
+
+                            <ToggleButton
+                                IsChecked="{Binding IsReadOnly, Converter={StaticResource Boolean2BooleanReConverter}}"
+                                Style="{StaticResource ToggleEditable}"
+                                Visibility="{Binding IsSelected, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" />
+
+                            <shared:CopyableTextBlock
+                                Margin="15,0,0,0"
+                                shared:MaskService.IsMask="True"
+                                Text="{Binding Account.OldValue}"
+                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+
+                        </DockPanel>
+                    </ToggleButton>
+
+
+
+                    <StackPanel Margin="4,0" Visibility="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected, Converter={StaticResource Boolean2VisibilityConverter}}">
+
+                        <Separator />
+
+                        <UniformGrid Rows="1">
+                            <DockPanel>
+                                <TextBlock FontSize="14" Text="原始材料" />
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.folder}"
+                                    Command="{Binding OpenRawFolderCommand}"
+                                    Style="{StaticResource ButtonIcon.Small}" />
+                            </DockPanel>
+
+
+                            <DockPanel>
+                                <TextBlock FontSize="14" Text="用印文件" />
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.folder}"
+                                    Command="{Binding OpenSealFolderCommand}"
+                                    Style="{StaticResource ButtonIcon.Small}" />
+                            </DockPanel>
+                        </UniformGrid>
+
+
+
+
+                        <shared:ModifiableControl
+                            Header="资金账号"
+                            Modifier="{Binding Account}"
+                            Style="{StaticResource EventModifier}" />
+
+                        <shared:ModifiableControl
+                            Header="交易密码"
+                            Modifier="{Binding Password}"
+                            Style="{StaticResource EventModifier}" />
+
+
+
 
                     </StackPanel>
-                </Border>
-
-
-                <StackPanel Margin="2,0">
-                    <DockPanel LastChildFill="False">
-                        <TextBlock FontSize="14" Text="原始材料" />
-                        <Button
-                            hc:IconElement.Geometry="{StaticResource f.folder}"
-                            Command="{Binding OpenRawFolderCommand}"
-                            Style="{StaticResource ButtonIcon.Small}" />
-                    </DockPanel>
-
-
-                    <DockPanel LastChildFill="False">
-                        <TextBlock FontSize="14" Text="用印文件" />
-                        <Button
-                            hc:IconElement.Geometry="{StaticResource f.folder}"
-                            Command="{Binding OpenSealFolderCommand}"
-                            Style="{StaticResource ButtonIcon.Small}" />
-                    </DockPanel>
-
-
-
-                    <BulletDecorator>
-                        <BulletDecorator.Bullet>
-                            <TextBlock Text="账号" />
-                        </BulletDecorator.Bullet>
-
-                        <hc:SimplePanel>
-                            <shared:CopyableTextBlock
-                                Margin="15,0,0,0"
-                                Text="{Binding Account}"
-                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-                            <TextBox
-                                Margin="4,0"
-                                Style="{StaticResource TextBox.Small}"
-                                Text="{Binding Account, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                        </hc:SimplePanel>
-
-                    </BulletDecorator>
-
-
-                    <BulletDecorator>
-                        <BulletDecorator.Bullet>
-                            <TextBlock Text="密码" />
-                        </BulletDecorator.Bullet>
-                        <hc:SimplePanel>
-                            <shared:CopyableTextBlock
-                                Margin="15,0,0,0"
-                                IsPasswordLike="True"
-                                Text="{Binding Password}"
-                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-                            <TextBox
-                                Margin="4,0"
-                                Style="{StaticResource TextBox.Small}"
-                                Text="{Binding Password, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                        </hc:SimplePanel>
-                    </BulletDecorator>
-
                 </StackPanel>
-            </DockPanel>
+            </Border>
         </DataTemplate>
 
 
 
+        <DataTemplate DataType="{x:Type local:BasicAccountViewModel}">
+            <Border
+                Background="Transparent"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="6">
+                <StackPanel>
+                    <ToggleButton
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        IsChecked="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"
+                        Style="{StaticResource ToggleButtonCustom}">
+                        <DockPanel>
+                            <Button
+                                x:Name="del"
+                                hc:IconElement.Geometry="{StaticResource f.trash}"
+                                Command="{Binding RelativeSource={RelativeSource AncestorType=ListBox}, Path=DataContext.DeleteEventCommand}"
+                                CommandParameter="{Binding .}"
+                                DockPanel.Dock="Right"
+                                Foreground="Red"
+                                Style="{StaticResource ButtonIcon.Small}"
+                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+
+                            <TextBlock
+                                Margin="3,0"
+                                Padding="4"
+                                VerticalAlignment="Center"
+                                FontSize="14"
+                                Text="{Binding Name}" />
+
+                            <ToggleButton
+                                IsChecked="{Binding IsReadOnly, Converter={StaticResource Boolean2BooleanReConverter}}"
+                                Style="{StaticResource ToggleEditable}"
+                                Visibility="{Binding IsSelected, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" />
+
+                            <shared:CopyableTextBlock
+                                Margin="15,0,0,0"
+                                shared:MaskService.IsMask="True"
+                                Text="{Binding Account.OldValue}"
+                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+
+                        </DockPanel>
+                    </ToggleButton>
+
+
+
+                    <StackPanel Margin="4,0" Visibility="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected, Converter={StaticResource Boolean2VisibilityConverter}}">
+
+                        <Separator />
+
+                        <UniformGrid Rows="1">
+                            <DockPanel>
+                                <TextBlock FontSize="14" Text="原始材料" />
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.folder}"
+                                    Command="{Binding OpenRawFolderCommand}"
+                                    Style="{StaticResource ButtonIcon.Small}" />
+                            </DockPanel>
+
+
+                            <DockPanel>
+                                <TextBlock FontSize="14" Text="用印文件" />
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.folder}"
+                                    Command="{Binding OpenSealFolderCommand}"
+                                    Style="{StaticResource ButtonIcon.Small}" />
+                            </DockPanel>
+                        </UniformGrid>
+
+                        <shared:FileView
+                            Width="220"
+                            HorizontalAlignment="Left"
+                            Content="{Binding BankLetter}"
+                            Header="银行关联函"
+                            IsReadOnly="{Binding IsReadOnly}" />
+
+                        <shared:FileView
+                            Width="220"
+                            HorizontalAlignment="Left"
+                            Content="{Binding ServiceAgreement}"
+                            Header="经服协议"
+                            IsReadOnly="{Binding IsReadOnly}" />
+
+
+                        <shared:ModifiableControl
+                            Header="资金账号"
+                            Modifier="{Binding Account}"
+                            Style="{StaticResource EventModifier}" />
+
+
+                        <UniformGrid Rows="1">
+                            <shared:ModifiableControl
+                                Header="交易密码"
+                                Modifier="{Binding TradePassword}"
+                                Style="{StaticResource EventModifier}" />
+
+                            <shared:ModifiableControl
+                                Header="资金密码"
+                                Modifier="{Binding CapitalPassword}"
+                                Style="{StaticResource EventModifier}" />
+                        </UniformGrid>
+
+
+
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Name}" Value="基本账户">
+                    <Setter TargetName="del" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+
+        <Style x:Key="AccountEventList" TargetType="ListBoxItem">
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="Width" Value="300" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                        <ContentPresenter
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
+
+
         <DataTemplate x:Key="StockItem" DataType="local:StockAccountViewModel">
-            <Border Background="WhiteSmoke" CornerRadius="8">
+            <Border
+                Margin="2,0"
+                Background="WhiteSmoke"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="8">
                 <hc:SimplePanel>
                     <hc:Watermark
                         FontSize="50"
@@ -318,13 +540,10 @@
                         MarkMargin="30,0"
                         Visibility="{Binding IsClosed, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
-                    <DockPanel LastChildFill="False">
-                        <DockPanel DockPanel.Dock="Top" LastChildFill="False">
-
-                            <Border
-                                Width="150"
-                                Background="RoyalBlue"
-                                CornerRadius="8,0,0,0">
+                    <StackPanel>
+                        <!--  Company  -->
+                        <Border Background="RoyalBlue" CornerRadius="8,8,0,0">
+                            <hc:SimplePanel>
                                 <TextBlock
                                     Margin="10,4"
                                     VerticalAlignment="Center"
@@ -333,143 +552,141 @@
                                     Foreground="White"
                                     Style="{StaticResource TextBlockDefaultBold}"
                                     Text="{Binding Company}" />
-                            </Border>
 
+                                <ToggleButton
+                                    x:Name="close"
+                                    Margin="5,0"
+                                    HorizontalAlignment="Right"
+                                    Command="{Binding CloseCommand}"
+                                    Content="注销"
+                                    DockPanel.Dock="Right"
+                                    IsChecked="{Binding IsClosed}"
+                                    Style="{StaticResource ToggleButtonDanger.Small}"
+                                    Visibility="Collapsed" />
 
+                            </hc:SimplePanel>
+                        </Border>
+
+                        <!--#region 股卡-->
+                        <DockPanel>
+                            <TextBlock
+                                Margin="10,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="上证股卡" />
+                            <ToggleButton
+                                x:Name="sh"
+                                Width="22"
+                                Padding="2"
+                                hc:IconElement.Geometry="{StaticResource f.connect}"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Style="{StaticResource ToggleButtonIcon}"
+                                Visibility="{Binding SHCardConnected, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
                             <Button
-                                x:Name="del"
-                                hc:IconElement.Geometry="{StaticResource f.trash}"
-                                Command="{Binding RelativeSource={RelativeSource AncestorType=local:FundAccountsView}, Path=DataContext.DeleteStockCommand}"
-                                CommandParameter="{Binding .}"
-                                DockPanel.Dock="Right"
+                                hc:IconElement.Geometry="{StaticResource f.disconnect}"
+                                Command="{Binding DisconnectSHCommand}"
                                 Foreground="Red"
                                 Style="{StaticResource ButtonIcon.Small}"
-                                Visibility="Collapsed" />
+                                Visibility="{Binding SHCardConnected, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
+                            <shared:CopyableTextBlock
+                                Margin="8,0,2,0"
+                                VerticalAlignment="Center"
+                                FontWeight="Black"
+                                Text="{Binding SHCard}" />
+
+                            <Popup
+                                AllowsTransparency="True"
+                                IsOpen="{Binding IsChecked, ElementName=sh}"
+                                Placement="Right"
+                                PlacementTarget="{Binding ElementName=sh}"
+                                StaysOpen="False">
+                                <Border>
+                                    <DockPanel>
+                                        <ListBox
+                                            DisplayMemberPath="CardNo"
+                                            ItemsPanel="{StaticResource WrapHorizontalItemsPanelTemplate}"
+                                            ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=local:FundAccountsView}, Path=DataContext.SHSecurityCardSource.View}"
+                                            SelectedItem="{Binding NewSHCard}"
+                                            Style="{StaticResource ListBox.Small}" />
+
+                                        <Button
+                                            Margin="4,0"
+                                            Command="{Binding ConfirmSHCardCommand}"
+                                            Content="确认"
+                                            Style="{StaticResource ButtonPrimary}" />
+                                    </DockPanel>
+                                </Border>
+                            </Popup>
+                        </DockPanel>
+
+                        <DockPanel>
+                            <TextBlock
+                                Margin="10,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="深证股卡" />
                             <ToggleButton
-                                x:Name="close"
-                                Command="{Binding CloseCommand}"
-                                Content="注销"
-                                DockPanel.Dock="Right"
-                                IsChecked="{Binding IsClosed}"
-                                Visibility="Collapsed" />
+                                x:Name="sz"
+                                Width="22"
+                                Padding="2"
+                                hc:IconElement.Geometry="{StaticResource f.connect}"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Style="{StaticResource ToggleButtonIcon}"
+                                Visibility="{Binding SZCardConnected, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.disconnect}"
+                                Command="{Binding DisconnectSZCommand}"
+                                Foreground="Red"
+                                Style="{StaticResource ButtonIcon.Small}"
+                                Visibility="{Binding SZCardConnected, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                            <shared:CopyableTextBlock
+                                Margin="8,0,2,0"
+                                VerticalAlignment="Center"
+                                FontWeight="Black"
+                                Text="{Binding SZCard}" />
 
 
-                            <DockPanel>
-                                <TextBlock
-                                    Margin="10,0,0,0"
-                                    VerticalAlignment="Center"
-                                    Text="上证股卡" />
-                                <ToggleButton
-                                    x:Name="sh"
-                                    Width="22"
-                                    Padding="2"
-                                    hc:IconElement.Geometry="{StaticResource f.connect}"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Style="{StaticResource ToggleButtonIcon}"
-                                    Visibility="{Binding SHCardConnected, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                            <Popup
+                                AllowsTransparency="True"
+                                IsOpen="{Binding IsChecked, ElementName=sz}"
+                                Placement="Right"
+                                PlacementTarget="{Binding ElementName=sz}"
+                                StaysOpen="False">
+                                <Border>
+                                    <DockPanel>
+                                        <ListBox
+                                            DisplayMemberPath="CardNo"
+                                            ItemsPanel="{StaticResource WrapHorizontalItemsPanelTemplate}"
+                                            ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=local:FundAccountsView}, Path=DataContext.SZSecurityCardSource.View}"
+                                            SelectedItem="{Binding NewSZCard}"
+                                            Style="{StaticResource ListBox.Small}" />
 
-                                <Button
-                                    hc:IconElement.Geometry="{StaticResource f.disconnect}"
-                                    Command="{Binding DisconnectSHCommand}"
-                                    Foreground="Red"
-                                    Style="{StaticResource ButtonIcon.Small}"
-                                    Visibility="{Binding SHCardConnected, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                        <Button
+                                            Margin="4,0"
+                                            Command="{Binding ConfirmSZCardCommand}"
+                                            Content="确认"
+                                            Style="{StaticResource ButtonPrimary}" />
+                                    </DockPanel>
+                                </Border>
+                            </Popup>
+                        </DockPanel>
+                        <!--#endregion-->
 
-                                <shared:CopyableTextBlock
-                                    Margin="8,0,2,0"
-                                    VerticalAlignment="Center"
-                                    FontWeight="Black"
-                                    Text="{Binding SHCard}" />
-
-                                <Popup
-                                    AllowsTransparency="True"
-                                    IsOpen="{Binding IsChecked, ElementName=sh}"
-                                    Placement="Right"
-                                    PlacementTarget="{Binding ElementName=sh}"
-                                    StaysOpen="False">
-                                    <Border>
-                                        <DockPanel>
-                                            <ListBox
-                                                DisplayMemberPath="CardNo"
-                                                ItemsPanel="{StaticResource WrapHorizontalItemsPanelTemplate}"
-                                                ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=local:FundAccountsView}, Path=DataContext.SHSecurityCardSource.View}"
-                                                SelectedItem="{Binding NewSHCard}"
-                                                Style="{StaticResource ListBox.Small}" />
-
-                                            <Button
-                                                Margin="4,0"
-                                                Command="{Binding ConfirmSHCardCommand}"
-                                                Content="确认"
-                                                Style="{StaticResource ButtonPrimary}" />
-                                        </DockPanel>
-                                    </Border>
-                                </Popup>
-                            </DockPanel>
-
-                            <DockPanel>
-                                <TextBlock
-                                    Margin="10,0,0,0"
-                                    VerticalAlignment="Center"
-                                    Text="深证股卡" />
-                                <ToggleButton
-                                    x:Name="sz"
-                                    Width="22"
-                                    Padding="2"
-                                    hc:IconElement.Geometry="{StaticResource f.connect}"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Style="{StaticResource ToggleButtonIcon}"
-                                    Visibility="{Binding SZCardConnected, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                <Button
-                                    hc:IconElement.Geometry="{StaticResource f.disconnect}"
-                                    Command="{Binding DisconnectSZCommand}"
-                                    Foreground="Red"
-                                    Style="{StaticResource ButtonIcon.Small}"
-                                    Visibility="{Binding SZCardConnected, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-                                <shared:CopyableTextBlock
-                                    Margin="8,0,2,0"
-                                    VerticalAlignment="Center"
-                                    FontWeight="Black"
-                                    Text="{Binding SZCard}" />
-
-
-                                <Popup
-                                    AllowsTransparency="True"
-                                    IsOpen="{Binding IsChecked, ElementName=sz}"
-                                    Placement="Right"
-                                    PlacementTarget="{Binding ElementName=sz}"
-                                    StaysOpen="False">
-                                    <Border>
-                                        <DockPanel>
-                                            <ListBox
-                                                DisplayMemberPath="CardNo"
-                                                ItemsPanel="{StaticResource WrapHorizontalItemsPanelTemplate}"
-                                                ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=local:FundAccountsView}, Path=DataContext.SZSecurityCardSource.View}"
-                                                SelectedItem="{Binding NewSZCard}"
-                                                Style="{StaticResource ListBox.Small}" />
-
-                                            <Button
-                                                Margin="4,0"
-                                                Command="{Binding ConfirmSZCardCommand}"
-                                                Content="确认"
-                                                Style="{StaticResource ButtonPrimary}" />
-                                        </DockPanel>
-                                    </Border>
-                                </Popup>
-                            </DockPanel>
+                        <DockPanel
+                            Margin="5,0"
+                            DockPanel.Dock="Top"
+                            LastChildFill="False">
 
 
                             <!--  Event  -->
                             <Button
                                 Command="{Binding AddCreditCommand}"
                                 Content="信用"
-                                Style="{StaticResource ButtonDefault.Small}"
-                                Visibility="{Binding Credit, Converter={StaticResource Object2VisibilityReConverter}}" />
+                                Style="{StaticResource ButtonDefault.Small}" />
 
                             <Button
                                 Command="{Binding AddQMTCommand}"
@@ -479,337 +696,186 @@
                         </DockPanel>
 
 
-                        <!--  基本户  -->
-                        <DockPanel Width="300" DataContext="{Binding Common}">
-                            <Border Background="Orange" CornerRadius="0,0,0,8">
-                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-
-                                    <TextBlock
-                                        Width="20"
-                                        Margin="3,0"
-                                        Padding="4"
-                                        VerticalAlignment="Center"
-                                        FontSize="14"
-                                        Text="{Binding Name}"
-                                        TextWrapping="Wrap" />
-                                    <StackPanel HorizontalAlignment="Center">
-                                        <ToggleButton
-                                            DockPanel.Dock="Bottom"
-                                            IsChecked="{Binding IsReadOnly, Converter={StaticResource Boolean2BooleanReConverter}}"
-                                            Style="{StaticResource ToggleEditable}" />
-                                        <Button
-                                            hc:IconElement.Geometry="{StaticResource f.floppy-disk}"
-                                            Command="{Binding SaveCommand}"
-                                            Style="{StaticResource ButtonIcon.Small}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-                                    </StackPanel>
-
-                                </StackPanel>
-                            </Border>
-
-                            <StackPanel Margin="2,0">
-                                <UniformGrid Rows="1">
-                                    <DockPanel>
-                                        <TextBlock FontSize="14" Text="原始材料" />
-                                        <Button
-                                            hc:IconElement.Geometry="{StaticResource f.folder}"
-                                            Command="{Binding OpenRawFolderCommand}"
-                                            Style="{StaticResource ButtonIcon.Small}" />
-                                    </DockPanel>
-
-
-                                    <DockPanel>
-                                        <TextBlock FontSize="14" Text="用印文件" />
-                                        <Button
-                                            hc:IconElement.Geometry="{StaticResource f.folder}"
-                                            Command="{Binding OpenSealFolderCommand}"
-                                            Style="{StaticResource ButtonIcon.Small}" />
-                                    </DockPanel>
-                                </UniformGrid>
-
-                                <shared:FileView
-                                    Content="{Binding BankLetter}"
-                                    Header="银行关联函"
-                                    IsReadOnly="{Binding IsReadOnly}" />
-
-                                <shared:FileView
-                                    Content="{Binding ServiceAgreement}"
-                                    Header="经服协议"
-                                    IsReadOnly="{Binding IsReadOnly}" />
-
-
-
-                                <BulletDecorator>
-                                    <BulletDecorator.Bullet>
-                                        <TextBlock Text="资金账号" />
-                                    </BulletDecorator.Bullet>
-
-                                    <hc:SimplePanel>
-                                        <shared:CopyableTextBlock
-                                            Margin="15,0,0,0"
-                                            shared:MaskService.IsMask="True"
-                                            Text="{Binding Account}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-                                        <TextBox
-                                            Margin="4,0"
-                                            Style="{StaticResource TextBox.Small}"
-                                            Text="{Binding Account, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                    </hc:SimplePanel>
-
-                                </BulletDecorator>
-
-
-                                <BulletDecorator>
-                                    <BulletDecorator.Bullet>
-                                        <TextBlock Text="交易密码" />
-                                    </BulletDecorator.Bullet>
-                                    <hc:SimplePanel>
-                                        <shared:CopyableTextBlock
-                                            Margin="15,0,0,0"
-                                            IsPasswordLike="True"
-                                            Text="{Binding TradePassword}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-                                        <TextBox
-                                            Margin="4,0"
-                                            Style="{StaticResource TextBox.Small}"
-                                            Text="{Binding TradePassword, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                    </hc:SimplePanel>
-                                </BulletDecorator>
-
-
-                                <BulletDecorator>
-                                    <BulletDecorator.Bullet>
-                                        <TextBlock Text="资金密码" />
-                                    </BulletDecorator.Bullet>
-                                    <hc:SimplePanel>
-                                        <shared:CopyableTextBlock
-                                            Margin="15,0,0,0"
-                                            IsPasswordLike="True"
-                                            Text="{Binding CapitalPassword}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-                                        <TextBox
-                                            Margin="4,0"
-                                            Style="{StaticResource TextBox.Small}"
-                                            Text="{Binding CapitalPassword, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                    </hc:SimplePanel>
-                                </BulletDecorator>
-                            </StackPanel>
-                        </DockPanel>
-
-                        <!--  信用户  -->
-
-                        <hc:SimplePanel Width="300" Visibility="{Binding Credit, Converter={StaticResource Object2VisibilityConverter}}">
-                            <DockPanel Margin="0,4" DataContext="{Binding Credit}">
-                                <Border Background="Orange">
-                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-
-                                        <TextBlock
-                                            Width="20"
-                                            Margin="3,0"
-                                            Padding="4"
-                                            VerticalAlignment="Center"
-                                            FontSize="14"
-                                            Text="{Binding Name}"
-                                            TextWrapping="Wrap" />
-                                        <StackPanel HorizontalAlignment="Center">
-                                            <ToggleButton
-                                                hc:IconElement.Geometry="{StaticResource f.pen}"
-                                                DockPanel.Dock="Bottom"
-                                                IsChecked="{Binding IsReadOnly, Converter={StaticResource Boolean2BooleanReConverter}}"
-                                                Style="{StaticResource ToggleEditable}" />
-
-
-                                            <Button
-                                                x:Name="delcredit"
-                                                hc:IconElement.Geometry="{StaticResource f.trash}"
-                                                Command="{Binding DataContext.DeleteCreditCommand, RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
-                                                DockPanel.Dock="Right"
-                                                Foreground="Red"
-                                                Style="{StaticResource ButtonIcon.Small}"
-                                                Visibility="Collapsed" />
-
-                                            <Button
-                                                hc:IconElement.Geometry="{StaticResource f.floppy-disk}"
-                                                Command="{Binding SaveCommand}"
-                                                Style="{StaticResource ButtonIcon.Small}"
-                                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-                                        </StackPanel>
-
-                                    </StackPanel>
-                                </Border>
-
-
-                                <StackPanel Margin="2,0">
-                                    <DockPanel LastChildFill="False">
-                                        <TextBlock FontSize="14" Text="原始材料" />
-                                        <Button
-                                            hc:IconElement.Geometry="{StaticResource f.folder}"
-                                            Command="{Binding OpenRawFolderCommand}"
-                                            Style="{StaticResource ButtonIcon.Small}" />
-                                    </DockPanel>
-
-
-                                    <DockPanel LastChildFill="False">
-                                        <TextBlock FontSize="14" Text="用印文件" />
-                                        <Button
-                                            hc:IconElement.Geometry="{StaticResource f.folder}"
-                                            Command="{Binding OpenSealFolderCommand}"
-                                            Style="{StaticResource ButtonIcon.Small}" />
-                                    </DockPanel>
-
-
-
-                                    <shared:FileView
-                                        Content="{Binding BankLetter}"
-                                        Header="银行关联函"
-                                        IsReadOnly="{Binding IsReadOnly}" />
-
-                                    <BulletDecorator>
-                                        <BulletDecorator.Bullet>
-                                            <TextBlock Text="资金账号" />
-                                        </BulletDecorator.Bullet>
-
-                                        <hc:SimplePanel>
-                                            <shared:CopyableTextBlock
-                                                Margin="15,0,0,0"
-                                                shared:MaskService.IsMask="True"
-                                                Text="{Binding Account}"
-                                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-                                            <TextBox
-                                                Margin="4,0"
-                                                Style="{StaticResource TextBox.Small}"
-                                                Text="{Binding Account, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                        </hc:SimplePanel>
-
-                                    </BulletDecorator>
-
-
-                                    <BulletDecorator>
-                                        <BulletDecorator.Bullet>
-                                            <TextBlock Text="交易密码" />
-                                        </BulletDecorator.Bullet>
-                                        <hc:SimplePanel>
-                                            <shared:CopyableTextBlock
-                                                Margin="15,0,0,0"
-                                                IsPasswordLike="True"
-                                                Text="{Binding TradePassword}"
-                                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-                                            <TextBox
-                                                Margin="4,0"
-                                                Style="{StaticResource TextBox.Small}"
-                                                Text="{Binding TradePassword, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                        </hc:SimplePanel>
-                                    </BulletDecorator>
-
-
-                                    <BulletDecorator>
-                                        <BulletDecorator.Bullet>
-                                            <TextBlock Text="资金密码" />
-                                        </BulletDecorator.Bullet>
-                                        <hc:SimplePanel>
-                                            <shared:CopyableTextBlock
-                                                Margin="15,0,0,0"
-                                                IsPasswordLike="True"
-                                                Text="{Binding CapitalPassword}"
-                                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-                                            <TextBox
-                                                Margin="4,0"
-                                                Style="{StaticResource TextBox.Small}"
-                                                Text="{Binding CapitalPassword, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                        </hc:SimplePanel>
-                                    </BulletDecorator>
-                                </StackPanel>
-                            </DockPanel>
-                        </hc:SimplePanel>
-
-
                         <ListBox
+                            Margin="0,0,0,5"
+                            VerticalContentAlignment="Stretch"
                             Background="Transparent"
                             BorderThickness="0"
+                            ItemContainerStyle="{StaticResource AccountEventList}"
                             ItemsSource="{Binding Events}"
                             Style="{StaticResource ListBoxCustom}">
                             <ListBox.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <DockPanel IsItemsHost="True" />
+                                    <StackPanel IsItemsHost="True" />
                                 </ItemsPanelTemplate>
                             </ListBox.ItemsPanel>
                         </ListBox>
 
-                    </DockPanel>
+                    </StackPanel>
                 </hc:SimplePanel>
             </Border>
             <DataTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter TargetName="del" Property="Visibility" Value="Visible" />
                     <Setter TargetName="close" Property="Visibility" Value="Visible" />
                 </Trigger>
-                <MultiDataTrigger>
-                    <MultiDataTrigger.Conditions>
-                        <Condition Binding="{Binding Credit.IsReadOnly}" Value="True" />
-                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver}" Value="True" />
-                    </MultiDataTrigger.Conditions>
-                    <Setter TargetName="delcredit" Property="Visibility" Value="Visible" />
-                </MultiDataTrigger>
-                <!--<DataTrigger Binding="{Binding Group}" Value="0">
-                    <Setter TargetName="group" Property="Foreground" Value="Black" />
-                </DataTrigger>-->
             </DataTemplate.Triggers>
         </DataTemplate>
+
+
+
+        <DataTemplate DataType="{x:Type local:FutureOpenAccountViewModel}">
+            <Border
+                Background="Transparent"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="6">
+                <StackPanel>
+                    <ToggleButton
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        IsChecked="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected}"
+                        Style="{StaticResource ToggleButtonCustom}">
+                        <DockPanel>
+                            <Button
+                                x:Name="del"
+                                hc:IconElement.Geometry="{StaticResource f.trash}"
+                                Command="{Binding RelativeSource={RelativeSource AncestorType=ListBox}, Path=DataContext.DeleteEventCommand}"
+                                CommandParameter="{Binding .}"
+                                DockPanel.Dock="Right"
+                                Foreground="Red"
+                                Style="{StaticResource ButtonIcon.Small}"
+                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+
+                            <TextBlock
+                                Margin="3,0"
+                                Padding="4"
+                                VerticalAlignment="Center"
+                                FontSize="14"
+                                Text="{Binding Name}" />
+
+                            <ToggleButton
+                                IsChecked="{Binding IsReadOnly, Converter={StaticResource Boolean2BooleanReConverter}}"
+                                Style="{StaticResource ToggleEditable}"
+                                Visibility="{Binding IsSelected, Converter={StaticResource Boolean2VisibilityConverter}, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" />
+
+
+                            <shared:CopyableTextBlock
+                                Margin="15,0,0,0"
+                                shared:MaskService.IsMask="True"
+                                Text="{Binding Account.OldValue}"
+                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+
+                        </DockPanel>
+                    </ToggleButton>
+
+
+
+                    <StackPanel Margin="4,0" Visibility="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsSelected, Converter={StaticResource Boolean2VisibilityConverter}}">
+
+                        <Separator />
+
+                        <UniformGrid Rows="1">
+                            <DockPanel>
+
+
+                                <TextBlock FontSize="14" Text="原始材料" />
+
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.wand-magic}"
+                                    Command="{Binding GenerateOpenAccountFilesCommand}"
+                                    Content="生成"
+                                    Foreground="Orange"
+                                    Style="{StaticResource ButtonIcon.Small}" />
+
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.folder}"
+                                    Command="{Binding OpenRawFolderCommand}"
+                                    Style="{StaticResource ButtonIcon.Small}" />
+                            </DockPanel>
+
+
+                            <DockPanel>
+                                <TextBlock FontSize="14" Text="用印文件" />
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.folder}"
+                                    Command="{Binding OpenSealFolderCommand}"
+                                    Style="{StaticResource ButtonIcon.Small}" />
+                            </DockPanel>
+                        </UniformGrid>
+
+                        <shared:FileView
+                            Width="220"
+                            HorizontalAlignment="Left"
+                            Content="{Binding BankLetter}"
+                            Header="银行关联函"
+                            IsReadOnly="{Binding IsReadOnly}" />
+
+                        <shared:FileView
+                            Width="220"
+                            HorizontalAlignment="Left"
+                            Content="{Binding ServiceAgreement}"
+                            Header="经服协议"
+                            IsReadOnly="{Binding IsReadOnly}" />
+
+                        <shared:FileView
+                            Width="220"
+                            HorizontalAlignment="Left"
+                            Content="{Binding AccountLetter}"
+                            Header="账户信息函"
+                            IsReadOnly="{Binding IsReadOnly}" />
+
+                        <shared:ModifiableControl
+                            Header="资金账号"
+                            Modifier="{Binding Account}"
+                            Style="{StaticResource EventModifier}" />
+
+                        <UniformGrid Rows="1">
+                            <shared:ModifiableControl
+                                Header="交易密码"
+                                Modifier="{Binding TradePassword}"
+                                Style="{StaticResource EventModifier}" />
+
+                            <shared:ModifiableControl
+                                Header="资金密码"
+                                Modifier="{Binding CapitalPassword}"
+                                Style="{StaticResource EventModifier}" />
+                        </UniformGrid>
+
+
+
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Name}" Value="基本账户">
+                    <Setter TargetName="del" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
 
         <DataTemplate x:Key="FutureItem" DataType="local:FutureAccountViewModel">
             <Border
                 Margin="2,0"
                 Background="WhiteSmoke"
+                BorderBrush="Gray"
+                BorderThickness="1"
                 CornerRadius="8">
                 <hc:SimplePanel>
                     <hc:Watermark
-                        FontSize="30"
+                        FontSize="50"
                         FontWeight="Bold"
                         Mark="已注销"
                         MarkMargin="30,0"
                         Visibility="{Binding IsClosed, Converter={StaticResource Boolean2VisibilityConverter}}" />
-                    <StackPanel MinWidth="300">
-                        <DockPanel LastChildFill="False">
-                            <Button
-                                x:Name="del"
-                                hc:IconElement.Geometry="{StaticResource f.trash}"
-                                Command="{Binding RelativeSource={RelativeSource AncestorType=local:FundAccountsView}, Path=DataContext.DeleteFutureCommand}"
-                                CommandParameter="{Binding .}"
-                                DockPanel.Dock="Right"
-                                Foreground="Red"
-                                Style="{StaticResource ButtonIcon.Small}"
-                                Visibility="Collapsed" />
 
-                            <ToggleButton
-                                x:Name="close"
-                                Command="{Binding CloseCommand}"
-                                Content="注销"
-                                DockPanel.Dock="Right"
-                                IsChecked="{Binding IsClosed}"
-                                Visibility="Collapsed" />
-
-                            <Border
-                                Width="150"
-                                Background="RoyalBlue"
-                                CornerRadius="8,0,0,0">
+                    <StackPanel>
+                        <!--  Company  -->
+                        <Border Background="RoyalBlue" CornerRadius="8,8,0,0">
+                            <hc:SimplePanel>
                                 <TextBlock
                                     Margin="10,4"
                                     VerticalAlignment="Center"
@@ -818,151 +884,67 @@
                                     Foreground="White"
                                     Style="{StaticResource TextBlockDefaultBold}"
                                     Text="{Binding Company}" />
-                            </Border>
-                        </DockPanel>
-                        <!--  基本户  -->
-                        <DockPanel DataContext="{Binding Common}">
-                            <Border Background="Orange" CornerRadius="0,0,0,8">
-                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
 
-                                    <TextBlock
-                                        Width="20"
-                                        Margin="3,0"
-                                        Padding="4"
-                                        VerticalAlignment="Center"
-                                        FontSize="14"
-                                        Text="{Binding Name}"
-                                        TextWrapping="Wrap" />
-                                    <StackPanel HorizontalAlignment="Center">
-                                        <ToggleButton
-                                            DockPanel.Dock="Bottom"
-                                            IsChecked="{Binding IsReadOnly, Converter={StaticResource Boolean2BooleanReConverter}}"
-                                            Style="{StaticResource ToggleEditable}" />
-                                        <Button
-                                            hc:IconElement.Geometry="{StaticResource f.floppy-disk}"
-                                            Command="{Binding SaveCommand}"
-                                            Style="{StaticResource ButtonIcon.Small}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-                                    </StackPanel>
+                                <ToggleButton
+                                    x:Name="close"
+                                    Margin="5,0"
+                                    HorizontalAlignment="Right"
+                                    Command="{Binding CloseCommand}"
+                                    Content="注销"
+                                    DockPanel.Dock="Right"
+                                    IsChecked="{Binding IsClosed}"
+                                    Style="{StaticResource ToggleButtonDanger.Small}"
+                                    Visibility="Collapsed" />
 
-                                </StackPanel>
-                            </Border>
-
-                            <StackPanel Margin="2,0">
-                                <UniformGrid Rows="1">
-                                    <DockPanel>
-                                        <TextBlock FontSize="14" Text="原始材料" />
-                                        <Button
-                                            hc:IconElement.Geometry="{StaticResource f.wand-magic}"
-                                            Command="{Binding GenerateOpenAccountFilesCommand}"
-                                            Content="生成"
-                                            Style="{StaticResource ButtonIcon.Small}" />
-                                        <Button
-                                            hc:IconElement.Geometry="{StaticResource f.folder}"
-                                            Command="{Binding OpenRawFolderCommand}"
-                                            Style="{StaticResource ButtonIcon.Small}" />
-                                    </DockPanel>
+                            </hc:SimplePanel>
+                        </Border>
 
 
-                                    <DockPanel>
-                                        <TextBlock FontSize="14" Text="用印文件" />
-                                        <Button
-                                            hc:IconElement.Geometry="{StaticResource f.folder}"
-                                            Command="{Binding OpenSealFolderCommand}"
-                                            Style="{StaticResource ButtonIcon.Small}" />
-                                    </DockPanel>
-                                </UniformGrid>
-
-                                <shared:FileView
-                                    Content="{Binding BankLetter}"
-                                    Header="银行关联函"
-                                    IsReadOnly="{Binding IsReadOnly}" />
-
-                                <shared:FileView
-                                    Content="{Binding ServiceAgreement}"
-                                    Header="经服协议"
-                                    IsReadOnly="{Binding IsReadOnly}" />
-
-                                <shared:FileView
-                                    Content="{Binding AccountLetter}"
-                                    Header="账户信息函"
-                                    IsReadOnly="{Binding IsReadOnly}" />
-
-                                <BulletDecorator>
-                                    <BulletDecorator.Bullet>
-                                        <TextBlock Text="资金账号" />
-                                    </BulletDecorator.Bullet>
-
-                                    <hc:SimplePanel>
-                                        <shared:CopyableTextBlock
-                                            Margin="15,0,0,0"
-                                            shared:MaskService.IsMask="True"
-                                            Text="{Binding Account}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-                                        <TextBox
-                                            Margin="4,0"
-                                            Style="{StaticResource TextBox.Small}"
-                                            Text="{Binding Account, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                    </hc:SimplePanel>
-
-                                </BulletDecorator>
+                        <!--<DockPanel
+                            Margin="5,0"
+                            DockPanel.Dock="Top"
+                            LastChildFill="False">
 
 
-                                <BulletDecorator>
-                                    <BulletDecorator.Bullet>
-                                        <TextBlock Text="交易密码" />
-                                    </BulletDecorator.Bullet>
-                                    <hc:SimplePanel>
-                                        <shared:CopyableTextBlock
-                                            Margin="15,0,0,0"
-                                            IsPasswordLike="True"
-                                            Text="{Binding TradePassword}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                        -->
+                        <!--  Event  -->
+                        <!--
 
-                                        <TextBox
-                                            Margin="4,0"
-                                            Style="{StaticResource TextBox.Small}"
-                                            Text="{Binding TradePassword, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                            <Button
+                                Command="{Binding AddQMTCommand}"
+                                Content="QMT"
+                                Style="{StaticResource ButtonDefault.Small}" />
 
-                                    </hc:SimplePanel>
-                                </BulletDecorator>
+                        </DockPanel>-->
 
 
-                                <BulletDecorator>
-                                    <BulletDecorator.Bullet>
-                                        <TextBlock Text="资金密码" />
-                                    </BulletDecorator.Bullet>
-                                    <hc:SimplePanel>
-                                        <shared:CopyableTextBlock
-                                            Margin="15,0,0,0"
-                                            IsPasswordLike="True"
-                                            Text="{Binding CapitalPassword}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                        <ListBox
+                            Margin="0,0,0,5"
+                            VerticalContentAlignment="Stretch"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ItemContainerStyle="{StaticResource AccountEventList}"
+                            ItemsSource="{Binding Events}"
+                            Style="{StaticResource ListBoxCustom}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel IsItemsHost="True" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                        </ListBox>
 
-                                        <TextBox
-                                            Margin="4,0"
-                                            Style="{StaticResource TextBox.Small}"
-                                            Text="{Binding CapitalPassword, UpdateSourceTrigger=PropertyChanged, Delay=300}"
-                                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                                    </hc:SimplePanel>
-                                </BulletDecorator>
-                            </StackPanel>
-                        </DockPanel>
                     </StackPanel>
                 </hc:SimplePanel>
             </Border>
             <DataTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter TargetName="del" Property="Visibility" Value="Visible" />
                     <Setter TargetName="close" Property="Visibility" Value="Visible" />
                 </Trigger>
             </DataTemplate.Triggers>
         </DataTemplate>
+
+
+
         <ItemsPanelTemplate x:Key="SecurityCardPanel">
             <WrapPanel IsItemsHost="True" />
         </ItemsPanelTemplate>
@@ -974,7 +956,7 @@
         <ItemsPanelTemplate x:Key="StockAccountPanel">
             <hc:UniformSpacingPanel
                 IsItemsHost="True"
-                Orientation="Vertical"
+                Orientation="Horizontal"
                 VerticalSpacing="6" />
         </ItemsPanelTemplate>
 
@@ -982,6 +964,8 @@
         <ItemsPanelTemplate x:Key="FutureAccountPanel">
             <hc:UniformSpacingPanel IsItemsHost="True" VerticalSpacing="6" />
         </ItemsPanelTemplate>
+
+
     </UserControl.Resources>
     <DockPanel Margin="10,10,0,10">
 
@@ -997,7 +981,7 @@
                     <Setter Property="Width" Value="85" />
                 </Style>
 
-             
+
             </UniformGrid.Resources>
 
             <shared:ModifiableControl
@@ -1126,7 +1110,7 @@
                         </DockPanel>
                     </DockPanel>
 
-                    <DockPanel Margin="0,0,10,0" Visibility="{Binding SecurityCardChangeSource.View, Converter={StaticResource ListIsNotEmpty2VisibilityConverter}}">
+                    <DockPanel Margin="20,0,10,0" Visibility="{Binding SecurityCardChangeSource.View, Converter={StaticResource ListIsNotEmpty2VisibilityConverter}}">
                         <Border
                             Width="40"
                             Background="Firebrick"
@@ -1142,6 +1126,7 @@
                                 TextWrapping="Wrap" />
                         </Border>
                         <ListBox
+                            Margin="2,0,0,0"
                             d:ItemsSource="{d:SampleData}"
                             BorderThickness="0"
                             ItemsPanel="{StaticResource SecurityCardChangePanel}"

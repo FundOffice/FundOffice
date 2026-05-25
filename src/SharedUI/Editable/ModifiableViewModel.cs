@@ -46,7 +46,7 @@ public class ValueChangeEventArgs<TProperty> : ValueChangeEventArgs
     public TProperty? FallbackValue { get; set; }
 }
 
- 
+
 
 public interface IValueModifier
 {
@@ -61,6 +61,12 @@ public interface IValueModifier
     void Apply();
     void Reset();
     void Clear();
+}
+
+
+public interface IValueModifier<TValue> : IValueModifier
+{
+    TValue? OldValue { get; set; }
 }
 
 public interface IFactorModifier
@@ -98,12 +104,19 @@ public static class CloneHelper
 public delegate void ValueChangedHandler<T>(ValueChangeEventArgs<T> args);
 
 
-public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject, IValueModifier where TViewModel : IViewModel<TValue, TViewModel>
+public partial class ModifiableViewModel : ObservableObject
+{
+
+    [ObservableProperty] public partial string? Label { get; set; }
+}
+
+
+
+public partial class ModifiableViewModel<TValue, TViewModel> : ModifiableViewModel, IValueModifier, IValueModifier<TValue> where TViewModel : IViewModel<TValue, TViewModel>
 {
     public event ValueChangedHandler<TValue>? Changed;
 
 
-    [ObservableProperty] public partial string? Label { get; set; }
 
     [ObservableProperty]
     public partial TValue? OldValue { get; set; }
@@ -150,7 +163,7 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
         // FallbackValue 是null / 默认值，不认为是继承
         if (FallbackValue is string s && string.IsNullOrWhiteSpace(s)) return false;
         if (FallbackValue is null) return false;
-         
+
         bool isDefault = FallbackValue switch { int d => d == 0, bool b => !b, DateOnly d => d.DayNumber == 0, var x => EqualityComparer<object>.Default.Equals(x, default(TValue)) };
         return !isDefault && EqualityComparer<TValue?>.Default.Equals(OldValue, FallbackValue);
     }
@@ -214,7 +227,7 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
     public void Clear()
     {
         if (!CanClear) return;
-        
+
         NewValue = TViewModel.Trans(FallbackValue); // 触发 OnNewValueChanged → ChangeKind = Deleted
         NotifyChanged(ValueChangeKind.Deleted, NewValue);
     }
@@ -223,7 +236,7 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ObservableObject,
 
 }
 
-public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModifier
+public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModifier, IValueModifier<TValue>
 {
     public event ValueChangedHandler<TValue>? Changed;
 
@@ -293,7 +306,7 @@ public partial class ModifiableViewModel<TValue> : ObservableObject, IValueModif
             false when !oldIsFallback && newIsFallback => ValueChangeKind.Deleted, // 自定义值 → 清空回继承
             _ => ValueChangeKind.Modified                                        // 自定义值A → 自定义值B
         };
-         
+
         OnPropertyChanged(nameof(IsInherited));
         OnPropertyChanged(nameof(CanConfirm));
     }

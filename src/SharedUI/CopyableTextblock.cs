@@ -50,7 +50,7 @@ public class CopyableTextBlock : Control
 
     // Using a DependencyProperty as the backing store for Text.  This enables animation, styling, binding, etc...
     public static readonly DependencyProperty TextProperty =
-        DependencyProperty.Register("Text", typeof(string), typeof(CopyableTextBlock), new PropertyMetadata(null, ModifyMasked));
+        DependencyProperty.Register("Text", typeof(string), typeof(CopyableTextBlock), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.None, ModifyMasked));
 
 
     public string MaskedText

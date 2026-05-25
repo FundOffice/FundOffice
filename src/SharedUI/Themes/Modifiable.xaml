@@ -4,7 +4,7 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:FMO.Shared"
     xmlns:sys="clr-namespace:System;assembly=mscorlib">
- 
+
     <!--  🔹 默认只读态显示模板（TextBlock）  -->
     <DataTemplate x:Key="DefaultReadOnlyTemplate">
         <TextBlock
