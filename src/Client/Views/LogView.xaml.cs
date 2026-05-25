@@ -1,7 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LiteDB;
+using LiteDB.Engine;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -26,14 +28,24 @@ public partial class LogViewModel : ObservableObject
 {
 
     [ObservableProperty]
-    public partial ObservableCollection<LogMessage> CommonLogs { get; set; }
+    public partial ObservableCollection<LogMessage> CommonLogs { get; set; } = [];
 
     public LogViewModel()
     {
-        using var db = new LiteDatabase($@"FileName=logs.db;Connection=Shared");
+        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs.db");
+        using var db = new LiteDatabase($@"FileName={path};ReadOnly=true");
 
-        CommonLogs = [.. db.GetCollection("logex").Query().OrderByDescending(x => x["_t"].AsDateTime).Limit(100).ToEnumerable().Select(x => To(x))];
-
+        try
+        {
+            CommonLogs = [.. db.GetCollection("logex").Query().OrderByDescending(x => x["_t"].AsDateTime).Limit(100).ToEnumerable().Select(x => To(x))];
+        }
+        catch (LiteException e)
+        {
+            using (var engine = new LiteEngine(path))
+            {
+                engine.Rebuild(); // 重建到新文件
+            }
+        }
     }
 
 
@@ -45,7 +57,8 @@ public partial class LogViewModel : ObservableObject
     [RelayCommand]
     public void ScrollToEnd()
     {
-        using var db = new LiteDatabase($@"FileName=logs.db;Connection=Shared");
+        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs.db");
+        using var db = new LiteDatabase($@"FileName={path};ReadOnly=true");
         var data = db.GetCollection("logex").Query().OrderByDescending(x => x["_t"].AsDateTime).Skip(CommonLogs.Count).Limit(100).ToList().
            Select(x => new LogMessage(x["_t"].AsDateTime, x[nameof(LogMessage.File)].AsString, x[nameof(LogMessage.Method)].AsString, x[nameof(LogMessage.Line)].AsInt32, x["_m"].AsString));
 

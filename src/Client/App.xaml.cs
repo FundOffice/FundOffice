@@ -39,7 +39,8 @@ public partial class App : Application
 
         System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        Log.Logger = new LoggerConfiguration().WriteTo.LiteDB(@"logs.db", "logex").CreateLogger();
+        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs.db");
+        Log.Logger = new LoggerConfiguration().WriteTo.LiteDB($@"FileName={path};Connection=Shared", "logex").CreateLogger();
         LogEx.Information($"System Start {DateTime.Now}");
 
 
