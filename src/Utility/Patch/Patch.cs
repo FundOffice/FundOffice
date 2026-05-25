@@ -60,7 +60,38 @@ public static partial class DatabaseAssist
         [127] = ChangeLockingRule,
         [146] = MoveToFact,
         [147] = FactorDuration,
+        [148] = FixNoticeDate,
     };
+
+    private static void FixNoticeDate(BaseDatabase db)
+    {
+        var docs = db.GetCollection(nameof(IDisclosureNotice)).Query().Where(Query.Contains("_type", nameof(FundDivdendNotice))).ToArray();
+        foreach (var doc in docs)
+        {
+            // 分红基准日：DateTime → DateOnly
+            ConvertDateTimeToDateOnly(doc, nameof(FundDivdendNotice.DividendReferenceDate));
+
+            // 股权登记日：DateTime → DateOnly
+            ConvertDateTimeToDateOnly(doc, nameof(FundDivdendNotice.RecordDate));
+
+            // 除息日：DateTime → DateOnly
+            ConvertDateTimeToDateOnly(doc, nameof(FundDivdendNotice.ExDividendDate));
+
+            // 现金派发日：DateTime → DateOnly
+            ConvertDateTimeToDateOnly(doc, nameof(FundDivdendNotice.CashPaymentDate));
+
+        }
+        db.GetCollection(nameof(IDisclosureNotice)).Update(docs);
+        void ConvertDateTimeToDateOnly(BsonDocument doc, string fieldName)
+        {
+            // 仅当字段存在且为DateTime类型时才转换，避免空值/类型错误
+            if (doc.TryGetValue(fieldName, out BsonValue value) && value.IsDateTime)
+            {
+                // 核心转换：剥离时间部分，仅保留日期
+                doc[fieldName] = BsonMapper.Global.ToDocument(DateOnly.FromDateTime(value.AsDateTime));
+            }
+        }
+    }
 
     private static void FactorDuration(BaseDatabase database)
     {
