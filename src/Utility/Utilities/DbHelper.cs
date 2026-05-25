@@ -119,7 +119,7 @@ public class BaseDatabase : LiteDatabase
 
         var factors = GetCollection<IFundFactor>().Query().Where(x => x.FundId == fundId).Where(Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x => new BsonValue(x)))).ToArray();
 
-        return new FundFactors(factors);
+        return new FundFactors(fundId, factors);
     }
 
 

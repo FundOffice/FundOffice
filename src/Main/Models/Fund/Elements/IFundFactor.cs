@@ -76,6 +76,13 @@ public class SingletonValueFactorItem<T> where T : struct
         _flowGroupCache = data.GroupBy(f => f.FlowId).Select(x => (x.Key, x.First())).ToImmutableArray();
     }
     public virtual T? this[int flowId] => _flowGroupCache.FirstOrDefault(x => x.FlowId <= flowId).Fact is { } f ? f.Data : null;
+
+
+    public static implicit operator T? (SingletonValueFactorItem<T> instance) => instance.Current;
+
+    public bool HasValue => _flowGroupCache.Length > 0;
+
+    public T? Current => _flowGroupCache.LastOrDefault().Fact is { } f ? f.Data : null;
 }
 
 
@@ -90,7 +97,11 @@ public class SingletonFactorItem<T> where T : class
 
     public virtual T? this[int flowId] => _flowGroupCache.FirstOrDefault(x => x.FlowId <= flowId).Fact is { } f ? f.Data : null;
 
-    public static implicit operator T?(SingletonFactorItem<T> instance) => instance._flowGroupCache.FirstOrDefault().Fact is { } f ? f.Data : null;
+    public static implicit operator T?(SingletonFactorItem<T> instance) => instance.Current;
+
+    public bool HasValue => _flowGroupCache.Length > 0;
+
+    public T? Current => _flowGroupCache.LastOrDefault().Fact is { } f ? f.Data : null;
 }
 
 
@@ -123,6 +134,8 @@ public class FactorItem<T> where T : class
 
     public T? this[int flowId] => this[flowId, ShareClass.Singleton][0];
 
+
+    public bool HasValue => _flowGroupCache.Length > 0;
 
     /// <summary>
     /// 查值规则
@@ -234,6 +247,7 @@ public class ValueFactorItem<T> where T : struct
 
     public T? this[int flowId] => this[flowId, ShareClass.Singleton][0];
 
+    public bool HasValue => _flowGroupCache.Length > 0;
 
     /// <summary>
     /// 查值规则
