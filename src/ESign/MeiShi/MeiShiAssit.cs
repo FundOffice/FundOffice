@@ -344,15 +344,16 @@ public partial class MeiShiAssit : ISigning
             }
 
             // 检查是否有
-            InvestorQualification q = new();
-            q.InvestorId = invId;
-            q.InvestorName = cusName;
-            q.Date = DateOnly.FromDateTime(vDate);
-            q.Result = item.InvestorType switch { 2 => QualifiedInvestorType.Professional, _ => QualifiedInvestorType.Normal };
-            q.IdentityCode = idNo;
-            q.Source = Id;
-            q.ExternalId = item.IdentifyFlowId.ToString();
-
+            var q = new InvestorQualification
+            {
+                InvestorId = invId,
+                InvestorName = cusName,
+                Date = DateOnly.FromDateTime(vDate),
+                Result = item.InvestorType switch { 2 => QualifiedInvestorType.Professional, _ => QualifiedInvestorType.Normal },
+                IdentityCode = idNo,
+                Source = Id,
+                ExternalId = item.IdentifyFlowId.ToString(),
+            };
             qs.Add(q);
         }
         return qs.ToArray();
@@ -380,7 +381,7 @@ public partial class MeiShiAssit : ISigning
 
             var cusName = detail.CustomerName;
             var vDate = DateTime.TryParse(detail.IdentifyTime, out var t) ? t : default;
-            q.InvestorName = cusName;
+            //q.InvestorName = cusName;
             q.Date = DateOnly.FromDateTime(vDate);
             q.Result = detail.InvestorType switch { 2 => QualifiedInvestorType.Professional, _ => QualifiedInvestorType.Normal };
 
