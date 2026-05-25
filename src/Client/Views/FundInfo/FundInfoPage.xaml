@@ -139,7 +139,8 @@
             Grid.Column="1"
             Padding="0"
             BorderThickness="0"
-            ItemContainerStyle="{StaticResource FundTab}">
+            ItemContainerStyle="{StaticResource FundTab}"
+            SelectedIndex="{Binding SelectedTab}">
             <TabItem Header="总览">
                 <local:FundLifeTimeView />
             </TabItem>
