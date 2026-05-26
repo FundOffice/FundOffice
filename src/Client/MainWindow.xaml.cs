@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.Logging;
 using FMO.Models;
+using FMO.Settings;
 using FMO.Todo;
 using FMO.Utilities;
 using Serilog;
@@ -87,7 +88,8 @@ public partial class TabItemInfo : ObservableObject
 
 public partial class MainWindowViewModel : ObservableRecipient, IRecipient<string>, IRecipient<OpenFundMessage>,
     IRecipient<OpenPageMessage>, IRecipient<ToastMessage>, IRecipient<VerifyMessage>, IRecipient<VerifyResultMessage>,
-    IRecipient<TodoGroupStatusMessage>, IRecipient<TodoStatusMessage>, IRecipient<ITodo>, IRecipient<MissionFailedMessage>, IRecipient<AddNotifyTodoMessage>
+    IRecipient<TodoGroupStatusMessage>, IRecipient<TodoStatusMessage>, IRecipient<ITodo>, IRecipient<MissionFailedMessage>, IRecipient<AddNotifyTodoMessage>,
+    IRecipient<ShowTodoMessage>
 {
 
     private PlatformPageViewModel? PlatformDataContext { get; set; }
@@ -585,6 +587,8 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
     }
 
     public void Receive(AddNotifyTodoMessage todo) => TodoService.Register(new JustNotifyTodo { CreateTime = DateTime.Now, UniqueId = todo.Unique, Message = todo.Message });
+
+    public void Receive(ShowTodoMessage message) => ShowTodoList = true;
 }
 
 
