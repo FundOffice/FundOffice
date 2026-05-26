@@ -6,7 +6,6 @@ using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Runtime.CompilerServices;
 
 namespace FMO.Trustee;
@@ -80,7 +79,7 @@ public partial class TrusteeWorker : ObservableObject
 
     //private PeriodicTimer periodicTimer;
 
-    ITrustee[] Trustees { get; }
+    HashSet<ITrustee> Trustees { get; }
 
     private WorkConfig RaisingBalanceConfig { get; set; }
 
@@ -147,7 +146,7 @@ public partial class TrusteeWorker : ObservableObject
 
 
 
-        Trustees = trustees;
+        Trustees = [.. trustees];
         foreach (var t in trustees)
             t.Prepare();
 
@@ -182,6 +181,12 @@ public partial class TrusteeWorker : ObservableObject
              ];
     }
 
+
+    internal void AddTrustee(ITrustee trustee)
+    {
+        trustee.Prepare();
+        Trustees.Add(trustee);
+    }
 
     public ITrustee? Find(int fundId) => Maps.FirstOrDefault(x => x.FundId == fundId)?.Trustee;
 

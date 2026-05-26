@@ -468,8 +468,14 @@ public partial class CMS : TrusteeApiBase
     }
 
     protected override async Task<bool> VerifyConfigOverride()
-    {
-        try { return (await QuerySubjectFundMappings()).Code == ReturnCode.Success; } catch { return false; }
+    { 
+        try
+        {
+            var r = await QuerySubjectFundMappings();
+            LogEx.Information($"VerifyConfigOverride: {Identifier} => {r.Code}, {r.Data?.Count ?? 0} items");
+            return r.Code == ReturnCode.Success;
+        }
+        catch (Exception e) { LogEx.Error(e); return false; }
     }
 }
 internal class APIConfig : IAPIConfig

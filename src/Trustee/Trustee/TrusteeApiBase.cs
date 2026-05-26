@@ -53,10 +53,18 @@ public abstract class TrusteeApiBase : ITrustee
 
     public async Task<bool> VerifyConfig()
     {
-        IsValid = true;
-        var r = await VerifyConfigOverride();
-        SetStatus(r);
-        return r;
+        try
+        {
+            IsValid = true;
+            var r = await VerifyConfigOverride();
+            SetStatus(r);
+            return r;
+        }
+        catch (Exception e)
+        {
+            LogEx.Error(e);
+            return false;
+        }
     }
 
     protected abstract Task<bool> VerifyConfigOverride();

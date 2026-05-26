@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.Logging;
 using FMO.Models;
 using System.ComponentModel;
 
@@ -81,7 +82,9 @@ public abstract partial class TrusteeViewModelBase<T> : TrusteeViewModelBase, IT
     [RelayCommand(CanExecute = nameof(CanSave))]
     public void SaveConfig()
     {
-        SaveConfigOverride();
+        try { SaveConfigOverride(); }
+        catch (Exception e) { LogEx.Error(e); }
+
         ShowConfigSetting = false;
 
         Task.Run(async () => { var r = await Assist.VerifyConfig(); WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"{Assist.Title}配置校验{(r ? "成功" : "失败")}")); });

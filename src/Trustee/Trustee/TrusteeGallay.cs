@@ -6,10 +6,10 @@ namespace FMO.Trustee;
 
 public static class TrusteeGallay
 {
-    private static Dictionary<string, ITrustee> _signs = [];
+    private static Dictionary<string, ITrustee> _plat = [];
     private static Dictionary<string, TrusteeViewModelBase> _viewModels = [];
 
-    public static ITrustee[] Trustees => _signs.Values.ToArray();
+    public static ITrustee[] Trustees => _plat.Values.ToArray();
 
 
     public static TrusteeViewModelBase[] TrusteeViewModels => _viewModels.Values.OrderBy(x => x.Idenitifier).ToArray();
@@ -37,11 +37,13 @@ public static class TrusteeGallay
 
     public static ITrustee? Find(int id) => Worker.Find(id);
 
-    public static void Register(ITrustee obj, TrusteeViewModelBase viewModel)
+    public static void Register(TrusteeViewModelBase viewModel)
     {
-        _signs[obj.Identifier] = obj;
-        _viewModels[obj.Identifier] = viewModel;
-
+        //obj.LoadConfig();
+        var obj = (viewModel as ITrusteeViewModel)!.Assist;
+        _plat[obj.Identifier] = obj;
+        _viewModels[viewModel.Idenitifier] = viewModel;
+        Worker.AddTrustee(obj);
     }
 
 

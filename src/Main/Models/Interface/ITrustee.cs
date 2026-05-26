@@ -100,6 +100,7 @@ public interface ITrustee
     Task<bool> VerifyConfig();
 
     public bool IsSuit(string? comapny);
+    bool LoadConfig();
 }
 
 
