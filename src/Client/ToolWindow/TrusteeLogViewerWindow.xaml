@@ -17,6 +17,7 @@
         <DockPanel DockPanel.Dock="Bottom">
             <TextBlock DockPanel.Dock="Top" Text="{Binding SelectedLog.Params}" />
             <TextBox
+                MaxHeight="400"
                 AcceptsReturn="True"
                 IsReadOnly="True"
                 Text="{Binding SelectedLog.Json}"
