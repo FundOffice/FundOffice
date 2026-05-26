@@ -42,6 +42,9 @@ internal class DelayLoader
             WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "初始化配置"));
             SettingService.Initialize();
 
+            SettingService.RegisterAbility( "Basic", "AutoShowTodo", "自动显示待办事项", "在应用启动时自动显示待办事项", true, new AutoShowTodoFunction());
+ 
+
         });
 
         Task.Run(() =>
@@ -233,15 +236,19 @@ internal class DelayLoader
         {
             try
             {
-                if (!VerifyDll(dllPath)) continue;
-
+                if (!VerifyDll(dllPath))
+                {
+                    LogEx.Error($"验证托管组件失败，可能未签名或签名无效，路径：{dllPath}");
+                    continue;
+                }
                 // 3. 加载程序集
                 Assembly assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(dllPath);
 
                 // 4. 遍历程序集中的所有公共类
                 foreach (Type type in assembly.GetExportedTypes())
                 {
-                    LoadTrustee(type);
+                    if(!LoadTrustee(type))
+                        LogEx.Error($"加载托管组件失败：{dllPath}");
                 }
             }
             catch (Exception ex)
@@ -275,11 +282,11 @@ internal class DelayLoader
 
 
             // 8. 创建实例
-            var assistInstance = Activator.CreateInstance(type) as ITrustee;
+            //var assistInstance = Activator.CreateInstance(type) as ITrustee;
             var vmInstance = Activator.CreateInstance(vmType) as TrusteeViewModelBase;
 
             // 9. 自动注册
-            TrusteeGallay.Register(assistInstance!, vmInstance!);
+            TrusteeGallay.Register(vmInstance!);
 
         }
         catch (Exception ex)

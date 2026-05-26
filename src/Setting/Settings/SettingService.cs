@@ -16,6 +16,7 @@ public static partial class SettingService
     {
 
         //InitVerifySection();
+         
     }
 
 

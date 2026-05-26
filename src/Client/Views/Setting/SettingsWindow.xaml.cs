@@ -34,6 +34,7 @@ public partial class SettingsWindowViewModel : ObservableObject
     public SettingMonitorGroup[] MonitorGroups { get; set; }
 
 
+    public AbilityUnitViewModel[] BasicGroups { get; set; }
 
     public SettingsWindowViewModel()
     {
@@ -52,7 +53,7 @@ public partial class SettingsWindowViewModel : ObservableObject
         List<SettingMonitorGroup> units = [];
         foreach (var item in monitors.GroupBy(x => x.Section))
         {
-            if(dic.TryGetValue(item.Key, out var title))
+            if (dic.TryGetValue(item.Key, out var title))
             {
                 units.Add(new() { Name = title, Units = item.Select(x => new AbilityUnitViewModel(x)) });
 
@@ -61,6 +62,12 @@ public partial class SettingsWindowViewModel : ObservableObject
         }
 
         MonitorGroups = units.ToArray();
+
+
+
+        var basics = SettingService.GetAbilityUnits("Basic");//.Select(x => new AbilityUnitViewModel(x)).ToArray();
+        BasicGroups = basics.Select(x => new AbilityUnitViewModel(x)).ToArray();
+
     }
 
 
