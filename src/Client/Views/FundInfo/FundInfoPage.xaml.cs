@@ -19,6 +19,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using Utilities;
 
 namespace FMO;
 /// <summary>
@@ -71,20 +72,29 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         _api = TrusteeGallay.Find(fund.Id);
 
-#pragma warning disable CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
-        //RegistrationLetter = new SingleFileViewModel()
-        //{
-        //    Label = "备案函",
-        //    OnDeleteFile = default,
-        //    OnSetFile = default,
-        //};
-#pragma warning restore CS8625 // 无法将 null 字面量转换为非 null 的引用类型。
-
-        InitFlows(fund);
 
         using var db = DbHelper.Base();
         var ele = db.QueryFactor(FundId);
-   
+        var shares = ele.ShareClasses.Current;
+        var openRules = ele.FundOpenRule.Current;
+
+        HasMultipleShare = shares?.Length > 1;
+        if (shares is not null && openRules.Length == shares?.Length)
+        {
+            OpenDays = shares?.Index().Select(x => new ShareOpenInfo(x.Item, OpenRule.ApplyMany(DateTime.Now.Year, openRules[x.Index]))).ToArray() ?? [];
+
+            SelectedShareOpenDays = OpenDays[0].DateInfo.Where(x => x.Date.Month == DateTime.Now.Month);
+        }
+        else
+        {
+            Toast.Error($"{FundName} 未设置开放日规则");
+            OpenDays = shares?.Index().Select(x => new ShareOpenInfo(x.Item, OpenRule.ApplyMany(DateTime.Now.Year, null))).ToArray() ?? [];
+            SelectedShareOpenDays = OpenDays[0].DateInfo.Where(x => x.Date.Month == DateTime.Now.Month);
+        }
+
+        InitFlows(fund);
+
+
 
         // 如果已定稿
         if (Flows?.Any(x => x is ContractFinalizeFlowViewModel f && f.IsReadOnly) ?? false)
@@ -94,42 +104,22 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         CollectionAccount = ele.CollectionAccount;
         CustodyAccount = ele.CustodyAccount;
 
-        //var lastmodiflow = Flows?.Where(x => x is RegistrationFl switch { RegistrationFlowViewModel a => a.RegistrationLetter, ContractModifyFlowViewModel b => b.RegistrationLetter, _ => null }).LastOrDefault(x => x is not null && x.File is not null);
-        //var filter = $"$.FundId == {FundId} && $.RegistrationLetter != null && $.RegistrationLetter != ''";
 
-        //db.GetCollection(nameof(FundFlow)).Find(filter);
-
-        //RegistrationLetter = new LatestFileViewModel { Name = "备案函", File = Flows?.Select(x => x switch { RegistrationFlowViewModel a => a.RegistrationLetter, ContractModifyFlowViewModel b => b.RegistrationLetter, _ => null }).Where(x => x is not null && x.File is not null).LastOrDefault()?.File };
-
-
-        /// 监控估值表文件夹
-        //WatchSheetFolder(fund, ele);
 
         RiskLevel = ele.RiskLevel;
-
-        // 净值 
-
-
-
-        //var strategies = db.GetCollection<FundStrategy>().Find(x => x.FundId == fund.Id).ToList();
 
 
         App.Current.Dispatcher.BeginInvoke(() =>
         {
             DailySource.Source = Array.Empty<DailyValue>();
             DailySource.View.SortDescriptions.Add(new System.ComponentModel.SortDescription(nameof(DailyValue.Date), System.ComponentModel.ListSortDirection.Descending));
-           // DailySource.View.Refresh();
+            // DailySource.View.Refresh();
         });
 
 
         debouncerDaily = new(() => App.Current.Dispatcher.BeginInvoke(() => DailySource.View.Refresh()));
 
 
-
-        //StrategyDataContext = new(FundId, fund.SetupDate);
-        //AccountsDataContext = new(FundId, FundCode!, names);
-        //TADataContext = new(FundId) { IsTrusteeApiAvaliable = _api?.IsValid ?? false };
-        //AnnouncementContext = new(FundId);
 
         IsActive = true;
         //_initialized = true;
@@ -503,6 +493,18 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
     public bool IsCleared => FundStatus > FundStatus.StartLiquidation;
 
+
+    [ObservableProperty]
+    public partial bool HasMultipleShare { get; set; }
+
+    /// <summary>
+    /// 开放日
+    /// </summary>
+    [ObservableProperty]
+    public partial ShareOpenInfo[] OpenDays { get; set; }
+
+    [ObservableProperty]
+    public partial IEnumerable<DateOpenInfo> SelectedShareOpenDays { get; private set; }
 
     [ObservableProperty]
     public partial RiskLevel? RiskLevel { get; set; }
@@ -1233,7 +1235,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     }
 }
 
-
+public record ShareOpenInfo(ShareClass Share, DateOpenInfo[] DateInfo);
 
 /// <summary>
 /// 最新的文件版本视图

@@ -1004,6 +1004,56 @@ public class OpenRule : ICloneable
     }
 
 
+    public static DateOpenInfo[] ApplyMany(int year, params OpenRule[]? rules)
+    {
+        var baseDays = Days.DayInfosByYear(year);
+        var result = new DateOpenInfo[baseDays.Length];
+
+        // 初始化全年基础数据
+        for (int i = 0; i < baseDays.Length; i++)
+        {
+            result[i] = new DateOpenInfo
+            {
+                Date = baseDays[i].Date,
+                Flag = baseDays[i].Flag,
+                Type = OpenType.None,
+                TradeType = OpenTradeType.None
+            };
+        }
+
+        if (rules?.Length is null or 0)
+            return result;
+
+        // 遍历所有规则（或的关系）
+        foreach (var rule in rules)
+        {
+            if (rule is null) continue;
+
+            // 计算当前 rule 的 TradeType
+            OpenTradeType ruleTradeType = OpenTradeType.None;
+            if (rule.AllowBuy) ruleTradeType |= OpenTradeType.Purchase;
+            if (rule.AllowSell) ruleTradeType |= OpenTradeType.Redemption;
+
+            // 获取当前 rule 应用的日期结果
+            var ruleResult = rule.Apply(year);
+            int len = Math.Min(result.Length, ruleResult.Length);
+
+            for (int i = 0; i < len; i++)
+            {
+                var item = ruleResult[i];
+                var target = result[i];
+
+                // 更新 OpenType（不允许从非None降级为None）
+                if (item.Type != OpenType.None)
+                    target.Type = item.Type;
+
+                // 更新 TradeType（使用 | 运算合并）
+                target.TradeType |= ruleTradeType;
+            }
+        }
+
+        return result;
+    }
 
     private static int QuarterOfDay(DateOnly d) => (d.Month - 1) / 3;
 

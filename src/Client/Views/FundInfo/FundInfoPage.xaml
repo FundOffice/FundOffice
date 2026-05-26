@@ -141,6 +141,153 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+
+        <!--  Styles for Calendar Controls  -->
+        <Style x:Key="ListBoxItem.Calender" TargetType="ListBoxItem">
+            <Setter Property="UIElement.SnapsToDevicePixels" Value="True" />
+            <Setter Property="FrameworkElement.FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="IsEnabled" Value="False" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border
+                            Margin="2"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="16">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="BorderBrush" Value="Green" />
+                                <Setter Property="BorderThickness" Value="1" />
+                            </Trigger>
+
+
+
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding Type}" Value="None" />
+                                    <Condition Binding="{Binding Flag}" Value="Trade" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="IsEnabled" Value="True" />
+                            </MultiDataTrigger>
+
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ListBox.Calender" TargetType="ListBox">
+            <Setter Property="ItemContainerStyle" Value="{StaticResource ListBoxItem.Calender}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBox">
+                        <ItemsPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
+        <Style TargetType="{x:Type shared:SimpleCalender}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type shared:SimpleCalender}">
+                        <Border
+                            Margin="{TemplateBinding Margin}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                            <DockPanel>
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    DockPanel.Dock="Top"
+                                    FontSize="18"
+                                    Text="{Binding Month, StringFormat={}{0}月, RelativeSource={RelativeSource TemplatedParent}}" />
+
+                                <ListBox
+                                    x:Name="PART_Header"
+                                    Margin="0,4"
+                                    BorderThickness="0"
+                                    DockPanel.Dock="Top"
+                                    Style="{StaticResource ListBoxCustom}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="7" IsItemsHost="True" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock HorizontalAlignment="Center" Text="{Binding .}" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <ListBox
+                                    BorderThickness="0"
+                                    ItemsSource="{Binding DisplayItems, RelativeSource={RelativeSource TemplatedParent}}"
+                                    Style="{StaticResource ListBox.Calender}">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="7" IsItemsHost="True" />
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <hc:SimplePanel>
+                                                <Ellipse
+                                                    x:Name="bk"
+                                                    HorizontalAlignment="Stretch"
+                                                    VerticalAlignment="Stretch" />
+                                                <TextBlock
+                                                    x:Name="txt"
+                                                    Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                                                    Margin="4"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Text="{Binding Date.Day}"
+                                                    TextAlignment="Center" />
+                                            </hc:SimplePanel>
+                                            <DataTemplate.Triggers>
+                                                <DataTrigger Binding="{Binding Flag}" Value="Weekend">
+                                                    <Setter TargetName="bk" Property="Fill" Value="LightGray" />
+                                                    <Setter TargetName="txt" Property="Foreground" Value="White" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Flag}" Value="Holiday">
+                                                    <Setter TargetName="bk" Property="Fill" Value="LightGray" />
+                                                    <Setter TargetName="txt" Property="Foreground" Value="White" />
+                                                </DataTrigger>
+
+                                                <DataTrigger Binding="{Binding Type}" Value="Temperaty">
+                                                    <Setter TargetName="bk" Property="Fill" Value="SkyBlue" />
+                                                    <Setter TargetName="txt" Property="Foreground" Value="White" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Type}" Value="Fixed">
+                                                    <Setter TargetName="bk" Property="Fill" Value="RoyalBlue" />
+                                                    <Setter TargetName="txt" Property="Foreground" Value="White" />
+                                                </DataTrigger>
+
+                                            </DataTemplate.Triggers>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </DockPanel>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
     <Grid Margin="0,8">
 
@@ -422,6 +569,36 @@
                     ToolTip="从中基协同步备案函" />
             </DockPanel>
 
+
+            <GroupBox HorizontalAlignment="Left" Header="开放日">
+                <DockPanel>
+                    <StackPanel>
+
+
+                        <shared:SimpleCalender ItemsSource="{Binding SelectedShareOpenDays}" Month="5" />
+                    </StackPanel>
+
+                    <StackPanel Margin="10,0,0,0">
+                        <ListBox
+                            ItemsPanel="{StaticResource ButtonGroupHorizontalStackItemsPanelTemplate}"
+                            ItemsSource="{Binding OpenDays}"
+                            SelectedIndex="0"
+                            Visibility="{Binding HasMultipleShare, Converter={StaticResource Boolean2VisibilityConverter}}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Share.Name}" />
+                                </DataTemplate>
+
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <Button Content="设置临时开放" />
+
+                        <Button Content="推送认申购订单" />
+
+                        <Button Content="推送赎回订单" />
+                    </StackPanel>
+                </DockPanel>
+            </GroupBox>
 
         </StackPanel>
 

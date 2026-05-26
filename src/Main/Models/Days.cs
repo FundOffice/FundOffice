@@ -52,6 +52,19 @@ public static class Days
         return Data[s..e].ToArray();
     }
 
+    public static DateMeta[] DayInfosByMonth(DateOnly date)
+    {
+        var start = new DateOnly(date.Year, date.Month, 1);
+        var end = start.AddMonths(1).AddDays(-1);
+
+        int s = Dates.BinarySearch(start);
+        int e = Dates.BinarySearch(end);
+
+        s = s < 0 ? ~s : s;
+        e = e < 0 ? ~e : e + 1;
+
+        return Data[s..e].ToArray();
+    }
 
     /// <summary>
     /// 获取指定年份的所有交易日

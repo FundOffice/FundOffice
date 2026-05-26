@@ -23,14 +23,13 @@
                 <shared:CopyableTextBlock Text="{Binding}" TextWrapping="Wrap" />
             </DataTemplate>
 
-            <DataTemplate x:Key="FactorEditTemplate">
+            <!--<DataTemplate x:Key="FactorEditTemplate">
                 <ContentPresenter VerticalAlignment="Center" Content="{Binding}" />
-            </DataTemplate>
+            </DataTemplate>-->
 
             <Style BasedOn="{StaticResource {x:Type shared:FactorModifiableControl}}" TargetType="shared:FactorModifiableControl">
                 <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
-                <Setter Property="MinHeight" Value="22" />
-                <Setter Property="EditTemplate" Value="{StaticResource FactorEditTemplate}" />
+                <Setter Property="MinHeight" Value="22" /> 
                 <Setter Property="ContentTemplate" Value="{StaticResource DefaultCopyable}" />
             </Style>
 
@@ -38,7 +37,7 @@
             <Style BasedOn="{StaticResource Modifiable.Inherit}" TargetType="shared:ModifiableControl">
                 <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
                 <Setter Property="MinHeight" Value="24" />
-                <Setter Property="EditTemplate" Value="{StaticResource FactorEditTemplate}" />
+                
                 <Setter Property="ContentTemplate" Value="{StaticResource DefaultCopyable}" />
             </Style>
 
@@ -297,7 +296,6 @@
 
                                 <shared:ModifiableControl
                                     HorizontalAlignment="Left"
-                                    EditTemplate="{StaticResource DT.Sealing}"
                                     Header="封闭期"
                                     Modifier="{Binding SealingRule}"
                                     Visibility="{Binding DataContext.IsSealingFund, RelativeSource={RelativeSource AncestorType=local:ElementsView}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
@@ -305,7 +303,6 @@
 
                                 <shared:FactorModifiableControl
                                     HorizontalAlignment="Left"
-                                    EditTemplate="{StaticResource DT.Sealing}"
                                     Header="锁定期"
                                     Modifier="{Binding LockingRule}" />
 

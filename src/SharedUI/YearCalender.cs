@@ -1,4 +1,5 @@
 ﻿using FMO.Models;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -123,7 +124,78 @@ public class SimpleCalender : Control
 
     // Using a DependencyProperty as the backing store for ItemsSource.  This enables animation, styling, binding, etc...
     public static readonly DependencyProperty ItemsSourceProperty =
-        DependencyProperty.Register("ItemsSource", typeof(IEnumerable<IDate>), typeof(SimpleCalender), new PropertyMetadata(null));
+        DependencyProperty.Register("ItemsSource", typeof(IEnumerable<IDate>), typeof(SimpleCalender),
+            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnChanged));
+
+
+    // 2. 内部供 UI 绑定的数据源（包含 null 占位）
+    public IEnumerable<IDate?> DisplayItems
+    {
+        get { return (IEnumerable<IDate?>)GetValue(DisplayItemsProperty); }
+    }
+
+    private static readonly DependencyPropertyKey DisplayItemsPropertyKey =
+        DependencyProperty.RegisterReadOnly("DisplayItems", typeof(IEnumerable<IDate?>), typeof(SimpleCalender), new PropertyMetadata(null));
+
+    public static readonly DependencyProperty DisplayItemsProperty = DisplayItemsPropertyKey.DependencyProperty;
+ 
+
+    private static void OnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is SimpleCalender sc)
+        {
+            var first = sc.ItemsSource?.FirstOrDefault();
+            if (first is null) return;
+            
+            if(first.Date.Day > 1) 
+                throw new InvalidDataException("ItemsSource 中的第一个日期必须是当月的 1 号");
+
+            var offset = first.Date.DayOfWeek != DayOfWeek.Sunday ? (int)first.Date.DayOfWeek : 0; // 将 Sunday 的 offset 调整为 7
+
+
+            // 将带有 null 占位符的生成器赋值给 DisplayItems
+            sc.SetValue(DisplayItemsPropertyKey, sc.GenerateWithOffset(sc.ItemsSource, offset));
+        }
+    }
+     
+
+    private void CalibrateItems(IEnumerable<IDate> source)
+    {
+        int offset = 0;
+        if (source != null)
+        {
+            var firstDate = source.FirstOrDefault();
+            if (firstDate != null)
+            {
+                // 假设你的 IDate 接口里有一个能获取 DateTime 的属性（例如 .Date）
+                // 如果 1 号是星期二 (DayOfWeek.Tuesday = 2)，offset 就是 2
+                offset = (int)firstDate.Date.DayOfWeek;
+            }
+        }
+
+        // 将带有 null 占位符的生成器赋值给 DisplayItems
+        SetValue(DisplayItemsPropertyKey, GenerateWithOffset(source, offset));
+    }
+
+    // 核心：使用 yield return 动态生成带占位符的集合
+    private IEnumerable<IDate?> GenerateWithOffset(IEnumerable<IDate> source, int offset)
+    {
+        // 1. 前面先返回 null 空出格子
+        for (int i = 0; i < offset; i++)
+        {
+            yield return null;
+        }
+
+        // 2. 再返回真实的日期数据
+        if (source != null)
+        {
+            foreach (var item in source)
+            {
+                yield return item;
+            }
+        }
+    }
+
 
 
     public override void OnApplyTemplate()

@@ -90,7 +90,7 @@
 
 
 
-    <DataTemplate x:Key="DT.Sealing">
+    <DataTemplate DataType="{x:Type local:SealingInfoViewModel}">
         <DockPanel LastChildFill="False">
 
             <ComboBox
