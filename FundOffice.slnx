@@ -73,7 +73,6 @@
     <Project Path="src/Utility/SourceGenerator/SourceGenerator.csproj" />
     <Project Path="src/Utility/Utilities/Utilities.csproj" />
   </Folder>
-  <Project Path="../MiniExcel/src/MiniExcel/MiniExcel.csproj" />
   <Project Path="src/Client/FundOffice.csproj" />
   <Project Path="src/Plugin/Plugin/Plugin.csproj" />
   <Project Path="src/SharedUI/SharedUI.csproj" />
