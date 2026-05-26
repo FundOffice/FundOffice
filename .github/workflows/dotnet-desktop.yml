@@ -1,45 +1,39 @@
-name: 发布WPF
-
+name: 发布Thor
 on:
   workflow_dispatch:
   push:
     tags:
       - 'v*'
-
 jobs:
   build:
     runs-on: windows-latest
     permissions:
       contents: write
+      packages: read  # 🔥 新增：读取组织内 GitHub Packages 的权限
 
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
         with: 
           fetch-depth: 0  
- 
-
 
       - name: 安装 .NET 10 SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.x'
+          # 🔥 新增：配置 GitHub Packages 源（自动解析组织名）
+          source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 初始化强签名密钥
         shell: pwsh
         run: |
-          # 1. 获取 Secret 并清除所有空白/换行符（防止手动粘贴带入的格式问题）
           $b64 = "${{ secrets.FOSNK }}" -replace '\s', ''
-          
-          # 2. 原生 Base64 解码并写入临时文件
           $bytes = [Convert]::FromBase64String($b64)
           $keyPath = Join-Path $env:RUNNER_TEMP "fo.snk"
           [IO.File]::WriteAllBytes($keyPath, $bytes)
-          
-          # 3. 导出环境变量（⚠️ 必须与 Directory.Build.props 中的 $(ESIGN_KEY_PATH) 一致）
           Add-Content $env:GITHUB_ENV "STRONG_KEY_PATH=$keyPath"
- 
-
 
       - name: 执行发布逻辑
         run: |
@@ -48,18 +42,19 @@ jobs:
           Set-Location $scriptPath
             
           $publishDir = Join-Path $scriptPath "publish"
-          $languageFolders = @("cs","de","es","fr","it","ja","ko","pl","pt-BR","ru","tr")
-          $foldersToKeep = @("esign", "mission", "runtimes", "trigger", "trustee")
+          # 🔥 同步 ps1 中的语言文件夹和保留文件夹配置
+          $languageFolders = @( "cs", "de", "es", "fr", "it", "ja", "ko", "pl", "pt-BR", "ru", "tr", "zh-Hans", "zh-Hant", "playwright" )
+          $foldersToKeep = @( ".ck", "esign", "mission", "runtimes", "trigger", "trustee" )
 
           Write-Host "========================================" -ForegroundColor Cyan
           Write-Host "开始发布 FundOffice 项目" -ForegroundColor Cyan
           Write-Host "========================================" -ForegroundColor Cyan
 
-          # 步骤开头提取版本
-          $buildVersion = if ("${{ github.ref }}" -like "refs/tags/v*") {
-                  "${{ github.ref_name }}" -replace '^v', ''
+          # 提取版本
+          $buildVersion = if ("${{ github.ref}}" -like "refs/tags/v*") {
+                   "${{ github.ref_name}}" -replace '^v', ''
               } else {
-                  "1.1.2.0" # 或你的默认开发版本
+                   "1.1.2.0" 
               }
 
           # 准备发布目录
@@ -68,32 +63,84 @@ jobs:
               Get-ChildItem -Path $publishDir -Force | ForEach-Object {
                   if ($foldersToKeep -notcontains $_.Name) {
                       Remove-Item $_.FullName -Recurse -Force
+                  } else {
+                      Write-Host "  保留: $($_.Name)" -ForegroundColor Cyan
                   }
               }
           } else {
               New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
           }
 
+          # 🔥 提取公共发布参数 (Splatting)，避免重复书写
+          $publishArgs = @("-c", "Release", "-r", "win-x64", "--self-contained", "false", "-o", $publishDir, "/p:DebugSymbols=false", "/p:DebugType=None", "/p:UseAppHost=true", "/p:Version=$buildVersion", "--nologo")
+
           # [1/4] NuGet Restore（必需）
           Write-Host "`n[1/4] 执行 NuGet Restore..." -ForegroundColor Cyan
-          dotnet restore "FundOffice.slnx"
+          $slnxFile = Join-Path $scriptPath "FundOffice.slnx"
+          if (Test-Path $slnxFile) { dotnet restore $slnxFile } else { dotnet restore }
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
-          # [2/4] 发布主解决方案（失败则终止）
-          Write-Host "[2/4] 发布主解决方案: FundOffice.slnx" -ForegroundColor Cyan
-          $solutionFile = Join-Path $scriptPath "FundOffice.slnx"
-          if (Test-Path $solutionFile) {
-              dotnet publish $solutionFile -c Release -r win-x64 --self-contained false -o $publishDir /p:DebugSymbols=false /p:DebugType=None /p:UseAppHost=true /p:Version=$buildVersion
-              if ($LASTEXITCODE -ne 0) {
-                  Write-Host "[FAIL] 主解决方案发布失败，终止流程" -ForegroundColor Red
+          # [2/4] 发布核心项目及 src 模块 (🔥 替换原主解决方案发布逻辑)
+          Write-Host "`n[2/4] 发布核心项目及 src 模块..." -ForegroundColor Cyan
+          $publishedProjects = @()
+          
+          # 2.1 先发布 src\Client\FundOffice.csproj
+          $clientProject = Join-Path $scriptPath "src\Client\FundOffice.csproj"
+          if (Test-Path $clientProject) {
+              Write-Host "  → 发布核心项目: src\Client\FundOffice.csproj" -ForegroundColor Yellow
+              dotnet publish $clientProject @publishArgs
+              if ($LASTEXITCODE -eq 0) {
+                  Write-Host "  [OK] 核心项目发布成功" -ForegroundColor Green
+                  $publishedProjects += (Get-Item $clientProject).FullName
+              } else {
+                  Write-Host "  [FAIL] 核心项目发布失败，终止流程" -ForegroundColor Red
                   exit 1
               }
-              Write-Host "[OK] 主解决方案发布成功" -ForegroundColor Green
           } else {
-              Write-Host "[WARN] 未找到 $solutionFile，跳过主解决方案发布" -ForegroundColor Yellow
+              Write-Host "  [WARN] 未找到核心项目文件: $clientProject，跳过" -ForegroundColor Yellow
           }
 
-          # [3/4] 发布 Tools 项目（失败则跳过，继续下一个）
+          # 2.2 找 src 下有 Directory.Build.props 的目录，再按它发布
+          $srcPath = Join-Path $scriptPath "src"
+          if (Test-Path $srcPath) {
+              $srcPathNormalized = (Get-Item $srcPath).FullName
+              $buildPropsFiles = Get-ChildItem -Path $srcPath -Filter "Directory.Build.props" -Recurse -File | 
+                                 Where-Object { $_.DirectoryName -ne $srcPathNormalized }
+
+              if ($buildPropsFiles.Count -gt 0) {
+                  Write-Host "  找到 $($buildPropsFiles.Count) 个子模块目录（已排除 src 根目录）" -ForegroundColor Green
+                  $moduleProjects = @()
+                  foreach ($propsFile in $buildPropsFiles) {
+                      $moduleDir = $propsFile.DirectoryName
+                      $projects = Get-ChildItem -Path $moduleDir -Include "*.csproj", "*.vbproj" -Recurse -File | 
+                                  Where-Object { $_.FullName -notin $publishedProjects -and $_.BaseName -notlike "*tmp*" -and $_.BaseName -notlike "*Test*" }
+                      $moduleProjects += $projects
+                  }
+                  $moduleProjects = $moduleProjects | Sort-Object FullName -Unique
+                  
+                  if ($moduleProjects.Count -gt 0) {
+                      Write-Host "  准备发布子模块目录下的 $($moduleProjects.Count) 个项目" -ForegroundColor Yellow
+                      $idx = 1
+                      foreach ($project in $moduleProjects) {
+                          Write-Host "  [$idx/$($moduleProjects.Count)] 发布: $($project.BaseName)" -ForegroundColor Yellow
+                          dotnet publish $project.FullName @publishArgs
+                          if ($LASTEXITCODE -eq 0) { 
+                              Write-Host "    [OK] 成功" -ForegroundColor Green 
+                              $publishedProjects += $project.FullName
+                          } else { 
+                              Write-Host "    [FAIL] 失败" -ForegroundColor Red 
+                          }
+                          $idx++
+                      }
+                  } else {
+                      Write-Host "  ⚠ 子模块目录下未找到其他需要发布的项目" -ForegroundColor Yellow
+                  }
+              } else {
+                  Write-Host "  ⚠ 未在 src 的子目录中找到 Directory.Build.props 文件" -ForegroundColor Yellow
+              }
+          }
+
+          # [3/4] 发布 src\Tools 下的工具项目（失败自动跳过）
           Write-Host "`n[3/4] 发布 src\Tools 下的工具项目（失败自动跳过）..." -ForegroundColor Cyan
           $toolsPath = Join-Path $scriptPath "src\Tools"
           $successCount = 0
@@ -101,24 +148,13 @@ jobs:
           $failedProjects = @()
 
           if (Test-Path $toolsPath) {
-              $projects = Get-ChildItem -Path $toolsPath -Include "*.csproj","*.vbproj" -Recurse -File |
-                          Where-Object { $_.FullName -notmatch '\\obj\\' -and $_.Name -notmatch '_' }
+              $projects = Get-ChildItem -Path $toolsPath -Include "*.csproj", "*.vbproj" -Recurse -File |
+                          Where-Object { $_.FullName -notmatch '\\obj\\' -and $_.Name -notmatch '_' -and $_.BaseName -notlike "*tmp*" -and $_.BaseName -notlike "*Test*" }
 
               foreach ($proj in $projects) {
                   Write-Host "`n  → 尝试发布: $($proj.Name)" -ForegroundColor Yellow
-                  # 使用 try-catch 捕获任何异常，确保单个项目失败不影响其他
                   try {
-                      dotnet publish $proj.FullName `
-                          -c Release `
-                          -r win-x64 `
-                          --self-contained false `
-                          -o $publishDir `
-                          /p:DebugSymbols=false `
-                          /p:DebugType=None `
-                          /p:UseAppHost=true `
-                          /p:Version=$buildVersion `
-                          --nologo
-
+                      dotnet publish $proj.FullName @publishArgs
                       if ($LASTEXITCODE -eq 0) {
                           Write-Host "  [OK] $($proj.BaseName)" -ForegroundColor Green
                           $successCount++
@@ -137,7 +173,6 @@ jobs:
               Write-Host "[WARN] 未找到 src\Tools 目录" -ForegroundColor Yellow
           }
 
-          # 统计 Tools 发布结果
           Write-Host "`n[Tools 发布统计]" -ForegroundColor Cyan
           Write-Host "  成功: $successCount | 跳过: $skipCount" -ForegroundColor White
           if ($failedProjects.Count -gt 0) {
@@ -145,7 +180,7 @@ jobs:
               $failedProjects | ForEach-Object { Write-Host "    - $_" -ForegroundColor Gray }
           }
 
-          # [4/4] 清理语言文件夹、PDB 和未引用 DLL
+          # [4/4] 清理语言文件夹、PDB 和未引用 DLL (保留 YML 中更安全的 CI 清理逻辑)
           Write-Host "`n[4/4] 执行发布后清理..." -ForegroundColor Cyan
           foreach ($lang in $languageFolders) {
               $p = Join-Path $publishDir $lang
@@ -153,62 +188,38 @@ jobs:
           }
           Get-ChildItem -Path $publishDir -Filter "*.pdb" -Recurse -File | Remove-Item -Force
 
-          #【新增】清理非 win-x64 的 runtime 文件夹
+          # 清理非 win-x64 的 runtime 文件夹
           $runtimesPath = Join-Path $publishDir "runtimes"
           if (Test-Path $runtimesPath) {
-              Write-Host "清理非 win-x64 的 runtime 文件夹..." -ForegroundColor Yellow
               Get-ChildItem -Path $runtimesPath -Directory | ForEach-Object {
-                  # PowerShell 字符串比较默认不区分大小写，安全匹配 win-x64
                   if ($_.Name -ne "win-x64") {
                       Remove-Item $_.FullName -Recurse -Force
-                      Write-Host "  已移除: $($_.Name)" -ForegroundColor Gray
                   }
               }
           }
 
-
-          # ========================================
-          # 安全清理未引用的项目 DLL（CI/CD 安全版）
-          # ========================================
-          
-          # 🔧 修复原脚本 $publishDir 末尾空格导致的路径匹配失败
+          # 安全清理根目录重复 DLL（CI/CD 安全版）
           $publishRoot = (Get-Item $publishDir).FullName.Trim()
-
-          # 1. 收集所有子目录中的 DLL 文件名（忽略大小写）
           $subDllNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
           Get-ChildItem -Path $publishRoot -Filter "*.dll" -File -Recurse |
               Where-Object { $_.Directory.FullName -ne $publishRoot } |
               ForEach-Object { $null = $subDllNames.Add($_.Name) }
 
-          # 2. 遍历根目录 DLL，若子目录有同名则删除根目录版本
           $delCount = 0
           Get-ChildItem -Path $publishRoot -Filter "*.dll" -File |
               Where-Object { $subDllNames.Contains($_.Name) } |
               ForEach-Object {
                   $dll = $_
-                  Write-Host "  [删除] 根目录重复 DLL: $($dll.FullName)" -ForegroundColor Yellow
                   Remove-Item $dll.FullName -Force -ErrorAction SilentlyContinue
                   $delCount++
-
-                  # 同步清理根目录附属文件（.xml / .config）
                   @(".xml", ".config") | ForEach-Object {
-                      $ext = $_
-                      $path = Join-Path $publishRoot "$($dll.BaseName)$ext"
-                      if (Test-Path $path) {
-                          Remove-Item $path -Force -ErrorAction SilentlyContinue
-                          Write-Host "    └─ 清理附属: $ext" -ForegroundColor DarkGray
-                      }
+                      $path = Join-Path $publishRoot "$($dll.BaseName)$_"
+                      if (Test-Path $path) { Remove-Item $path -Force -ErrorAction SilentlyContinue }
                   }
               }
-
-          if ($delCount -gt 0) {
-              Write-Host "  ✓ 共清理 $delCount 个根目录重复 DLL（已保留子目录版本）" -ForegroundColor Green
-          } else {
-              Write-Host "  ✓ 无根目录重复 DLL，无需清理" -ForegroundColor Gray
-          }
-          Write-Host ""
+          if ($delCount -gt 0) { Write-Host "  ✓ 共清理 $delCount 个根目录重复 DLL" -ForegroundColor Green }
         shell: pwsh
-
+         
 
       - name: 签名指定文件夹 DLL（防篡改）
         if: ${{ success() }}
