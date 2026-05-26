@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using FMO.Models;
 using FMO.Shared;
+using FMO.Utilities;
 using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -464,7 +465,74 @@ public partial class FundExpireDateViewModel : ObservableObject, IViewModel<Date
 }
 
 
-public partial class HugeRedemptionRuleViewModel : IViewModel<HugeRedemptionRule?, HugeRedemptionRuleViewModel> 
+public partial class HugeRedemptionRuleViewModel : IViewModel<HugeRedemptionRule?, HugeRedemptionRuleViewModel>
 {
-    
+
+}
+
+
+public partial class FundOpenRuleViewModel : ObservableObject, IViewModel<OpenRule[]?, FundOpenRuleViewModel>
+{
+    [ObservableProperty]
+    public partial ObservableCollection<OpenRule> Rules { get; set; } = [];
+
+    public static OpenRule[]? Trans(FundOpenRuleViewModel vm)
+    {
+        return vm.Rules.ToArray();
+    }
+
+    public static FundOpenRuleViewModel Trans(OpenRule[]? vm)
+    {
+        return new FundOpenRuleViewModel { Rules = vm is null ? [] : [.. vm.Select(x => (OpenRule)x.Clone())] };
+    }
+
+    public bool Equals(OpenRule[]? other)
+    {
+        if (Rules.Count != (other?.Length??0)) return false;
+
+        if (Rules.Count == 0) return true;
+
+        return Rules.Select(x => x.ToString()).Order().SequenceEqual(other!.Select(x => x.ToString()).Order());
+
+    }
+
+
+    [RelayCommand]
+    public void AddRule()
+    {
+        Rules.Add(new());
+    }
+
+
+    [RelayCommand]
+    public void DeleteRule(OpenRule rule)
+    {
+
+        Rules.Remove(rule);
+    }
+
+    [RelayCommand]
+    public void SetOpenRule(OpenRule rule)
+    {
+        OpenRuleViewModel openRuleViewModel = new();
+        openRuleViewModel.Init(rule);
+
+        var wnd = new OpenRuleEditor
+        {
+            Height = 930,
+            Width = 1200,
+            DataContext = openRuleViewModel,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Owner = App.Current.MainWindow
+        };
+        if (wnd.ShowDialog() is true)
+        {
+            var id = Rules.IndexOf(rule);
+            Rules.RemoveAt(id);
+            Rules.Insert(id, openRuleViewModel.Rule);
+            //rule.UpdateFrom(openRuleViewModel.Rule);
+            
+            OnPropertyChanged(nameof(Rules));
+        }
+    }
 }

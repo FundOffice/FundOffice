@@ -9,7 +9,6 @@ using FMO.Todo;
 using FMO.TPL;
 using FMO.Trustee;
 using FMO.Utilities;
-using HandyControl.Controls;
 using LiteDB;
 using Microsoft.Playwright;
 using Microsoft.Win32;
@@ -83,28 +82,17 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         InitFlows(fund);
 
-
-
         using var db = DbHelper.Base();
-        FundElements ele = db.GetCollection<FundElements>().FindById(FundId);
-        if (ele is null)
-        {
-            ele = FundElements.Create(FundId, Flows!.Min(x => x.FlowId));
-            db.GetCollection<FundElements>().Insert(ele);
-        }
-        else
-        {
-            //检查是否有不存在的flow
-            //ele.RemoveInvalidFlow(Flows?.Select(x => x.FlowId).ToArray());
-        }
+        var ele = db.QueryFactor(FundId);
+   
 
         // 如果已定稿
         if (Flows?.Any(x => x is ContractFinalizeFlowViewModel f && f.IsReadOnly) ?? false)
             CheckAndTodo(ele);
 
 
-        CollectionAccount = ele.CollectionAccount.Value?.ToString();
-        CustodyAccount = ele.CustodyAccount.Value?.ToString();
+        CollectionAccount = ele.CollectionAccount;
+        CustodyAccount = ele.CustodyAccount;
 
         //var lastmodiflow = Flows?.Where(x => x is RegistrationFl switch { RegistrationFlowViewModel a => a.RegistrationLetter, ContractModifyFlowViewModel b => b.RegistrationLetter, _ => null }).LastOrDefault(x => x is not null && x.File is not null);
         //var filter = $"$.FundId == {FundId} && $.RegistrationLetter != null && $.RegistrationLetter != ''";
@@ -117,199 +105,186 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         /// 监控估值表文件夹
         //WatchSheetFolder(fund, ele);
 
-        RiskLevel = ele.RiskLevel?.Value;
+        RiskLevel = ele.RiskLevel;
 
         // 净值 
 
-        DailyValues = new ObservableCollection<DailyValue>(db.GetDailyCollection(Fund.Id).FindAll().OrderByDescending(x => x.Date).IntersectBy(Days.AllTradeDays, x => x.Date));
-        var strategies = db.GetCollection<FundStrategy>().Find(x => x.FundId == fund.Id).ToList();
 
 
+        //var strategies = db.GetCollection<FundStrategy>().Find(x => x.FundId == fund.Id).ToList();
 
-        var names = ele.FullName.Changes.Values.ToArray() ?? [];
-        db.Dispose();
+
         App.Current.Dispatcher.BeginInvoke(() =>
         {
-            DailySource.Source = DailyValues;
+            DailySource.Source = Array.Empty<DailyValue>();
             DailySource.View.SortDescriptions.Add(new System.ComponentModel.SortDescription(nameof(DailyValue.Date), System.ComponentModel.ListSortDirection.Descending));
-            DailySource.View.Refresh();
+           // DailySource.View.Refresh();
         });
 
-        var ll = DailyValues;
 
         debouncerDaily = new(() => App.Current.Dispatcher.BeginInvoke(() => DailySource.View.Refresh()));
 
-        CurveViewDataContext = new DailyValueCurveViewModel
-        {
-            FundId = Fund.Id,
-            FundName = Fund.ShortName,
-            Data = ll.OrderBy(x => x.Date).ToList(),
-            SetupDate = Fund.SetupDate,
-            StartDate = ll.LastOrDefault()?.Date,
-            EndDate = ll.FirstOrDefault()?.Date,
-            Strategies = strategies
-        };
 
 
-        StrategyDataContext = new(FundId, fund.SetupDate);
-        AccountsDataContext = new(FundId, FundCode!, names);
-        TADataContext = new(FundId) { IsTrusteeApiAvaliable = _api?.IsValid ?? false };
-        AnnouncementContext = new(FundId);
+        //StrategyDataContext = new(FundId, fund.SetupDate);
+        //AccountsDataContext = new(FundId, FundCode!, names);
+        //TADataContext = new(FundId) { IsTrusteeApiAvaliable = _api?.IsValid ?? false };
+        //AnnouncementContext = new(FundId);
 
         IsActive = true;
         //_initialized = true;
     }
 
-    public void CheckAndTodo(FundElements ele)
+    public void CheckAndTodo(FundFactors ele)
     {
         var missingList = new List<string>();
 
-        if (ele.FullName?.Changes is null || ele.FullName.Changes.Count == 0)
+        // 统一格式：if (!ele.XXX.HasValue)
+        if (!ele.FullName.HasValue)
         {
             missingList.Add("名称");
         }
-        if (ele.ShortName?.Changes is null || ele.ShortName.Changes.Count == 0)
+        if (!ele.ShortName.HasValue)
         {
             missingList.Add("简称");
         }
-        if (ele.SecurityFundType?.Changes is null || ele.SecurityFundType.Changes.Count == 0)
+        if (!ele.SecurityFundType.HasValue)
         {
             missingList.Add("基金类型");
         }
-        if (ele.FundModeInfo?.Changes is null || ele.FundModeInfo.Changes.Count == 0)
+        if (!ele.FundModeInfo.HasValue)
         {
             missingList.Add("运作方式");
         }
 
-        if (ele.FundModeInfo?.Value?.Data == FundMode.Open)
+        if (ele.FundModeInfo.Current?.Mode == FundMode.Open)
         {
-            if (ele.SealingRule?.Changes is null || ele.SealingRule.Changes.Count == 0)
+            if (!ele.SealingRule.HasValue)
             {
                 missingList.Add("封闭期");
             }
 
-            if (ele.OpenDayInfo?.Changes is null || ele.OpenDayInfo.Changes.Count == 0)
+            if (!ele.OpenDayInfo.HasValue)
             {
                 missingList.Add("开放日规则");
             }
-            if (ele.FundOpenRule?.Changes is null || ele.FundOpenRule.Changes.Count == 0)
+            if (!ele.FundOpenRule.HasValue)
             {
                 missingList.Add("开放规则");
             }
-
         }
 
-        if (ele.RiskLevel?.Changes is null || ele.RiskLevel.Changes.Count == 0)
+        if (!ele.RiskLevel.HasValue)
         {
             missingList.Add("风险等级");
         }
-        if (ele.DurationInMonths?.Changes is null || ele.DurationInMonths.Changes.Count == 0)
+        if (!ele.DurationInMonths.HasValue)
         {
             missingList.Add("存续期");
         }
-        if (ele.ExpirationDate?.Changes is null || ele.ExpirationDate.Changes.Count == 0)
+        if (!ele.ExpirationDate.HasValue)
         {
             missingList.Add("结束日期");
         }
-        if (ele.CollectionAccount?.Changes is null || ele.CollectionAccount.Changes.Count == 0)
+        if (!ele.CollectionAccount.HasValue)
         {
             missingList.Add("募集账户");
         }
-        if (ele.CustodyAccount?.Changes is null || ele.CustodyAccount.Changes.Count == 0)
+        if (!ele.CustodyAccount.HasValue)
         {
             missingList.Add("托管账户");
         }
 
-        //if (ele.StopLine?.Changes is null || ele.StopLine.Changes.Count == 0)
+        //if (!ele.StopLine.HasValue)
         //{
         //    missingList.Add("止损线");
         //}
-        //if (ele.WarningLine?.Changes is null || ele.WarningLine.Changes.Count == 0)
+        //if (!ele.WarningLine.HasValue)
         //{
         //    missingList.Add("预警线");
         //}
 
-        if (ele.TrusteeInfo?.Changes is null || ele.TrusteeInfo.Changes.Count == 0)
+        if (!ele.TrusteeInfo.HasValue)
         {
             missingList.Add("托管机构");
         }
-        if (ele.TrusteeFee?.Changes is null || ele.TrusteeFee.Changes.Count == 0)
+        if (!ele.TrusteeFee.HasValue)
         {
             missingList.Add("托管费");
         }
-        if (ele.OutsourcingInfo?.Changes is null || ele.OutsourcingInfo.Changes.Count == 0)
+        if (!ele.OutsourcingInfo.HasValue)
         {
             missingList.Add("外包机构");
         }
-        if (ele.OutsourcingFee?.Changes is null || ele.OutsourcingFee.Changes.Count == 0)
+        if (!ele.OutsourcingFee.HasValue)
         {
             missingList.Add("外包费");
         }
-        //if (ele.InvestmentManagers?.Changes is null || ele.InvestmentManagers.Changes.Count == 0)
+        //if (!ele.InvestmentManagers.HasValue)
         //{
         //    missingList.Add("投资管理人");
         //}
-        if (ele.InvestmentManager?.Changes is null || ele.InvestmentManager.Changes.Count == 0)
+        if (!ele.InvestmentManager.HasValue)
         {
             missingList.Add("投资经理");
         }
-        //if (ele.PerformanceBenchmark?.Changes is null || ele.PerformanceBenchmark.Changes.Count == 0)
+        //if (!ele.PerformanceBenchmark.HasValue)
         //{
         //    missingList.Add("业绩比较基准");
         //}
-        if (ele.InvestmentObjective?.Changes is null || ele.InvestmentObjective.Changes.Count == 0)
+        if (!ele.InvestmentObjective.HasValue)
         {
             missingList.Add("投资目标");
         }
-        if (ele.InvestmentScope?.Changes is null || ele.InvestmentScope.Changes.Count == 0)
+        if (!ele.InvestmentScope.HasValue)
         {
             missingList.Add("投资范围");
         }
-        if (ele.InvestmentStrategy?.Changes is null || ele.InvestmentStrategy.Changes.Count == 0)
+        if (!ele.InvestmentStrategy.HasValue)
         {
             missingList.Add("投资策略");
         }
-        //if (ele.TemporarilyOpenInfo?.Changes is null || ele.TemporarilyOpenInfo.Changes.Count == 0)
+        //if (!ele.TemporarilyOpenInfo.HasValue)
         //{
         //    missingList.Add("临时开放信息");
         //}
-        if (ele.HugeRedemptionRatio?.Changes is null || ele.HugeRedemptionRatio.Changes.Count == 0)
+        if (!ele.HugeRedemption.HasValue)
         {
             missingList.Add("巨额赎回");
         }
-        if (ele.CoolingPeriod?.Changes is null || ele.CoolingPeriod.Changes.Count == 0)
+        if (!ele.CoolingPeriod.HasValue)
         {
             missingList.Add("冷静期");
         }
-        if (ele.Callback?.Changes is null || ele.Callback.Changes.Count == 0)
+        if (!ele.Callback.HasValue)
         {
             missingList.Add("回访");
         }
-        if (ele.LockingRule?.Changes is null || ele.LockingRule.Changes.Count == 0)
+        if (!ele.LockingRule.HasValue)
         {
             missingList.Add("锁定期");
         }
-        if (ele.ManageFee?.Changes is null || ele.ManageFee.Changes.Count == 0)
+        if (!ele.ManageFee.HasValue)
         {
             missingList.Add("管理费");
         }
-        if (ele.ManageFeePay?.Changes is null || ele.ManageFeePay.Changes.Count == 0)
+        if (!ele.ManageFeePay.HasValue)
         {
             missingList.Add("管理费支付方式");
         }
-        if (ele.SubscriptionRule?.Changes is null || ele.SubscriptionRule.Changes.Count == 0)
+        if (!ele.SubscriptionRule.HasValue)
         {
             missingList.Add("认购规则");
         }
-        if (ele.PurchasRule?.Changes is null || ele.PurchasRule.Changes.Count == 0)
+        if (!ele.PurchasRule.HasValue)
         {
             missingList.Add("申购规则");
         }
-        if (ele.RedemptionFee?.Changes is null || ele.RedemptionFee.Changes.Count == 0)
+        if (!ele.RedemptionFee.HasValue)
         {
             missingList.Add("赎回费");
         }
-        if (ele.PerformanceFeeStatement?.Changes is null || ele.PerformanceFeeStatement.Changes.Count == 0)
+        if (!ele.PerformanceFeeStatement.HasValue)
         {
             missingList.Add("业绩报酬");
         }
@@ -319,7 +294,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
             TodoService.Register(new FundElementFillTodo
             {
                 FundId = ele.Id,
-                FundName = ele.FullName?.Value ?? string.Empty,
+                FundName = ele.FullName.Current ?? string.Empty,
                 FundCode = string.Empty,
                 Missing = missingList
             });
@@ -499,6 +474,10 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     }
 
     #region Property
+
+    [ObservableProperty]
+    public partial int SelectedTab { get; set; }
+
     [ObservableProperty]
     public partial bool IsEditable { get; set; }
 
@@ -557,11 +536,11 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     /// 募集账户
     /// </summary>
     [ObservableProperty]
-    public partial string? CollectionAccount { get; set; }
+    public partial BankAccount? CollectionAccount { get; set; }
 
 
     [ObservableProperty]
-    public partial string? CustodyAccount { get; set; }
+    public partial BankAccount? CustodyAccount { get; set; }
 
 
     /// <summary>
@@ -597,7 +576,8 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
     public SimpleFileViewModel RegistrationLetter { get; } = new();
 
-    public ObservableCollection<DailyValue> DailyValues { get; }
+    [ObservableProperty]
+    public partial ObservableCollection<DailyValue> DailyValues { get; set; }
 
     private Debouncer debouncerDaily;
 
@@ -629,6 +609,80 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     public partial FundDisclosureViewModel AnnouncementContext { get; set; }
 
     #endregion
+
+
+    partial void OnSelectedTabChanged(int value)
+    {
+        switch (value)
+        {
+            case 1: // TA
+                if (TADataContext is null)
+                    TADataContext = new FundTAViewModel(FundId) { IsTrusteeApiAvaliable = _api?.IsValid ?? false };
+                break;
+
+            case 2:
+                if (DailyValues?.Count is null or 0)
+                {
+                    using var db = DbHelper.Base();
+                    IEnumerable<DailyValue> collection = db.GetDailyCollection(Fund.Id).FindAll().OrderByDescending(x => x.Date).IntersectBy(Days.AllTradeDays, x => x.Date);
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        DailyValues = new ObservableCollection<DailyValue>(collection);
+                        DailySource.Source = DailyValues;
+                        DailySource.View.Refresh();
+                    });
+                }
+                break;
+
+            case 3: // 曲线
+                if (CurveViewDataContext is null)
+                {
+                    using var db = DbHelper.Base();
+                    var strategies = db.GetCollection<FundStrategy>().Find(x => x.FundId == FundId).ToList();
+
+                    CurveViewDataContext = new DailyValueCurveViewModel
+                    {
+                        FundId = Fund.Id,
+                        FundName = Fund.ShortName,
+                        Data = DailyValues.OrderBy(x => x.Date).ToList(),
+                        SetupDate = Fund.SetupDate,
+                        StartDate = DailyValues.LastOrDefault()?.Date,
+                        EndDate = DailyValues.FirstOrDefault()?.Date,
+                        Strategies = strategies
+                    };
+                }
+                break;
+
+            case 4: // 要素
+                if (ElementsViewDataContext is null)
+                {
+                    ElementsViewDataContext = new ElementsViewModel { FundId = Fund.Id };
+                    // 同步当前已选中的 Flow
+                    if (SelectedFlowInElements != null)
+                        ElementsViewDataContext.FlowId = SelectedFlowInElements.FlowId;
+                }
+                break;
+
+            case 5: // 策略
+                if (StrategyDataContext is null)
+                    StrategyDataContext = new FundStrategyViewModel(FundId, Fund.SetupDate);
+                break;
+
+            case 6: // 账户
+                if (AccountsDataContext is null)
+                    AccountsDataContext = new FundAccountsViewModel(FundId, FundCode!);
+                break;
+
+            case 7: // 信披
+                if (AnnouncementContext is null)
+                    AnnouncementContext = new FundDisclosureViewModel(FundId);
+                break;
+
+            default:
+                break;
+        }
+    }
+
 
     /// <summary>
     /// 打开基金公示
@@ -700,7 +754,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     public void CreateDividendFlow()
     {
         // 分红日期检查
-        var last = Flows.OfType<DividendFlowViewModel>().Select(x=>x.Date).OfType<DateTime>().LastOrDefault();
+        var last = Flows.OfType<DividendFlowViewModel>().Select(x => x.Date).OfType<DateTime>().LastOrDefault();
         if (last != default && (DateTime.Now - last).TotalDays < 180)
             if (HandyControl.Controls.MessageBox.Show($"距上次分红不足6个月，本次分红将不会收取业绩报酬！\n\n建议 {last.AddDays(180):yyyy/M/d} 后分红\n\n是否继续", "警告", MessageBoxButton.YesNo) == MessageBoxResult.No)
                 return;
@@ -744,7 +798,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     {
         if (flow is ContractRelatedFlowViewModel && HandyControl.Controls.MessageBox.Show("删除后不可恢复，同时会删除关联的要素", "确认删除", System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.No)
             return;
-        else if(HandyControl.Controls.MessageBox.Show("删除后不可恢复!!，确认删除？", "确认删除", System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.No)
+        else if (HandyControl.Controls.MessageBox.Show("删除后不可恢复!!，确认删除？", "确认删除", System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.No)
             return;
 
         using var db = DbHelper.Base();
@@ -1109,7 +1163,9 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
                     DailyValues.Remove(old);
 
                 DailyValues.Add(message.Daily);
-                CurveViewDataContext.Data = DailyValues.OrderBy(x => x.Date).ToList();
+
+                if (CurveViewDataContext is not null)
+                    CurveViewDataContext.Data = DailyValues.OrderBy(x => x.Date).ToList();
 
                 debouncerDaily.Invoke();
             });
@@ -1120,7 +1176,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
     public void Receive(FundStrategyChangedMessage message)
     {
-        if (message.FundId == FundId)
+        if (message.FundId == FundId && CurveViewDataContext is not null)
         {
             using var db = DbHelper.Base();
             var strategies = db.GetCollection<FundStrategy>().Find(x => x.FundId == FundId).ToList();
@@ -1137,13 +1193,13 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
             case FundAccountType.Collection:
                 {
                     using var db = DbHelper.Base();
-                    CollectionAccount = db.GetCollection<FundElements>().FindById(FundId)?.CollectionAccount?.Value?.ToString();
+                    CollectionAccount = db.QueryFundFactor<BankAccount>(FundId, FactorFields.CollectionAccount).FirstOrDefault()?.Data;
                 }
                 break;
             case FundAccountType.Custody:
                 {
                     using var db = DbHelper.Base();
-                    CustodyAccount = db.GetCollection<FundElements>().FindById(FundId)?.CustodyAccount?.Value?.ToString();
+                    CustodyAccount = db.QueryFundFactor<BankAccount>(FundId, FactorFields.CustodyAccount).FirstOrDefault()?.Data;
                 }
                 break;
             default:
@@ -1172,7 +1228,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
     public void Receive(TrusteeStatus message)
     {
-        if (message.Id == _api?.Identifier)
+        if (message.Id == _api?.Identifier && TADataContext is not null)
             TADataContext.IsTrusteeApiAvaliable = message.Status;
     }
 }

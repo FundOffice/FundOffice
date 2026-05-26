@@ -31,11 +31,10 @@ public partial class FundAccountsView : UserControl
 
 public partial class FundAccountsViewModel : ObservableObject
 {
-    public FundAccountsViewModel(int fundId, string code, string[] names)
+    public FundAccountsViewModel(int fundId, string code)
     {
         FundId = fundId;
         Code = code;
-        Names = names;
 
         /// 统一账户
         using var db = DbHelper.Base();
@@ -187,7 +186,7 @@ public partial class FundAccountsViewModel : ObservableObject
 
     public int FundId { get; }
     public string Code { get; }
-    public string[] Names { get; }
+   
 
     public ObservableCollection<SecurityCardViewModel> SecurityCards { get; }
 

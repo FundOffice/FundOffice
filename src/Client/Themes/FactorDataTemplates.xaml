@@ -1005,4 +1005,84 @@
         </DockPanel>
     </DataTemplate>
 
+
+    <DataTemplate DataType="{x:Type local:FundOpenRuleViewModel}">
+        <DockPanel>
+            <Button
+                hc:IconElement.Geometry="{StaticResource f.circle-plus}"
+                Command="{Binding AddRuleCommand}"
+                Style="{StaticResource ButtonIcon.Small}" />
+
+
+            <ListBox
+                x:Name="ls"
+                BorderThickness="0"
+                ItemsSource="{Binding Rules}"
+                Style="{StaticResource ListBoxCustom}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <hc:UniformSpacingPanel IsItemsHost="True" Spacing="5" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+
+                        <Border
+                            Height="22"
+                            MinWidth="120"
+                            Background="Transparent"
+                            BorderBrush="RosyBrown"
+                            BorderThickness="1"
+                            CornerRadius="6">
+
+                            <DockPanel Margin="4,0">
+                                <DockPanel
+                                    x:Name="set"
+                                    HorizontalAlignment="Right"
+                                    DockPanel.Dock="Right"
+                                    Visibility="Collapsed">
+                                    <Button
+                                        Padding="2,0"
+                                        hc:IconElement.Geometry="{StaticResource f.pen}"
+                                        Command="{Binding DataContext.SetOpenRuleCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource ButtonIcon.Small}" />
+
+
+                                    <Button
+                                        Padding="2,0"
+                                        hc:IconElement.Geometry="{StaticResource f.circle-minus}"
+                                        Command="{Binding DataContext.DeleteRuleCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                        CommandParameter="{Binding .}"
+                                        Foreground="Red"
+                                        Style="{StaticResource ButtonIcon.Small}" />
+                                </DockPanel>
+
+                                <TextBlock
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Text="{Binding .}"
+                                    TextAlignment="Center" />
+
+                            </DockPanel>
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="set" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+        </DockPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="DT.OpenRules">
+        <ListBox
+            BorderThickness="0"
+            ItemsSource="{Binding}"
+            Style="{StaticResource ListBoxCustom}" />
+    </DataTemplate>
+
 </ResourceDictionary>

@@ -7,13 +7,18 @@ namespace FMO.Models;
 
 public partial class FundFactors
 {
+    public int Id { get; }
 
     /// <summary>
     /// FlowId → 该flow实际生效的ShareType配置（已填充继承）
     /// </summary>
     //private readonly ImmutableDictionary<int, ShareType[]> _shareConfigMap = null!;
 
-    public FundFactors(IEnumerable<IFundFactor> factories) => __AutoInitializeCtor(factories);
+    public FundFactors(int Id, IEnumerable<IFundFactor> factories)
+    {
+        __AutoInitializeCtor(factories);
+        this.Id = Id;
+    }
 
     //public FundFactors(IEnumerable<IFundFactor> facts)
     //{

@@ -94,6 +94,15 @@ public class BaseDatabase : LiteDatabase
     }
 
 
+    public FundFactor<T>[] QueryFundFactor<T>(string field)
+    { 
+        var flowIds = GetCollection<FundFlow>().Query().Where(Query.Contains("_type", "Contract")).Select(x => x.Id).ToArray();
+
+        return GetCollection<IFundFactor>().Query().Where(x => x.FactorId == field)
+            .Where(Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x => new BsonValue(x))))
+            .OrderByDescending(x => x.FlowId).ToEnumerable().OfType<FundFactor<T>>().ToArray();
+    }
+
     public FlowShareInfo[] QueryFundShares(int fundId)
     {
         if (fundId <= 0) throw new InvalidDataException("FundId 不正确");
@@ -119,7 +128,7 @@ public class BaseDatabase : LiteDatabase
 
         var factors = GetCollection<IFundFactor>().Query().Where(x => x.FundId == fundId).Where(Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x => new BsonValue(x)))).ToArray();
 
-        return new FundFactors(factors);
+        return new FundFactors(fundId, factors);
     }
 
 
