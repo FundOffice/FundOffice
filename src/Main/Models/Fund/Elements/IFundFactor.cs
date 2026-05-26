@@ -70,38 +70,44 @@ public class FundFactor<T> : FundFactor
 
 public class SingletonValueFactorItem<T> where T : struct
 {
-    protected readonly ImmutableArray<(int FlowId, FundFactor<T> Fact)> _flowGroupCache;
+    /// <summary>
+    /// 按flowid 倒序序，保证FirstOrDefault拿到的就是当前flowid的值
+    /// </summary>
+    protected readonly ImmutableArray<(int FlowId, FundFactor<T> Factor)> _flowGroupCache;
     public SingletonValueFactorItem(IEnumerable<FundFactor<T>> data)
     {
         _flowGroupCache = data.GroupBy(f => f.FlowId).Select(x => (x.Key, x.First())).ToImmutableArray();
     }
-    public virtual T? this[int flowId] => _flowGroupCache.FirstOrDefault(x => x.FlowId <= flowId).Fact is { } f ? f.Data : null;
+    public virtual T? this[int flowId] => _flowGroupCache.FirstOrDefault(x => x.FlowId <= flowId).Factor is { } f ? f.Data : null;
 
 
-    public static implicit operator T? (SingletonValueFactorItem<T> instance) => instance.Current;
+    public static implicit operator T?(SingletonValueFactorItem<T> instance) => instance.Current;
 
     public bool HasValue => _flowGroupCache.Length > 0;
 
-    public T? Current => _flowGroupCache.LastOrDefault().Fact is { } f ? f.Data : null;
+    public T? Current => _flowGroupCache.FirstOrDefault().Factor is { } f ? f.Data : null;
 }
 
 
 public class SingletonFactorItem<T> where T : class
 {
-    protected readonly ImmutableArray<(int FlowId, FundFactor<T> Fact)> _flowGroupCache;
+    /// <summary>
+    /// 按flowid 倒序序，保证FirstOrDefault拿到的就是当前flowid的值
+    /// </summary>
+    protected readonly ImmutableArray<(int FlowId, FundFactor<T> Factor)> _flowGroupCache;
 
     public SingletonFactorItem(IEnumerable<FundFactor<T>> data)
     {
         _flowGroupCache = data.GroupBy(f => f.FlowId).Select(x => (x.Key, x.First())).ToImmutableArray();
     }
 
-    public virtual T? this[int flowId] => _flowGroupCache.FirstOrDefault(x => x.FlowId <= flowId).Fact is { } f ? f.Data : null;
+    public virtual T? this[int flowId] => _flowGroupCache.FirstOrDefault(x => x.FlowId <= flowId).Factor is { } f ? f.Data : null;
 
     public static implicit operator T?(SingletonFactorItem<T> instance) => instance.Current;
 
     public bool HasValue => _flowGroupCache.Length > 0;
 
-    public T? Current => _flowGroupCache.LastOrDefault().Fact is { } f ? f.Data : null;
+    public T? Current => _flowGroupCache.FirstOrDefault().Factor is { } f ? f.Data : null;
 }
 
 
@@ -109,31 +115,35 @@ public class SingletonFactorItem<T> where T : class
 
 public class ShareClassFactorItem(IEnumerable<FundFactor<ShareClass[]>> data) : SingletonFactorItem<ShareClass[]>(data)
 {
-    public (int FlowId, ShareClass[] Fact)[] GetShares() => _flowGroupCache.Select(x => (x.FlowId, x.Fact.Data)).ToArray();
+    public (int FlowId, ShareClass[] Factor)[] GetShares() => _flowGroupCache.Select(x => (x.FlowId, x.Factor.Data)).ToArray();
 
-    public override ShareClass[] this[int flowId] => _flowGroupCache.FirstOrDefault(x => x.FlowId <= flowId).Fact is { } f && f.Data.Length > 0 ? f.Data : ShareClass.Default;
+    public override ShareClass[] this[int flowId] => _flowGroupCache.FirstOrDefault(x => x.FlowId <= flowId).Factor is { } f && f.Data.Length > 0 ? f.Data : ShareClass.Default;
 }
 
 
 public class FactorItem<T> where T : class
 {
+    /// <summary>
+    /// 按flowid 倒序序，保证FirstOrDefault拿到的就是当前flowid的值
+    /// </summary>
+    protected readonly ImmutableArray<(int FlowId, FundFactor<T>[] Factor)> _flowGroupCache;
+    private readonly (int FlowId, int[] ClassIds)[] _shares;
+    private ImmutableDictionary<int, InheritMap> _shareMap;
 
-    protected readonly ImmutableArray<(int FlowId, FundFactor<T>[] Fact)> _flowGroupCache;
-
-    private ImmutableDictionary<int, InheritMap> _shares;
 
 
-
-    public FactorItem(IEnumerable<FundFactor<T>> data, ImmutableDictionary<int, InheritMap> shareConfigMap)
+    public FactorItem(IEnumerable<FundFactor<T>> data, (int FlowId, ShareClass[] Factor)[] shares, ImmutableDictionary<int, InheritMap> shareConfigMap)
     {
         _flowGroupCache = data.GroupBy(f => f.FlowId).Select(x => (x.Key, x.ToArray())).ToImmutableArray();
-        _shares = shareConfigMap;
+        _shares = shares.Select(x => (x.FlowId, x.Factor.Select(f => f.Id).ToArray())).ToArray();
+        _shareMap = shareConfigMap;
     }
 
     public T?[] this[int flowId, params int[] classId] => GetValues(flowId, classId);
 
-    public T? this[int flowId] => this[flowId, ShareClass.Singleton][0];
+    public T?[] this[int flowId] => GetValues(flowId);
 
+    public virtual T?[] Current => GetValues(_flowGroupCache.FirstOrDefault().FlowId);
 
     public bool HasValue => _flowGroupCache.Length > 0;
 
@@ -157,6 +167,10 @@ public class FactorItem<T> where T : class
         }
         return values;
     }
+
+
+    public virtual T?[] GetValues(int flowId) => GetValues(flowId, _shares.FirstOrDefault(x => x.FlowId <= flowId).ClassIds);
+
 
     /// <summary>
     /// 核心查询：按 FlowId 倒序追溯，Singleton 绝对优先
@@ -184,10 +198,10 @@ public class FactorItem<T> where T : class
         {
             while (flowId < ShareClass.GetFlow(currentLookupId)) // 当前share无效了，因为没有定义
             {
-                if (_shares.TryGetValue(currentLookupId, out var map) && _shares.ContainsKey(map.Inherit) && map.Inherit < currentLookupId)
+                if (_shareMap.TryGetValue(currentLookupId, out var map) && _shareMap.ContainsKey(map.Inherit) && map.Inherit < currentLookupId)
                     currentLookupId = map.Inherit;
                 else // 没有更上层的 Inherit 定义了，直接跳出循环
-                    break; 
+                    break;
             }
             if (flowId < ShareClass.GetFlow(currentLookupId))// 当前share无效了，因为没有定义
                 return default;
@@ -211,8 +225,6 @@ public class FactorItem<T> where T : class
     }
 
 
-    //private ShareClass[] GetShareClasses(int flowId) => _shares.TryGetValue(flowId, out var d) ? d : _shares.LastOrDefault(x => x.Key < flowId).Value;
-
 
     public virtual (T? Old, T? New)[] GetInheritValues(int flowId, params int[] classId)
     {
@@ -230,22 +242,25 @@ public class FactorItem<T> where T : class
 
 public class ValueFactorItem<T> where T : struct
 {
+    /// <summary>
+    /// 按flowid 倒序序，保证FirstOrDefault拿到的就是当前flowid的值
+    /// </summary>
+    protected readonly ImmutableArray<(int FlowId, FundFactor<T>[] Factor)> _flowGroupCache;
+    private readonly (int FlowId, int[] ClassIds)[] _shares;
+    private ImmutableDictionary<int, InheritMap> _shareMap;
 
-    protected readonly ImmutableArray<(int FlowId, FundFactor<T>[] Fact)> _flowGroupCache;
-
-    private ImmutableDictionary<int, InheritMap> _shares;
 
 
-
-    public ValueFactorItem(IEnumerable<FundFactor<T>> data, ImmutableDictionary<int, InheritMap> shareConfigMap)
+    public ValueFactorItem(IEnumerable<FundFactor<T>> data, (int FlowId, ShareClass[] Factor)[] shares, ImmutableDictionary<int, InheritMap> shareConfigMap)
     {
         _flowGroupCache = data.GroupBy(f => f.FlowId).Select(x => (x.Key, x.ToArray())).ToImmutableArray();
-        _shares = shareConfigMap;
+        _shares = shares.Select(x => (x.FlowId, x.Factor.Select(f => f.Id).ToArray())).ToArray();
+        _shareMap = shareConfigMap;
     }
 
     public T?[] this[int flowId, params int[] classId] => GetValues(flowId, classId);
 
-    public T? this[int flowId] => this[flowId, ShareClass.Singleton][0];
+    public T?[] this[int flowId] => GetValues(flowId);
 
     public bool HasValue => _flowGroupCache.Length > 0;
 
@@ -269,6 +284,11 @@ public class ValueFactorItem<T> where T : struct
         }
         return values;
     }
+
+
+    public virtual T?[] GetValues(int flowId) => GetValues(flowId, _shares.FirstOrDefault(x => x.FlowId <= flowId).ClassIds);
+
+    public virtual T?[] Current => GetValues(_flowGroupCache.FirstOrDefault().FlowId);
 
     /// <summary>
     /// 核心查询：按 FlowId 倒序追溯，Singleton 绝对优先
@@ -294,11 +314,11 @@ public class ValueFactorItem<T> where T : struct
         // 从 targetFlowId 开始，按时间倒序遍历所有有数据的 Flow
         foreach (var (flowId, facts) in _flowGroupCache.Where(x => x.FlowId <= targetFlowId).OrderByDescending(x => x.FlowId))
         {
-            var map = _shares[currentLookupId];
+            var map = _shareMap[currentLookupId];
             while (flowId < map.FlowId) // 当前share无效了，因为没有定义
             {
                 currentLookupId = map.Inherit;
-                map = _shares[currentLookupId];
+                map = _shareMap[currentLookupId];
             }
 
             // 🥇 优先级1：当前 Flow 精确匹配目标份额
@@ -318,11 +338,7 @@ public class ValueFactorItem<T> where T : struct
         // 🛡️ 全程未匹配到值，返回默认值
         return null;
     }
-
-
-    //private ShareClass[] GetShareClasses(int flowId) => _shares.TryGetValue(flowId, out var d) ? d : _shares.LastOrDefault(x => x.Key < flowId).Value;
-
-
+     
     public virtual (T? Old, T? New)[] GetInheritValues(int flowId, params int[] classId)
     {
         var values = GetValues(flowId, classId);

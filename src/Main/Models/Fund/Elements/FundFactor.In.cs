@@ -457,7 +457,7 @@ public class OpenRule : ICloneable
             case FundOpenType.Weekly:
                 if (Dates is null || Dates.Length == 0) return "无效的设置";
 
-                return $"每周{ WeekStr()}{pos}{(Postpone ? "，非交易日顺延" : "")}";
+                return $"每周{WeekStr()}{pos}{(Postpone ? "，非交易日顺延" : "")}";
             case FundOpenType.Daily:
                 return $"每日{pos}";
             default:
@@ -491,7 +491,7 @@ public class OpenRule : ICloneable
         }
     }
 
-    public OpenDateSheet[] Apply(int year)
+    public DateOpenInfo[] Apply(int year)
     {
         if (Type == FundOpenType.Closed)
             return Days.DayInfosByYear(year).Select(x => new DateEx { Date = x.Date, Flag = x.Flag, WeekOfMonth = 1, WeekOfYear = 1, Type = OpenType.None }).ToArray();
@@ -1030,7 +1030,7 @@ public class OpenRule : ICloneable
 
     }
 
-    public class DateEx : OpenDateSheet
+    public class DateEx : DateOpenInfo
     {
         public bool IsExclude { get; set; }
 
@@ -1083,13 +1083,26 @@ public enum OpenType
     Postpone
 }
 
+
 public interface IDate
 {
     public DateOnly Date { get; }
 }
 
 
-public class OpenDateSheet : IDate
+[Flags]
+public enum OpenTradeType
+{
+    None,
+
+    Purchase = 1,
+
+    Redemption = 2,
+
+    Both = Purchase | Redemption
+}
+
+public class DateOpenInfo : IDate
 {
     public required DateOnly Date { get; init; }
 
@@ -1097,6 +1110,7 @@ public class OpenDateSheet : IDate
 
     public OpenType Type { get; set; }
 
+    public OpenTradeType TradeType { get; set; }
 }
 
 

@@ -22,7 +22,7 @@ public readonly record struct PropertyMeta(
     /// 初始化代码片段
     /// </summary>
     public string InitCode => IsFactorItem
-        ? $"{Name} = new(Filter<{GenericArg.Replace("?", "")}>(FactorFields.{FieldKey}, g), _shareConfigMap);"
+        ? $"{Name} = new(Filter<{GenericArg.Replace("?", "")}>(FactorFields.{FieldKey}, g), _shares, _shareConfigMap);"
         : $"{Name} = new(Filter<{GenericArg.Replace("?", "")}>(FactorFields.{FieldKey}, g));";
 }
 
@@ -188,7 +188,8 @@ public class FundFactorsCtorGenerator : IIncrementalGenerator
         sb.AppendLine("            .ToDictionary(x => x.Key, x => x.AsEnumerable());");
         sb.AppendLine();
         sb.AppendLine("        ShareClasses = new(Filter<ShareClass[]>(FactorFields.ShareClasses, g));");
-        sb.AppendLine("        var _shareConfigMap = BuildInheritedShareConfigMap(ShareClasses.GetShares());\n");
+        sb.AppendLine("        var _shares = ShareClasses.GetShares();");
+        sb.AppendLine("        var _shareConfigMap = BuildInheritedShareConfigMap(_shares);\n");
 
         foreach (var p in others)
         {
