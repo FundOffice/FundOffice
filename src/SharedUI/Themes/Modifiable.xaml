@@ -392,6 +392,10 @@
     </Style>
 
 
+    <DataTemplate x:Key="FallbackEditTemplate">
+        <ContentPresenter Content="{Binding}" />
+    </DataTemplate>
+
     <!--  PortionElement  -->
     <DataTemplate x:Key="DTpl.PortionElement">
         <DockPanel LastChildFill="False">
@@ -415,7 +419,7 @@
                 VerticalContentAlignment="Center"
                 BorderThickness="0"
                 ContentTemplate="{Binding ContentTemplate, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
-                EditTemplate="{Binding EditTemplate, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
+                EditTemplate="{Binding EditTemplate, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}, TargetNullValue={StaticResource FallbackEditTemplate}}"
                 Header="{Binding ShareName}"
                 IsReadOnly="{Binding IsReadOnly, RelativeSource={RelativeSource AncestorType=local:FactorModifiableControl}}"
                 Modifier="{Binding .}"
@@ -435,7 +439,7 @@
 
 
     <Style TargetType="{x:Type local:FactorModifiableControl}">
-        <Setter Property="EditTemplate" Value="{StaticResource Tpl.Changeable.Element}" />
+        <Setter Property="EditTemplate" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:FactorModifiableControl}">
