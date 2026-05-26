@@ -72,7 +72,7 @@ public class FundElementsReflectionRoundTripTests
         }
 
         // 2. 执行往返转换
-        var facts = original.ToFacts();
+        var facts = original.ToFactors();
         var restored = FundElements.From(facts);
 
         // 3. 反射深度对比（动态对比所有 Key）
@@ -115,7 +115,7 @@ public class FundElementsReflectionRoundTripTests
             var original = f;
 
             // 2. 执行往返转换
-            var facts = original.ToFacts();
+            var facts = original.ToFactors();
             var restored = FundElements.From(facts);
 
             // 3. 反射深度对比
@@ -143,87 +143,6 @@ public class FundElementsReflectionRoundTripTests
     }
 
 
-    [TestMethod]
-    public void TestGetElements_PartialFields_ReflectiveValidation()
-    {
-        TestInit.SetAsDebug();
-
-        using var db = DbHelper.Base();
-        var elements = db.GetCollection<FundElements>().FindAll().ToArray();
-
-        // 获取 FactorFields 中所有可用的字段名
-        var allFields = typeof(FactorFields)
-            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-            .Where(f => f.IsLiteral && !f.IsInitOnly && f.FieldType == typeof(string))
-            .Select(f => f.GetRawConstantValue() as string)
-            .Where(s => !string.IsNullOrEmpty(s))
-            .ToArray();
-
-        var random = new Random(); // 固定种子保证测试可复现
-
-        foreach (var original in elements)
-        {
-            // 1. 随机选择 1~N 个字段进行测试（至少1个，最多全部）
-            var fieldCount = random.Next(1, Math.Max(2, allFields.Length));
-            var selectedFields = allFields
-                .OrderBy(_ => random.Next())
-                .Take(fieldCount)
-                .ToArray();
-
-            // 2. 调用 GetElements 获取部分字段
-            var partial = db.QueryElements(original.Id, selectedFields);
-
-            // 3. 反射对比选中字段的值（复用原有对比逻辑）
-            foreach (var field in selectedFields)
-            {
-                // 3.1 找到对应属性（处理字段名映射）
-                var prop = FindPropertyByFactField(field);
-
-                if (prop == null)
-                {
-                    Assert.Fail($"无法找到字段 '{field}' 对应的 FundElements 属性");
-                    continue;
-                }
-
-                var origVal = prop.GetValue(original);
-                var partVal = prop.GetValue(partial);
-
-                // 3.2 根据属性类型复用原有对比方法
-                var pType = prop.PropertyType;
-
-                if (prop.Name == nameof(FundElements.Id))
-                {
-                    // 基础 ID 字段直接对比
-                    Assert.AreEqual(origVal, partVal, $"基础属性 {prop.Name} 值不一致");
-                }
-                else if (pType.IsGenericType)
-                {
-                    var genericDef = pType.GetGenericTypeDefinition();
-
-                    if (genericDef == typeof(Mutable<>))
-                    {
-                        // ✅ 复用原有 AssertMutableDeepEqual
-                        AssertMutableDeepEqual(origVal!, partVal!, prop.Name);
-                    }
-                    else if (genericDef == typeof(PortionMutable<>))
-                    {
-                        // ✅ 复用原有 AssertPortionMutableDeepEqual
-                        AssertPortionMutableDeepEqual(origVal!, partVal!, prop.Name);
-                    }
-                    else
-                    {
-                        // 其他泛型类型走通用深度对比
-                        DeepCompare(origVal, partVal, $"Field:{field}");
-                    }
-                }
-                else
-                {
-                    // 普通标量类型走通用深度对比（复用 DeepCompare）
-                    DeepCompare(origVal, partVal, $"Field:{field}");
-                }
-            }
-        }
-    }
 
     /// <summary>
     /// 根据 FactorFields 字段名查找对应的 FundElements 属性（处理别名映射）

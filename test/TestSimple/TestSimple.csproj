@@ -12,6 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Utility\Logging\Logging.csproj" />
+    <ProjectReference Include="..\..\src\Utility\Logg\LogGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all" />
     <ProjectReference Include="..\..\src\Utility\Utilities\Utilities.csproj" />
     <ProjectReference Include="..\Initial\Initial.csproj" />
   </ItemGroup>
