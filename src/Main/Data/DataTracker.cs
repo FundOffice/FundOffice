@@ -440,7 +440,7 @@ public static partial class DataTracker
 
     //}
 
-    
+
     public static void OnDailyValue(IEnumerable<DailyValue> data)
     {
         var dailyValues = data.Where(x => x.NetValue != 0).ToList();
@@ -643,7 +643,7 @@ public static partial class DataTracker
         if (changed.PropertyName == nameof(Fund.ClearDate) && changed.New != default)
             DataHub.Push(changed);
     }
-   
+
 
     public static void OnEntityChanged(LiquidationFlow d)
     {
@@ -679,13 +679,14 @@ public static partial class DataTracker
         //    WeakReferenceMessenger.Default.Send(new TransferRecordLinkOrderMessage(item.Id, item.OrderId));
     }
 
-    
+
     public static void OnBatchTransferRequest(IList<TransferRequest> data)
     {
         // 匹配订单
         using var db = DbHelper.Base();
 
         SaveRequests(db, data);
+
 
         try { PostHandleTransferRequests(db, data); }
         catch (Exception ex) { Logg.Error($"{ex}"); }
@@ -696,7 +697,7 @@ public static partial class DataTracker
 
     }
 
-    
+
     public static void OnBatchTransferRecord(IList<TransferRecord> records)
     {
         if (records.Count == 0) return;
@@ -712,7 +713,7 @@ public static partial class DataTracker
         DataHub.Push(records);
     }
 
-    
+
     public static void OnBatchTransferOrder(IList<TransferOrder> data)
     {
         // 匹配订单
@@ -803,6 +804,14 @@ public static partial class DataTracker
             db.Execute($"UPDATE {nameof(TransferRequest)} SET IsCanceled = true WHERE FundId={can.FundId} AND InvestorId={can.InvestorId} AND RequestDate=@date AND RequestShare={can.RequestAmount} AND RequestShare={can.RequestShare}", BsonMapper.Global.ToDocument(can.RequestDate));
         }
 
+        // 获取删除的订单，更新 IList<TransferRequest> data
+        var dates = data.Select(x => x.RequestDate.DayNumber).Distinct().Select(x => new BsonValue(x)).ToArray();
+        var olds = db.GetCollection<TransferRequest>().Query().Where(Query.In("RequestDate.DayNumber", dates)).Select(x => x.Id).ToArray();
+        if(olds.Length > 0)
+        {
+            var del = olds.ExceptBy(data.Select(x => x.Id), x => x).Select(x => new BsonValue(x)).ToList();
+            db.GetCollection<TransferRequest>().UpdateMany($"{{ {nameof(TransferRequest.IsCanceled)} : True }}", Query.In("_id", del));
+        }
 
         db.GetCollection<TransferRequest>().Upsert(data);
 
@@ -1543,7 +1552,7 @@ public static partial class DataTracker
 
 
 
-    
+
     public static void OnNewNotice(IDisclosureNotice notice)
     {
         using var db = DbHelper.Base();
@@ -1579,7 +1588,7 @@ public static partial class DataTracker
         }
     }
 
-    
+
     public static void OnNewDay(NewDay today)
     {
         DataHub.Push(today);
