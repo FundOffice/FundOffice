@@ -1,7 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using LiteDB;
-using LiteDB.Engine;
 using MoT;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -34,27 +32,18 @@ public partial class LogViewModel : ObservableObject
     public LogViewModel()
     {
         var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs.db");
-        using var db = new LiteDatabase($@"FileName={path};ReadOnly=true");
 
         try
         {
             CommonLogs = [.. Logg.Read().OrderByDescending(x => x.Timestamp).Take(100).ToArray()];
             //CommonLogs = [.. db.GetCollection("Logg").Query().OrderByDescending(x => x["_t"].AsDateTime).Limit(100).ToEnumerable().Select(x => To(x))];
         }
-        catch (LiteException e)
+        catch (Exception e)
         {
-            using (var engine = new LiteEngine(path))
-            {
-                engine.Rebuild(); // 重建到新文件
-            }
+            Logg.Error(e);
         }
     }
-
-
-    private static LogMessage To(BsonDocument x)
-    {
-        return new LogMessage(x["_t"].AsDateTime, x[nameof(LogMessage.File)].AsString, x[nameof(LogMessage.Method)].AsString, x[nameof(LogMessage.Line)].AsInt32, x["_m"].AsString);
-    }
+     
 
     [RelayCommand]
     public void ScrollToEnd()
