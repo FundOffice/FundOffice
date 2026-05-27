@@ -85,169 +85,7 @@ public static partial class DataTracker
     }
 
 
-    //public static void CheckShareIsPair(IEnumerable<Fund> funds)
-    //{
-    //    // 验证最新净值中的份额（Share）与 FundShareRecord 中的份额是否一致
-    //    using var db = DbHelper.Base();
 
-    //    // 遍历所有的基金（funds）
-    //    foreach (var fund in funds)
-    //    {
-    //        // 获取该基金的每日净值数据中，净值大于0的记录，并找到最新日期的记录
-    //        var last = db.GetDailyCollection(fund.Id).Find(x => x.NetValue > 0).MaxBy(x => x.Date);
-
-    //        // 如果没有找到有效的净值记录，则跳过当前基金
-    //        if (last is null) continue;
-
-    //        // 获取基金的 FundShareRecord 记录和 TransferRecord 记录
-    //        var c = db.GetCollection<FundShareRecord>().Find(x => x.FundId == fund.Id);
-    //        var ta = db.GetCollection<TransferRecord>().Find(x => x.FundId == fund.Id);
-
-    //        // 如果没有 TA 记录或 FundShareRecord 数据为空，则添加提示：没有TA数据
-    //        if (!ta.Any())
-    //        {
-    //            FundTips.Add(new FundTip(fund.Id, fund.Name, TipType.FundNoTARecord, "没有TA数据"));
-    //            continue;
-    //        }
-    //        else if (FundTips.FirstOrDefault(x => x.FundId == fund.Id && x.Type == TipType.FundNoTARecord) is FundTip tip) // 清除错误信息
-    //        {
-    //            FundTips.Remove(tip);
-    //            WeakReferenceMessenger.Default.Send(new FundTipMessage(fund.Id));
-    //        }
-
-    //        // 获取 TA 记录中确认日期（ConfirmedDate）最大的日期
-    //        var lta = ta.Max(x => x.ConfirmedDate);
-
-    //        // 如果 FundShareRecord 为空，或者最新记录的日期早于 TA 的最新确认日期，则重建 FundShareRecord
-    //        if (c is null || !c.Any() || c.Max(x => x.Date) < lta)
-    //        {
-    //            db.RebuildFundShareRecord(fund.Id); // 重建该基金的份额记录
-    //            c = db.GetCollection<FundShareRecord>().Find(x => x.FundId == fund.Id); // 重新获取份额记录
-    //        }
-
-    //        // 找到在 FundShareRecord 中，日期不晚于最新净值日期的最后一条记录
-    //        var sh = c.OrderBy(x => x.Date).LastOrDefault(x => x.Date <= last.Date);
-
-    //        // 检查份额是否一致，如果不一致则添加提示：基金份额与估值表不一致
-    //        if (sh!.Share != last.Share)
-    //        {
-    //            FundTips.Add(new FundTip(fund.Id, fund.Name, TipType.FundShareNotPair, "基金份额与估值表不一致"));
-
-    //            // 修改 trustee中的work日期
-    //            using var pd = DbHelper.Platform();
-    //            var rs = pd.GetCollection<TrusteeMethodShotRange>().Find(x => x.Id.EndsWith(nameof(ITrustee.QueryTransferRecords))).ToArray();
-    //            foreach (var item in rs)
-    //            {
-    //                if (item.End > sh.Date)
-    //                    pd.GetCollection<TrusteeMethodShotRange>().Update(new TrusteeMethodShotRange(item.Id, item.Begin, sh.Date));
-    //            }
-
-    //            // 发送基金提示消息（例如用于界面通知）
-    //            WeakReferenceMessenger.Default.Send(new FundTipMessage(fund.Id));
-    //            continue;
-    //        }
-    //        else if (FundTips.FirstOrDefault(x => x.FundId == fund.Id && x.Type == TipType.FundShareNotPair) is FundTip tip) // 清除错误信息
-    //        {
-    //            FundTips.Remove(tip);
-    //            WeakReferenceMessenger.Default.Send(new FundTipMessage(fund.Id));
-    //        }
-
-    //    }
-
-    //}
-    //public static void CheckShareIsPair(int fid)
-    //{
-    //    // 验证最新的净值中份额与share是否一致
-    //    using var db = DbHelper.Base();
-    //    var fund = db.GetCollection<Fund>().FindById(fid);
-
-    //    var last = db.GetDailyCollection(fund.Id).Find(x => x.NetValue > 0).MaxBy(x => x.Date);
-    //    if (last is null)
-    //    {
-    //        WeakReferenceMessenger.Default.Send(new FundTipMessage(fid));
-    //        return;
-    //    }
-    //    var c = db.GetCollection<FundShareRecord>().Find(x => x.FundId == fund.Id);
-    //    var lta = db.GetCollection<TransferRecord>().Find(x => x.FundId == fund.Id).Max(x => x.ConfirmedDate);
-    //    if (c is null || !c.Any() || c.Max(x => x.Date < lta))
-    //    {
-    //        db.RebuildFundShareRecord(fund.Id);
-    //        c = db.GetCollection<FundShareRecord>().Find(x => x.FundId == fund.Id);
-    //    }
-
-    //    if (c is null || !c.Any())
-    //    {
-    //        FundTips.Add(new FundTip(fund.Id, fund.Name, TipType.FundNoTARecord, "没有TA数据"));
-    //        WeakReferenceMessenger.Default.Send(new FundTipMessage(fid));
-    //        return;
-    //    }
-
-    //    var sh = c.LastOrDefault(x => x.Date < last.Date);
-
-    //    if (sh?.Share != last.Share)
-    //    {
-    //        FundTips.Add(new FundTip(fund.Id, fund.Name, TipType.FundShareNotPair, "基金份额与估值表不一致"));
-    //        WeakReferenceMessenger.Default.Send(new FundTipMessage(fid));
-    //        return;
-    //    }
-
-    //    FundTips.Remove(x => x.Type == TipType.FundShareNotPair);
-    //    WeakReferenceMessenger.Default.Send(new FundTipMessage(fid));
-
-    //    DataValidationInfo validationInfo = new DataValidationInfo
-    //    {
-    //        Related = [new(typeof(DailyValue), 0, fid), new(typeof(TransferRecord), 0, fid)]
-    //    };
-    //}
-
-
-    //public static void CheckIsExpired(IEnumerable<Fund> funds)
-    //{
-    //    using var db = DbHelper.Base();
-    //    var cur = DateOnly.FromDateTime(DateTime.Today);
-
-    //    var coll = db.GetCollection<FundElements>();
-    //    foreach (var fund in funds.Where(x => x.Status == FundStatus.Normal || x.Status == FundStatus.StartLiquidation))
-    //    {
-    //        var ele = coll.FindById(fund.Id);
-    //        if (ele is not null)
-    //        {
-    //            var expire = ele.ExpirationDate.Value;
-
-    //            if (expire != default && cur > expire)
-    //            {
-    //                FundTips.Add(new FundTip(fund.Id, fund.Name, TipType.OverDue, $"基金已超期{cur.DayNumber - expire.DayNumber}天"));
-    //                WeakReferenceMessenger.Default.Send(new FundTipMessage(fund.Id));
-    //            }
-    //        }
-    //    }
-    //}
-
-    //public static void CheckInvestorBalance()
-    //{
-    //    using var db = DbHelper.Base();
-    //    var coll = db.GetCollection<InvestorBalance>().FindAll().OrderBy(x => x.Id).ToList();
-    //    var tas = db.GetCollection<TransferRecord>().FindAll().ToList();
-    //    IEnumerable<(long key, DateOnly date)> ta = tas.Select(x => new { id = InvestorBalance.MakeId(x.InvestorId, x.FundId), date = x.ConfirmedDate }).
-    //        GroupBy(x => x.id).Select(x => (key: x.Key, date: x.Max(y => y.date))).OrderBy(x => x.key);
-
-    //    foreach (var item in ta)
-    //    {
-    //        var o = coll.FirstOrDefault(x => x.Id == item.key);
-    //        if (o is null || o.Date != item.date)
-    //        {
-    //            var (c, f) = InvestorBalance.ParseId(item.key);
-    //            var tf = tas.Where(x => x.InvestorId == c && x.FundId == f);
-    //            var share = tf.Sum(x => x.ShareChange());
-    //            var deposit = tf.Where(x => x.Type switch { TransferRecordType.Subscription or TransferRecordType.Purchase or TransferRecordType.MoveIn or TransferRecordType.SwitchIn or TransferRecordType.TransferIn => true, _ => false }).Sum(x => x.ConfirmedNetAmount);
-    //            var withdraw = tf.Where(x => x.Type switch { TransferRecordType.Redemption or TransferRecordType.Redemption or TransferRecordType.MoveOut or TransferRecordType.SwitchOut or TransferRecordType.TransferOut or TransferRecordType.Distribution => true, _ => false }).Sum(x => x.ConfirmedNetAmount);
-
-    //            db.GetCollection<InvestorBalance>().Upsert(new InvestorBalance { FundId = f, InvestorId = c, Share = share, Deposit = deposit, Withdraw = withdraw, Date = tf.Max(x => x.ConfirmedDate) });
-    //        }
-    //    }
-
-
-    //}
 
     /// <summary>
     /// 检查TA中的fundid,investor id是不是0
@@ -807,7 +645,7 @@ public static partial class DataTracker
         // 获取删除的订单，更新 IList<TransferRequest> data
         var dates = data.Select(x => x.RequestDate.DayNumber).Distinct().Select(x => new BsonValue(x)).ToArray();
         var olds = db.GetCollection<TransferRequest>().Query().Where(Query.In("RequestDate.DayNumber", dates)).Select(x => x.Id).ToArray();
-        if(olds.Length > 0)
+        if (olds.Length > 0)
         {
             var del = olds.ExceptBy(data.Select(x => x.Id), x => x).Select(x => new BsonValue(x)).ToList();
             db.GetCollection<TransferRequest>().UpdateMany($"{{ {nameof(TransferRequest.IsCanceled)} : True }}", Query.In("_id", del));
@@ -930,7 +768,7 @@ public static partial class DataTracker
 
         //MapRequestRecord(data);
 
-        MapRequestToOrder();
+        MapRequestToOrder3();
 
         var handled = data.Select(x => x.Id).ToList();
         db.GetCollection<PostHandleIds>("ph_request").DeleteMany(x => handled.Contains(x.Id));
@@ -1279,6 +1117,220 @@ public static partial class DataTracker
         db.Commit();
         WeakReferenceMessenger.Default.Send(msg.AsEnumerable());
     }
+
+
+    public enum MappingResult
+    {
+        Success,               // 匹配成功
+        NoCandidateRequests,   // 找不到对应 Fund/Investor 的未映射申请
+        DateOutOfRange,        // 所有申请日期均早于订单日期
+        NoCompatibleRequests,  // 日期匹配但未通过 IsCompatible 校验
+        AmountMismatch,        // 金额汇总不一致
+        ShareMismatch,         // 份额汇总不一致
+        UnsupportedType        // 不支持的订单类型
+    }
+
+    public class OrderMappingLog
+    {
+        public long OrderId { get; set; }
+        public int FundId { get; set; }
+        public int InvestorId { get; set; }
+        public DateOnly OrderDate { get; set; }
+        public TransferOrderType OrderType { get; set; }
+        public decimal OrderNumber { get; set; } // 订单目标金额或份额
+
+        public MappingResult Result { get; set; }
+        public string? FailureReason { get; set; }
+
+        // 记录匹配成功的明细，便于排查
+        public int[]? MatchedRequestIds { get; set; }
+        public decimal MatchedSum { get; set; }
+    }
+    
+    public static void MapRequestToOrder3()
+    {
+        // 辅助方法：简化日志记录代码
+        void LogFailure(TransferOrder o, MappingResult result, string reason)
+        {
+            Logg.Write(new OrderMappingLog
+            {
+                OrderId = o.Id,
+                FundId = o.FundId,
+                InvestorId = o.InvestorId,
+                OrderDate = o.Date,
+                OrderType = o.Type,
+                OrderNumber = o.Number,
+                Result = result,
+                FailureReason = reason
+            });
+        }
+
+
+        using var db = DbHelper.Base();
+
+        // 1. 获取未映射的数据
+        var unmappedRequests = db.GetCollection<TransferRequest>().Find(x => x.OrderId == 0).ToList();
+        var mappedOrderIds = db.GetCollection<TransferRequest>().Query().Where(x => x.OrderId != 0).Select(x => x.OrderId).ToList();
+        var unmappedOrders = db.GetCollection<TransferOrder>().Find(x => !mappedOrderIds.Contains(x.Id)).ToList();
+
+        var messages = new List<LinkOrderMessage>();
+        var requestsToUpdate = new List<TransferRequest>();
+
+        // 2. 按 (FundId, InvestorId) 分组，并在组内按日期严格排序
+        var orderGroups = unmappedOrders
+            .GroupBy(x => (x.FundId, x.InvestorId))
+            .ToDictionary(g => g.Key, g => g.OrderBy(x => x.Date).ToList());
+
+        var requestGroups = unmappedRequests
+            .GroupBy(x => (x.FundId, x.InvestorId))
+            .ToDictionary(g => g.Key, g => g.OrderBy(x => x.RequestDate).ToList());
+
+        db.BeginTrans();
+        try
+        {
+            // 3. 遍历 Order 组，按 Key 进行 Left Join
+            foreach (var orderKvp in orderGroups)
+            {
+                var key = orderKvp.Key;
+                var orders = orderKvp.Value;
+
+                // 如果该投资人没有未映射的 Request，直接记录失败并跳过
+                if (!requestGroups.TryGetValue(key, out var requests) || requests.Count == 0)
+                {
+                    foreach (var o in orders)
+                        LogFailure(o, MappingResult.NoCandidateRequests, "该 Fund/Investor 无未映射的 Request");
+                    continue;
+                }
+
+                // 按日期分组
+                var reqByDate = requests.GroupBy(x => x.RequestDate).OrderBy(g => g.Key).ToArray();
+
+                // 【核心优化】：使用 For 循环遍历 Order，j 作为辅助指针在外部声明
+                int jb = 0;
+                for (int i = 0; i < orders.Count; i++)
+                {
+                    var o = orders[i];
+                    bool mapped = false;
+                    int maxMiss = 2; // 最多允许几次request不匹配，防止无限匹配
+                    for (int j = jb; j < reqByDate.Length; j++)
+                    {
+                        var dv = reqByDate[j];
+                        // 推进 j，跳过所有日期早于当前 Order 的 Request
+                        if (dv.Key <= o.Date)
+                        {
+                            ++jb;
+                            continue;
+                        }
+
+                        // 开放日比较
+                        if (o.OpenDate != default && o.OpenDate < dv.Key)
+                        {
+                            LogFailure(o, MappingResult.NoCompatibleRequests, $"截止开放日，没有找到可能的 request");
+                            break;
+                        }
+
+                        // (4) 业务过滤与匹配
+                        var may = dv.Where(x => x.IsCompatible(o)).ToList();
+
+                        if (may.Count == 0)
+                        {
+                            --maxMiss;
+                            if (maxMiss <= 0)
+                            {
+                                LogFailure(o, MappingResult.NoCompatibleRequests, $"多次不匹配的 request，不再匹配");
+                                break;
+                            }
+
+                            LogFailure(o, MappingResult.NoCompatibleRequests, $"找到 {dv.Key:yyyy-MM-dd} 的申请，但未通过 IsCompatible 校验");
+                            continue;
+                        }
+
+
+                        // =================  =================
+                        bool pair = false;
+                        decimal currentSum = 0;
+
+                        switch (o.Type)
+                        {
+                            case TransferOrderType.FirstTrade:
+                            case TransferOrderType.Buy:
+                            case TransferOrderType.Amount:
+                            case TransferOrderType.RemainAmout:
+                                currentSum = may.Sum(x => x.RequestAmount);
+                                pair = o.Number == currentSum;
+                                break;
+                            case TransferOrderType.Share:
+                                currentSum = may.Sum(x => x.RequestShare);
+                                pair = o.Number == currentSum;
+                                break;
+                            default:
+                                LogFailure(o, MappingResult.UnsupportedType, $"不支持的订单类型: {o.Type}");
+                                break;
+                        }
+
+                        if (pair)
+                        {
+                            // 匹配成功
+                            Logg.Write(new OrderMappingLog
+                            {
+                                OrderId = o.Id,
+                                FundId = o.FundId,
+                                InvestorId = o.InvestorId,
+                                OrderDate = o.Date,
+                                OrderType = o.Type,
+                                OrderNumber = o.Number,
+                                Result = MappingResult.Success,
+                                MatchedSum = currentSum,
+                                MatchedRequestIds = may.Select(x => x.Id).ToArray()
+                            });
+
+                            foreach (var item in may)
+                            {
+                                item.OrderId = o.Id;
+                                messages.Add(new LinkOrderMessage(0, item.OrderId, item.Id));
+                                requestsToUpdate.Add(item);
+                            }
+
+                            mapped = true;
+                            break;
+                        }
+                        else
+                        {
+                            // 金额/份额不匹配
+                            var resultType = o.Type == TransferOrderType.Share ? MappingResult.ShareMismatch : MappingResult.AmountMismatch;
+                            LogFailure(o, resultType, $"找到 {dv.Key:yyyy-MM-dd} 的申请，但汇总不一致。期望: {o.Number}, 实际: {currentSum}");
+                            break;
+                        }
+                    }
+
+
+                    // (2) 如果 Request 已经耗尽，说明当前及后续的所有 Order 都无法匹配了
+                    if (!mapped)
+                        LogFailure(o, MappingResult.DateOutOfRange, "组内 Request 已耗尽，无更晚的 Request");
+                }
+            }
+
+            // 4. 批量更新数据库
+            if (requestsToUpdate.Count > 0)
+            {
+                db.GetCollection<TransferRequest>().Update(requestsToUpdate);
+            }
+
+            db.Commit();
+        }
+        catch (Exception)
+        {
+            db.Rollback();
+            throw;
+        }
+
+        if (messages.Count > 0)
+        {
+            WeakReferenceMessenger.Default.Send(messages.AsEnumerable());
+        }
+
+    }
+
 
 
     /// <summary>
