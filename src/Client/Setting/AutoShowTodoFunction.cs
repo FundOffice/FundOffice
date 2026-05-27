@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using FMO.Models;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Windows.Interop;
 
 namespace FMO.Settings;
 
@@ -16,6 +18,8 @@ internal class AutoShowTodoFunction : ISettingFunction
 
     private CancellationTokenSource? _cancel;
 
+    private nint mainHwnd;
+
     public void Dispose()
     {
 
@@ -24,7 +28,8 @@ internal class AutoShowTodoFunction : ISettingFunction
     public void Init()
     {
         // Initialization logic for AutoShowTodoFunction
-
+       
+       App.Current.Dispatcher.Invoke(() => mainHwnd = new WindowInteropHelper(App.Current.MainWindow).Handle);
     }
 
     private void MainWindow_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -46,7 +51,10 @@ internal class AutoShowTodoFunction : ISettingFunction
                 if (Stopwatch.GetTimestamp() - _lastTime > 60 * Stopwatch.Frequency)
                 {
                     _lastTime = Stopwatch.GetTimestamp();
-                    WeakReferenceMessenger.Default.Send(new ShowTodoMessage());
+               
+                    var foregroundHwnd = GetForegroundWindow();
+                    if (foregroundHwnd == mainHwnd)
+                        WeakReferenceMessenger.Default.Send(new ShowTodoMessage());
                 }
             }
         });
@@ -59,6 +67,11 @@ internal class AutoShowTodoFunction : ISettingFunction
         App.Current.MainWindow.PreviewMouseMove -= MainWindow_PreviewMouseMove;
         _cancel?.Cancel();
     }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+   
 }
 
 public class ShowTodoMessage;
