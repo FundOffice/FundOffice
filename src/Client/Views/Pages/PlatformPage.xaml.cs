@@ -16,6 +16,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using Utilities;
 
 namespace FMO;
 
@@ -482,7 +483,13 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
                 UseProxy = value,
                 Proxy = new WebProxy(ProxyViewModel.Address) { Credentials = string.IsNullOrWhiteSpace(ProxyViewModel.User) ? null : new NetworkCredential(ProxyViewModel.User, ProxyViewModel.Password) }
             });
-            LocalIP = await client.GetStringAsync("https://ifconfig.me/ip");
+            try { LocalIP = (await client.GetStringAsync("https://api-ipv4.ip.sb/ip")).Trim(); }
+            catch { LocalIP = await client.GetStringAsync("https://ifconfig.me/ip"); }
+        }
+        catch (HttpRequestException e) when (e.Message.Contains("积极拒绝"))
+        {
+            Toast.Error("代理不可用");
+            UseProxyForTrustee = false;
         }
         catch
         {

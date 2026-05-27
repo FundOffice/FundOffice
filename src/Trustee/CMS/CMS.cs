@@ -370,9 +370,14 @@ public partial class CMS : TrusteeApiBase
                 }
             }
         }
+        catch(HttpRequestException e)
+        {
+            Logg.Error(e, $"{Identifier} {caller}");
+            return new(ReturnCode.Network, null);
+        }
         catch (Exception e)
         {
-            Log(caller, null, e.Message);
+            Logg.Error(e, $"{Identifier} {caller}");
             return new(ReturnCode.Unknown, null);
         }
 
@@ -473,7 +478,7 @@ public partial class CMS : TrusteeApiBase
         try
         {
             var r = await QuerySubjectFundMappings();
-            Logg.Information($"VerifyConfigOverride: {Identifier} => {r.Code}, {r.Data?.Count ?? 0} items");
+            Logg.Information($"{Identifier} => {r.Code}");
             return r.Code == ReturnCode.Success;
         }
         catch (Exception e) { Logg.Error(e); return false; }

@@ -29,14 +29,13 @@
                     <shared:CopyableTextBlock
                         Margin="8"
                         Foreground="Black"
-                        Text="{Binding Message}" />
+                        Text="{Binding Exception}" />
                 </DataTemplate>
             </DataGrid.RowDetailsTemplate>
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Timestamp, StringFormat=yyyy-MM-dd HH:mm:ss}" Header="时间" />
                 <DataGridTextColumn Binding="{Binding Caller}" Header="Method" />
                 <DataGridTextColumn Binding="{Binding Message}" Header="Log" />
-                <DataGridTextColumn Binding="{Binding Exception}" Header="" />
             </DataGrid.Columns>
         </DataGrid>
     </Grid>
