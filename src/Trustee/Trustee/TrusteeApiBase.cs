@@ -57,6 +57,7 @@ public abstract class TrusteeApiBase : ITrustee
         {
             IsValid = true;
             var r = await VerifyConfigOverride();
+
             SetStatus(r);
             return r;
         }
