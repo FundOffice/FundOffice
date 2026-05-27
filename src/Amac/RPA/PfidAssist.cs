@@ -1,5 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.OCR;
 using FMO.TPL;
@@ -7,6 +7,7 @@ using FMO.Utilities;
 using Microsoft.CodeAnalysis;
 using Microsoft.Playwright;
 using MiniExcelLibs;
+using MoT;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -284,7 +285,7 @@ public static class PfidAssist
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
         }
 
 
@@ -443,7 +444,7 @@ public static class PfidAssist
                 }
                 catch (Exception e)
                 {
-                    LogEx.Error(e);
+                    Logg.Error(e);
                 }
             }
 
@@ -593,7 +594,7 @@ public static class PfidAssist
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
         }
 
 

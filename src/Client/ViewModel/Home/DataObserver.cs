@@ -1,7 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
+using MoT;
 using System.Collections.ObjectModel;
 
 namespace FMO;
@@ -34,7 +35,7 @@ public class TipsObserver : IRecipient<IDataTip>, IRecipient<DataTipRemove>
         {
             if (Tips.FirstOrDefault(x => x.Id == message.Id) is IDataTip tip)
                 Tips.Remove(tip);
-            else LogEx.Error($"Remove Tip {message.Id} Missing");
+            else Logg.Error($"Remove Tip {message.Id} Missing");
         }));
     }
 }

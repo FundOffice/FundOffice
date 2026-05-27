@@ -1,8 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
-using Serilog;
+using MoT;
 
 namespace FMO.Schedule;
 
@@ -80,11 +80,11 @@ public abstract class Mission
         {
             log += $"Error {e}";
             r = new(false, $"Mission Error {Id} {e}");
-            LogEx.Error($"Mission Error {Id} {e}");
+            Logg.Error(e, $"Mission Error {Id}");
 
             WeakReferenceMessenger.Default.Send(new MissionFailedMessage(Id, e));
             //TodoService.Register(new JustNotifyTodo { CreateTime = now, Message = $"Mission Error {Id} {e}" });
-            //WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"[{Id}]任务执行出错，请查看log"));
+            //WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Error, $"[{Id}]任务执行出错，请查看log"));
         }
 
 

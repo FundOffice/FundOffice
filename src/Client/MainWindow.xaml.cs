@@ -1,12 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Settings;
 using FMO.Todo;
 using FMO.Utilities;
-using Serilog;
+using MoT;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Reflection;
@@ -166,7 +166,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
             }
             catch (Exception e)
             {
-                LogEx.Error($"Failed to load main icon: {e}");
+                Logg.Error($"Failed to load main icon: {e}");
             }
         }
 
@@ -454,7 +454,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
     [RelayCommand]
     public void test()
     {
-        LogEx.Warning(DateTime.Now.ToString());
+        Logg.Warning(DateTime.Now.ToString());
     }
 
 
@@ -500,16 +500,16 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
     {
         switch (message.Level)
         {
-            case LogLevel.Info:
+            case ToastLevel.Information:
                 HandyControl.Controls.Growl.Info(message.Message);
                 break;
-            case LogLevel.Warning:
+            case ToastLevel.Warning:
                 HandyControl.Controls.Growl.Warning(message.Message);
                 break;
-            case LogLevel.Error:
+            case ToastLevel.Error:
                 HandyControl.Controls.Growl.Error(message.Message);
                 break;
-            case LogLevel.Success:
+            case ToastLevel.Success:
                 HandyControl.Controls.Growl.Success(message.Message);
                 break;
             default:
@@ -553,7 +553,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
         var vm = TodoViewModelFactory.Create(message);
         if (vm is null)
         {
-            LogEx.Error($"{message.GetType()} 无法创建ViewModel");
+            Logg.Error($"{message.GetType()} 无法创建ViewModel");
             return;
         }
 

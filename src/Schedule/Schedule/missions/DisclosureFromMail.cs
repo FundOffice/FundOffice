@@ -1,11 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using FMO.Disclosure;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.PDF;
 using FMO.Utilities;
 using MimeKit;
-using Serilog;
+
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
@@ -81,7 +81,7 @@ public class DisclosureFromMailMission : MailMission
             }
             catch (Exception ex)
             {
-                LogEx.Error($"Mail 获取信批错误 {ex}");
+                Logg.Error($"Mail 获取信批错误 {ex}");
             }
 
             progress += unit;
@@ -229,7 +229,7 @@ public class DisclosureFromMailMission : MailMission
         }
         else if (PdfHelper.Merge(ext.Select(x => x.Stream).ToArray()) is Stream nes) // 有些托管会发多个Pdf，把它们合并成一个
             fp.Pdf = new SimpleFile { File = FileMeta.Create(nes, $"{fundName}_{EnumDescriptionTypeConverter.GetEnumDescription(type.Key)}_{fp.ReportDate:yyyyMMdd}.pdf") };
-        else LogEx.Error($"{fp.Name} pdf 设置出错，有以下文件，但不符合条件 {string.Join('\n', ext.Select(x => x.FileName))}");
+        else Logg.Error($"{fp.Name} pdf 设置出错，有以下文件，但不符合条件 {string.Join('\n', ext.Select(x => x.FileName))}");
     }
 
     private MemoryStream Copy(IMimeContent c)

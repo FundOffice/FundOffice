@@ -1,8 +1,9 @@
 ﻿using FMO.AMAC.Direct;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using MiniExcelLibs;
+using MoT;
 
 namespace FMO.Disclosure;
 
@@ -163,7 +164,7 @@ public class PFIDDisclosureChannel : IDisclosureChannel
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
         }
 
         return false;

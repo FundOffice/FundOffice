@@ -1,4 +1,5 @@
-﻿using FMO.Logging;
+﻿
+using MoT;
 using Org.BouncyCastle.Asn1.GM;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Engines;
@@ -102,7 +103,7 @@ public static class Sm2Utils
         }
         catch (Exception ex)
         {
-            LogEx.Error($"SM2加密失败: {ex.Message}");
+            Logg.Error($"SM2加密失败: {ex.Message}");
             return "";
         }
     }

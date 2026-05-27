@@ -1,9 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
+using MoT;
 using System.IO;
 using System.Windows;
 
@@ -48,7 +49,7 @@ partial class TransferOrderViewModel : ITransferViewModel
         var order = db.GetCollection<TransferOrder>().FindById(Id);
         if (order is null)
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"订单【{Id}】不存在"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, $"订单【{Id}】不存在"));
             return;
         }
 
@@ -76,7 +77,7 @@ partial class TransferOrderViewModel : ITransferViewModel
                 FileMeta.CreateHardLink(@$"files\hardlink\{f.Id}", tmp);
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(tmp) { UseShellExecute = true });
         }
-        catch (Exception e) { LogEx.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "无法打开文件")); }
+        catch (Exception e) { Logg.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "无法打开文件")); }
     }
 
 

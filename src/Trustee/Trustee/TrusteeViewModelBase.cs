@@ -1,8 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
+using MoT;
 using System.ComponentModel;
 
 namespace FMO.Trustee;
@@ -83,11 +84,11 @@ public abstract partial class TrusteeViewModelBase<T> : TrusteeViewModelBase, IT
     public void SaveConfig()
     {
         try { SaveConfigOverride(); }
-        catch (Exception e) { LogEx.Error(e); }
+        catch (Exception e) { Logg.Error(e); }
 
         ShowConfigSetting = false;
 
-        Task.Run(async () => { var r = await Assist.VerifyConfig(); WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"{Assist.Title}配置校验{(r ? "成功" : "失败")}")); });
+        Task.Run(async () => { var r = await Assist.VerifyConfig(); WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"{Assist.Title}配置校验{(r ? "成功" : "失败")}")); });
     }
 
 
@@ -99,7 +100,7 @@ public abstract partial class TrusteeViewModelBase<T> : TrusteeViewModelBase, IT
         {
             Assist.IsEnabled = IsEnabled;
             SaveConfigOverride();
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"托管API【{Title}】已{(IsEnabled?"启":"禁")}用"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"托管API【{Title}】已{(IsEnabled?"启":"禁")}用"));
         }
     }
 }

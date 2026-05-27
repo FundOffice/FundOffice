@@ -1,9 +1,10 @@
-﻿using FMO.Logging;
+﻿
 using FMO.Models;
 using FMO.Utilities;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using MoT;
 using System.Text.RegularExpressions;
 
 namespace FMO.Disclosure;
@@ -128,7 +129,7 @@ public class EmailDisclosureChannel : IDisclosureChannel
             {
                 failed = true;
                 record.Records[inv.Id] = new(inv.Id, "", false);
-                LogEx.Error($"邮件信批{notice.Name}，发送邮件给投资人 {inv.Name} 失败: {ex.Message}");
+                Logg.Error($"邮件信批{notice.Name}，发送邮件给投资人 {inv.Name} 失败: {ex.Message}");
             }
         }
 

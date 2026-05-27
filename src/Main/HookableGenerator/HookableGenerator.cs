@@ -110,7 +110,7 @@ public class DataHubGenerator : IIncrementalGenerator
         sb.AppendLine("#pragma warning disable CS8669");
         sb.AppendLine("using System;");
         sb.AppendLine("using System.Threading.Tasks;");
-        sb.AppendLine("using FMO.Logging;");
+        sb.AppendLine("");
 
         // 📦 动态生成 using 引用（去重、排序、过滤默认命名空间）
         var defaultUsings = new HashSet<string>

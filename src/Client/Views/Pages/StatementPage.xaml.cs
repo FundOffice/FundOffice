@@ -1,10 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.TPL;
 using FMO.Utilities;
+using MoT;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
@@ -46,7 +47,7 @@ public partial class StatementPageViewModel : ObservableObject
         var context = new ExporterWindowViewModel(ExportTypeFlag.MultiFundSummary);
         if (context.Templates.Length == 0)
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "没有可用的模板或者模板已被删除"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "没有可用的模板或者模板已被删除"));
             return;
         }
 
@@ -65,7 +66,7 @@ public partial class StatementPageViewModel : ObservableObject
         var context = new ExporterWindowViewModel(ExportTypeFlag.MultiFundElementSheet);
         if (context.Templates.Length == 0)
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "没有可用的模板或者模板已被删除"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "没有可用的模板或者模板已被删除"));
             return;
         }
 
@@ -128,7 +129,7 @@ public partial class StatementPageViewModel : ObservableObject
                     }
                     catch (Exception er)
                     {
-                        LogEx.Error(er);
+                        Logg.Error(er);
                         Toast.Warning($"导入失败: {Path.GetFileNameWithoutExtension(p)}");
                     }
                 }

@@ -1,9 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.TPL;
 using FMO.Utilities;
+using MoT;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -128,7 +129,7 @@ public partial class SheetExportWindowViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             Toast.Warning("导出报告失败");
         }
         App.Current.Windows[^1].Close();

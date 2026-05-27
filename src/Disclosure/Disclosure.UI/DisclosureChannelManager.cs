@@ -1,5 +1,6 @@
-using FMO.Logging;
+
 using FMO.Utilities;
+using MoT;
 
 namespace FMO.Disclosure;
 
@@ -29,7 +30,7 @@ public static class DisclosureChannelManager
         foreach (var item in ins)
             DisclosureService.AddToQueue(item);
 
-        LogEx.Information($"恢复信批队列：{string.Join('\n', ins.Select(x => $"{x.Channel}-{x.Type}-{x.NoticeId}"))}");
+        Logg.Information($"恢复信批队列：{string.Join('\n', ins.Select(x => $"{x.Channel}-{x.Type}-{x.NoticeId}"))}");
 
 
         DisclosureService.StartWorker();

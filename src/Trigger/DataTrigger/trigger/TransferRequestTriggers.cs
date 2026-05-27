@@ -1,9 +1,10 @@
-﻿using FMO.Logging;
+﻿
 using FMO.Models;
 using FMO.Settings;
 using FMO.Todo;
 using FMO.Utilities;
 using LiteDB;
+using MoT;
 
 namespace FMO.Trigger;
 
@@ -42,7 +43,7 @@ public partial class HugeRedemptionMonitor : ITracker<IEnumerable<TransferReques
                 var dv = db.GetDailyCollection(fv.Key).FindOne(x => x.Date == openday);
                 if (dv is null || dv.NetAsset == 0)
                 {
-                    LogEx.Warning($"基金净值数据异常，无法进行巨额赎回监控，基金：{fundName}，日期：{openday}");
+                    Logg.Warning($"基金净值数据异常，无法进行巨额赎回监控，基金：{fundName}，日期：{openday}");
                     continue;
                 }
 
@@ -58,7 +59,7 @@ public partial class HugeRedemptionMonitor : ITracker<IEnumerable<TransferReques
                 {
 
                     TodoService.Register(new FundElementMissingTodo { FundCode = code, FundName = fundName, Missing = "巨额赎回" });
-                    LogEx.Warning($"基金巨额赎回监控未设置阈值，无法进行监控，基金：{fundName}");
+                    Logg.Warning($"基金巨额赎回监控未设置阈值，无法进行监控，基金：{fundName}");
                     continue;
                 }
 

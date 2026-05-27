@@ -159,7 +159,7 @@ public sealed class ObserverGenerator : IIncrementalGenerator
             OnDataArrival(obj);
             {{debouncerCall}}
         }
-        catch (Exception e) { LogEx.Error($"{e}"); }
+        catch (Exception e) { Logg.Error(e); }
         finally { semaphoreSlim.Release(); }
     }
 """;
@@ -183,9 +183,10 @@ public sealed class ObserverGenerator : IIncrementalGenerator
 using System;
 using System.Linq;
 using System.Threading;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
+using MoT;
 
 namespace {{info.Namespace}};
 

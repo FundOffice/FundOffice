@@ -3,12 +3,13 @@ using System.IO;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using Microsoft.Win32;
 using MiniSoftware;
-using Serilog;
+using MoT;
+
 
 namespace FMO;
 
@@ -167,7 +168,7 @@ public partial class FutureOpenFilesGeneratorWindowViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            LogEx.Error($"按模板生成开户材料出错 {e}");
+            Logg.Error($"按模板生成开户材料出错 {e}");
             HandyControl.Controls.Growl.Error("生成文件失败");
         }
     }

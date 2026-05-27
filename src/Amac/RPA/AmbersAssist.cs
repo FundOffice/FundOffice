@@ -1,10 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.TPL;
 using FMO.Utilities;
 using LiteDB;
 using Microsoft.Playwright;
+using MoT;
 using System.Text.RegularExpressions;
 
 namespace FMO.IO.AMAC;
@@ -70,7 +71,7 @@ public static class AmbersAssist
             acc = db.GetCollection<AmacAccount>().FindById("ambers");
             if (string.IsNullOrWhiteSpace(acc?.Name) || string.IsNullOrWhiteSpace(acc?.Password))
             {
-                LogEx.Error("AMAC账号信息不完整，请检查数据库");
+                Logg.Error("AMAC账号信息不完整，请检查数据库");
                 return false;
             }
 
@@ -94,7 +95,7 @@ public static class AmbersAssist
 
             if (!loginResult)
             {
-                LogEx.Error("AMAC登录失败，请检查账号信息");
+                Logg.Error("AMAC登录失败，请检查账号信息");
                 return false;
             }
 
@@ -103,7 +104,7 @@ public static class AmbersAssist
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return false;
         }
 
@@ -165,12 +166,12 @@ public static class AmbersAssist
                 {
                     if (!dic.TryGetValue(item.Code, out var id) || id!.Length < 10)
                     {
-                        LogEx.Warning($"{item.Code} 上报季度更新时没有找到id，请先在基金总览页点击更新");
+                        Logg.Warning($"{item.Code} 上报季度更新时没有找到id，请先在基金总览页点击更新");
                         continue;
                     }
                     if (item.File?.File is null)
                     {
-                        LogEx.Warning($"{item.Code} 上报季度更新时，投资者信息表不存在");
+                        Logg.Warning($"{item.Code} 上报季度更新时，投资者信息表不存在");
                         continue;
                     }
 
@@ -247,7 +248,7 @@ public static class AmbersAssist
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return false;
         }
         finally
@@ -299,8 +300,8 @@ public static class AmbersAssist
 
         if (d.Count != data.Count)
         {
-            LogEx.Warning($"{FundName} 生成季度更新风险揭示书数据不匹配，应有{data.Count}，实际{d.Count}");
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "风险揭示书数量不全"));
+            Logg.Warning($"{FundName} 生成季度更新风险揭示书数据不匹配，应有{data.Count}，实际{d.Count}");
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "风险揭示书数量不全"));
         }
         return ZipSplitter.CreateSplitZip(d.Select(x => x.File).ToArray(), "temp", $"{FundName}_风险揭示书_{PeriodEnd:yyyyMMdd}", 20 * 1024 * 1024);
     }
@@ -533,7 +534,7 @@ public static class AmbersAssist
             status.InvestorFill.LastUpdated = DateTime.Now;
             status.InvestorFill.IsFilled = false;
             status.InvestorFill.Error = $"上传失败，程序异常{e.Message}";
-            LogEx.Error(e);
+            Logg.Error(e);
             return false;
         }
 
@@ -549,7 +550,7 @@ public static class AmbersAssist
 
             if (!File.Exists(path))
             {
-                WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "投资人表模板不存在，无法生成"));
+                WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "投资人表模板不存在，无法生成"));
                 return null;
             }
 
@@ -576,7 +577,7 @@ public static class AmbersAssist
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return null;
         }
     }
@@ -763,7 +764,7 @@ public static class AmbersAssist
         }
         catch (Exception ex)
         {
-            LogEx.Error(ex);
+            Logg.Error(ex);
             return false;
         }
 
@@ -793,7 +794,7 @@ public static class AmbersAssist
         }
         catch (Exception ex)
         {
-            LogEx.Error(ex);
+            Logg.Error(ex);
         }
     }
 
@@ -817,7 +818,7 @@ public static class AmbersAssist
 
             if (!Regex.IsMatch(messageText, regex, RegexOptions.IgnoreCase))
             {
-                LogEx.Error($"Ambers 弹窗文本不匹配正则：{regex}，实际文本：{messageText}");
+                Logg.Error($"Ambers 弹窗文本不匹配正则：{regex}，实际文本：{messageText}");
                 return false;
             }
 
@@ -831,7 +832,7 @@ public static class AmbersAssist
         }
         catch (Exception ex)
         {
-            LogEx.Error(ex);
+            Logg.Error(ex);
             return false;
         }
     }

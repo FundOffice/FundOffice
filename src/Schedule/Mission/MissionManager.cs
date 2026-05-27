@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
+using MoT;
 using System.Reflection;
 
 namespace FMO.Schedule;
@@ -32,7 +33,7 @@ public static class MissionManager
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             WeakReferenceMessenger.Default.Send(new AddNotifyTodoMessage($"Mission {m.Id} ViewModel", $"任务【{m.Id}】无法创建UI，请查看log"));
         }
 

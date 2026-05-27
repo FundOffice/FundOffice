@@ -1,10 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using Microsoft.Win32;
-using Serilog;
+using MoT;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -145,7 +145,7 @@ public partial class SecurityCardViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            LogEx.Error($"文件另存为失败: {ex.Message}");
+            Logg.Error($"文件另存为失败: {ex.Message}");
         }
     }
 
@@ -235,7 +235,7 @@ public partial class SecurityCardChangeViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            LogEx.Error($"文件另存为失败: {ex.Message}");
+            Logg.Error($"文件另存为失败: {ex.Message}");
         }
     }
 

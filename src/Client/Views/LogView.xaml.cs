@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using LiteDB;
 using LiteDB.Engine;
+using MoT;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
@@ -28,7 +29,7 @@ public partial class LogViewModel : ObservableObject
 {
 
     [ObservableProperty]
-    public partial ObservableCollection<LogMessage> CommonLogs { get; set; } = [];
+    public partial ObservableCollection<LogEvent> CommonLogs { get; set; } = [];
 
     public LogViewModel()
     {
@@ -37,7 +38,8 @@ public partial class LogViewModel : ObservableObject
 
         try
         {
-            CommonLogs = [.. db.GetCollection("logex").Query().OrderByDescending(x => x["_t"].AsDateTime).Limit(100).ToEnumerable().Select(x => To(x))];
+            CommonLogs = [.. Logg.Read().OrderByDescending(x => x.Timestamp).Take(100).ToArray()];
+            //CommonLogs = [.. db.GetCollection("Logg").Query().OrderByDescending(x => x["_t"].AsDateTime).Limit(100).ToEnumerable().Select(x => To(x))];
         }
         catch (LiteException e)
         {
@@ -57,14 +59,10 @@ public partial class LogViewModel : ObservableObject
     [RelayCommand]
     public void ScrollToEnd()
     {
-        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs.db");
-        using var db = new LiteDatabase($@"FileName={path};ReadOnly=true");
-        var data = db.GetCollection("logex").Query().OrderByDescending(x => x["_t"].AsDateTime).Skip(CommonLogs.Count).Limit(100).ToList().
-           Select(x => new LogMessage(x["_t"].AsDateTime, x[nameof(LogMessage.File)].AsString, x[nameof(LogMessage.Method)].AsString, x[nameof(LogMessage.Line)].AsInt32, x["_m"].AsString));
+        var data = Logg.Read().OrderByDescending(x => x.Timestamp).Skip(CommonLogs.Count).Take(100).ToArray();
 
         foreach (var item in data)
             CommonLogs.Add(item);
-
     }
 
     public record LogMessage(DateTime Time, string File, string Method, int Line, string Message);

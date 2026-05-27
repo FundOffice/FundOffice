@@ -2,10 +2,11 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.IO.AMAC;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using Microsoft.Win32;
+using MoT;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
@@ -162,7 +163,7 @@ public partial class FundsPageViewModel : ObservableRecipient, IRecipient<Fund>
         }
         catch (Exception ex)
         {
-            LogEx.Error(ex);
+            Logg.Error(ex);
             Toast.Warning($"基金信息更新失败{fund?.Name}");
         }
     }
@@ -563,7 +564,7 @@ public partial class BatchImportViewModel : ObservableObject
             DataTracker.OnDailyValue(ds.Where(x => x.Fund is not null && x.Daily is not null).Select(x => x.Daily!));
 
 
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Success, $"载入{ds.Count}个估值表"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Success, $"载入{ds.Count}个估值表"));
             BatchImportSheetProgess = 100;
 
         }).ContinueWith((x) => --RunCount);

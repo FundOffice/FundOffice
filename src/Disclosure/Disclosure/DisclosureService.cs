@@ -1,8 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
+using MoT;
 
 namespace FMO.Disclosure;
 
@@ -209,7 +210,7 @@ public static partial class DisclosureService
                 }
                 catch (Exception ex)
                 {
-                    LogEx.Error(ex, $"[信批 Queue {item.Channel} {item.NoticeId} ] Background task failed");
+                    Logg.Error(ex, $"[信批 Queue {item.Channel} {item.NoticeId} ] Background task failed");
                 }
             }
         });
@@ -401,7 +402,7 @@ public static partial class DisclosureService
                         var list = db.GetCollection<DisclosureInstance>().Find(x => x.AutoRun).ToArray();
                         AddToQueue(list);
                     }
-                    catch (Exception ex) { LogEx.Error(ex); }
+                    catch (Exception ex) { Logg.Error(ex); }
                 }
             }
         });
@@ -418,7 +419,7 @@ public static partial class DisclosureService
             }
             catch (Exception ex)
             {
-                LogEx.Error($"[{dic.Key}] 处理队列异常：{ex}");
+                Logg.Error($"[{dic.Key}] 处理队列异常：{ex}");
             }
         }
     }
@@ -442,7 +443,7 @@ public static partial class DisclosureService
             }
             catch (Exception ex)
             {
-                LogEx.Error(ex);
+                Logg.Error(ex);
             }
         }
     }
@@ -463,7 +464,7 @@ public static partial class DisclosureService
         if (exist != null)
         {
             db.GetCollection<IDisclosureNotice>().Update(notice);
-            LogEx.Warning($"报告已存在，ID={notice.Id}，仅更新，不再注册");
+            Logg.Warning($"报告已存在，ID={notice.Id}，仅更新，不再注册");
             return;
         }
         db.GetCollection<IDisclosureNotice>().Insert(notice);

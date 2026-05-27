@@ -1,6 +1,6 @@
 
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
@@ -62,7 +62,7 @@ public abstract class TrusteeApiBase : ITrustee
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return false;
         }
     }
@@ -141,7 +141,7 @@ public abstract class TrusteeApiBase : ITrustee
                 return LoadConfigOverride(config);
             }
         }
-        catch (Exception e) { LogEx.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(Models.LogLevel.Error, $"加载{Title}的配置文件出错")); }
+        catch (Exception e) { Logg.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Error, $"加载{Title}的配置文件出错")); }
 
 
         IsValid = db.GetCollection<TrusteeStatus>().FindById(Identifier)?.Status ?? false;

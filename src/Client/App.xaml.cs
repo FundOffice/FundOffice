@@ -1,9 +1,9 @@
-﻿using FMO.Logging;
+﻿
 using FMO.Models;
 using FMO.Plugin;
 using FMO.Utilities;
 using Microsoft.Win32;
-using Serilog;
+using MoT;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
@@ -39,9 +39,9 @@ public partial class App : Application
 
         System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs.db");
-        Log.Logger = new LoggerConfiguration().WriteTo.LiteDB($@"FileName={path};Connection=Shared", "logex").CreateLogger();
-        LogEx.Information($"System Start {DateTime.Now}");
+        //var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs.db");
+        //Log.Logger = new LoggerConfiguration().WriteTo.LiteDB($@"FileName={path};Connection=Shared", "Logg").CreateLogger();
+        Logg.Information($"System Start {DateTime.Now}");
 
 
     }
@@ -66,13 +66,13 @@ public partial class App : Application
         AppDomain.CurrentDomain.UnhandledException += (s, args) =>
         {
             var exception = (Exception)args.ExceptionObject;
-            LogEx.Error($"{exception}");
+            Logg.Error($"{exception}");
         };
 
         // 处理 Task 内部未处理的异常
         TaskScheduler.UnobservedTaskException += (s, args) =>
         {
-            LogEx.Error($"{s}");
+            Logg.Error($"{s}");
             args.SetObserved(); // 避免后续崩溃
         };
 
@@ -137,7 +137,7 @@ public partial class App : Application
 
                 return true;
             }
-            catch (Exception ex) { LogEx.Error(ex); return true; }
+            catch (Exception ex) { Logg.Error(ex); return true; }
         }
     }
 
@@ -157,7 +157,7 @@ public partial class App : Application
 
     private void Application_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
-        LogEx.Error(e.Exception.Message);
+        Logg.Error(e.Exception.Message);
 #if !DEBUG
         e.Handled = true;
 #endif

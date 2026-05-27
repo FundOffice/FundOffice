@@ -1,9 +1,10 @@
-﻿using FMO.Logging;
+﻿
 using FMO.Models;
 using FMO.Settings;
 using FMO.Todo;
 using FMO.Utilities;
 using LiteDB;
+using MoT;
 using System.Data;
 
 namespace FMO.Trigger;
@@ -98,7 +99,7 @@ public partial class OrderValueIsWellMonitor : ITracker<IEnumerable<TransferOrde
                         var rule = ele.PurchasRule.Value[cid];
                         if (rule is null)
                         {
-                            LogEx.Error($"{nameof(OrderValueIsWellMonitor)} 异常，ShareClass检验过，但是申购规则是null");
+                            Logg.Error($"{nameof(OrderValueIsWellMonitor)} 异常，ShareClass检验过，但是申购规则是null");
                             break;
                         }
 

@@ -1,9 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Trustee;
 using LiteDB;
-using Serilog;
+using MoT;
 using System.Text.RegularExpressions;
 namespace FMO.Utilities;
 
@@ -56,7 +56,7 @@ public  static partial class DatabaseAssist
                 var collection = db.GetCollection<DailyValue>(collectionName);
                 var deletedCount = collection.DeleteMany(x => x.NetValue == 0);
             }
-            catch (Exception ex) { LogEx.Error($"{ex.Message}"); }
+            catch (Exception ex) { Logg.Error($"{ex.Message}"); }
         }
     }
 
@@ -99,14 +99,14 @@ public  static partial class DatabaseAssist
                 db.GetCollection<Investor>().Insert(c);
                 item.InvestorId = c.Id;
 
-                WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"新增投资人 {item.InvestorName}，请完善材料"));
+                WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"新增投资人 {item.InvestorName}，请完善材料"));
             }
             else if (tmp.Length == 1)
                 item.InvestorId = tmp.First().Id;
             else
             {
-                LogEx.Error($"TransferRecord {item.Id} {item.FundName} {item.InvestorName} 与多个Inverstor对应");
-                WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"{item.FundName} {item.InvestorName} 交易无法对应投资人，因为证件号重复"));
+                Logg.Error($"TransferRecord {item.Id} {item.FundName} {item.InvestorName} 与多个Inverstor对应");
+                WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, $"{item.FundName} {item.InvestorName} 交易无法对应投资人，因为证件号重复"));
             }
         }
         db.GetCollection<TransferRecord>().Update(d);

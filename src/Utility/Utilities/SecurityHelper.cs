@@ -1,4 +1,5 @@
-﻿using FMO.Logging;
+﻿
+using MoT;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -50,7 +51,7 @@ public static class SecurityHelper
         catch (Exception ex)
         {
             // 🔹 任何异常（格式错误/权限不足/解码失败）均视为验证失败，绝不崩溃
-            LogEx.Error(ex);
+            Logg.Error(ex);
             return false;
         }
     }

@@ -2,11 +2,11 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.ESigning;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Trustee;
 using FMO.Utilities;
-using Serilog;
+using MoT;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Net;
@@ -85,12 +85,12 @@ public partial class ProxyViewModel : ObservableObject
             IsAvailiable = resp.StatusCode == HttpStatusCode.OK;
             ProxyChecked?.Invoke(IsAvailiable);
 
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Success, $"代理连接成功"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Success, $"代理连接成功"));
         }
         catch (Exception e)
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"连接失败，请检查端口、用户名密码是否正确"));
-            LogEx.Error($"连接Proxy  {e}");
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, $"连接失败，请检查端口、用户名密码是否正确"));
+            Logg.Error($"连接Proxy  {e}");
         }
     }
 
@@ -213,7 +213,7 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
             //    }
             //    catch (Exception e)
             //    {
-            //        LogEx.Error($"[{file.Name}]加载插件失败{e.Message}");
+            //        Logg.Error($"[{file.Name}]加载插件失败{e.Message}");
             //    }
             //}
 

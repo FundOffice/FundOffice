@@ -1,4 +1,4 @@
-﻿using FMO.Logging;
+﻿
 using System.Collections.Immutable;
 
 namespace FMO.Models;
@@ -84,7 +84,7 @@ public partial class FundFactors
 
         //    if (hasSingleton && hasOthers)
         //    {
-        //        LogEx.Error($"FlowId={flowId}: 份额配置冲突，同时存在 Singleton 和其他份额。该配置将被忽略，查询时自动向前追溯。");
+        //        Logg.Error($"FlowId={flowId}: 份额配置冲突，同时存在 Singleton 和其他份额。该配置将被忽略，查询时自动向前追溯。");
         //        continue; // 跳过此配置，让查询逻辑按继承链向前找
         //    }
 

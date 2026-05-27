@@ -1,12 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FMO.Disclosure;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Shared;
 using FMO.TPL;
 using FMO.Utilities;
 using LiteDB;
+using MoT;
 using System.Collections.ObjectModel;
 using System.IO;
 
@@ -263,7 +264,7 @@ public partial class QuarterlyUpdateViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             HandyControl.Controls.Growl.Warning("生成投资者信息表出错");
         }
     }

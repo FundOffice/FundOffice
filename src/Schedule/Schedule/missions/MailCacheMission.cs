@@ -2,7 +2,7 @@
 using FMO.Models;
 using FMO.Utilities;
 using MimeKit;
-using Serilog;
+
 using System.IO;
 using System.Net.NetworkInformation;
 

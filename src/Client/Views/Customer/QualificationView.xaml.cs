@@ -5,7 +5,7 @@ using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
 using LiteDB;
-using Serilog;
+
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;

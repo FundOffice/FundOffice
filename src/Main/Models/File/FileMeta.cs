@@ -1,6 +1,6 @@
 ﻿namespace FMO.Models;
 
-using FMO.Logging;
+using MoT;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -115,7 +115,7 @@ public record FileMeta(string Id, string Name, DateTime Time, string Hash)
         if (!result)
         {
             // 获取详细错误信息
-            LogEx.Error($"{Marshal.GetLastWin32Error()}");
+            Logg.Error($"{Marshal.GetLastWin32Error()}");
         }
 
         return result;

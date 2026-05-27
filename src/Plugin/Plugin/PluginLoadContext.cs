@@ -1,6 +1,7 @@
 ﻿
-using FMO.Logging;
-using Serilog;
+
+
+using MoT;
 using System.Reflection;
 using System.Runtime.Loader;
 
@@ -42,18 +43,18 @@ public class PluginLoadContext : AssemblyLoadContext
                     }
                     catch (Exception ex)
                     {
-                        LogEx.Error($"创建 {type.FullName} 失败：{ex.Message}");
+                        Logg.Error($"创建 {type.FullName} 失败：{ex.Message}");
                     }
                 }
             }
         }
         catch (ReflectionTypeLoadException ex)
         {
-            LogEx.Error($"加载 {def.EndPoint} 失败：{string.Join('\n', ex.LoaderExceptions.Select(x => x?.Message))}");
+            Logg.Error($"加载 {def.EndPoint} 失败：{string.Join('\n', ex.LoaderExceptions.Select(x => x?.Message))}");
         }
         catch (Exception ex)
         {
-            LogEx.Error($"加载 {def.EndPoint} 失败：{ex.Message}");
+            Logg.Error($"加载 {def.EndPoint} 失败：{ex.Message}");
         }
         Plugins = list.ToArray();
     }

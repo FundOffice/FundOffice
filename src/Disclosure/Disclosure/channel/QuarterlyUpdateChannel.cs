@@ -1,11 +1,12 @@
 ﻿using FMO.AMAC.Direct;
 using FMO.IO.AMAC;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.TPL;
 using FMO.Utilities;
 using LiteDB;
 using Microsoft.Playwright;
+using MoT;
 using System.Text.RegularExpressions;
 
 namespace FMO.Disclosure;
@@ -92,7 +93,7 @@ public class QuarterlyUpdateChannel : IDisclosureChannel
 
                     if (DateTime.Now - _lastAccess > TimeSpan.FromMinutes(10))
                     {
-                        LogEx.Information("RPA闲置超过10分钟，自动关闭");
+                        Logg.Information("RPA闲置超过10分钟，自动关闭");
 
                         // 线程安全清空
                         lock (this)
@@ -107,7 +108,7 @@ public class QuarterlyUpdateChannel : IDisclosureChannel
             }
             catch (Exception ex)
             {
-                LogEx.Error(ex, "闲置监测任务异常");
+                Logg.Error(ex, "闲置监测任务异常");
             }
         });
     }
@@ -401,7 +402,7 @@ public class QuarterlyUpdateChannel : IDisclosureChannel
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return new(false, null, [], e.Message);
         }
     }
@@ -424,7 +425,7 @@ public class QuarterlyUpdateChannel : IDisclosureChannel
 
             if (!Regex.IsMatch(messageText, regex, RegexOptions.IgnoreCase))
             {
-                LogEx.Error($"Ambers 弹窗文本不匹配正则：{regex}，实际文本：{messageText}");
+                Logg.Error($"Ambers 弹窗文本不匹配正则：{regex}，实际文本：{messageText}");
                 return false;
             }
 
@@ -438,7 +439,7 @@ public class QuarterlyUpdateChannel : IDisclosureChannel
         }
         catch (Exception ex)
         {
-            LogEx.Error(ex);
+            Logg.Error(ex);
             return false;
         }
     }

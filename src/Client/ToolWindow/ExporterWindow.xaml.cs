@@ -2,13 +2,13 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using ExcelDataReader;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.TPL;
 using FMO.Utilities;
 using LiteDB;
 using Microsoft.Win32;
-using Serilog;
+using MoT;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
@@ -137,7 +137,7 @@ public partial class ExporterWindowViewModel : ObservableObject
             var type = assembly.GetType(SelectedTemplate.Type);
             if (type is null)
             {
-                WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "导出失败，模板异常。"));
+                WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "导出失败，模板异常。"));
                 return;
             }
 
@@ -146,7 +146,7 @@ public partial class ExporterWindowViewModel : ObservableObject
             var data = obj?.Generate(param);
             if (data?.Data is null)
             {
-                WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "导出失败，未能成功生成数据。"));
+                WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "导出失败，未能成功生成数据。"));
                 return;
             }
 
@@ -161,8 +161,8 @@ public partial class ExporterWindowViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "导出失败，请查看Log"));
+            Logg.Error(e);
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "导出失败，请查看Log"));
         }
         finally
         {
@@ -229,12 +229,12 @@ public partial class ExporterWindowViewModel : ObservableObject
         }
         catch (DirectoryNotFoundException)
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "模板丢失，请重新导入模板"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "模板丢失，请重新导入模板"));
         }
         catch (Exception e)
         {
-            LogEx.Error(e, $"打开模板失败，{value.Name} {value.Id}");
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "打开模板失败，请查看log"));
+            Logg.Error(e, $"打开模板失败，{value.Name} {value.Id}");
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "打开模板失败，请查看log"));
         }
     }
 

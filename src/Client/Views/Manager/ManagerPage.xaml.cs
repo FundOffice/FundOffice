@@ -2,12 +2,13 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.IO.AMAC;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
 using LiteDB;
 using Microsoft.Win32;
+using MoT;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -374,7 +375,7 @@ public partial class ManagerPageViewModel :ObservableObject, IRecipient<Particip
         }
         catch (Exception ex)
         {
-            LogEx.Error($"获取管理人成员失败，{ex}");
+            Logg.Error($"获取管理人成员失败，{ex}");
             HandyControl.Controls.Growl.Error($"获取管理人成员失败，请查看log");
         }
     }
@@ -756,7 +757,7 @@ public partial class ManagerPageViewModel :ObservableObject, IRecipient<Particip
             }
             catch (Exception e)
             {
-                LogEx.Error($"SetLogo Error {e}");
+                Logg.Error($"SetLogo Error {e}");
             }
         }
     }
@@ -862,7 +863,7 @@ public partial class ManagerPageViewModel :ObservableObject, IRecipient<Particip
                     wnd.Owner = App.Current.MainWindow;
                     wnd.ShowDialog();
                 }
-                catch (Exception e) { LogEx.Error($"{e}"); }
+                catch (Exception e) { Logg.Error(e); }
             }
         }
 
@@ -1046,8 +1047,8 @@ public partial class ManagerFlowViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            LogEx.Error($"OpenFolder Error {e}");
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "打开文件夹失败"));
+            Logg.Error($"OpenFolder Error {e}");
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "打开文件夹失败"));
         }
     }
 

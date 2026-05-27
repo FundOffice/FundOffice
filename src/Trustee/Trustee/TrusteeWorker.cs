@@ -1,10 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
+using MoT;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -200,7 +201,7 @@ public partial class TrusteeWorker : ObservableObject
     {
         try
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"开始同步 募集户余额"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"开始同步 募集户余额"));
             if (trustees is null || trustees.Any()) trustees = Trustees;
             List<WorkReturn> ret = new();
             // 保存数据库
@@ -228,7 +229,7 @@ public partial class TrusteeWorker : ObservableObject
                 catch (Exception e)
                 {
                     ret.Add(new(tr.Title, ReturnCode.Unknown));
-                    LogEx.Error($"QueryRaisingBalanceOnce {e}");
+                    Logg.Error($"QueryRaisingBalanceOnce {e}");
                 }
             }
 
@@ -242,7 +243,7 @@ public partial class TrusteeWorker : ObservableObject
         }
         catch (Exception e)
         {
-            LogEx.Error($"{nameof(QueryRaisingBalanceOnce)} {e.Message}");
+            Logg.Error($"{nameof(QueryRaisingBalanceOnce)} {e.Message}");
         }
     }
 
@@ -259,7 +260,7 @@ public partial class TrusteeWorker : ObservableObject
     {
         try
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"开始同步 交易申请"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"开始同步 交易申请"));
             if (trustees is null || trustees.Any()) trustees = Trustees;
 
             List<WorkReturn> ret = new();
@@ -285,8 +286,8 @@ public partial class TrusteeWorker : ObservableObject
                     var rc = await tr.QueryTransferRequests(begin, end);
                     if (rc.Code != ReturnCode.Success && rc.Code != ReturnCode.TrafficLimit)
                     {
-                        LogEx.Error($"{rc.Code} {rc.Data?.Count} {tr.Title} 获取的交易申请记录数据异常");
-                        WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"{tr.Title} 获取的交易申请记录数据异常"));
+                        Logg.Error($"{rc.Code} {rc.Data?.Count} {tr.Title} 获取的交易申请记录数据异常");
+                        WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Error, $"{tr.Title} 获取的交易申请记录数据异常"));
                     }
                     ///
                     // 保存数据库，部分成功的也保存
@@ -303,7 +304,7 @@ public partial class TrusteeWorker : ObservableObject
                         if (rc.Data?.Any(x => x.InvestorName == "unset" || x.FundName == "unset" || x.InvestorIdentity == "unset") ?? false)
                         {
                             ret.Add(new(tr.Title, ReturnCode.DataIsNotWellFormed, rc.Data));
-                            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"{tr.Title} 获取的交易申请记录存在未识别的主体"));
+                            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Error, $"{tr.Title} 获取的交易申请记录存在未识别的主体"));
                             break;
                         }
                     }
@@ -315,7 +316,7 @@ public partial class TrusteeWorker : ObservableObject
                 {
                     ret.Add(new(tr.Title, ReturnCode.Unknown));
 
-                    LogEx.Error($"QueryTransferRequestOnce {e}");
+                    Logg.Error($"QueryTransferRequestOnce {e}");
                 }
             }
 
@@ -329,7 +330,7 @@ public partial class TrusteeWorker : ObservableObject
         }
         catch (Exception e)
         {
-            LogEx.Error($"{nameof(QueryTransferRequestOnce)} {e.Message}");
+            Logg.Error($"{nameof(QueryTransferRequestOnce)} {e.Message}");
         }
     }
 
@@ -343,7 +344,7 @@ public partial class TrusteeWorker : ObservableObject
     {
         try
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"开始同步 交易确认"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"开始同步 交易确认"));
             if (trustees is null || trustees.Any()) trustees = Trustees;
 
             List<WorkReturn> ret = new();
@@ -393,7 +394,7 @@ public partial class TrusteeWorker : ObservableObject
                 {
                     ret.Add(new(tr.Title, ReturnCode.Unknown));
 
-                    LogEx.Error($"QueryTransferRecordOnce {e}");
+                    Logg.Error($"QueryTransferRecordOnce {e}");
                 }
             }
 
@@ -407,7 +408,7 @@ public partial class TrusteeWorker : ObservableObject
         }
         catch (Exception e)
         {
-            LogEx.Error($"{nameof(QueryTransferRecordOnce)} {e.Message}");
+            Logg.Error($"{nameof(QueryTransferRecordOnce)} {e.Message}");
         }
     }
 
@@ -474,7 +475,7 @@ public partial class TrusteeWorker : ObservableObject
                 catch (Exception e)
                 {
                     ret.Add(new(tr.Title, ReturnCode.Unknown));
-                    LogEx.Error($"QueryDailyFeeOnce {e}");
+                    Logg.Error($"QueryDailyFeeOnce {e}");
                 }
             }
 
@@ -488,7 +489,7 @@ public partial class TrusteeWorker : ObservableObject
         }
         catch (Exception e)
         {
-            LogEx.Error($"{nameof(QueryDailyFeeOnce)} {e.Message}");
+            Logg.Error($"{nameof(QueryDailyFeeOnce)} {e.Message}");
         }
     }
 
@@ -499,7 +500,7 @@ public partial class TrusteeWorker : ObservableObject
     /// <returns></returns>
     private async Task QueryRaisingAccountTransctionImpl(IEnumerable<ITrustee>? trustees = null)
     {
-        WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"开始同步 募集户流水"));
+        WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"开始同步 募集户流水"));
         if (trustees is null || trustees.Any()) trustees = Trustees;
 
         List<WorkReturn> ret = new();
@@ -541,7 +542,7 @@ public partial class TrusteeWorker : ObservableObject
             catch (Exception e)
             {
                 ret.Add(new(tr.Title, ReturnCode.Unknown));
-                LogEx.Error($"QueryRaisingAccountTransctionOnce {e}");
+                Logg.Error($"QueryRaisingAccountTransctionOnce {e}");
             }
         }
 
@@ -603,7 +604,7 @@ public partial class TrusteeWorker : ObservableObject
             catch (Exception e)
             {
                 ret.Add(new(tr.Title, ReturnCode.Unknown));
-                LogEx.Error($"{method} {e}");
+                Logg.Error($"{method} {e}");
             }
 
             WeakReferenceMessenger.Default.Send(new TrusteeWorkResult(nameof(ITrustee.QueryNetValue), ret));
@@ -666,7 +667,7 @@ public partial class TrusteeWorker : ObservableObject
                 DataTracker.OnDailyValue(rc.Data);
             }
         }
-        else WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "未发现对应的API"));
+        else WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "未发现对应的API"));
     }
 
 
@@ -674,7 +675,7 @@ public partial class TrusteeWorker : ObservableObject
     {
         WeakReferenceMessenger.Default.Send(new TrusteeRunMessage(name, true));
 
-        try { await task; } catch (Exception e) { LogEx.Error($"{name} {e.Message}"); }
+        try { await task; } catch (Exception e) { Logg.Error($"{name} {e.Message}"); }
 
         WeakReferenceMessenger.Default.Send(new TrusteeRunMessage(name, false));
     }
@@ -809,7 +810,7 @@ public partial class TrusteeWorker : ObservableObject
                 }
                 catch (Exception ex)
                 {
-                    LogEx.Error($"Trustee Worker Error executing command: {ex.Message}");
+                    Logg.Error($"Trustee Worker Error executing command: {ex.Message}");
                 }
                 finally
                 {

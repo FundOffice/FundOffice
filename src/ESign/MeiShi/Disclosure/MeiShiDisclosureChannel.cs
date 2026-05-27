@@ -1,5 +1,5 @@
 ﻿using FMO.Disclosure;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using System.IO;
@@ -273,7 +273,7 @@ public partial class MeiShiAssit : IDisclosureChannel
         if (!IsValid) return new ErrorReturn(false, "Invalid");
         if (!isLogin && await LoginFromDisclosure() is ErrorReturn er && !er.Successed)
         {
-            LogEx.Error("MeiShi Login Failed");
+            Logg.Error("MeiShi Login Failed");
             return er;
         }
 

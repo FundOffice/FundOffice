@@ -1,12 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.PDF;
 using FMO.Shared;
 using FMO.Utilities;
-using Serilog;
+using MoT;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 
@@ -226,9 +226,9 @@ public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IEle
                     WeakReferenceMessenger.Default.Send(new ElementChangedBackgroundMessage(FundId, FlowId));
                     WeakReferenceMessenger.Default.Send(new FundAccountChangedMessage(FundId, accountType));
                 }
-                LogEx.Information($"设置 {accountType} 账户成功 {FundId}.{FlowId}");
+                Logg.Information($"设置 {accountType} 账户成功 {FundId}.{FlowId}");
             }
-            catch (Exception e) { LogEx.Error($"设置 {accountType} 账户出错 {FundId}.{FlowId} {e}"); }
+            catch (Exception e) { Logg.Error($"设置 {accountType} 账户出错 {FundId}.{FlowId} {e}"); }
 
         });
     }

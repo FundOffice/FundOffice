@@ -1,9 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using Microsoft.Win32;
+using MoT;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
@@ -114,7 +115,7 @@ public partial class ReadOnlyFileMetaViewModel : ObservableObject
                 FileMeta.CreateHardLink(@$"files\hardlink\{Id}", tmp);
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(tmp) { UseShellExecute = true });
         }
-        catch (Exception e) { LogEx.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "无法打开文件")); }
+        catch (Exception e) { Logg.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "无法打开文件")); }
     }
 
 
@@ -135,7 +136,7 @@ public partial class ReadOnlyFileMetaViewModel : ObservableObject
             obj.SetText(tmp);
             Clipboard.SetDataObject(obj);
         }
-        catch (Exception e) { LogEx.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "无法复制文件")); }
+        catch (Exception e) { Logg.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "无法复制文件")); }
     }
 
 
@@ -153,7 +154,7 @@ public partial class ReadOnlyFileMetaViewModel : ObservableObject
             if (d.ShowDialog() == true)
                 File.Copy(@$"files\hardlink\{Id}", d.FileName);
         }
-        catch (Exception e) { LogEx.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "文件另存为失败")); }
+        catch (Exception e) { Logg.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "文件另存为失败")); }
     }
 
     

@@ -1,4 +1,5 @@
-﻿using FMO.Logging;
+﻿
+using MoT;
 using OpenCvSharp;
 using RapidOCRSharpOnnx;
 using RapidOCRSharpOnnx.Configurations;
@@ -32,7 +33,7 @@ public static class OCRWorker
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return "";
         }
     }

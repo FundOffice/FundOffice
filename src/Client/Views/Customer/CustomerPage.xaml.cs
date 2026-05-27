@@ -3,10 +3,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.IO.AMAC;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using Microsoft.Win32;
+using MoT;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -309,7 +310,7 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             HandyControl.Controls.Growl.Error($"生成失败：{e.Message}");
         }
     }
@@ -322,8 +323,8 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
         var acc = db.GetCollection<AmacAccount>().FindById("xinpi");
         var (s, e) = await PfidAssist.UpdateInvestorAccounts(acc);
         if (s)
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"同步完成：{e}"));
-        else WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"同步失败：{e}"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"同步完成：{e}"));
+        else WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, $"同步失败：{e}"));
     }
 
     [RelayCommand]
@@ -405,7 +406,7 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
                         }
                         catch (Exception e)
                         {
-                            LogEx.Error($"ImportQualificationData {e}");
+                            Logg.Error($"ImportQualificationData {e}");
                         }
                     }
 
@@ -457,7 +458,7 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
                                 //if (!old.CertificationFiles.Files.Any(x => x.Path == fsi.Path))
                                 old.CertificationFiles.Files.Add(fsi);
                             }
-                            else LogEx.Warning($"未识别的合投文件 {cus.Name}:{qf.Name}");
+                            else Logg.Warning($"未识别的合投文件 {cus.Name}:{qf.Name}");
                         }
 
                         db.GetCollection<InvestorQualification>().Upsert(old);
@@ -499,7 +500,7 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return null;
         }
     }
@@ -575,7 +576,7 @@ public partial class CustomerPageViewModel : ObservableRecipient, IRecipient<Inv
             }
             catch (Exception e)
             {
-                LogEx.Error($"更新investor出错 {e.Message}");
+                Logg.Error($"更新investor出错 {e.Message}");
             }
 
         }));

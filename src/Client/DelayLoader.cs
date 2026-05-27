@@ -2,13 +2,14 @@
 using FMO.Disclosure;
 using FMO.ESigning;
 using FMO.IO.AMAC;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Schedule;
 using FMO.Settings;
 using FMO.Trustee;
 using FMO.Utilities;
 using LiteDB;
+using MoT;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
@@ -20,7 +21,7 @@ internal class DelayLoader
 {
     public static void Load()
     {
-        WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "数据库自检中"));
+        WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "数据库自检中"));
         ///数据库自检等操作
         DatabaseAssist.SystemValidation();
 
@@ -30,16 +31,16 @@ internal class DelayLoader
         Task.Run(() =>
         {
             
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "加载任务组件"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "加载任务组件"));
             InitMission();
             WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Task", true));
 
             // 加载触发器
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "加载触发器组件"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "加载触发器组件"));
             InitializeTriggers();
 
             // 加载配置
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "初始化配置"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "初始化配置"));
             SettingService.Initialize();
 
             SettingService.RegisterAbility( "Basic", "AutoShowTodo", "自动显示待办事项", "在应用启动时自动显示待办事项", true, new AutoShowTodoFunction());
@@ -51,7 +52,7 @@ internal class DelayLoader
         {
 
             // 加载托管组件
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "加载托管平台组件"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "加载托管平台组件"));
             InitializeTrustees();
 
             // 加载托管消息
@@ -59,11 +60,11 @@ internal class DelayLoader
 
 
             // 加载电签组件
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "加载电签组件"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "加载电签组件"));
             InitializeSignings();
 
             // 加载信批组件
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "加载信批组件"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "加载信批组件"));
             InitializeDisclosureChannels();
 
 
@@ -101,7 +102,7 @@ internal class DelayLoader
 
         if (!Directory.Exists(disDir))
         {
-            LogEx.Warning("mission 目录不存在，退出加载");
+            Logg.Warning("mission 目录不存在，退出加载");
 
             return;
         }
@@ -128,7 +129,7 @@ internal class DelayLoader
             }
             catch (Exception ex)
             {
-                LogEx.Error($"加载mission组件失败，错误：{ex.Message}");
+                Logg.Error($"加载mission组件失败，错误：{ex.Message}");
             }
         }
 
@@ -149,7 +150,7 @@ internal class DelayLoader
 
         if (!Directory.Exists(esignDir))
         {
-            LogEx.Warning("esign 目录不存在，退出加载");
+            Logg.Warning("esign 目录不存在，退出加载");
             return;
         }
 
@@ -174,7 +175,7 @@ internal class DelayLoader
             }
             catch (Exception ex)
             {
-                LogEx.Error($"注册电子签名组件失败，错误：{ex.Message}");
+                Logg.Error($"注册电子签名组件失败，错误：{ex.Message}");
             }
         }
 
@@ -208,7 +209,7 @@ internal class DelayLoader
         }
         catch (Exception ex)
         {
-            LogEx.Error($"注册电子签名组件失败：{type.Name}，错误：{ex.Message}");
+            Logg.Error($"注册电子签名组件失败：{type.Name}，错误：{ex.Message}");
         }
 
         return true;
@@ -224,7 +225,7 @@ internal class DelayLoader
 
         if (!Directory.Exists(trusteeDir))
         {
-            LogEx.Warning("trustee 目录不存在，退出加载");
+            Logg.Warning("trustee 目录不存在，退出加载");
             WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Trustee", true));
             return;
         }
@@ -238,7 +239,7 @@ internal class DelayLoader
             {
                 if (!VerifyDll(dllPath))
                 {
-                    LogEx.Error($"验证托管组件失败，可能未签名或签名无效，路径：{dllPath}");
+                    Logg.Error($"验证托管组件失败，可能未签名或签名无效，路径：{dllPath}");
                     continue;
                 }
                 // 3. 加载程序集
@@ -247,13 +248,12 @@ internal class DelayLoader
                 // 4. 遍历程序集中的所有公共类
                 foreach (Type type in assembly.GetExportedTypes())
                 {
-                    if(!LoadTrustee(type))
-                        LogEx.Error($"加载托管组件失败：{dllPath}");
+                    LoadTrustee(type);
                 }
             }
             catch (Exception ex)
             {
-                LogEx.Error($"，错误：{ex.Message}");
+                Logg.Error($"，错误：{ex.Message}");
             }
         }
 
@@ -291,7 +291,7 @@ internal class DelayLoader
         }
         catch (Exception ex)
         {
-            LogEx.Error($"加载托管组件失败：{type.Name}，错误：{ex.Message}");
+            Logg.Error(ex, $"加载托管组件失败：{type.Name}");
         }
 
         return true;
@@ -308,7 +308,7 @@ internal class DelayLoader
 
         if (!Directory.Exists(disDir))
         {
-            LogEx.Warning("disclosure 目录不存在，退出加载");
+            Logg.Warning("disclosure 目录不存在，退出加载");
             WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Disclosure", true));
 
             return;
@@ -334,7 +334,7 @@ internal class DelayLoader
             }
             catch (Exception ex)
             {
-                LogEx.Error($"注册信批组件失败，错误：{ex.Message}");
+                Logg.Error($"注册信批组件失败，错误：{ex.Message}");
             }
         }
 
@@ -372,7 +372,7 @@ internal class DelayLoader
         }
         catch (Exception ex)
         {
-            LogEx.Error($"注册信批组件失败：{type.Name}，错误：{ex.Message}");
+            Logg.Error($"注册信批组件失败：{type.Name}，错误：{ex.Message}");
         }
 
         return true;
@@ -388,7 +388,7 @@ internal class DelayLoader
 
         if (!Directory.Exists(disDir))
         {
-            LogEx.Warning("trigger 目录不存在，退出加载");
+            Logg.Warning("trigger 目录不存在，退出加载");
 
             return;
         }
@@ -415,7 +415,7 @@ internal class DelayLoader
             }
             catch (Exception ex)
             {
-                LogEx.Error($"加载Trigger组件失败，错误：{ex.Message}");
+                Logg.Error($"加载Trigger组件失败，错误：{ex.Message}");
             }
         }
 
@@ -486,7 +486,7 @@ internal class DelayLoader
             }
             catch (Exception ex)
             {
-                LogEx.Error($"同步公示信息失败：{ex}");
+                Logg.Error($"同步公示信息失败：{ex}");
                 HandyControl.Controls.Growl.Error($"同步基金公示信息失败");
             }
         }

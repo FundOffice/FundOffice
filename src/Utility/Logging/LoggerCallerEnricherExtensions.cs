@@ -5,7 +5,7 @@ namespace FMO.Logging;
 
 
 
-public static class LogEx
+public static class Logg
 {
     public static ILogger Here(
          [CallerFilePath] string filePath = "",

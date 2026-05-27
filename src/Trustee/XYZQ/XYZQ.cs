@@ -1,4 +1,4 @@
-﻿using FMO.Logging;
+﻿
 using FMO.Models;
 using FMO.Utilities;
 using Microsoft.CodeAnalysis;
@@ -88,7 +88,7 @@ public class XYZQ : TrusteeApiBase
 
         if (resobj?["code"] is not JsonNode node)
         {
-            LogEx.Error($"XYZQ Auth Failed {resobj?["msg"]}");
+            Logg.Error($"XYZQ Auth Failed {resobj?["msg"]}");
             return false;
         }
 
@@ -105,7 +105,7 @@ public class XYZQ : TrusteeApiBase
         var tnode = resobj?["refresh_token"];
         if (tnode is null || rnode is null)
         {
-            LogEx.Error($"XYZQ GetToken Failed {resobj?["msg"]}");
+            Logg.Error($"XYZQ GetToken Failed {resobj?["msg"]}");
             return false;
         }
         AToken = tnode.GetValue<string>();
@@ -135,7 +135,7 @@ public class XYZQ : TrusteeApiBase
         var tnode = resobj?["accessToken"];
         if (tnode is null || rnode is null)
         {
-            LogEx.Error($"XYZQ GetToken Failed {resobj?["msg"]}");
+            Logg.Error($"XYZQ GetToken Failed {resobj?["msg"]}");
             return false;
         }
         AToken = tnode.GetValue<string>();
@@ -363,7 +363,7 @@ public class XYZQ : TrusteeApiBase
                     // 其它原因失败
                     if (root.returnCode != "1")
                     {
-                        LogEx.Error($"{caller} {root.msg}");
+                        Logg.Error($"{caller} {root.msg}");
                         return new(ReturnCode.Unknown, []);
                     }
 
@@ -388,7 +388,7 @@ public class XYZQ : TrusteeApiBase
                 }
                 catch (Exception e)
                 {
-                    LogEx.Error(e);
+                    Logg.Error(e);
                     return new(ReturnCode.JsonNotPairToEntity, []);
                 }
             }

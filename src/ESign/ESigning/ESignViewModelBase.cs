@@ -46,7 +46,7 @@ public abstract partial class ESignViewModelBase : ObservableObject, IRecipient<
         ShowConfigSetting = false;
 
         WeakReferenceMessenger.Default.Send(new ESigningStatus(Id, IsValid));
-        WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, $"{Title}配置校验{(config.IsValid ? "成功" : "失败")}"));
+        WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"{Title}配置校验{(config.IsValid ? "成功" : "失败")}"));
     }
 
     protected abstract ISigningConfig BuildConfig();

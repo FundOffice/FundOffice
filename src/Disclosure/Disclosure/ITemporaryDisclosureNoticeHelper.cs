@@ -1,6 +1,7 @@
-﻿using FMO.Logging;
+﻿
 using FMO.Models;
 using FMO.TPL;
+using MoT;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -25,7 +26,7 @@ public static class ITemporaryDisclosureNoticeHelper
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
         }
     }
 }

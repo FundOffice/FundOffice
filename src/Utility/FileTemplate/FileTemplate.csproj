@@ -42,7 +42,6 @@
     <PackageReference Include="Microsoft.CodeAnalysis.Scripting.Common" Version="5.3.0" />
     <PackageReference Include="MiniExcel" Version="2.0.0" />
     <PackageReference Include="MiniWord" Version="0.9.2" />
-    <PackageReference Include="Serilog" Version="4.3.1" />
 	  <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="5.3.0" />
   </ItemGroup>
 

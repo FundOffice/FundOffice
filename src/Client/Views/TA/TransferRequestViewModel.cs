@@ -60,7 +60,7 @@ partial class TransferRequestViewModel : ITransferViewModel, IHasOrderViewModel
         var order = db.GetCollection<TransferOrder>().FindById(OrderId ?? 0);
         if (order is null)
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"订单【{Id}】不存在"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, $"订单【{Id}】不存在"));
             return;
         }
 

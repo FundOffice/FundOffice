@@ -1,9 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Trustee;
 using FMO.Utilities;
 using LiteDB;
+using MoT;
 using System.Runtime.CompilerServices;
 
 namespace FMO.ESigning;
@@ -65,7 +66,7 @@ public class ESigningWorker
             }
             catch (Exception e)
             {
-                LogEx.Error(e);
+                Logg.Error(e);
             }
         }
     }
@@ -161,7 +162,7 @@ public class ESigningWorker
                         item.FundName = f.Name;
                         item.ShareClass = c;
                     }
-                    else { LogEx.Error($"Sync Order Fund Not Exists {item.FundName}, in {item.InvestorName} {item.Date} {item.Type}"); }
+                    else { Logg.Error($"Sync Order Fund Not Exists {item.FundName}, in {item.InvestorName} {item.Date} {item.Type}"); }
 
                     // 已存在的
                     if (exist_ids.TryGetValue(item.ExternalId!, out var oid))
@@ -169,7 +170,7 @@ public class ESigningWorker
 
                     if (cidMap.TryGetValue(item.InvestorIdentity!, out var cid))
                         item.InvestorId = cid;
-                    else LogEx.Error($"Sync Order Investor Not Exists {item.InvestorName}/{item.InvestorIdentity}, in {item.InvestorName} {item.Date} {item.Type}");
+                    else Logg.Error($"Sync Order Investor Not Exists {item.InvestorName}/{item.InvestorIdentity}, in {item.InvestorName} {item.Date} {item.Type}");
 
 
                     bool check(TransferOrder order)
@@ -183,7 +184,7 @@ public class ESigningWorker
 
                     // 如果缺文件，就下载
                     if (check(item) && (await sign.QueryOrderAsync(item) is ErrorReturn { Successed: false } er))
-                        LogEx.Error($"获取Order文件失败 Customer:{item.InvestorName} Fund{item.FundName} {item.Date} {er.Error}");
+                        Logg.Error($"获取Order文件失败 Customer:{item.InvestorName} Fund{item.FundName} {item.Date} {er.Error}");
 
                     orders.Add(item);
                 }
@@ -193,7 +194,7 @@ public class ESigningWorker
             }
             catch (Exception e)
             {
-                LogEx.Error(e);
+                Logg.Error(e);
             }
         }
 
@@ -311,7 +312,7 @@ public class ESigningWorker
     {
         WeakReferenceMessenger.Default.Send(new SigningRunMessage(name, true));
 
-        try { await task; } catch (Exception e) { LogEx.Error($"{name} {e.Message}"); }
+        try { await task; } catch (Exception e) { Logg.Error($"{name} {e.Message}"); }
 
         WeakReferenceMessenger.Default.Send(new SigningRunMessage(name, false));
     }
@@ -349,7 +350,7 @@ public class ESigningWorker
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
         }
 
 
@@ -359,7 +360,7 @@ public class ESigningWorker
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
         }
 
         try
@@ -368,7 +369,7 @@ public class ESigningWorker
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
         }
 
 

@@ -2,12 +2,13 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using DocumentFormat.OpenXml.Wordprocessing;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.PDF;
 using FMO.Shared;
 using FMO.Utilities;
 using Microsoft.Win32;
+using MoT;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -431,7 +432,7 @@ public partial class CustomerViewModel : ObservableObject, IRecipient<IEnumerabl
     {
         if (Qualifications.Any(x => x.Date.OldValue == default))
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "存在未完成的合格投资者认定流程，请先完成！"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "存在未完成的合格投资者认定流程，请先完成！"));
             return;
         }
 
@@ -492,7 +493,7 @@ public partial class CustomerViewModel : ObservableObject, IRecipient<IEnumerabl
         // 验证是否有投资人名
         if (!texts.Any(x => x.Contains(Name.OldValue!)))
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, $"请确认是否为 [{Name.OldValue}] 的风险测评文件"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, $"请确认是否为 [{Name.OldValue}] 的风险测评文件"));
             return;
         }
         foreach (var str in texts)
@@ -616,8 +617,8 @@ public partial class CustomerViewModel : ObservableObject, IRecipient<IEnumerabl
         }
         catch (Exception e)
         {
-            LogEx.Error($"{nameof(CustomerViewModel)} {nameof(UpdateBank)} {e}");
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "更新银行账户出错"));
+            Logg.Error($"{nameof(CustomerViewModel)} {nameof(UpdateBank)} {e}");
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "更新银行账户出错"));
         }
     }
 
@@ -634,8 +635,8 @@ public partial class CustomerViewModel : ObservableObject, IRecipient<IEnumerabl
         }
         catch (Exception e)
         {
-            LogEx.Error($"{nameof(CustomerViewModel)} {nameof(DeleteBank)} {e}");
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "删除银行账户出错"));
+            Logg.Error($"{nameof(CustomerViewModel)} {nameof(DeleteBank)} {e}");
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "删除银行账户出错"));
         }
     }
 
@@ -657,7 +658,7 @@ public partial class CustomerViewModel : ObservableObject, IRecipient<IEnumerabl
 
         if (files.Length != 2)
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "请选择且仅选择两个图片文件"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "请选择且仅选择两个图片文件"));
             return;
         }
 
@@ -669,7 +670,7 @@ public partial class CustomerViewModel : ObservableObject, IRecipient<IEnumerabl
 
             if (bitmap1 == null || bitmap2 == null)
             {
-                WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "无法加载图片，请检查文件格式"));
+                WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "无法加载图片，请检查文件格式"));
                 return;
             }
 
@@ -723,8 +724,8 @@ public partial class CustomerViewModel : ObservableObject, IRecipient<IEnumerabl
         }
         catch (Exception ex)
         {
-            LogEx.Error($"合并证件图片出错 {ex}");
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "合并证件图片出错"));
+            Logg.Error($"合并证件图片出错 {ex}");
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "合并证件图片出错"));
         }
 
     }
@@ -773,7 +774,7 @@ public partial class CustomerViewModel : ObservableObject, IRecipient<IEnumerabl
         }
         catch (Exception e)
         {
-            LogEx.Error($"void Receive(TransferRecordLinkOrderMessage message) {e}");
+            Logg.Error($"void Receive(TransferRecordLinkOrderMessage message) {e}");
         }
     }
 
@@ -805,7 +806,7 @@ public partial class CustomerViewModel : ObservableObject, IRecipient<IEnumerabl
         }
         catch (Exception e)
         {
-            LogEx.Error($"void Receive(TransferRecordLinkOrderMessage message) {e}");
+            Logg.Error($"void Receive(TransferRecordLinkOrderMessage message) {e}");
         }
     }
 
@@ -984,7 +985,7 @@ public partial class RiskAssessmentViewModel : ObservableObject
                 FileMeta.CreateHardLink(@$"files\hardlink\{File.Id}", tmp);
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(tmp) { UseShellExecute = true });
         }
-        catch (Exception e) { LogEx.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "风险调查问卷不存在")); }
+        catch (Exception e) { Logg.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "风险调查问卷不存在")); }
     }
 
     [RelayCommand]

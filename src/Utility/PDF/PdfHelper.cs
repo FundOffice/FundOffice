@@ -1,6 +1,7 @@
-﻿using FMO.Logging;
+﻿
 using FMO.Models;
 using LiteDB;
+using MoT;
 using PDFiumSharp;
 using PDFiumSharp.Enums;
 using PDFiumSharp.Types;
@@ -658,7 +659,7 @@ public static class PdfHelper
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
         }
         finally
         {

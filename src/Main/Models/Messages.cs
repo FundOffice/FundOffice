@@ -1,4 +1,6 @@
-﻿namespace FMO.Models;
+﻿using MoT;
+
+namespace FMO.Models;
 
 public record FundDailyUpdateMessage(int FundId, DailyValue Daily);
 
@@ -21,18 +23,19 @@ public record FundAccountChangedMessage(int FundId, FundAccountType Type);
 public record ElementChangedBackgroundMessage(int FundId, int FlowId);
 
 
-public enum LogLevel
+public enum ToastLevel
 {
-    Info,
+    Information,
+    Success,
     Warning,
-    Error,
-    Success
+    Error
 }
+
 
 /// <summary>
 /// 
 /// </summary>
-public record ToastMessage(LogLevel Level, string Message);
+public record ToastMessage(ToastLevel Level, string Message);
 
 public record EntityDeleted<T>(T Value);
 

@@ -2,9 +2,10 @@
 //#define TEST_PFID
 
 using FMO.Disclosure;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
+using MoT;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO.Compression;
@@ -242,7 +243,7 @@ public class AmacDirectReporter
             db.GetCollection<DirectAmacResult>().Upsert(r);
             return r;
         }
-        catch (Exception ex) { LogEx.Error(ex); return new DirectAmacResult { Id = report.Id, FileType = type, UploadError = ex.Message }; }
+        catch (Exception ex) { Logg.Error(ex); return new DirectAmacResult { Id = report.Id, FileType = type, UploadError = ex.Message }; }
         finally { File.Delete(path); }
     }
 
@@ -341,7 +342,7 @@ public class AmacDirectReporter
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return null;
         }
         finally
@@ -441,7 +442,7 @@ public class AmacDirectReporter
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return new(false, e.Message);
         }
         finally
@@ -511,7 +512,7 @@ public class AmacDirectReporter
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return new(false, e.Message);
         }
         finally
@@ -585,7 +586,7 @@ public class AmacDirectReporter
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
         }
         finally
         {

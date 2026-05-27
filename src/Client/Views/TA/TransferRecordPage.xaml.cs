@@ -1,11 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
 using LiteDB;
+using MoT;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -280,7 +281,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
         }
         catch (Exception e)
         {
-            LogEx.Error($"{e}");
+            Logg.Error(e);
         }
     }
 
@@ -780,7 +781,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
         }
         catch (Exception e)
         {
-            LogEx.Error($"void Receive(TransferRecordLinkOrderMessage message) {e}");
+            Logg.Error($"void Receive(TransferRecordLinkOrderMessage message) {e}");
         }
     }
 

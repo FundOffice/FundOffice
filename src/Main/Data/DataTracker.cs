@@ -1,9 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using FMO.Disclosure;
-using FMO.Logging;
+
 using FMO.Models;
 using LiteDB;
-using Serilog;
+using MoT;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
@@ -76,7 +76,7 @@ public static partial class DataTracker
                 if (di.Name != name)
                 {
                     Directory.Move(di.FullName, folder);
-                    LogEx.Warning($"基金 {f.Code} 名称已更新 [{di.Name}] -> [{f.Name}]");
+                    Logg.Warning($"基金 {f.Code} 名称已更新 [{di.Name}] -> [{f.Name}]");
                 }
 
                 FundHelper.Map(f, folder);
@@ -501,7 +501,7 @@ public static partial class DataTracker
             }
             catch (Exception e)
             {
-                LogEx.Error($"{g.Key.FundId}", e);
+                Logg.Error(e, $"{g.Key.FundId}");
             }
 
 
@@ -688,7 +688,7 @@ public static partial class DataTracker
         SaveRequests(db, data);
 
         try { PostHandleTransferRequests(db, data); }
-        catch (Exception ex) { LogEx.Error($"{ex}"); }
+        catch (Exception ex) { Logg.Error($"{ex}"); }
 
 
         DataHub.Push(data);
@@ -705,7 +705,7 @@ public static partial class DataTracker
         SaveRecords(records, db);
 
         // 通知UI
-        try { WeakReferenceMessenger.Default.Send(records); } catch (Exception e) { LogEx.Error(e); }
+        try { WeakReferenceMessenger.Default.Send(records); } catch (Exception e) { Logg.Error(e); }
 
         PostHandleTransferRecords(db, records);
 
@@ -720,7 +720,7 @@ public static partial class DataTracker
 
         db.GetCollection<TransferOrder>().Upsert(data);
 
-        try { WeakReferenceMessenger.Default.Send(data); } catch (Exception e) { LogEx.Error(e); }
+        try { WeakReferenceMessenger.Default.Send(data); } catch (Exception e) { Logg.Error(e); }
 
         DataHub.Push(data);
     }
@@ -747,7 +747,7 @@ public static partial class DataTracker
                     r.ShareClass = c;
                 continue;
             }
-            else LogEx.Error($"QueryTransferRequests 发现未知的产品{r.FundName} {r.FundCode}");
+            else Logg.Error($"QueryTransferRequests 发现未知的产品{r.FundName} {r.FundCode}");
         }
 
         // 不在库中的投资人
@@ -829,7 +829,7 @@ public static partial class DataTracker
                     r.ShareClass = c;
                 continue;
             }
-            else LogEx.Error($"QueryTransferRequests 发现未知的产品{r.FundName} {r.FundCode}");
+            else Logg.Error($"QueryTransferRequests 发现未知的产品{r.FundName} {r.FundCode}");
         }
 
         // 不在库中的投资人
@@ -973,7 +973,7 @@ public static partial class DataTracker
                     // 校验一定是赎回类型
                     if (item.Type != TransferRecordType.Redemption && item.Type != TransferRecordType.ForceRedemption)
                     {
-                        LogEx.Error($"基金 {fid} 清盘时， 最后 TransferRecordType = {item.Type}，应为 赎回");
+                        Logg.Error($"基金 {fid} 清盘时， 最后 TransferRecordType = {item.Type}，应为 赎回");
                         db.Rollback();
                         break;
                     }

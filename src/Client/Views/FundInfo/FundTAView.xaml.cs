@@ -1,12 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.TPL;
 using FMO.Trustee;
 using FMO.Utilities;
 using Microsoft.Win32;
+using MoT;
 using System.IO;
 using System.Runtime.Loader;
 using System.Windows.Controls;
@@ -187,7 +188,7 @@ public partial class FundTAViewModel : ObservableObject
         var tpl = db.GetCollection<TemplateInfo>().FindById("DF3CEE4F-EF22-E7F7-8238-6CFEE4605326");
         if (tpl is null || !Directory.Exists(@$"files\tpl\{tpl.Id}"))
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "模板不存在"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "模板不存在"));
             return;
         }
 
@@ -205,7 +206,7 @@ public partial class FundTAViewModel : ObservableObject
             var data = obj?.Generate((FundId, DateOnly.FromDateTime(DateTime.Now)));
             if (data?.Data is null)
             {
-                WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "导出失败，未能成功生成数据。"));
+                WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "导出失败，未能成功生成数据。"));
                 return;
             }
 
@@ -222,8 +223,8 @@ public partial class FundTAViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "导出失败，请查看Log"));
+            Logg.Error(e);
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "导出失败，请查看Log"));
         }
         finally
         {
@@ -249,7 +250,7 @@ public partial class FundTAViewModel : ObservableObject
         var api = TrusteeGallay.Find(FundId);
         if (!(api?.IsValid ?? false))
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "API 不可用"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "API 不可用"));
             return;
         }
         try
@@ -268,8 +269,8 @@ public partial class FundTAViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "更新失败"));
+            Logg.Error(e);
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "更新失败"));
         }
     }
 }

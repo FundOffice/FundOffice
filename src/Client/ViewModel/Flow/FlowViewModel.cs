@@ -1,11 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
-using Serilog;
+using MoT;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
@@ -22,7 +22,7 @@ public class TempFile : IDisposable
 
     public void Dispose()
     {
-        try { File.Delete(FilePath); } catch (Exception e) { LogEx.Error(e, $"删除临时文件【{FilePath}】失败"); }
+        try { File.Delete(FilePath); } catch (Exception e) { Logg.Error(e, $"删除临时文件【{FilePath}】失败"); }
     }
 }
 
@@ -161,7 +161,7 @@ public partial class FlowViewModel : ObservableObject//, IFileSetter
          
         IsReadOnly = ok;
         if (!ok)
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, string.Join('\n', err)));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, string.Join('\n', err)));
     }
 
 

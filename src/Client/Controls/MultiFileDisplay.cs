@@ -1,6 +1,6 @@
-﻿using FMO.Logging;
+﻿
 using Microsoft.Win32;
-using Serilog;
+using MoT;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
@@ -167,7 +167,7 @@ public class MultiFileDisplay : Control
         }
         catch (Exception ex)
         {
-            LogEx.Error($"文件另存为失败: {ex.Message}");
+            Logg.Error($"文件另存为失败: {ex.Message}");
         }
     }
 

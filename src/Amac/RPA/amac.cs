@@ -1,10 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using FMO.AMAC;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using Microsoft.Playwright;
-using Serilog;
+using MoT;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -68,7 +68,7 @@ public static class AmacAssist
             var resp = await client.GetAsync("https://gs.amac.org.cn/amac-infodisc/res/pof/manager/managerList.html");
             if (!resp.IsSuccessStatusCode)
             {
-                LogEx.Warning("请检查网络");
+                Logg.Warning("请检查网络");
                 return null;
             }
 
@@ -98,12 +98,12 @@ public static class AmacAssist
                 return root?.Content?.ToArray();
             }
 
-            LogEx.Error($"GetInstitutionInfoFromAmac Net Error {resp.StatusCode}");
+            Logg.Error($"GetInstitutionInfoFromAmac Net Error {resp.StatusCode}");
             return null;
         }
         catch (Exception e)
         {
-            LogEx.Error(e, $"GetInstitutionInfoFromAmac");
+            Logg.Error(e, $"GetInstitutionInfoFromAmac");
 
             return null;
         }
@@ -154,7 +154,7 @@ public static class AmacAssist
         var idx = content.IndexOf("基金名称");
         if (idx < 0)
         {
-            LogEx.Error("获取基金公示信息错误 1");
+            Logg.Error("获取基金公示信息错误 1");
             return default;
         }
 
@@ -162,7 +162,7 @@ public static class AmacAssist
         var e = content.IndexOf("tbody", idx);
         if (e <= s)
         {
-            LogEx.Error("获取基金公示信息错误 2");
+            Logg.Error("获取基金公示信息错误 2");
             return default;
         }
 
@@ -176,14 +176,14 @@ public static class AmacAssist
 
             if (tds.Length < 2)
             {
-                LogEx.Error("获取基金公示信息错误 3");
+                Logg.Error("获取基金公示信息错误 3");
                 return default;
             }
 
             var match = Regex.Match(tds[0], ">.*?<");
             if (!match.Success)
             {
-                LogEx.Error("获取基金公示信息错误 4");
+                Logg.Error("获取基金公示信息错误 4");
                 return default;
             }
 
@@ -192,7 +192,7 @@ public static class AmacAssist
             match = Regex.Match(tds[1], "(?s)>.*?<");
             if (!match.Success)
             {
-                LogEx.Error("获取基金公示信息错误 5");
+                Logg.Error("获取基金公示信息错误 5");
                 return default;
             }
             var value = match.Value[1..^1].Trim();
@@ -296,13 +296,13 @@ public static class AmacAssist
             var name = await item.Locator("td > a").First.InnerTextAsync(options);
             if (string.IsNullOrWhiteSpace(name))
             {
-                LogEx.Error($"CrawleManagerInfo. Fund Name is Empty");
+                Logg.Error($"CrawleManagerInfo. Fund Name is Empty");
                 return Array.Empty<FundBasicInfo>();
             }
             var url = await item.Locator("td > a").First.GetAttributeAsync("href");
             if (string.IsNullOrWhiteSpace(url))
             {
-                LogEx.Error($"CrawleManagerInfo. Fund Url is Empty");
+                Logg.Error($"CrawleManagerInfo. Fund Url is Empty");
                 return Array.Empty<FundBasicInfo>();
             }
 
@@ -317,13 +317,13 @@ public static class AmacAssist
             var name = await item.Locator("td > a").First.InnerTextAsync(options);
             if (string.IsNullOrWhiteSpace(name))
             {
-                LogEx.Error($"CrawleManagerInfo. Fund Name is Empty");
+                Logg.Error($"CrawleManagerInfo. Fund Name is Empty");
                 return Array.Empty<FundBasicInfo>();
             }
             var url = await item.Locator("td > a").First.GetAttributeAsync("href");
             if (string.IsNullOrWhiteSpace(url))
             {
-                LogEx.Error($"CrawleManagerInfo. Fund Url is Empty");
+                Logg.Error($"CrawleManagerInfo. Fund Url is Empty");
                 return Array.Empty<FundBasicInfo>();
             }
 
@@ -337,13 +337,13 @@ public static class AmacAssist
             var name = await item.Locator("td > a").First.InnerTextAsync(options);
             if (string.IsNullOrWhiteSpace(name))
             {
-                LogEx.Error($"CrawleManagerInfo. Fund Name is Empty");
+                Logg.Error($"CrawleManagerInfo. Fund Name is Empty");
                 return Array.Empty<FundBasicInfo>();
             }
             var url = await item.Locator("td > a").First.GetAttributeAsync("href");
             if (string.IsNullOrWhiteSpace(url))
             {
-                LogEx.Error($"CrawleManagerInfo. Fund Url is Empty");
+                Logg.Error($"CrawleManagerInfo. Fund Url is Empty");
                 return Array.Empty<FundBasicInfo>();
             }
 
@@ -378,7 +378,7 @@ public static class AmacAssist
             var m = Regex.Match(content, "<div class=\"section\"[\\s\\S]*?关闭");
             if (!content.Contains("机构信息") || !m.Success)
             {
-                LogEx.Error("获取的网页内容异常");
+                Logg.Error("获取的网页内容异常");
                 return false;
             }
 
@@ -466,7 +466,7 @@ public static class AmacAssist
         }
         catch (Exception e)
         {
-            LogEx.Error($"CrawleManagerInfo {e}");
+            Logg.Error($"CrawleManagerInfo {e}");
             return false;
         }
     }
@@ -524,7 +524,7 @@ public static class AmacAssist
         }
         catch (Exception e)
         {
-            LogEx.Error(e, $"CrawleManagerInfo. Fund Url is Empty");
+            Logg.Error(e, $"CrawleManagerInfo. Fund Url is Empty");
             return Array.Empty<FundBasicInfo>();
         }
     }

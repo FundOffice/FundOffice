@@ -2,11 +2,11 @@
 using FMO.Models;
 using FMO.Utilities;
 using MimeKit;
-using Serilog;
+
 using System.Linq;
 using System.IO;
 using System.IO.Compression;
-using FMO.Logging;
+
 
 namespace FMO.Schedule;
 
@@ -58,7 +58,7 @@ public class DailyFromMailMission : MailMission
             }
             catch (Exception ex)
             {
-                LogEx.Error($"Daily From Mail {ex}");
+                Logg.Error($"Daily From Mail {ex}");
             }
 
             progress += unit;

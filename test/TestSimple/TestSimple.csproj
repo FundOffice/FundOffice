@@ -22,7 +22,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="MoT.Logg" Version="1.0.5" />
+		<PackageReference Include="MoT.Logg" Version="1.1.8" />
 	</ItemGroup>
 
 </Project>

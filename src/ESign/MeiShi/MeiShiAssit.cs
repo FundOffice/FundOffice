@@ -1,5 +1,5 @@
 ﻿using FMO.Disclosure;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using System.IO;
@@ -87,7 +87,7 @@ public partial class MeiShiAssit : ISigning
         {
             IsValid = false;
             this.SetStatus(false);
-            LogEx.Error("登录MeiShi错误：用户名或密码为空");
+            Logg.Error("登录MeiShi错误：用户名或密码为空");
             return false;
         }
 
@@ -215,9 +215,9 @@ public partial class MeiShiAssit : ISigning
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             if (setCookieHeaders?.Any() ?? false)
-                LogEx.Information(string.Join('\n', setCookieHeaders));
+                Logg.Information(string.Join('\n', setCookieHeaders));
         }
 
         var jsonBody = "{}";
@@ -262,7 +262,7 @@ public partial class MeiShiAssit : ISigning
     {
         if (!IsValid) return [];
         if (!isLogin) isLogin = await LoginFromEsign();
-        if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return []; }
+        if (!isLogin) { Logg.Error("MeiShi Login Failed"); return []; }
 
 
         if (end == default) end = DateTime.Now;
@@ -275,7 +275,7 @@ public partial class MeiShiAssit : ISigning
         {
             isLogin = false;
             isLogin = await LoginFromEsign();
-            if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return []; }
+            if (!isLogin) { Logg.Error("MeiShi Login Failed"); return []; }
 
             cont = await Query(from, end);
         }
@@ -283,7 +283,7 @@ public partial class MeiShiAssit : ISigning
         var root = JsonSerializer.Deserialize<RootJson>(cont);
         if (root?.code != 1008)
         {
-            LogEx.Error($"MeiShi QueryCustomerAsync {root?.message}");
+            Logg.Error($"MeiShi QueryCustomerAsync {root?.message}");
             return [];
         }
         var customers = root?.data?["list"].Deserialize<CustomerJson[]>();
@@ -297,7 +297,7 @@ public partial class MeiShiAssit : ISigning
     {
         if (!IsValid) return [];
         if (!isLogin) isLogin = await LoginFromEsign();
-        if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return []; }
+        if (!isLogin) { Logg.Error("MeiShi Login Failed"); return []; }
 
         if (end == default) end = DateTime.Now;
 
@@ -339,7 +339,7 @@ public partial class MeiShiAssit : ISigning
 
             if (!cusIdMap.TryGetValue(idNo!, out var invId))
             {
-                LogEx.Warning($"同步MeiShi投资者资格认证时，未找到对应投资人：{cusName}（{idNo}）");
+                Logg.Warning($"同步MeiShi投资者资格认证时，未找到对应投资人：{cusName}（{idNo}）");
                 continue;
             }
 
@@ -535,7 +535,7 @@ public partial class MeiShiAssit : ISigning
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return false;
         }
     }
@@ -547,7 +547,7 @@ public partial class MeiShiAssit : ISigning
 
         if (!IsValid) return [];
         if (!isLogin) isLogin = await LoginFromEsign();
-        if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return []; }
+        if (!isLogin) { Logg.Error("MeiShi Login Failed"); return []; }
 
 
         List<OrderInfoJson> infoJsons = new();
@@ -650,7 +650,7 @@ public partial class MeiShiAssit : ISigning
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return new(false, e.Message);
         }
     }
@@ -710,7 +710,7 @@ public partial class MeiShiAssit : ISigning
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return new(false, e.Message);
         }
     }
@@ -766,7 +766,7 @@ public partial class MeiShiAssit : ISigning
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return new(false, e.Message);
         }
     }
@@ -818,7 +818,7 @@ public partial class MeiShiAssit : ISigning
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             return new(false, e.Message);
         }
 
@@ -863,7 +863,7 @@ public partial class MeiShiAssit : ISigning
     {
         if (!IsValid) return [];
         if (!isLogin) isLogin = await LoginFromEsign();
-        if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return []; }
+        if (!isLogin) { Logg.Error("MeiShi Login Failed"); return []; }
 
 
         HttpRequestMessage request = new();
@@ -895,7 +895,7 @@ public partial class MeiShiAssit : ISigning
         }
         catch (Exception ex)
         {
-            LogEx.Error(ex);
+            Logg.Error(ex);
             return [];
         }
     }
@@ -995,7 +995,7 @@ public partial class MeiShiAssit : ISigning
 
             if (bitmap1 == null || bitmap2 == null)
             {
-                LogEx.Error("合并投资人证件：无法加载图片，请检查文件格式");
+                Logg.Error("合并投资人证件：无法加载图片，请检查文件格式");
                 return null;
             }
 
@@ -1029,7 +1029,7 @@ public partial class MeiShiAssit : ISigning
         }
         catch (Exception ex)
         {
-            LogEx.Error($"合并投资人证件出错 {ex}");
+            Logg.Error($"合并投资人证件出错 {ex}");
             return null;
         }
     }
@@ -1074,7 +1074,7 @@ public partial class MeiShiAssit : ISigning
 
         if (!IsValid) return new(false, "Invalid");
         if (!isLogin) isLogin = await LoginFromEsign();
-        if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return new(false, "登录失败"); }
+        if (!isLogin) { Logg.Error("MeiShi Login Failed"); return new(false, "登录失败"); }
 
 
         var funds = await QueryFundInfo();
@@ -1159,7 +1159,7 @@ public partial class MeiShiAssit : ISigning
     {
         if (!IsValid) return new(false, [], "Invalid");
         if (!isLogin) isLogin = await LoginFromEsign();
-        if (!isLogin) { LogEx.Error("MeiShi Login Failed"); return new(false, [], "登录失败"); }
+        if (!isLogin) { Logg.Error("MeiShi Login Failed"); return new(false, [], "登录失败"); }
 
 
         var funds = await QueryFundInfo();

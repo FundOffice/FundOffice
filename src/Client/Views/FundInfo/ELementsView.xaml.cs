@@ -1,10 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
+using MoT;
 using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows;
@@ -388,7 +389,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
             Toast.Warning("出错了");
         }
     }
@@ -415,7 +416,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         }
         catch (Exception e)
         { 
-            LogEx.Error(e);
+            Logg.Error(e);
             Toast.Warning("出错了");
         }
     }

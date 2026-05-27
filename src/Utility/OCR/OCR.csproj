@@ -7,11 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MoT.Logg" Version="1.1.8" />
     <PackageReference Include="RapidOCRSharpOnnx" Version="1.0.7" />
   </ItemGroup>
-	<ItemGroup>
-	  <ProjectReference Include="..\Logging\Logging.csproj" />
-	</ItemGroup>
 	<ItemGroup>
 	  <None Update="modelfiles\ch_PP-LCNet_x0_25_textline_ori_cls_mobile.onnx">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

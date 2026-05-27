@@ -1,6 +1,7 @@
 ﻿using FMO.Disclosure;
-using FMO.Logging;
+
 using FMO.Models;
+using MoT;
 using System.Collections.Concurrent;
 
 namespace FMO.Utilities;
@@ -32,7 +33,7 @@ public sealed partial class DataHub
     /// </summary>
     private static void OnSubscriberError(Type dataType, Exception ex)
     {
-        LogEx.Error($"[DataHub] 派发 {dataType.Name} 时订阅者异常: {ex.StackTrace}");
+        Logg.Error($"[DataHub] 派发 {dataType.Name} 时订阅者异常: {ex.StackTrace}");
     }
 
     // ================= 内部泛型管理器 =================

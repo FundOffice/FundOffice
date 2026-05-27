@@ -1,8 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Settings;
 using FMO.Utilities;
+using MoT;
 using System.Collections.Concurrent;
 
 
@@ -117,7 +118,7 @@ public partial class FundDailyMissingRule : VerifyRule, ITracker<IEnumerable<Dai
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
         }
 
         // 净值更新
@@ -154,7 +155,7 @@ public partial class FundDailyMissingRule : VerifyRule, ITracker<IEnumerable<Dai
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
+            Logg.Error(e);
         }
     }
 }

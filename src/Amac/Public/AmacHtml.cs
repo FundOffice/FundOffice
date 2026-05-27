@@ -1,6 +1,6 @@
 ﻿using AngleSharp;
 using AngleSharp.Dom;
-using FMO.Logging;
+
 using FMO.Models;
 using System.Globalization;
 using System.Text;
@@ -19,7 +19,7 @@ public class AmacHtml
 
             if (document.Body?.TextContent.Contains("机构信息") is not true)
             {
-                LogEx.Error("获取的网页内容异常：缺少机构信息");
+                Logg.Error("获取的网页内容异常：缺少机构信息");
                 return false;
             }
 
@@ -46,7 +46,7 @@ public class AmacHtml
         }
         catch (Exception e)
         {
-            LogEx.Error($"CrawleManagerInfo {e}");
+            Logg.Error($"CrawleManagerInfo {e}");
             return false;
         }
     }
@@ -61,7 +61,7 @@ public class AmacHtml
 
             if (document.Body?.TextContent.Contains("机构信息") is not true)
             {
-                LogEx.Error("获取的网页内容异常：缺少机构信息");
+                Logg.Error("获取的网页内容异常：缺少机构信息");
                 return [];
             }
 
@@ -86,7 +86,7 @@ public class AmacHtml
         }
         catch (Exception e)
         {
-            LogEx.Error($"CrawleManagerInfo {e}");
+            Logg.Error($"CrawleManagerInfo {e}");
             return [];
         }
     }
@@ -108,7 +108,7 @@ public class AmacHtml
             var resp = await client.GetAsync("https://gs.amac.org.cn/amac-infodisc/res/pof/manager/managerList.html");
             if (!resp.IsSuccessStatusCode)
             {
-                LogEx.Warning("请检查网络");
+                Logg.Warning("请检查网络");
                 return null;
             }
 
@@ -138,12 +138,12 @@ public class AmacHtml
                 return root?.Content?.ToArray();
             }
 
-            LogEx.Error($"GetInstitutionInfoFromAmac Net Error {resp.StatusCode}");
+            Logg.Error($"GetInstitutionInfoFromAmac Net Error {resp.StatusCode}");
             return null;
         }
         catch (Exception e)
         {
-            LogEx.Error(e, $"GetInstitutionInfoFromAmac");
+            Logg.Error(e, $"GetInstitutionInfoFromAmac");
 
             return null;
         }

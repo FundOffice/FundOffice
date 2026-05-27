@@ -2,7 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FMO.IO.AMAC;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Shared;
 using FMO.Todo;
@@ -12,6 +12,7 @@ using FMO.Utilities;
 using LiteDB;
 using Microsoft.Playwright;
 using Microsoft.Win32;
+using MoT;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
@@ -306,7 +307,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     //            var v = ValuationSheetHelper.ParseExcel(fs);
     //            if (v.dy is null)
     //            {
-    //                LogEx.Warning($"解析估值表 {e.Name} 出错");
+    //                Logg.Warning($"解析估值表 {e.Name} 出错");
     //                return;
     //            }
 
@@ -318,7 +319,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     //        }
     //        catch (Exception er)
     //        {
-    //            LogEx.Warning($"解析估值表 {e.Name} 出错 {er.Message}");
+    //            Logg.Warning($"解析估值表 {e.Name} 出错 {er.Message}");
     //        }
     //    };
     //}
@@ -860,7 +861,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
                     var item = ValuationSheetHelper.ParseExcel(fs);
                     if (item.dy is not null)
                         item.dy.SheetPath = Path.GetRelativePath(Directory.GetCurrentDirectory(), f.FullName);
-                    else LogEx.Error($"解析{f.Name}出错");
+                    else Logg.Error($"解析{f.Name}出错");
 
                     bag.Add(item);
                 });
@@ -887,7 +888,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
                 // 从属验证 
                 if (err.Count != 0)
                 {
-                    LogEx.Error($"{FundName} 解析全部估值表出错 发现{err.Count}个文件不属于本基金\n{string.Join('\n', err.Select(x => x.name))}))");
+                    Logg.Error($"{FundName} 解析全部估值表出错 发现{err.Count}个文件不属于本基金\n{string.Join('\n', err.Select(x => x.name))}))");
                     HandyControl.Controls.Growl.Info($"发现{err.Count}个文件不属于本基金\n{string.Join('\n', err.Select(x => x.name))}))");
                 }
 
@@ -897,7 +898,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
             }
             catch (Exception e)
             {
-                LogEx.Error($"{FundName} 解析全部估值表出错 {e.Message}");
+                Logg.Error($"{FundName} 解析全部估值表出错 {e.Message}");
             }
 
             App.Current.Dispatcher.BeginInvoke(() => CanRefreshNetValues = true);
@@ -916,7 +917,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         var exporters = db.GetCollection<TemplateInfo>().FindAll().Where(x => x.Suit.HasFlag(ExportTypeFlag.SingleFundNetValueList)).ToList();
         if (exporters is null || exporters.Count == 0)
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "未找到基金净值列表导出模板"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "未找到基金净值列表导出模板"));
             return;
         }
 
@@ -985,7 +986,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         }
         catch (Exception e)
         {
-            LogEx.Error($"生成基金合同附件失败{e}");
+            Logg.Error($"生成基金合同附件失败{e}");
             HandyControl.Controls.Growl.Warning("生成基金合同附件失败");
         }
     }
@@ -995,7 +996,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     {
         if (SetupDate is null || SetupDate == default(DateOnly))
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "请先设置基金的成立日期"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "请先设置基金的成立日期"));
             return;
         }
         if (FundCode is not null)
@@ -1019,7 +1020,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     {
         if (string.IsNullOrWhiteSpace(FundCode))
         {
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "没有备案号，无法更新"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "没有备案号，无法更新"));
             return false;
         }
 
@@ -1029,7 +1030,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
             acc = db.GetCollection<AmacAccount>().FindById("ambers");
             if (string.IsNullOrWhiteSpace(acc?.Name) || string.IsNullOrWhiteSpace(acc?.Password))
             {
-                LogEx.Error("AMAC账号信息不完整，请检查数据库");
+                Logg.Error("AMAC账号信息不完整，请检查数据库");
                 return false;
             }
         }
@@ -1051,7 +1052,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
             if (!loginResult)
             {
-                LogEx.Error("AMAC登录失败，请检查账号信息");
+                Logg.Error("AMAC登录失败，请检查账号信息");
                 return false;
             }
 
@@ -1064,7 +1065,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
                 var downloadResult = await AmbersAssist.DownloadRegisterLetterCore(page, FundCode);
                 if (string.IsNullOrWhiteSpace(downloadResult) || !File.Exists(downloadResult))
                 {
-                    WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "AMAC下载备案函失败，可能是网络问题或者AMAC页面结构发生变化"));
+                    WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "AMAC下载备案函失败，可能是网络问题或者AMAC页面结构发生变化"));
                     return false;
                 }
 
@@ -1088,8 +1089,8 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
             }
             catch (Exception e)
             {
-                LogEx.Error(e);
-                WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "AMAC下载备案函失败，请查看log"));
+                Logg.Error(e);
+                WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "AMAC下载备案函失败，请查看log"));
                 return false;
             }
 
@@ -1099,8 +1100,8 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         }
         catch (Exception e)
         {
-            LogEx.Error(e);
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "AMAC下载备案函失败，请查看log"));
+            Logg.Error(e);
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "AMAC下载备案函失败，请查看log"));
             return false;
         }
         finally
@@ -1120,7 +1121,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         if (!dir.Exists)
         {
-            LogEx.Error($"[{FundName}]存储文件夹无法创建,{dir}");
+            Logg.Error($"[{FundName}]存储文件夹无法创建,{dir}");
             HandyControl.Controls.Growl.Error($"[{FundName}]存储文件夹无法创建");
             return;
         }
@@ -1295,7 +1296,7 @@ public partial class LatestFileViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            LogEx.Error($"文件另存为失败: {ex.Message}");
+            Logg.Error($"文件另存为失败: {ex.Message}");
         }
     }
 }

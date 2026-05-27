@@ -1,8 +1,8 @@
-﻿using FMO.Logging;
+﻿
 using FMO.Models;
 using MiniExcelLibs;
 using MiniSoftware;
-using Serilog;
+using MoT;
 using System.IO.Compression;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -82,7 +82,7 @@ public static class Tpl
         var stream = assembly.GetManifestResourceStream(@$"FileTemplate.tpl.{fileName}");
         if (stream is null)
         {
-            LogEx.Error($"未找到内嵌资源：{fileName}");
+            Logg.Error($"未找到内嵌资源：{fileName}");
             return null;
         }
         byte[] buffer = new byte[stream.Length];
@@ -98,7 +98,7 @@ public static class Tpl
         var fi = new FileInfo(@"files\tpl\备案承诺函.docx");
         if (!fi.Exists)
         {
-            LogEx.Error("生成备案承诺函失败：未找到模板");
+            Logg.Error("生成备案承诺函失败：未找到模板");
             return false;
         }
 
@@ -109,7 +109,7 @@ public static class Tpl
         }
         catch (Exception e)
         {
-            LogEx.Error($"生成备案承诺函失败：{e.Message}");
+            Logg.Error($"生成备案承诺函失败：{e.Message}");
             return false;
         }
     }

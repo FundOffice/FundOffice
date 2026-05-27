@@ -1,6 +1,7 @@
-﻿using FMO.Logging;
+﻿
 using FMO.Models;
 using LiteDB;
+using MoT;
 
 namespace FMO.Settings;
 
@@ -40,7 +41,7 @@ public static partial class SettingService
         if (r.IsEnabled)
         {
             if (instance is ISettingFunction vr)
-                try { vr.Init(); } catch(Exception e) { LogEx.Error(e); }
+                try { vr.Init(); } catch(Exception e) { Logg.Error(e); }
 
             instance.Start();
         }

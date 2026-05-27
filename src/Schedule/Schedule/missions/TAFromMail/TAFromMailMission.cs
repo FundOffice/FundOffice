@@ -1,10 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 using ExcelDataReader;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Utilities;
 using MimeKit;
-using Serilog;
+
 using System.IO;
 using System.IO.Compression;
 using System.Text.RegularExpressions;
@@ -68,7 +68,7 @@ public class TAFromMailMission : MailMission
             }
             catch (Exception ex)
             {
-                LogEx.Error($"TA From Mail {ex}");
+                Logg.Error($"TA From Mail {ex}");
             }
 
             progress += unit;
@@ -102,7 +102,7 @@ public class TAFromMailMission : MailMission
         {
             if (item.FileName is null || item.Content is null)
             {
-                LogEx.Error($"TA From Mail {mime.Subject} 附件异常");
+                Logg.Error($"TA From Mail {mime.Subject} 附件异常");
                 continue;
             }
 
@@ -225,7 +225,7 @@ public class TAFromMailMission : MailMission
                 // 校验
                 if (rec.Type == TransferRecordType.UNK || (rec.ConfirmedShare == 0 && rec.ConfirmedAmount == 0))
                 {
-                    LogEx.Error($"TA Bad Data {rec.PrintProperties()}");
+                    Logg.Error($"TA Bad Data {rec.PrintProperties()}");
                     continue;
                 }
 
@@ -261,13 +261,13 @@ public class TAFromMailMission : MailMission
         // 没找到对应的fund
         if (fund is null)
         {
-            LogEx.Error($"{r.FundName}({r.FundCode}) {r.InvestorName} {r.ConfirmedDate} 未找到对应基金");
+            Logg.Error($"{r.FundName}({r.FundCode}) {r.InvestorName} {r.ConfirmedDate} 未找到对应基金");
             return;
         }
 
         if (string.IsNullOrWhiteSpace(r.FundName))
         {
-            LogEx.Error($"{r.FundName}({r.FundCode}) {r.InvestorName} {r.ConfirmedDate} 数据异常");
+            Logg.Error($"{r.FundName}({r.FundCode}) {r.InvestorName} {r.ConfirmedDate} 数据异常");
             return;
         }
         r.FundId = fund.Id;

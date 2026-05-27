@@ -1,7 +1,8 @@
-﻿using FMO.Logging;
+﻿
 using FMO.Models;
 using FMO.Settings;
 using FMO.Utilities;
+using MoT;
 using System.Collections.Concurrent;
 
 namespace FMO.Trigger;
@@ -254,7 +255,7 @@ public partial class FundStopPurchaseRule : VerifyRule, ITracker<IEnumerable<Dai
 
                     if (dates.Length == 0)
                     {
-                        //LogEx.Error($"{f.Name} From {begin} Has No Nv");
+                        //Logg.Error($"{f.Name} From {begin} Has No Nv");
                         continue;
                     }
 
@@ -286,7 +287,7 @@ public partial class FundStopPurchaseRule : VerifyRule, ITracker<IEnumerable<Dai
 
                     if (dates.Length == 0)
                     {
-                        //LogEx.Error($"{f.Name} From {fundLimit.CheckDate} Has No Nv");
+                        //Logg.Error($"{f.Name} From {fundLimit.CheckDate} Has No Nv");
                         continue;
                     }
 
@@ -313,7 +314,7 @@ public partial class FundStopPurchaseRule : VerifyRule, ITracker<IEnumerable<Dai
             }
             catch (Exception ex)
             {
-                LogEx.Error($"{f.Name} FundStopPurchaseRule", ex);
+                Logg.Error(ex, $"{f.Name} FundStopPurchaseRule");
             }
 
         }

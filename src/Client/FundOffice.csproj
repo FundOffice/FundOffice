@@ -110,9 +110,6 @@
     <PackageReference Include="LiteDB" Version="5.0.21" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
     <PackageReference Include="OxyPlot.Wpf" Version="2.2.0" />
-    <PackageReference Include="Serilog" Version="4.3.1" />
-    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageReference Include="Serilog.Sinks.LiteDB" Version="1.0.32" />
   </ItemGroup>
 
   <ItemGroup>
@@ -129,7 +126,6 @@
     <ProjectReference Include="..\Todo\Todo.UI\Todo.UI.csproj" />
     <ProjectReference Include="..\Trigger\DataTrigger\DataTrigger.csproj" />
     <ProjectReference Include="..\Utility\ElementGenerator\ElementGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all" />
-    <ProjectReference Include="..\Utility\Logging\Logging.csproj" />
     <ProjectReference Include="..\Utility\Patch\Patch.csproj" />
     <ProjectReference Include="..\Utility\PDF\PdfExt.csproj" TargetFramework="net9.0-windows" />
     <ProjectReference Include="..\Plugin\Plugin\Plugin.csproj" />

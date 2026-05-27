@@ -1,12 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.PDF;
 using FMO.Shared;
 using FMO.Utilities;
 using Microsoft.Win32;
-using Serilog;
+using MoT;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -142,11 +142,11 @@ public partial class FundAccountsViewModel : ObservableObject
 
             SecurityCompanies.Filter += (s, e) => e.Accepted = string.IsNullOrWhiteSpace(SecurityCompanyKeyword) ? true : e.Item switch { string ss => ss.Contains(SecurityCompanyKeyword), _ => true };
 
-            LogEx.Error($"加载证券公司列表失败");
+            Logg.Error($"加载证券公司列表失败");
         }
         catch (Exception e)
         {
-            LogEx.Error($"加载证券公司列表失败{e.Message}");
+            Logg.Error($"加载证券公司列表失败{e.Message}");
         }
 
 
@@ -178,7 +178,7 @@ public partial class FundAccountsViewModel : ObservableObject
         }
         catch (Exception e)
         {
-            LogEx.Error($"加载期货公司列表失败{e.Message}");
+            Logg.Error($"加载期货公司列表失败{e.Message}");
         }
 
 
@@ -340,7 +340,7 @@ public partial class FundAccountsViewModel : ObservableObject
                             var (fund, _) = db.FindByName(name.Last());
                             change.FundId = fund?.Id ?? 0;
                             db.GetCollection<SecurityCardChange>().Upsert(change);
-                            if (fund is null) LogEx.Error($"股卡变更 {change.Id} 的基金 {change.Name} 不在库中");
+                            if (fund is null) Logg.Error($"股卡变更 {change.Id} 的基金 {change.Name} 不在库中");
 
                             if (fund?.Id == FundId)
                                 cl.Add(change);
@@ -354,7 +354,7 @@ public partial class FundAccountsViewModel : ObservableObject
                         if (c.text.Contains("申请日期")) continue;
 
                         ++failed;
-                        LogEx.Error($"解析股卡失败:\n {c.text}");
+                        Logg.Error($"解析股卡失败:\n {c.text}");
                         continue;
                     }
 
@@ -390,7 +390,7 @@ public partial class FundAccountsViewModel : ObservableObject
                         sa.FundCode = fund?.Code;
                         db.GetCollection<SecurityCard>().Upsert(sa);
 
-                        if (fund is null) LogEx.Error($"股卡 {sa.CardNo} 的基金 {sa.Name} 不在库中");
+                        if (fund is null) Logg.Error($"股卡 {sa.CardNo} 的基金 {sa.Name} 不在库中");
                     }
                     ++cnt;
                      
@@ -401,7 +401,7 @@ public partial class FundAccountsViewModel : ObservableObject
             }
             catch (Exception e)
             {
-                LogEx.Error(e);
+                Logg.Error(e);
             }
         }
 
@@ -429,7 +429,7 @@ public partial class FundAccountsViewModel : ObservableObject
     //        sa.FundCode = fund?.Code;
     //        db.GetCollection<SecurityCard>().Upsert(sa);
 
-    //        if (fund is null) LogEx.Error($"股卡 {sa.CardNo} 的基金 {sa.Name} 不在库中");
+    //        if (fund is null) Logg.Error($"股卡 {sa.CardNo} 的基金 {sa.Name} 不在库中");
     //    }
     //}
 

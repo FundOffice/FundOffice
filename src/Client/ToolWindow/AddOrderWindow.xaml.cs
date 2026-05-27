@@ -1,12 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
 using LiteDB;
-using Serilog;
+using MoT;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Compression;
@@ -261,22 +261,22 @@ public abstract partial class AddOrderWindowViewModelBase : ObservableObject
         TransferOrder order = new();
         var m = Regex.Match(text, @"姓名/名称：([-\(\)（）\w]+)");
         if (!m.Success)
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "交易申请单中，未找到投资人名称"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "交易申请单中，未找到投资人名称"));
         order.InvestorName = m.Groups[1].Value;
 
         m = Regex.Match(text, @"证件号码：([\da-zA-Z]+)");
         if (!m.Success)
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "交易申请单中，未找到证件号码"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "交易申请单中，未找到证件号码"));
         order.InvestorIdentity = m.Groups[1].Value;
 
         m = Regex.Match(text, @"产品名称：([\da-zA-Z]+)");
         if (!m.Success)
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "交易申请单中，未找到产品名称"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "交易申请单中，未找到产品名称"));
         order.FundName = m.Groups[1].Value;
 
         m = Regex.Match(text, @"赎回方式：([\da-zA-Z]+)");
         if (!m.Success)
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Warning, "交易申请单中，未找到产品名称"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "交易申请单中，未找到产品名称"));
         order.FundName = m.Groups[1].Value;
 
 
@@ -416,7 +416,7 @@ public partial class AddOrderWindowViewModel : AddOrderWindowViewModelBase
         catch (Exception e)
         {
             db.Rollback();
-            LogEx.Error($"添加交易订单失败，{e}");
+            Logg.Error($"添加交易订单失败，{e}");
         }
     }
 
@@ -690,7 +690,7 @@ public partial class SupplementaryOrderWindowViewModel : AddOrderWindowViewModel
         catch (Exception e)
         {
             db.Rollback();
-            LogEx.Error($"添加交易订单失败，{e}");
+            Logg.Error($"添加交易订单失败，{e}");
         }
     }
 

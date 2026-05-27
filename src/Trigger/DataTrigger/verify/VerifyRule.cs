@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Models;
+using MoT;
 
 namespace FMO.Trigger;
 
@@ -36,7 +37,7 @@ public abstract class VerifyRule : DataObserver, IVerifyRule
 
             ClearParamsOverride();
         }
-        catch (Exception e) { LogEx.Error($"{e}"); }
+        catch (Exception e) { Logg.Error(e); }
         finally { semaphoreSlim.Release(); }
     }
 

@@ -1,7 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
-using FMO.Logging;
+
 using FMO.Utilities;
 using LiteDB;
+using MoT;
 
 namespace FMO.Schedule;
 
@@ -40,7 +41,7 @@ public static class MissionSchedule
                 mission.Init();
                 return mission;
             }
-            catch (Exception e) { LogEx.Error($"无法加载mission{x["_id"]}\n{x.ToString()}\n{e.Message}\n{e.StackTrace}"); return null; }
+            catch (Exception e) { Logg.Error($"无法加载mission{x["_id"]}\n{x.ToString()}\n{e.Message}\n{e.StackTrace}"); return null; }
         }).OfType<Mission>().OrderBy(x => x!.GetType().Name switch { "MailCacheMission" => 0, _ => x.Id }).ToDictionary(x => x.Id);
 
 

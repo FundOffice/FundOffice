@@ -4,17 +4,18 @@ using CommunityToolkit.Mvvm.Messaging;
 using FMO.Disclosure;
 using FMO.ESigning;
 using FMO.IO.AMAC;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Schedule;
 using FMO.Settings;
 using FMO.Trustee;
 using FMO.Utilities;
 using Microsoft.Win32;
+using MoT;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
-using Serilog;
+
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -431,7 +432,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
               }
               catch (Exception e)
               {
-                  LogEx.Error($"备份失败 {e}");
+                  Logg.Error($"备份失败 {e}");
                   HandyControl.Controls.Growl.Error("备份失败");
               }
           }, TaskCreationOptions.LongRunning);
@@ -580,12 +581,12 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
             InitPlot();
 
 
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "更新每日数据完成"));
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "更新每日数据完成"));
         }
         catch (Exception ex)
         {
-            LogEx.Error($"HomePage, OnNewDate {ex}");
-            WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Info, "更新每日数据失败"));
+            Logg.Error($"HomePage, OnNewDate {ex}");
+            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "更新每日数据失败"));
         }
 
         BackupDb();
@@ -615,7 +616,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         }
         catch (Exception ex)
         {
-            LogEx.Error(ex);
+            Logg.Error(ex);
         }
     }
 

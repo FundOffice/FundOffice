@@ -1,9 +1,10 @@
 ﻿using FMO.AMAC;
-using FMO.Logging;
+
 using FMO.Models;
 using FMO.Settings;
 using FMO.Todo;
 using FMO.Utilities;
+using MoT;
 
 namespace FMO.Trigger;
 
@@ -48,7 +49,7 @@ public partial class PeriodicalUnreportedMonitor : ITracker<NewDay>
         }
         catch (Exception ex)
         {
-            LogEx.Error(ex);
+            Logg.Error(ex);
         }
     }
 }
