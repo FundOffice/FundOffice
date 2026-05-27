@@ -63,4 +63,8 @@
     <ProjectReference Include="..\Mission\Mission.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="MoT" />
+  </ItemGroup>
+
 </Project>
