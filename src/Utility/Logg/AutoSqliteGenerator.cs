@@ -16,7 +16,7 @@ public class LoggGenerator : IIncrementalGenerator
             {
                 if (ctx.Node is not InvocationExpressionSyntax invocation) return null;
                 var symbol = ctx.SemanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
-                if (symbol != null && symbol.Name == "Write" && symbol.ContainingType.Name == "Logg" && symbol.ContainingNamespace.ToDisplayString() == "Logg")
+                if (symbol != null && symbol.Name == "Write" && symbol.ContainingType.Name == "Logg" && symbol.ContainingNamespace.ToDisplayString() == "MoT")
                 {
                     if (symbol.IsGenericMethod && symbol.TypeArguments.Length > 0) return symbol.TypeArguments[0];
                     if (!symbol.IsGenericMethod && symbol.Parameters.Length > 0) return symbol.Parameters[0].Type;
@@ -37,9 +37,8 @@ public class LoggGenerator : IIncrementalGenerator
             sb.AppendLine("using Microsoft.Data.Sqlite;");
             sb.AppendLine("using System.Text.Json;");
             sb.AppendLine("using System.Runtime.CompilerServices;");
-            sb.AppendLine("using Logg;");
             sb.AppendLine();
-            sb.AppendLine("namespace Logg.Generated");
+            sb.AppendLine("namespace MoT");
             sb.AppendLine("{");
 
             // 1. 生成注册器 (在程序启动时同步建表)
@@ -84,8 +83,7 @@ public class LoggGenerator : IIncrementalGenerator
         // --- 生成格式化的 CreateTable SQL (改为 internal 供 Registrar 访问) ---
         sb.AppendLine("        internal const string CreateTableSql = @\"");
         sb.AppendLine($"            CREATE TABLE IF NOT EXISTS [{safeName}] (");
-        sb.AppendLine("                [Time] TEXT NOT NULL,");
-        sb.AppendLine("                [Level] TEXT NOT NULL,");
+        sb.AppendLine("                [_t_] TEXT NOT NULL,");
         for (int i = 0; i < props.Count; i++)
         {
             string comma = i == props.Count - 1 ? "" : ",";
@@ -98,34 +96,24 @@ public class LoggGenerator : IIncrementalGenerator
         var cols = string.Join(", ", props.Select(p => $"[{p.Name}]"));
         var pars = string.Join(", ", props.Select(p => $"@{p.Name}"));
         sb.AppendLine("        private const string InsertSql = @\"");
-        sb.AppendLine($"            INSERT INTO [{safeName}] ([Time], [Level], {cols})");
-        sb.AppendLine($"            VALUES (@Time, @Level, {pars});\";");
+        sb.AppendLine($"            INSERT INTO [{safeName}] ([_t_], {cols})");
+        sb.AppendLine($"            VALUES (@_t_, {pars});\";");
         sb.AppendLine();
 
         // --- 生成 Write 方法 (移除 CreateTableSql) ---
         sb.AppendLine($"        public static void Write({fullName} v)");
         sb.AppendLine("        {");
-        sb.AppendLine($"            Logg.Enqueue(new Logg.LogJob(InsertSql, cmd => BindParameters(cmd, v)));");
+        sb.AppendLine($"            Logg.Enqueue(new LogJob(InsertSql, cmd => BindParameters(cmd, v)));");
         sb.AppendLine("        }");
         sb.AppendLine();
 
         // --- 生成 BindParameters 方法 ---
         sb.AppendLine($"        private static void BindParameters(SqliteCommand cmd, {fullName} v)");
         sb.AppendLine("        {");
-        sb.AppendLine("            if (cmd.Parameters.Count == 0)");
-        sb.AppendLine("            {");
-        sb.AppendLine("                cmd.Parameters.Add(new SqliteParameter(\"@Time\", DateTime.Now.ToString(\"o\")));");
-        sb.AppendLine("                cmd.Parameters.Add(new SqliteParameter(\"@Level\", \"INFO\"));");
+        sb.AppendLine("            cmd.Parameters.Clear();");
+        sb.AppendLine("            cmd.Parameters.AddWithValue(\"@_t_\", DateTime.Now.ToString(\"o\"));");
         foreach (var p in props)
-            sb.AppendLine($"                cmd.Parameters.Add(new SqliteParameter(\"@{p.Name}\", {GetValExpr(p, "v")}));");
-        sb.AppendLine("            }");
-        sb.AppendLine("            else");
-        sb.AppendLine("            {");
-        sb.AppendLine("                ((SqliteParameter)cmd.Parameters[\"@Time\"]).Value = DateTime.Now.ToString(\"o\");");
-        sb.AppendLine("                ((SqliteParameter)cmd.Parameters[\"@Level\"]).Value = \"INFO\";");
-        foreach (var p in props)
-            sb.AppendLine($"                ((SqliteParameter)cmd.Parameters[\"@{p.Name}\"]).Value = {GetValExpr(p, "v")};");
-        sb.AppendLine("            }");
+            sb.AppendLine($"            cmd.Parameters.AddWithValue(\"@{p.Name}\", {GetValExpr(p, "v")});");
         sb.AppendLine("        }");
 
         sb.AppendLine("    }");

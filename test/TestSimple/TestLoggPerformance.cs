@@ -4,11 +4,12 @@ using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Data.Sqlite;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using MoT;
 
 namespace TestSimple;
 
 [TestClass]
-public class MyTestClass
+public class TestLoggPerformance
 {
     private static readonly string DbPath = Path.Combine(AppContext.BaseDirectory, "app_logs.db");
 
@@ -33,12 +34,12 @@ public class MyTestClass
         // 1. 多线程疯狂入队
         Parallel.For(1, total + 1, i =>
         {
-            Logg.Logg.Write(new Info { Id = i });
+            Logg.Write(new Info { Id = i });
         });
         long enqueueTime = sw.ElapsedMilliseconds;
 
         // 2. 等待后台消费者全部落盘
-        await Logg.Logg.FlushAsync();
+        await Logg.FlushAsync();
         long asyncTotalTime = sw.ElapsedMilliseconds;
 
         Console.WriteLine($"[异步队列模式 (生产者-消费者)]");

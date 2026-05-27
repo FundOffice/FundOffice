@@ -66,7 +66,6 @@
       <Build Solution="Debug|*" Project="false" />
     </Project>
     <Project Path="src/Utility/FileTemplate/FileTemplate.csproj" />
-    <Project Path="src/Utility/Logg/LogGenerator.csproj" Id="e6efeb06-e94e-4758-a37c-548f64eee48b" />
     <Project Path="src/Utility/Logging/Logging.csproj" />
     <Project Path="src/Utility/OCR/OCR.csproj" />
     <Project Path="src/Utility/Patch/Patch.csproj" />

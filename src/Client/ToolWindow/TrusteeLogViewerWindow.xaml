@@ -7,21 +7,58 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="平台Log"
     Width="800"
-    Height="450"
+    Height="850"
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
     <Window.DataContext>
         <local:TrusteeLogViewerWindowViewModel />
     </Window.DataContext>
     <DockPanel Margin="10">
-        <DockPanel DockPanel.Dock="Bottom">
-            <TextBlock DockPanel.Dock="Top" Text="{Binding SelectedLog.Params}" />
-            <TextBox
-                MaxHeight="400"
-                AcceptsReturn="True"
-                IsReadOnly="True"
-                Text="{Binding SelectedLog.Json}"
+        <DockPanel
+            Width="500"
+            Margin="10,0,0,0"
+            DockPanel.Dock="Right">
+            <TextBlock
+                Margin="8"
+                DockPanel.Dock="Top"
+                Text="{Binding SelectedLog.Params, StringFormat=参数：{0}}"
                 TextWrapping="Wrap" />
+            <TreeView
+                x:Name="JsonTreeView"
+                ItemsSource="{Binding TreeNodes}"
+                Style="{StaticResource TreeView.Small}">
+                <TreeView.Resources>
+                    <!--  关键：HierarchicalDataTemplate 用于递归展示树节点  -->
+                    <HierarchicalDataTemplate DataType="{x:Type local:JsonTreeNode}" ItemsSource="{Binding Children}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,0,5,0"
+                                FontWeight="SemiBold"
+                                Text="{Binding Name}" />
+                            <TextBlock
+                                x:Name="txtValue"
+                                Margin="0,0,5,0"
+                                FontStyle="Italic"
+                                Foreground="Gray"
+                                Text="{Binding Value}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <!--  叶子节点显示值，非叶子节点隐藏值  -->
+                        <HierarchicalDataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsLeaf}" Value="False">
+                                <Setter TargetName="txtValue" Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </HierarchicalDataTemplate.Triggers>
+                    </HierarchicalDataTemplate>
+                </TreeView.Resources>
+                <TreeView.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource TreeViewItemBaseStyle.Small}" TargetType="TreeViewItem">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=OneTime}" />
+                    </Style>
+                </TreeView.ItemContainerStyle>
+            </TreeView>
+
         </DockPanel>
         <DockPanel>
 
@@ -43,13 +80,13 @@
             </ListBox>
 
             <ListBox
+                DockPanel.Dock="Top"
                 ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
                 ItemsSource="{Binding Functions}"
                 SelectedItem="{Binding SelectedFunction}" />
 
             <DockPanel>
                 <ListBox
-                    BorderThickness="0"
                     DockPanel.Dock="Top"
                     ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
                     ItemStringFormat="yyyy/MM/dd"

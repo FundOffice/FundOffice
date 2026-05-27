@@ -12,8 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Utility\Logging\Logging.csproj" />
-    <ProjectReference Include="..\..\src\Utility\Logg\LogGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all" />
     <ProjectReference Include="..\..\src\Utility\Utilities\Utilities.csproj" />
     <ProjectReference Include="..\Initial\Initial.csproj" />
   </ItemGroup>
@@ -21,5 +19,10 @@
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="MoT.Logg" Version="1.0.5" />
+	</ItemGroup>
 
 </Project>

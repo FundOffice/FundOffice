@@ -1,6 +1,7 @@
 ﻿using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
+using MoT;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
@@ -380,7 +381,7 @@ public partial class CMS : TrusteeApiBase
         Log(caller, null, list.Count == 0 ? "OK [Empty]" : $"OK [{list.Count}]");
 
         try { var dd = list.Select(x => transfer(x)).ToArray(); return new(ReturnCode.Success, dd); }
-        catch (Exception e) { Log(e.Message); return new(ReturnCode.ObjectTransformError, []); }
+        catch (Exception e) { Logg.Debug(e.Message); return new(ReturnCode.ObjectTransformError, []); }
     }
 
 

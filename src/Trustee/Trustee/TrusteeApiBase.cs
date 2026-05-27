@@ -4,6 +4,7 @@ using FMO.Logging;
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
+using MoT;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
@@ -46,9 +47,8 @@ public abstract class TrusteeApiBase : ITrustee
     /// 所有API 统一client，方便切换是否用proxy : TrusteeApiBase.SetProxy
     /// </summary>
     protected static HttpClient _client { get; private set; } = new();
+     
 
-    private static ILiteDatabase _db { get; } = new LiteDatabase(@$"FileName=data\platformlog.db;Connection=Shared");
-    
     public bool IsEnabled { get; internal set; }
 
     public async Task<bool> VerifyConfig()
@@ -141,7 +141,7 @@ public abstract class TrusteeApiBase : ITrustee
                 return LoadConfigOverride(config);
             }
         }
-        catch (Exception e) { LogEx.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(LogLevel.Error, $"加载{Title}的配置文件出错")); }
+        catch (Exception e) { LogEx.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(Models.LogLevel.Error, $"加载{Title}的配置文件出错")); }
 
 
         IsValid = db.GetCollection<TrusteeStatus>().FindById(Identifier)?.Status ?? false;
@@ -161,41 +161,31 @@ public abstract class TrusteeApiBase : ITrustee
     }
 
 
-    protected void Log(string message)
-    {
-        _db.GetCollection<LogInfo>().Insert(new LogInfo { Identifier = Identifier, Log = message, Time = DateTime.Now });
-    }
+ 
     protected void Log(string? caller, string? json, string? message)
     {
-        _db.GetCollection<LogInfo>().Insert(new LogInfo { Identifier = Identifier, Log = message, Method = caller, Content = json, Time = DateTime.Now });
+        Logg.Write(new LogInfo { Identifier = Identifier, Log = message, Method = caller, Content = json, Time = DateTime.Now });
     }
 
+    /// <summary>
+    /// LogRun中已记录调用历史和参数，不需要再记录一次
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="caller"></param>
+    /// <param name="list"></param>
     protected void CacheJson<T>(string? caller, IEnumerable<T> list)
     {
-        using (var db = DbHelper.Platform())
-            db.GetCollection<T>($"{Identifier}_{caller}").Insert(list);
+        //using (var db = DbHelper.Platform())
+        //    db.GetCollection<T>($"{Identifier}_{caller}").Insert(list);
     }
 
 
     protected void LogRun(string? caller, Dictionary<string, object> formatedParams, string? json)
     {
-        _db.GetCollection<TrusteeCallHistory>().Insert(new TrusteeCallHistory(Identifier, caller ?? "unknown", DateTime.Now, System.Text.Json.JsonSerializer.Serialize(formatedParams), json));
+        Logg.Write(new TrusteeCallHistory(Identifier, caller ?? "unknown", DateTime.Now, System.Text.Json.JsonSerializer.Serialize(formatedParams), json));
     }
 
-    public static LogInfo[]? GetLogs()
-    {
-        try
-        {
-            var dic = _db.GetCollection<LogInfo>().Query().OrderByDescending(x => x.Time).Limit(1000).ToList().GroupBy(x => x.Identifier).ToDictionary(x => x.Key, x => x.GroupBy(y => y.Method ?? "").ToDictionary(y => y.Key, y => y.Take(5)));
-            return dic.SelectMany(x => x.Value.SelectMany(y => y.Value)).OrderByDescending(x => x.Time).ToArray();
-        }
-        catch (Exception ex)
-        {
-            LogEx.Error($"Can Not Load Log {ex.Message}");
-            return [];
-        }
-        // return _db.GetCollection<LogInfo>().FindAll().GroupBy(x=>x.Identifier).Select(x=> (x.Key, x.GroupBy(x=>x.Method).Select(y=> (y.Key, y.Take(5))))).ToArray();
-    }
+ 
 
 
     /// <summary>
@@ -272,12 +262,15 @@ public abstract class TrusteeApiBase : ITrustee
 #if DEBUG
     protected static string? GetCache(string Identifier, string Method, object Params)
     {
-        return _db.GetCollection<APIDebugCache>().Find(x => x.Identifier == Identifier && x.Method == Method && x.Params == Params).LastOrDefault()?.Json;
+        return Logg.Read<APIDebugCache>().Where(x => x.Identifier == Identifier && x.Method == Method && x.Params == Params).Select(x=>x.Json).FirstOrDefault();
+
+        //return _db.GetCollection<APIDebugCache>().Find(x => x.Identifier == Identifier && x.Method == Method && x.Params == Params).LastOrDefault()?.Json;
     }
 
     protected static void SetCache(string Identifier, string Method, object Params, string json)
     {
-        _db.GetCollection<APIDebugCache>().Insert(new APIDebugCache(Identifier, Method, Params, json));
+        Logg.Write(new APIDebugCache(Identifier, Method, Params, json));
+        //_db.GetCollection<APIDebugCache>().Insert(new APIDebugCache(Identifier, Method, Params, json));
     }
 #endif
 
