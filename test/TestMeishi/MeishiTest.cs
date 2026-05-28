@@ -11,7 +11,7 @@ public sealed class MeishiTest
 {
     public MeishiTest()
     {
-        TestInit.SetAsDebug();
+        DataInject.SetAsDebug();
     }
         
     [TestMethod]
