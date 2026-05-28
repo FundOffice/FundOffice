@@ -43,4 +43,8 @@
     </Using>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ESign\" />
+  </ItemGroup>
+
 </Project>

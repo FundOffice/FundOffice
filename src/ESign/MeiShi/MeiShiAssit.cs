@@ -1059,7 +1059,7 @@ public partial class MeiShiAssit : ISigning
     /// <param name="date"></param>
     /// <param name="notify"></param>
     /// <returns></returns>
-    public async Task<ErrorReturn> CreateTemporaryOpenDay(int fundId, string? share, DateOnly date, OpenFlag flag, bool notify)
+    public async Task<ErrorReturn> CreateTemporaryOpenDay(int fundId, string? share, DateOnly date, OpenTradeType flag, bool notify)
     {
         using var db = DbHelper.Base();
         var fund = db.GetCollection<Fund>().FindById(fundId);
@@ -1070,7 +1070,7 @@ public partial class MeiShiAssit : ISigning
     }
 
 
-    public async Task<ErrorReturn> CreateTemporaryOpenDay(string fundName, string? share, DateOnly date, OpenFlag flag, bool notify)
+    public async Task<ErrorReturn> CreateTemporaryOpenDay(string fundName, string? share, DateOnly date, OpenTradeType flag, bool notify)
     {
 
         if (!IsValid) return new(false, "Invalid");
@@ -1087,11 +1087,11 @@ public partial class MeiShiAssit : ISigning
 
 
         TemporaryOpenDayJson obj;
-        if (flag.HasFlag(OpenFlag.Sell))
+        if (flag.HasFlag(OpenTradeType.Redemption))
             obj = new TemporaryOpenDayWithRedemJson()
             {
                 ProductId = int.Parse(fund.Id!),
-                TradeTypes = flag switch { OpenFlag.Buy | OpenFlag.Sell => [1, 2], OpenFlag.Buy => [1], OpenFlag.Sell => [2], _ => [] },
+                TradeTypes = flag switch { OpenTradeType.Purchase | OpenTradeType.Redemption => [1, 2], OpenTradeType.Purchase => [1], OpenTradeType.Redemption => [2], _ => [] },
                 NoticeRule = notify ? Math.Max(0, date.DayNumber - DateOnly.FromDateTime(DateTime.Now).DayNumber) : 0,
                 NotificationList = notify ? [1, 2] : [],
                 ProductName = fund.Name,
@@ -1101,7 +1101,7 @@ public partial class MeiShiAssit : ISigning
         else obj = new()
         {
             ProductId = int.Parse(fund.Id!),
-            TradeTypes = flag switch { OpenFlag.Buy | OpenFlag.Sell => [1, 2], OpenFlag.Buy => [1], OpenFlag.Sell => [2], _ => [] },
+            TradeTypes = flag switch { OpenTradeType.Purchase | OpenTradeType.Redemption => [1, 2], OpenTradeType.Purchase => [1], OpenTradeType.Redemption => [2], _ => [] },
             NoticeRule = notify ? Math.Max(0, date.DayNumber - DateOnly.FromDateTime(DateTime.Now).DayNumber) : 0,
             NotificationList = notify ? [1, 2] : [],
             ProductName = fund.Name,
@@ -1144,7 +1144,7 @@ public partial class MeiShiAssit : ISigning
         }
     }
 
-    public async Task<Return<DateOnly[]>> QueryAvaliableOpenDay(int fundId, string? share, OpenFlag flag)
+    public async Task<Return<DateOnly[]>> QueryAvaliableOpenDay(int fundId, string? share, OpenTradeType flag)
     {
         using var db = DbHelper.Base();
         var fund = db.GetCollection<Fund>().FindById(fundId);
@@ -1156,7 +1156,7 @@ public partial class MeiShiAssit : ISigning
     }
 
 
-    public async Task<Return<DateOnly[]>> QueryAvaliableOpenDay(string fundName, string? share, OpenFlag flag)
+    public async Task<Return<DateOnly[]>> QueryAvaliableOpenDay(string fundName, string? share, OpenTradeType flag)
     {
         if (!IsValid) return new(false, [], "Invalid");
         if (!isLogin) isLogin = await LoginFromEsign();
@@ -1175,7 +1175,7 @@ public partial class MeiShiAssit : ISigning
 
         HttpRequestMessage request = new();
         request.Method = HttpMethod.Get;
-        request.RequestUri = new Uri($"https://vipfunds.simu800.com/vip-manager/productDay/selectOpenDay?productId={fund.Id}&openType=3&tradeTypes={flag switch { OpenFlag.Buy => 1, _ => 2 }}&t={DateTime.Now.TimeStampByMilliseconds()}");
+        request.RequestUri = new Uri($"https://vipfunds.simu800.com/vip-manager/productDay/selectOpenDay?productId={fund.Id}&openType=3&tradeTypes={flag switch { OpenTradeType.Purchase => 1, _ => 2 }}&t={DateTime.Now.TimeStampByMilliseconds()}");
         request.Headers.Add("tokenid", Token);
 
 

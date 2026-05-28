@@ -64,7 +64,7 @@ public interface ISigning
     /// <param name="flag">申购标志</param>
     /// <param name="notify">通知投资人</param>
     /// <returns></returns>
-    Task<ErrorReturn> CreateTemporaryOpenDay(int fundId, string? share, DateOnly date, OpenFlag flag, bool notify);
+    Task<ErrorReturn> CreateTemporaryOpenDay(int fundId, string? share, DateOnly date, OpenTradeType flag, bool notify);
 
     /// <summary>
     /// 创建临时开放日
@@ -75,7 +75,7 @@ public interface ISigning
     /// <param name="flag">申购标志</param>
     /// <param name="notify">通知投资人</param>
     /// <returns></returns>
-    Task<ErrorReturn> CreateTemporaryOpenDay(string fundName, string? share, DateOnly date, OpenFlag flag, bool notify);
+    Task<ErrorReturn> CreateTemporaryOpenDay(string fundName, string? share, DateOnly date, OpenTradeType flag, bool notify);
 
 
     /// <summary>
@@ -84,7 +84,7 @@ public interface ISigning
     /// <param name="fundId"></param>
     /// <param name="share"></param>
     /// <returns></returns>
-    Task<Return<DateOnly[]>> QueryAvaliableOpenDay(int fundId, string? share, OpenFlag flag);
+    Task<Return<DateOnly[]>> QueryAvaliableOpenDay(int fundId, string? share, OpenTradeType flag);
 
 
     /// <summary>

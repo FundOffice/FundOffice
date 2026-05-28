@@ -21,7 +21,7 @@ public sealed class MeishiTest
         var mei = new FMO.ESigning.MeiShi.MeiShiAssit();
 
         var date = DateOnly.FromDateTime(DateTime.Now);
-        var result = await mei.CreateTemporaryOpenDay(2, null, date.AddDays(6), OpenFlag.Buy, true);
+        var result = await mei.CreateTemporaryOpenDay(2, null, date.AddDays(6), OpenTradeType.Purchase, true);
 
        
     }

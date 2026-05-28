@@ -202,7 +202,7 @@ public partial class ManualApplyTradeWindowViewModel : ObservableObject
 
     private async Task UpdateOpenDays(ISigning signer, int fundId)
     {
-        var days = await signer.QueryAvaliableOpenDay(fundId, null, IsBuy ? OpenFlag.Buy : OpenFlag.Sell);
+        var days = await signer.QueryAvaliableOpenDay(fundId, null, IsBuy ? OpenTradeType.Purchase : OpenTradeType.Redemption);
 
 
     }

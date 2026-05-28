@@ -1152,6 +1152,9 @@ public enum OpenTradeType
     Both = Purchase | Redemption
 }
 
+/// <summary>
+/// 日历
+/// </summary>
 public class DateOpenInfo : IDate
 {
     public required DateOnly Date { get; init; }
@@ -1163,7 +1166,26 @@ public class DateOpenInfo : IDate
     public OpenTradeType TradeType { get; set; }
 }
 
+/// <summary>
+/// 基金开放日
+/// </summary>
+public class FundOpenDay
+{
+    public int FundId { get; set; }
 
+    public int ShareId { get; set; }
+
+    public DateOnly Date { get; set; }
+
+    public OpenType OpenType { get; set; }
+
+    public OpenTradeType TradeType { get; set; }
+
+    /// <summary>
+    /// 来源：托管、电签、手动输入等
+    /// </summary>
+    public string? Source { get; set; }
+}
 
 #endregion
 
