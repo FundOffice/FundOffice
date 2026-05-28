@@ -162,7 +162,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
     public partial ShareFactorViewModel<FundFeeInfo?, FundFeeInfoViewModel>? ManageFee { get; set; } = null!;
 
 
-     
+
 
     [ObservableProperty]
     public partial FactorModifiableViewModel<DateOnly?, FundExpireDateViewModel> ExpirationDate { get; private set; } = null!;
@@ -208,6 +208,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
     /// </summary>
     [ObservableProperty]
     public partial bool OnlyOneShare { get; set; }
+    public string? FundCode { get; private set; }
 
 
     #endregion
@@ -260,6 +261,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
     {
         using var db = DbHelper.Base();
         var fund = db.GetCollection<Fund>().FindById(FundId);
+        FundCode = fund.Code;
         var flow = db.GetCollection<FundFlow>().FindById(newValue);
         bool isori = flow is ContractFinalizeFlow;
         var elements = db.GetCollection<FundElements>().FindById(FundId);
@@ -274,12 +276,12 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
 
         FillBy(facts, newValue);
 
-        IsSharesInherited = !facts.ShareClasses[newValue].Any(x=> ShareClass.GetFlow(x.Id) == newValue);
+        IsSharesInherited = !facts.ShareClasses[newValue].Any(x => ShareClass.GetFlow(x.Id) == newValue);
 
         var type = GetType();
         SetupDate = fund.SetupDate;
         var cinfo = elements.ShareClasses.GetValue(newValue);
-     
+
         var sc = cinfo.Value ?? [ShareClass.DefaultShare];
 
 
@@ -319,7 +321,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         // 开放/封闭切换
         FundModeInfo.Changed += e => OnPropertyChanged(nameof(IsSealingFund));
 
- 
+
 
     }
 
@@ -375,7 +377,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         try
         {
             var wnd = new ModifyShareClassWindow();
-            wnd.DataContext = new ModifyShareClassWindowViewModel(FundId, FlowId, Shares.Select(x => new ShareClassViewModel(FlowId, x.Build())).ToArray());
+            wnd.DataContext = new ModifyShareClassWindowViewModel(FundId, FundCode ?? "SSSUNK", FlowId, Shares.Select(x => new ShareClassViewModel(FlowId, x.Build())).ToArray());
             wnd.Owner = App.Current.MainWindow;
             Window window = Window.GetWindow(panel);
             Point point = panel.TransformToAncestor(window).Transform(new Point(panel.ActualWidth / 2, panel.ActualHeight / 2));
@@ -407,7 +409,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
 
             var r = wnd.ShowDialog();
 
-            if(context.Changed)
+            if (context.Changed)
             {
                 using var db = DbHelper.Base();
             }
@@ -415,7 +417,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
             if (r ?? false) OnFlowIdChanged(FlowId, FlowId);
         }
         catch (Exception e)
-        { 
+        {
             Logg.Error(e);
             Toast.Warning("出错了");
         }

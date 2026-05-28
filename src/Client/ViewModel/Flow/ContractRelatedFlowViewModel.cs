@@ -25,6 +25,9 @@ public partial class ShareClassViewModel : ObservableObject, IViewModel<ShareCla
     public required partial string Name { get; set; }
 
     [ObservableProperty]
+    public partial string? Code { get; set; }
+
+    [ObservableProperty]
     public partial string? Requirement { get; set; }
 
     [ObservableProperty]
@@ -43,6 +46,7 @@ public partial class ShareClassViewModel : ObservableObject, IViewModel<ShareCla
     {
         Id = s.Id;
         Name = s.Name;
+        Code = s.Code;
         Inherit = s.Inherit;
         RealInherit = s.Inherit;
         Requirement = s.Requirement;
@@ -53,13 +57,14 @@ public partial class ShareClassViewModel : ObservableObject, IViewModel<ShareCla
     {
         Id = s.Id;
         Name = s.Name;
+        Code = s.Code;
         Inherit = s.Inherit;
         RealInherit = s.Inherit;
         Requirement = s.Requirement; 
     }
 
 
-    public ShareClass Build() => new ShareClass() { Name = Name, Id = Id, Inherit = RealInherit, Requirement = Requirement };
+    public ShareClass Build() => new ShareClass() { Name = Name, Id = Id, Code = Code, Inherit = RealInherit, Requirement = Requirement };
 
 
     public static int GetFlow(int id) => id / 1000;

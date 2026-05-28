@@ -63,8 +63,32 @@ public static partial class DatabaseAssist
         [148] = FixNoticeDate,
         [150] = MoveFundAccount,
         [152] = ChangeOpenRule,
-
+        [153] = AddCodeToShareClass
     };
+
+    private static void AddCodeToShareClass(BaseDatabase db)
+    {
+        var funds = db.GetCollection<Fund>().Query().Select(x => new { x.Id, x.Code }).ToArray();
+        foreach (var item in funds)
+        {
+            var shares = db.QueryFundShares(item.Id);
+
+            string code = item.Code ?? "SSSUNK";
+            foreach (var sc in shares)
+            {
+                if (sc.Shares.Length == 1)
+                    sc.Shares[0].Code = item.Code;
+                else
+                    foreach (var s in sc.Shares)
+                    {
+                        s.Code = code[1..] + s.Name;
+                    }
+            }
+            db.GetCollection<IFundFactor>().Upsert(shares.Select(x => new FundFactor<ShareClass[]> { FundId = item.Id, FlowId = x.FlowId, FactorId = FactorFields.ShareClasses, Data = x.Shares }));
+        }
+
+        
+    }
 
 
     /// <summary>
@@ -75,8 +99,8 @@ public static partial class DatabaseAssist
     private static void ChangeOpenRule(BaseDatabase db)
     {
         var old = db.QueryFundFactor<OpenRule>(FactorFields.FundOpenRule);
-        
-        db.GetCollection<IFundFactor>().Upsert(old.Select(x=> new FundFactor<OpenRule[]> { Data = [x.Data], FactorId = x.FactorId, FlowId = x.FlowId , FundId = x.FundId }));
+
+        db.GetCollection<IFundFactor>().Upsert(old.Select(x => new FundFactor<OpenRule[]> { Data = [x.Data], FactorId = x.FactorId, FlowId = x.FlowId, FundId = x.FundId }));
 
     }
 

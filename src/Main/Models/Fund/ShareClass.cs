@@ -12,6 +12,10 @@ public class ShareClass
     /// </summary>
     public required string Name { get; set; }
 
+    /// <summary>
+    /// 对应托管外包机构的份额代码 6位
+    /// </summary>
+    public string? Code { get; set; }
 
     public int Inherit { get; set; } = ShareClass.Singleton;
 
@@ -37,31 +41,5 @@ public class ShareClass
 
     public static int GetFlow(int id) => id / 1000;
      
-}
-
-
-public record struct ShareType(string? Requirement, string Id = "singleton", string Name = "单一份额", string Inherit = "singleton")
-{
-    public const string Singleton = "singleton";
-
-    public static ShareType[] Default { get; } = [new(null)];
-}
-
-
-/// <summary>
-/// 与份额相关的要素
-/// </summary>
-public class PortionElements
-{
-    /// <summary>
-    /// 份额
-    /// </summary>
-    public ShareClass? Class { get; set; }
-
-    /// <summary>
-    /// 锁定期
-    /// </summary>
-    public Mutable<SealingRule>? LockingRule { get; set; }
-
 }
 

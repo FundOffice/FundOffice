@@ -7,7 +7,7 @@
     xmlns:local="clr-namespace:FMO"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="基金份额"
-    Width="400"
+    Width="550"
     Height="250"
     d:DataContext="{d:DesignInstance Type=local:ModifyShareClassWindowViewModel}"
     ResizeMode="NoResize"
@@ -117,16 +117,27 @@
 
                                 </DockPanel>
                             </Border>
-                            <TextBlock
-                                x:Name="t2"
-                                Margin="5,0"
-                                VerticalAlignment="Center"
-                                Text="要求" />
-                            <TextBox
-                                x:Name="t3"
-                                HorizontalAlignment="Stretch"
-                                IsEnabled="{Binding IsInherited, Converter={StaticResource Boolean2BooleanReConverter}}"
-                                Text="{Binding Requirement, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+
+                            <DockPanel IsEnabled="{Binding IsInherited, Converter={StaticResource Boolean2BooleanReConverter}}">
+                                <hc:TextBox
+                                    Width="90"
+                                    hc:InfoElement.Placeholder="托管产品编码"
+                                    IsEnabled="{Binding DataContext.IsSingleton, RelativeSource={RelativeSource AncestorType=local:ModifyShareClassWindow}, Converter={StaticResource Boolean2BooleanReConverter}}"
+                                    Text="{Binding Code}"
+                                    TextAlignment="Center" />
+
+                                <TextBlock
+                                    x:Name="t2"
+                                    Margin="5,0"
+                                    VerticalAlignment="Center"
+                                    Text="要求" />
+                                <hc:TextBox
+                                    x:Name="t3"
+                                    HorizontalAlignment="Stretch"
+                                    hc:InfoElement.Placeholder="份额对应的要求"
+                                    Text="{Binding Requirement, UpdateSourceTrigger=PropertyChanged, Delay=300}"
+                                    TextWrapping="Wrap" />
+                            </DockPanel>
                         </DockPanel>
 
                         <DataTemplate.Triggers>

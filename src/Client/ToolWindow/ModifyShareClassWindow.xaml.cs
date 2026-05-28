@@ -29,11 +29,14 @@ public partial class ModifyShareClassWindowViewModel : ObservableObject
 
     public int FundId { get; }
     public int FlowId { get; }
+    public string FundCode { get; }
 
     /// <summary>
     /// 初始是单一份额，
     /// </summary>
     public bool IsOriginalSingleton { get; set; }
+
+    public bool IsSingleton => Shares.Count == 1;
 
     [ObservableProperty]
     public partial ObservableCollection<ShareClassViewModel> Shares { get; set; }
@@ -49,10 +52,11 @@ public partial class ModifyShareClassWindowViewModel : ObservableObject
     private List<ShareClassViewModel> removed = [];
 
     [SetsRequiredMembers]
-    public ModifyShareClassWindowViewModel(int fundId, int flowId, ShareClassViewModel[] shareClassViewModels)
+    public ModifyShareClassWindowViewModel(int fundId, string fundCode, int flowId, ShareClassViewModel[] shareClassViewModels)
     {
         FundId = fundId;
         FlowId = flowId;
+        FundCode = fundCode;
 
         IsOriginalSingleton = shareClassViewModels.Length <= 1;
         old = [.. shareClassViewModels.Select(x => x.Build())];
@@ -77,6 +81,7 @@ public partial class ModifyShareClassWindowViewModel : ObservableObject
         if (Shares.Count == 1)
         {
             Shares[0].Name = "A";
+            Shares[0].Code = FundCode[1..] + "A";
             if (isInherit)
             {
                 Shares[0].Inherit = Shares[0].Id;
@@ -87,8 +92,10 @@ public partial class ModifyShareClassWindowViewModel : ObservableObject
 
         if (vm is null) vm = Shares[0];
 
-
-        Shares.Add(new() { FlowId = FlowId, Id = ++newId, Name = GetNextClass(), Inherit = vm.Id, RealInherit = vm.Inherit });
+        string scn = GetNextClass();
+        Shares.Add(new() { FlowId = FlowId, Id = ++newId, Code = FundCode[1..] + scn, Name = scn, Inherit = vm.Id, RealInherit = vm.Inherit });
+         
+        OnPropertyChanged(nameof(IsSingleton));
     }
 
     private string GetNextClass()
@@ -111,7 +118,12 @@ public partial class ModifyShareClassWindowViewModel : ObservableObject
 
         // 只改名，确认的时候还要改要素
         if (Shares.Count == 1)
+        {
             Shares[0].Name = ShareClass.SingletonName;// = new(ShareClass.DefaultShare);
+            Shares[0].Code = FundCode;
+        }
+
+        OnPropertyChanged(nameof(IsSingleton));
     }
 
     [RelayCommand(CanExecute = nameof(AnythingChanged))]
