@@ -26,7 +26,7 @@ public sealed class TestOpenDay
     {
         var assist = new CMS();
         assist.LoadConfig();
-        assist.Prepare();
+        assist.Initialize();
 
         var result = await assist.QueryOpenDays(new DateOnly(2026, 1, 1), new DateOnly(2026, 5, 1));
 
