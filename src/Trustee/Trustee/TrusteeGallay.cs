@@ -15,7 +15,7 @@ public static class TrusteeGallay
     public static TrusteeViewModelBase[] TrusteeViewModels => _viewModels.Values.OrderBy(x => x.Idenitifier).ToArray();
 
 
-    public static TrusteeWorker Worker { get; }
+    public static TrusteeWorker Worker { get; private set; } = null!;
 
     static TrusteeGallay()
     {
@@ -32,7 +32,6 @@ public static class TrusteeGallay
         //Trustees = TrusteeViewModels.OfType<ITrusteeViewModel>().Select(x => x.Assist).ToArray();
 
 
-        Worker = new TrusteeWorker(Trustees);
     }
 
     public static ITrustee? Find(int id) => Worker.Find(id);
@@ -43,7 +42,7 @@ public static class TrusteeGallay
         var obj = (viewModel as ITrusteeViewModel)!.Assist;
         _plat[obj.Identifier] = obj;
         _viewModels[viewModel.Idenitifier] = viewModel;
-        Worker.AddTrustee(obj);
+        //Worker.AddTrustee(obj);
     }
 
 
@@ -52,6 +51,7 @@ public static class TrusteeGallay
     /// </summary>
     public static void Initialize()
     {
+        Worker = new TrusteeWorker(Trustees);
 #if !DEBUG
         Worker.Start();
 #endif
