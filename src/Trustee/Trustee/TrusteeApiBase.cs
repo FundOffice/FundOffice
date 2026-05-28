@@ -51,6 +51,10 @@ public abstract class TrusteeApiBase : ITrustee
 
     public bool IsEnabled { get; internal set; }
 
+
+    // 产品列表
+    protected SubjectFundMapping[] FundsInfo { get; set; } = [];
+
     public async Task<bool> VerifyConfig()
     {
         try
@@ -145,15 +149,28 @@ public abstract class TrusteeApiBase : ITrustee
     /// <param name="end"></param>
     /// <param name="fundCode"></param>
     /// <returns></returns>
-    public abstract Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end, string? fundCode = null);
+    public abstract Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end, string fundCode);
 
-    public abstract Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end, string? fundCode = null);
+    public abstract Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end);
+
+    public abstract Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end, string fundCode);
+
+    public abstract Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end);
+
+    public bool Initialize()
+    {
+        bool r= InitializeOverride();
+        if(!IsValid)
+            Task.Run(()=> VerifyConfig());
+
+        return r;
+    }
 
     /// <summary>
     /// 启动准备
     /// </summary>
     /// <returns></returns>
-    public abstract bool Prepare();
+    protected abstract bool InitializeOverride();
 
     /// <summary>
     /// 访问前验证

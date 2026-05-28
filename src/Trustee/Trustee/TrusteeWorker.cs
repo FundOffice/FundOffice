@@ -149,7 +149,7 @@ public partial class TrusteeWorker : ObservableObject
 
         Trustees = [.. trustees];
         foreach (var t in trustees)
-            t.Prepare();
+            t.Initialize();
 
 
         tasks = [
@@ -185,7 +185,7 @@ public partial class TrusteeWorker : ObservableObject
 
     internal void AddTrustee(ITrustee trustee)
     {
-        trustee.Prepare();
+        trustee.Initialize();
         Trustees.Add(trustee);
     }
 

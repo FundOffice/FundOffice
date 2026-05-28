@@ -42,10 +42,6 @@ public partial class CMS : TrusteeApiBase
 
     public X509Certificate2? Certificate { get; set; }
 
-
-    private SubjectFundMapping[]? FundsInfo { get; set; }
-
-
     public override bool IsSuit(string? company) => string.IsNullOrWhiteSpace(company) ? false : Regex.IsMatch(company, $"招商证券|招商证券股份有限公司|{_Identifier}");
 
 
@@ -223,6 +219,9 @@ public partial class CMS : TrusteeApiBase
         return new ReturnWrap<DailyValue>(ReturnCode.Success, ret.ToArray());
     }
 
+    public override Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end) => QueryNetValue(begin, end, null);
+
+
     public override async Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end, string? fundCode = null)
     {
         var b = begin; var e = end;
@@ -241,38 +240,29 @@ public partial class CMS : TrusteeApiBase
         foreach (var item in data.Data.GroupBy(x => x.FundCode))
         {
             var code = item.Key;
-            if (db.FindFundByCode(code) is var (ff, c) && ff is Fund f)
+            if (db.FindShare(code) is var (ff, c) && ff != 0)
             {
-                ret.AddRange(item.Select(x => new FundOpenDay
-                {
-                    FundId = f.Id,
-                    Class = c,
-                    Date = DateOnly.ParseExact(x.NavDate, "yyyyMMdd"),
-                    NetValue = ParseDecimal(x.Nav),
-                    CumNetValue = ParseDecimal(x.AccumulativeNav),
-                    Asset = ParseDecimal(x.TotalAsset),
-                    Share = ParseDecimal(x.AssetVol),
-                    NetAsset = ParseDecimal(x.AssetNav),
-                    Source = DailySource.Custodian
-                }));
+                ret.AddRange(item.Select(x => x.To(ff, c)));
             }
-            else JsonBase.ReportJsonUnexpected(Identifier, "QueryNetValue", $"Fund Code = {code}");
+            else JsonBase.ReportJsonUnexpected(Identifier, "QueryOpenDays", $"Fund Code = {code}");
         }
 
 
-
+        return new ReturnWrap<FundOpenDay>(ReturnCode.Success, ret.ToArray());
     }
+
+
+    public override Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end) => QueryOpenDays(begin, end, null);
 
     //////////////////////////////////////////////////////////////////////////////////////////
 
 
-    public override bool Prepare()
+    protected override bool InitializeOverride()
     {
         InitCertificate();
 
         if (string.IsNullOrWhiteSpace(CompanyId) || string.IsNullOrWhiteSpace(LicenceKey) || string.IsNullOrWhiteSpace(UserNo) || ServerType is null || Certificate is null)
             SetStatus();
-
         return true;
     }
 
@@ -408,7 +398,7 @@ public partial class CMS : TrusteeApiBase
                 }
             }
         }
-        catch(HttpRequestException e)
+        catch (HttpRequestException e)
         {
             Logg.Error(e, $"{Identifier} {caller}");
             return new(ReturnCode.Network, null);
@@ -457,6 +447,9 @@ public partial class CMS : TrusteeApiBase
     {
         // 检验可用性 
         if (!IsValid) return ReturnCode.ConfigInvalid;
+
+        if (Certificate is null)
+            InitCertificate();
 
         if (string.IsNullOrWhiteSpace(LicenceKey) || string.IsNullOrWhiteSpace(UserNo) || Certificate is null || ServerType is null)
         {
@@ -512,7 +505,7 @@ public partial class CMS : TrusteeApiBase
     }
 
     protected override async Task<bool> VerifyConfigOverride()
-    { 
+    {
         try
         {
             var r = await QuerySubjectFundMappings();
