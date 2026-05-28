@@ -515,9 +515,29 @@ public partial class CITICS : TrusteeApiBase
             else JsonBase.ReportJsonUnexpected(Identifier, "QueryOpenDays", $"Fund Code = {code}");
         }
 
+        ret = ret.GroupBy(x => (x.FundId, x.ShareId, x.Date)).Select(item =>
+            MergeGroup(item, item.Key.FundId, item.Key.ShareId, item.Key.Date)).ToList();
 
         return new ReturnWrap<FundOpenDay>(ReturnCode.Success, ret.ToArray());
     }
+
+    FundOpenDay MergeGroup(IEnumerable<FundOpenDay> group, int fundId, int shareId, DateOnly date)
+    {
+        return new FundOpenDay
+        {
+            FundId = fundId,
+            ShareId = shareId,
+            Date = date,
+            Source = "api",
+
+            // 核心逻辑：合并 OpenType，Fixed 优先，其次 Temporary
+            OpenPurchase = MergeOpenType(group.Select(x => x.OpenPurchase)),
+            OpenRedemption = MergeOpenType(group.Select(x => x.OpenRedemption))
+        };
+
+        OpenType MergeOpenType(IEnumerable<OpenType> openTypes) => openTypes.MaxBy(x => x switch { OpenType.Fixed => 3, OpenType.Postpone => 2, OpenType.Temporary => 1, _ => 0 });
+    }
+
 
     public override Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end) => QueryOpenDays(begin, end, null);
 
