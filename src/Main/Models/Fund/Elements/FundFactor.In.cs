@@ -1125,7 +1125,7 @@ public enum OpenType
     /// <summary>
     /// 临时
     /// </summary>
-    Temperaty,
+    Temporary,
 
     /// <summary>
     /// 顺延的
@@ -1175,11 +1175,19 @@ public class FundOpenDay
 
     public int ShareId { get; set; }
 
+    public string? Code { get; set; }
+
     public DateOnly Date { get; set; }
 
-    public OpenType OpenType { get; set; }
+    /// <summary>
+    /// 申购开放
+    /// </summary>
+    public OpenType OpenPurchase { get; set; }
 
-    public OpenTradeType TradeType { get; set; }
+    /// <summary>
+    /// 赎回开放
+    /// </summary>
+    public OpenType OpenRedemption { get; set; }
 
     /// <summary>
     /// 来源：托管、电签、手动输入等
