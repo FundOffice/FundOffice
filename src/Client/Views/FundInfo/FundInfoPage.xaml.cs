@@ -80,18 +80,23 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         var openRules = ele.FundOpenRule.Current;
 
         HasMultipleShare = shares?.Length > 1;
-        if (shares is not null && openRules.Length == shares?.Length)
-        {
-            OpenDays = shares?.Index().Select(x => new ShareOpenInfo(x.Item, OpenRule.ApplyMany(DateTime.Now.Year, openRules[x.Index]))).ToArray() ?? [];
 
-            SelectedShareOpenDays = OpenDays[0].DateInfo.Where(x => x.Date.Month == DateTime.Now.Month);
-        }
-        else
-        {
-            Toast.Error($"{FundName} 未设置开放日规则");
-            OpenDays = shares?.Index().Select(x => new ShareOpenInfo(x.Item, OpenRule.ApplyMany(DateTime.Now.Year, null))).ToArray() ?? [];
-            SelectedShareOpenDays = OpenDays[0].DateInfo.Where(x => x.Date.Month == DateTime.Now.Month);
-        }
+        AllowSetTemporaryOpen = ele.TemporarilyOpenInfo.Current?.IsAllowed ?? false;
+
+        if(shares is not null)
+            Task.Run(() => InitOpenDay(shares));
+        //if (shares is not null && openRules.Length == shares?.Length)
+        //{
+        //    ShareOpenInfos = shares?.Index().Select(x => new ShareOpenInfo(x.Item, OpenRule.ApplyMany(DateTime.Now.Year, openRules[x.Index]))).ToArray() ?? [];
+
+        //    SelectedShareOpenDays = ShareOpenInfos[0].DateInfo.Where(x => x.Date.Month == DateTime.Now.Month);
+        //}
+        //else
+        //{
+        //    Toast.Error($"{FundName} 未设置开放日规则");
+        //    ShareOpenInfos = shares?.Index().Select(x => new ShareOpenInfo(x.Item, OpenRule.ApplyMany(DateTime.Now.Year, null))).ToArray() ?? [];
+        //    SelectedShareOpenDays = ShareOpenInfos[0].DateInfo.Where(x => x.Date.Month == DateTime.Now.Month);
+        //}
 
         InitFlows(fund);
 
@@ -499,13 +504,19 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     public partial bool HasMultipleShare { get; set; }
 
     /// <summary>
+    /// 允许设置临开
+    /// </summary>
+    [ObservableProperty]
+    public partial bool AllowSetTemporaryOpen { get; private set; }
+
+    /// <summary>
     /// 开放日
     /// </summary>
     [ObservableProperty]
-    public partial ShareOpenInfo[] OpenDays { get; set; }
+    public partial ShareOpenInfo[] ShareOpenInfos { get; set; }
 
     [ObservableProperty]
-    public partial IEnumerable<DateOpenInfo> SelectedShareOpenDays { get; private set; }
+    public partial IEnumerable<FundOpenDay> SelectedShareOpenDays { get; private set; }
 
     [ObservableProperty]
     public partial RiskLevel? RiskLevel { get; set; }
@@ -686,6 +697,77 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         }
     }
 
+
+
+    private async Task InitOpenDay(ShareClass[] shares)
+    {
+        var info = new ShareOpenInfo[shares.Length];
+        if (TrusteeGallay.Find(Fund.Id) is ITrustee api)
+        {
+            var today = DateTime.Today;
+
+            for (int i = 0; i < shares.Length; i++)
+            {
+                var sc = shares[i];
+
+                var data = await api.QueryOpenDays(new DateOnly(today.Year, today.Month, 1), new DateOnly(today.Year, today.Month + 2, 1).AddDays(-1), sc.Code!);
+                if (data.Code != ReturnCode.Success)
+                    info[i] = new ShareOpenInfo(sc, []);
+                else
+                    info[i] = new ShareOpenInfo(sc, FillMissingDates(data.Data));
+            }
+            ShareOpenInfos = info;
+        }
+
+        SelectedShareOpenDays = ShareOpenInfos[0].DateInfo.Where(x => x.Date.Month == DateTime.Now.Month);
+        //        Logg.Information($"{FundName} 无法获取托管接口，尝试手动计算");
+
+
+    }
+
+    private static FundOpenDay[] FillMissingDates(IEnumerable<FundOpenDay>? openDays)
+    {
+        if (openDays == null)
+            return [];
+
+        var list = openDays.ToList();
+        if (list.Count == 0)
+            return [];
+
+        // 构建现有日期集合，用于快速查重
+        var existingDates = list.Select(x => x.Date).ToHashSet();
+
+        // 获取全局日期范围
+        var minDate = list.Min(x => x.Date);
+        var maxDate = list.Max(x => x.Date);
+        minDate = new DateOnly(minDate.Year, minDate.Month, 1);
+        maxDate = new DateOnly(maxDate.Year, maxDate.Month + 1, 1).AddDays(-1);
+
+        // 取首个元素作为模板，继承非关键字段
+        var template = list[0];
+
+        var result = new List<FundOpenDay>(list); // 先加入原数据
+
+        // 遍历日期范围，补全缺失日期
+        for (var date = minDate; date <= maxDate; date = date.AddDays(1))
+        {
+            if (!existingDates.Contains(date))
+            {
+                result.Add(new FundOpenDay
+                {
+                    FundId = template.FundId,
+                    ShareId = template.ShareId,
+                    Code = template.Code,
+                    Date = date,
+                    OpenPurchase = OpenType.None,
+                    OpenRedemption = OpenType.None,
+                    Source = "AutoFilled"  // 标记来源，便于区分人工/自动
+                });
+            }
+        }
+
+        return result.OrderBy(x => x.Date).ToArray();
+    }
 
     /// <summary>
     /// 打开基金公示
@@ -1236,7 +1318,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     }
 }
 
-public record ShareOpenInfo(ShareClass Share, DateOpenInfo[] DateInfo);
+public record ShareOpenInfo(ShareClass Share, FundOpenDay[] DateInfo);
 
 /// <summary>
 /// 最新的文件版本视图

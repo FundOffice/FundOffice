@@ -1169,7 +1169,7 @@ public class DateOpenInfo : IDate
 /// <summary>
 /// 基金开放日
 /// </summary>
-public class FundOpenDay
+public class FundOpenDay : IDate
 {
     public int FundId { get; set; }
 

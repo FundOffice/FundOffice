@@ -152,7 +152,7 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="IsEnabled" Value="False" />
+            <Setter Property="IsEnabled" Value="True" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -175,10 +175,10 @@
 
                             <MultiDataTrigger>
                                 <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding Type}" Value="None" />
-                                    <Condition Binding="{Binding Flag}" Value="Trade" />
+                                    <Condition Binding="{Binding OpenPurchase}" Value="None" />
+                                    <Condition Binding="{Binding OpenRedemption}" Value="Trade" />
                                 </MultiDataTrigger.Conditions>
-                                <Setter Property="IsEnabled" Value="True" />
+                                <Setter Property="IsEnabled" Value="False" />
                             </MultiDataTrigger>
 
                         </ControlTemplate.Triggers>
@@ -245,39 +245,61 @@
                                     </ListBox.ItemsPanel>
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
-                                            <hc:SimplePanel>
-                                                <Ellipse
-                                                    x:Name="bk"
-                                                    HorizontalAlignment="Stretch"
-                                                    VerticalAlignment="Stretch" />
-                                                <TextBlock
-                                                    x:Name="txt"
-                                                    Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
-                                                    Margin="4"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Text="{Binding Date.Day}"
-                                                    TextAlignment="Center" />
+                                            <hc:SimplePanel Width="24" Height="24">
+
+                                                <Border x:Name="bkLeft" CornerRadius="15">
+                                                    <Border.Clip>
+                                                        <PathGeometry Figures="M 0,0 L 24,0 L 0,24 Z" />
+                                                    </Border.Clip>
+                                                    <TextBlock
+                                                        x:Name="txtLeft"
+                                                        Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                                                        Margin="4"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Text="{Binding Date.Day}"
+                                                        TextAlignment="Center" />
+                                                </Border>
+
+                                                <Border x:Name="bkRight" CornerRadius="15">
+                                                    <Border.Clip>
+                                                        <PathGeometry Figures="M 24,24 L 24,0 L 0,24 Z" />
+                                                    </Border.Clip>
+                                                    <TextBlock
+                                                        x:Name="txtRight"
+                                                        Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                                                        Margin="4"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Text="{Binding Date.Day}"
+                                                        TextAlignment="Center" />
+                                                </Border>
                                             </hc:SimplePanel>
                                             <DataTemplate.Triggers>
-                                                <DataTrigger Binding="{Binding Flag}" Value="Weekend">
+                                                <!--<DataTrigger Binding="{Binding Flag}" Value="Weekend">
                                                     <Setter TargetName="bk" Property="Fill" Value="LightGray" />
                                                     <Setter TargetName="txt" Property="Foreground" Value="White" />
+                                                </DataTrigger>-->
+
+
+                                                <DataTrigger Binding="{Binding OpenPurchase}" Value="Fixed">
+                                                    <Setter TargetName="bkLeft" Property="Background" Value="RoyalBlue" />
+                                                    <Setter TargetName="txtLeft" Property="Foreground" Value="White" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Flag}" Value="Holiday">
-                                                    <Setter TargetName="bk" Property="Fill" Value="LightGray" />
-                                                    <Setter TargetName="txt" Property="Foreground" Value="White" />
+                                                <DataTrigger Binding="{Binding OpenRedemption}" Value="Fixed">
+                                                    <Setter TargetName="bkRight" Property="Background" Value="RoyalBlue" />
+                                                    <Setter TargetName="txtRight" Property="Foreground" Value="White" />
                                                 </DataTrigger>
 
-                                                <DataTrigger Binding="{Binding Type}" Value="Temperaty">
-                                                    <Setter TargetName="bk" Property="Fill" Value="SkyBlue" />
-                                                    <Setter TargetName="txt" Property="Foreground" Value="White" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Type}" Value="Fixed">
-                                                    <Setter TargetName="bk" Property="Fill" Value="RoyalBlue" />
-                                                    <Setter TargetName="txt" Property="Foreground" Value="White" />
-                                                </DataTrigger>
 
+                                                <DataTrigger Binding="{Binding OpenPurchase}" Value="Temporary">
+                                                    <Setter TargetName="bkLeft" Property="Background" Value="Orange" />
+                                                    <Setter TargetName="txtLeft" Property="Foreground" Value="White" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding OpenRedemption}" Value="Temporary">
+                                                    <Setter TargetName="bkRight" Property="Background" Value="Orange" />
+                                                    <Setter TargetName="txtRight" Property="Foreground" Value="White" />
+                                                </DataTrigger>
                                             </DataTemplate.Triggers>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
@@ -581,7 +603,7 @@
                     <StackPanel Margin="10,0,0,0">
                         <ListBox
                             ItemsPanel="{StaticResource ButtonGroupHorizontalStackItemsPanelTemplate}"
-                            ItemsSource="{Binding OpenDays}"
+                            ItemsSource="{Binding ShareOpenInfos}"
                             SelectedIndex="0"
                             Visibility="{Binding HasMultipleShare, Converter={StaticResource Boolean2VisibilityConverter}}">
                             <ListBox.ItemTemplate>
@@ -591,7 +613,7 @@
 
                             </ListBox.ItemTemplate>
                         </ListBox>
-                        <Button Content="设置临时开放" />
+                        <Button Content="设置临时开放" Visibility="{Binding AllowSetTemporaryOpen, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
                         <Button Content="推送认申购订单" />
 
