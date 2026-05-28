@@ -94,8 +94,18 @@ public interface ITrustee
     /// <returns></returns>
     Task<ReturnWrap<FundBankBalance>> QueryRaisingBalance();
 
-
+    /// <summary>
+    /// 查询净值
+    /// </summary>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <param name="fundCode"></param>
+    /// <returns></returns>
     Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end, string? fundCode = null);
+
+
+    Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end, string? fundCode = null);
+
 
     Task<bool> VerifyConfig();
 

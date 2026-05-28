@@ -70,11 +70,20 @@ public abstract class TrusteeApiBase : ITrustee
 
     protected abstract Task<bool> VerifyConfigOverride();
 
-
+    /// <summary>
+    /// 查询投资人信息
+    /// </summary>
+    /// <returns></returns>
     public abstract Task<ReturnWrap<Investor>> QueryInvestors();
 
 
-
+    /// <summary>
+    /// 查询交易申请
+    /// </summary>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <param name="fundCode"></param>
+    /// <returns></returns>
     public abstract Task<ReturnWrap<TransferRequest>> QueryTransferRequests(DateOnly begin, DateOnly end, string? fundCode = null);
 
 
@@ -94,29 +103,56 @@ public abstract class TrusteeApiBase : ITrustee
     public abstract Task<ReturnWrap<TransferRecord>> QueryTransferRecords(DateOnly begin, DateOnly end, string? fundCode = null);
 
 
-
-
-
-
+    /// <summary>
+    /// 查询费用
+    /// </summary>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <returns></returns>
     public abstract Task<ReturnWrap<FundDailyFee>> QueryFundDailyFee(DateOnly begin, DateOnly end);
 
 
 
-
+    /// <summary>
+    /// 查询托管账户交易明细
+    /// </summary>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <param name="fundCode"></param>
+    /// <returns></returns>
     public abstract Task<ReturnWrap<BankTransaction>> QueryCustodialAccountTransction(DateOnly begin, DateOnly end, string? fundCode = null);
 
-
+    /// <summary>
+    /// 查询募集账户交易明细
+    /// </summary>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <param name="fundCode"></param>
+    /// <returns></returns>
     public abstract Task<ReturnWrap<RaisingBankTransaction>> QueryRaisingAccountTransction(DateOnly begin, DateOnly end, string? fundCode = null);
 
 
-
+    /// <summary>
+    /// 查询募集户余额
+    /// </summary>
+    /// <returns></returns>
     public abstract Task<ReturnWrap<FundBankBalance>> QueryRaisingBalance();
 
-
+    /// <summary>
+    /// 查询净值
+    /// </summary>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <param name="fundCode"></param>
+    /// <returns></returns>
     public abstract Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end, string? fundCode = null);
 
+    public abstract Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end, string? fundCode = null);
 
-
+    /// <summary>
+    /// 启动准备
+    /// </summary>
+    /// <returns></returns>
     public abstract bool Prepare();
 
     /// <summary>

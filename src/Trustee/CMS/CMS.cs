@@ -193,13 +193,11 @@ public partial class CMS : TrusteeApiBase
 
         var data = await SyncWork<NetValueJson, NetValueJson>(1005, param, x => x);
 
-        // map
+        // empty or error
         if (data.Code != ReturnCode.Success || data.Data is null)
             return new ReturnWrap<DailyValue>(data.Code, []);
 
         using var db = DbHelper.Base();
-
-
         List<DailyValue> ret = new List<DailyValue>(data.Data.Count);
         foreach (var item in data.Data.GroupBy(x => x.FundCode))
         {
@@ -223,6 +221,46 @@ public partial class CMS : TrusteeApiBase
         }
 
         return new ReturnWrap<DailyValue>(ReturnCode.Success, ret.ToArray());
+    }
+
+    public override async Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end, string? fundCode = null)
+    {
+        var b = begin; var e = end;
+        object param = new { beginDate = $"{b:yyyyMMdd}", endDate = $"{e:yyyyMMdd}", fundCode = fundCode };
+
+        var data = await SyncWork<OpenDayJson, OpenDayJson>(1009, param, x => x);
+
+        // empty or error
+        if (data.Code != ReturnCode.Success || data.Data is null)
+            return new ReturnWrap<FundOpenDay>(data.Code, []);
+
+        // map
+        using var db = DbHelper.Base();
+        var ret = new List<FundOpenDay>(data.Data.Count);
+
+        foreach (var item in data.Data.GroupBy(x => x.FundCode))
+        {
+            var code = item.Key;
+            if (db.FindFundByCode(code) is var (ff, c) && ff is Fund f)
+            {
+                ret.AddRange(item.Select(x => new FundOpenDay
+                {
+                    FundId = f.Id,
+                    Class = c,
+                    Date = DateOnly.ParseExact(x.NavDate, "yyyyMMdd"),
+                    NetValue = ParseDecimal(x.Nav),
+                    CumNetValue = ParseDecimal(x.AccumulativeNav),
+                    Asset = ParseDecimal(x.TotalAsset),
+                    Share = ParseDecimal(x.AssetVol),
+                    NetAsset = ParseDecimal(x.AssetNav),
+                    Source = DailySource.Custodian
+                }));
+            }
+            else JsonBase.ReportJsonUnexpected(Identifier, "QueryNetValue", $"Fund Code = {code}");
+        }
+
+
+
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////
