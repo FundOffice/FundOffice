@@ -87,7 +87,7 @@ public partial class ManualApplyTradeWindowViewModel : ObservableObject
         InvestorSource.Source = Investors;
         InvestorSource.Filter += (s, e) =>
         {
-            e.Accepted = (IsBuy || _currentHolding.ContainsKey((e.Item as Investor)!.Id)) && (string.IsNullOrWhiteSpace(SearchInvestorKey) || SearchInvestorKey == SelectedInvestor?.Name ? true : e.Item switch { Investor f => f.Name.Contains(SearchInvestorKey), _ => true });
+            e.Accepted = (OrderType == TransferOrderType.FirstTrade || _currentHolding.ContainsKey((e.Item as Investor)!.Id)) && (string.IsNullOrWhiteSpace(SearchInvestorKey) || SearchInvestorKey == SelectedInvestor?.Name ? true : e.Item switch { Investor f => f.Name.Contains(SearchInvestorKey), _ => true });
         };
 
         SelectedFund = db.GetCollection<Fund>().FindById(fundId);
@@ -236,7 +236,7 @@ public partial class ManualApplyTradeWindowViewModel : ObservableObject
 
 
 
-    partial void OnOrderTypeChanged(TransferOrderType? value) => UpdateInvestorList();
+    partial void OnOrderTypeChanged(TransferOrderType? value) =>  UpdateInvestorList(!(value is  null or TransferOrderType.FirstTrade));
 
 
     partial void OnSelectedInvestorChanged(Investor? value)
