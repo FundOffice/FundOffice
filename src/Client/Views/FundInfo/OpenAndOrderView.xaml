@@ -1,0 +1,208 @@
+﻿<UserControl
+    x:Class="FMO.OpenAndOrderView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="https://handyorg.github.io/handycontrol"
+    d:DataContext="{d:DesignInstance Type=local:OpenAndOrderViewModel}"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+
+        <!--  Styles for Calendar Controls  -->
+        <Style x:Key="ListBoxItem.Calender" TargetType="ListBoxItem">
+            <Setter Property="UIElement.SnapsToDevicePixels" Value="True" />
+            <Setter Property="FrameworkElement.FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="IsEnabled" Value="{Binding Selectable}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border
+                            Margin="2"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="16">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="BorderBrush" Value="Green" />
+                                <Setter Property="BorderThickness" Value="1" />
+                            </Trigger>
+
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
+
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ListBox.Calender" TargetType="ListBox">
+            <Setter Property="ItemContainerStyle" Value="{StaticResource ListBoxItem.Calender}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBox">
+                        <ItemsPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
+
+    </UserControl.Resources>
+
+    <Border Background="WhiteSmoke">
+        <DockPanel Margin="5,10">
+            <StackPanel>
+
+                <DockPanel>
+                    <ListBox
+                        BorderThickness="0"
+                        DockPanel.Dock="Top"
+                        ItemsSource="{Binding DayOfWeekList}"
+                        Style="{StaticResource ListBoxCustom}">
+                        <d:ListBoxItem>日</d:ListBoxItem>
+                        <d:ListBoxItem>一</d:ListBoxItem>
+                        <d:ListBoxItem>二</d:ListBoxItem>
+                        <d:ListBoxItem>三</d:ListBoxItem>
+                        <d:ListBoxItem>四</d:ListBoxItem>
+                        <d:ListBoxItem>五</d:ListBoxItem>
+                        <d:ListBoxItem>六</d:ListBoxItem>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="7" IsItemsHost="True" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock HorizontalAlignment="Center" Text="{Binding .}" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <ListBox
+                        BorderThickness="0"
+                        ItemsSource="{Binding SelectedShareOpenDays}"
+                        SelectedItem="{Binding SelectedDate}"
+                        Style="{StaticResource ListBox.Calender}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="7" IsItemsHost="True" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <hc:SimplePanel Width="24" Height="24">
+
+                                    <Border x:Name="bkLeft" CornerRadius="15">
+                                        <Border.Clip>
+                                            <PathGeometry Figures="M 0,0 L 24,0 L 0,24 Z" />
+                                        </Border.Clip>
+                                        <TextBlock
+                                            x:Name="txtLeft"
+                                            Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                                            Margin="4"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding Date.Day}"
+                                            TextAlignment="Center" />
+                                    </Border>
+
+                                    <Border x:Name="bkRight" CornerRadius="15">
+                                        <Border.Clip>
+                                            <PathGeometry Figures="M 24,24 L 24,0 L 0,24 Z" />
+                                        </Border.Clip>
+                                        <TextBlock
+                                            x:Name="txtRight"
+                                            Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                                            Margin="4"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding Date.Day}"
+                                            TextAlignment="Center" />
+                                    </Border>
+                                </hc:SimplePanel>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding AllowPushPurchase}" Value="True">
+                                        <Setter TargetName="bkLeft" Property="Background" Value="RoyalBlue" />
+                                        <Setter TargetName="txtLeft" Property="Foreground" Value="White" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding AllowPushRedemption}" Value="True">
+                                        <Setter TargetName="bkRight" Property="Background" Value="Orange" />
+                                        <Setter TargetName="txtRight" Property="Foreground" Value="White" />
+                                    </DataTrigger>
+
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </StackPanel>
+
+            <StackPanel Margin="10,0,0,0">
+                <StackPanel.Resources>
+                    <Style BasedOn="{StaticResource ButtonDefault.Small}" TargetType="Button" />
+                </StackPanel.Resources>
+                <DockPanel Visibility="{Binding HasMultipleShare, Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <ListBox
+                        BorderThickness="0"
+                        ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
+                        ItemsPanel="{StaticResource UniformVerticalItemsPanelTemplate}"
+                        ItemsSource="{Binding ShareOpenInfos}"
+                        SelectedItem="{Binding SelectedShare}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Share.Name}" />
+                            </DataTemplate>
+
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock Text="{Binding SelectedShare.Requirement}" TextWrapping="Wrap" />
+
+                </DockPanel>
+
+                <StackPanel
+                    Margin="0,10"
+                    HorizontalAlignment="Left"
+                    DataContext="{Binding SelectedOpenDay}"
+                    Visibility="{Binding ., Converter={StaticResource Object2VisibilityConverter}}">
+                    <Button Content="设置临时开放 (电签平台)" Visibility="{Binding AllowSetTemporaryOpen, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                    <DockPanel Visibility="{Binding AllowPush, Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <TextBlock Text="推送" />
+
+                        <Button
+                            Background="RoyalBlue"
+                            Command="{Binding PushOrderCommand}"
+                            CommandParameter="True"
+                            Content="认申购"
+                            Foreground="White"
+                            Visibility="{Binding AllowPushPurchase, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                        <Button
+                            Background="Orange"
+                            Command="{Binding PushOrderCommand}"
+                            CommandParameter="False"
+                            Content="赎回"
+                            Foreground="White"
+                            Visibility="{Binding AllowPushRedemption, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                    </DockPanel>
+                </StackPanel>
+            </StackPanel>
+        </DockPanel>
+    </Border>
+</UserControl>
