@@ -618,7 +618,6 @@
                                 ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
                                 ItemsPanel="{StaticResource UniformVerticalItemsPanelTemplate}"
                                 ItemsSource="{Binding ShareOpenInfos}"
-                                SelectedIndex="0"
                                 SelectedItem="{Binding SelectedShare}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
@@ -636,18 +635,22 @@
                             HorizontalAlignment="Left"
                             DataContext="{Binding SelectedOpenDay}"
                             Visibility="{Binding ., Converter={StaticResource Object2VisibilityConverter}}">
-                            <Button Content="设置临时开放" Visibility="{Binding AllowSetTemporaryOpen, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                            <Button Content="设置临时开放 (电签平台)" Visibility="{Binding AllowSetTemporaryOpen, Converter={StaticResource Boolean2VisibilityConverter}}" />
                             <DockPanel Visibility="{Binding AllowPush, Converter={StaticResource Boolean2VisibilityConverter}}">
                                 <TextBlock Text="推送" />
 
                                 <Button
                                     Background="RoyalBlue"
+                                    Command="{Binding PushOrderCommand}"
+                                    CommandParameter="True"
                                     Content="认申购"
                                     Foreground="White"
                                     Visibility="{Binding AllowPushPurchase, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
                                 <Button
                                     Background="Orange"
+                                    Command="{Binding PushOrderCommand}"
+                                    CommandParameter="False"
                                     Content="赎回"
                                     Foreground="White"
                                     Visibility="{Binding AllowPushRedemption, Converter={StaticResource Boolean2VisibilityConverter}}" />

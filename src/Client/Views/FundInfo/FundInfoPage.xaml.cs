@@ -736,11 +736,11 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
                 if (data.Code != ReturnCode.Success)
                     info[i] = new ShareOpenInfo(sc, [], sc.Requirement ?? "");
                 else
-                    info[i] = new ShareOpenInfo(sc, OpenDayViewModel.Create(data.Data, temp ?? new()), sc.Requirement ?? "");
+                    info[i] = new ShareOpenInfo(sc, OpenDayViewModel.Create(FundId, data.Data, temp ?? new()), sc.Requirement ?? "");
             }
             ShareOpenInfos = info;
         }
-
+        SelectedShare = ShareOpenInfos.FirstOrDefault();
         SelectedShareOpenDays = ShareOpenInfos[0].DateInfo.Where(x => x.Date.Month == DateTime.Now.Month);
         //        Logg.Information($"{FundName} 无法获取托管接口，尝试手动计算");
 
@@ -1376,6 +1376,8 @@ public partial class LatestFileViewModel : ObservableObject
 
 public partial class OpenDayViewModel : ObservableObject, IDate
 {
+    public int FundId { get; set; }
+
     public DateOnly Date { get; set; }
 
     public bool AllowPush => AllowPushPurchase || AllowPushRedemption;
@@ -1405,8 +1407,17 @@ public partial class OpenDayViewModel : ObservableObject, IDate
     [ObservableProperty]
     public partial bool Selectable { get; set; }
 
+    [RelayCommand]
+    public void PushOrder(string buy)
+    {
+        var wnd = new ManualApplyTradeWindow();
+        wnd.Owner = App.Current.MainWindow;
+        wnd.DataContext = new ManualApplyTradeWindowViewModel(FundId, buy == "True", Date);
 
-    public static OpenDayViewModel[] Create(IEnumerable<FundOpenDay>? openDays, TemporarilyOpenInfo temp)
+        wnd.ShowDialog();
+    }
+
+    public static OpenDayViewModel[] Create(int fundId, IEnumerable<FundOpenDay>? openDays, TemporarilyOpenInfo temp)
     {
         if (openDays == null)
             return [];
@@ -1432,6 +1443,7 @@ public partial class OpenDayViewModel : ObservableObject, IDate
         var today = DateOnly.FromDateTime(DateTime.Today);
         var result = new List<OpenDayViewModel>(list.Select(x => new OpenDayViewModel
         {
+            FundId = fundId,
             Date = x.Date,
             Selectable = x.Date >= today,
             AllowSetTemporaryPurchase = temp.IsAllowed && temp.AllowPurchase && x.OpenPurchase == OpenType.None,
@@ -1449,6 +1461,7 @@ public partial class OpenDayViewModel : ObservableObject, IDate
                 var trade = dayi[date].Flag.HasFlag(DayFlag.Trade);
                 result.Add(new OpenDayViewModel
                 {
+                    FundId = fundId,
                     Date = date,
                     Selectable = date >= today && trade,
                     AllowSetTemporaryPurchase = temp.IsAllowed && temp.AllowPurchase && trade,
