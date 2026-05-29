@@ -152,7 +152,7 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="IsEnabled" Value="True" />
+            <Setter Property="IsEnabled" Value="{Binding Selectable}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Template">
                 <Setter.Value>
@@ -171,15 +171,9 @@
                                 <Setter Property="BorderThickness" Value="1" />
                             </Trigger>
 
-
-
-                            <MultiDataTrigger>
-                                <MultiDataTrigger.Conditions>
-                                    <Condition Binding="{Binding OpenPurchase}" Value="None" />
-                                    <Condition Binding="{Binding OpenRedemption}" Value="Trade" />
-                                </MultiDataTrigger.Conditions>
-                                <Setter Property="IsEnabled" Value="False" />
-                            </MultiDataTrigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5" />
+                            </Trigger>
 
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -210,12 +204,6 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}">
                             <DockPanel>
-                                <TextBlock
-                                    HorizontalAlignment="Center"
-                                    DockPanel.Dock="Top"
-                                    FontSize="18"
-                                    Text="{Binding Month, StringFormat={}{0}月, RelativeSource={RelativeSource TemplatedParent}}" />
-
                                 <ListBox
                                     x:Name="PART_Header"
                                     Margin="0,4"
@@ -237,6 +225,7 @@
                                 <ListBox
                                     BorderThickness="0"
                                     ItemsSource="{Binding DisplayItems, RelativeSource={RelativeSource TemplatedParent}}"
+                                    SelectedItem="{Binding SelectedDate, RelativeSource={RelativeSource TemplatedParent}}"
                                     Style="{StaticResource ListBox.Calender}">
                                     <ListBox.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -282,24 +271,15 @@
                                                 </DataTrigger>-->
 
 
-                                                <DataTrigger Binding="{Binding OpenPurchase}" Value="Fixed">
+                                                <DataTrigger Binding="{Binding AllowPushPurchase}" Value="True">
                                                     <Setter TargetName="bkLeft" Property="Background" Value="RoyalBlue" />
                                                     <Setter TargetName="txtLeft" Property="Foreground" Value="White" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding OpenRedemption}" Value="Fixed">
-                                                    <Setter TargetName="bkRight" Property="Background" Value="RoyalBlue" />
-                                                    <Setter TargetName="txtRight" Property="Foreground" Value="White" />
-                                                </DataTrigger>
-
-
-                                                <DataTrigger Binding="{Binding OpenPurchase}" Value="Temporary">
-                                                    <Setter TargetName="bkLeft" Property="Background" Value="Orange" />
-                                                    <Setter TargetName="txtLeft" Property="Foreground" Value="White" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding OpenRedemption}" Value="Temporary">
+                                                <DataTrigger Binding="{Binding AllowPushRedemption}" Value="True">
                                                     <Setter TargetName="bkRight" Property="Background" Value="Orange" />
                                                     <Setter TargetName="txtRight" Property="Foreground" Value="White" />
                                                 </DataTrigger>
+
                                             </DataTemplate.Triggers>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
@@ -592,32 +572,87 @@
             </DockPanel>
 
 
-            <GroupBox HorizontalAlignment="Left" Header="开放日">
+            <GroupBox
+                Width="400"
+                Margin="0,10"
+                HorizontalAlignment="Left"
+                Header="开放日">
                 <DockPanel>
                     <StackPanel>
 
+                        <ListBox
+                            HorizontalAlignment="Center"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
+                            ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
+                            ItemsSource="{Binding Months}"
+                            SelectedIndex="0"
+                            SelectedItem="{Binding SelectedMonth}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
 
-                        <shared:SimpleCalender ItemsSource="{Binding SelectedShareOpenDays}" Month="5" />
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        DockPanel.Dock="Top"
+                                        FontSize="18"
+                                        Text="{Binding ., StringFormat={}{0}月}" />
+
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <shared:SimpleCalender
+                            ItemsSource="{Binding SelectedShareOpenDays}"
+                            Month="5"
+                            SelectedDate="{Binding SelectedOpenDay}" />
                     </StackPanel>
 
                     <StackPanel Margin="10,0,0,0">
-                        <ListBox
-                            ItemsPanel="{StaticResource ButtonGroupHorizontalStackItemsPanelTemplate}"
-                            ItemsSource="{Binding ShareOpenInfos}"
-                            SelectedIndex="0"
-                            Visibility="{Binding HasMultipleShare, Converter={StaticResource Boolean2VisibilityConverter}}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Share.Name}" />
-                                </DataTemplate>
+                        <StackPanel.Resources>
+                            <Style BasedOn="{StaticResource ButtonDefault.Small}" TargetType="Button" />
+                        </StackPanel.Resources>
+                        <DockPanel Visibility="{Binding HasMultipleShare, Converter={StaticResource Boolean2VisibilityConverter}}">
+                            <ListBox
+                                BorderThickness="0"
+                                ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
+                                ItemsPanel="{StaticResource UniformVerticalItemsPanelTemplate}"
+                                ItemsSource="{Binding ShareOpenInfos}"
+                                SelectedIndex="0"
+                                SelectedItem="{Binding SelectedShare}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Share.Name}" />
+                                    </DataTemplate>
 
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                        <Button Content="设置临时开放" Visibility="{Binding AllowSetTemporaryOpen, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <TextBlock Text="{Binding SelectedShare.Requirement}" TextWrapping="Wrap" />
 
-                        <Button Content="推送认申购订单" />
+                        </DockPanel>
 
-                        <Button Content="推送赎回订单" />
+                        <StackPanel
+                            Margin="0,10"
+                            HorizontalAlignment="Left"
+                            DataContext="{Binding SelectedOpenDay}"
+                            Visibility="{Binding ., Converter={StaticResource Object2VisibilityConverter}}">
+                            <Button Content="设置临时开放" Visibility="{Binding AllowSetTemporaryOpen, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                            <DockPanel Visibility="{Binding AllowPush, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <TextBlock Text="推送" />
+
+                                <Button
+                                    Background="RoyalBlue"
+                                    Content="认申购"
+                                    Foreground="White"
+                                    Visibility="{Binding AllowPushPurchase, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                                <Button
+                                    Background="Orange"
+                                    Content="赎回"
+                                    Foreground="White"
+                                    Visibility="{Binding AllowPushRedemption, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                            </DockPanel>
+                        </StackPanel>
                     </StackPanel>
                 </DockPanel>
             </GroupBox>
