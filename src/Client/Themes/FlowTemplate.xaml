@@ -346,7 +346,7 @@
 
                 <shared:FileView
                     Content="{Binding Prospectus}"
-                    Header="招募说明书"
+                    Header="推介材料"
                     Style="{StaticResource DualFileStyle2}" />
 
 
@@ -437,6 +437,14 @@
 
                     <shared:FileView Content="{Binding Contract}" Header="基金合同" />
                     <shared:FileView Content="{Binding RiskDisclosureDocument}" Header="风险揭示书" />
+                    <shared:FileView
+                        Content="{Binding StructureGraph}"
+                        Header="产品结构图"
+                        Style="{StaticResource DualFileStyle2}" />
+                    <shared:FileView
+                        Content="{Binding Prospectus}"
+                        Header="推介材料"
+                        Style="{StaticResource DualFileStyle2}" />
 
                     <WrapPanel Visibility="{Binding ModifyCollectionAccount, Converter={StaticResource Boolean2VisibilityConverter}}">
                         <shared:FileView Content="{Binding CollectionAccount}" Header="募集账户函" />

@@ -84,8 +84,7 @@ public partial class RegistrationFlowViewModel : FlowViewModel
     [ObservableProperty]
     public partial DualFileViewModel RegistrationLetter { get; set; }
 
-
-
+ 
 
 
 
@@ -124,7 +123,7 @@ public partial class RegistrationFlowViewModel : FlowViewModel
         RegistrationLetter = new(flow.RegistrationLetter);
         RegistrationLetter.FileChanged += f => SaveFileChanged(new { RegistrationLetter = f });
 
-
+ 
         //CommitmentLetter = new()
         //{
         //    Label = "备案承诺函",

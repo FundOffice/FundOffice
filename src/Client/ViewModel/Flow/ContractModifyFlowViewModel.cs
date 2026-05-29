@@ -67,6 +67,12 @@ public partial class ContractModifyFlowViewModel : ContractRelatedFlowViewModel,
     /// </summary>
     public MultiFileViewModel SignedSupplementary { get; set; }
 
+    public DualFileViewModel Prospectus { get; }
+
+    /// <summary>
+    /// 产品结构图
+    /// </summary>
+    public DualFileViewModel StructureGraph { get; }
 
     [SetsRequiredMembers]
     public ContractModifyFlowViewModel(ContractModifyFlow flow) : base(flow)
@@ -115,6 +121,11 @@ public partial class ContractModifyFlowViewModel : ContractRelatedFlowViewModel,
 
         CommitmentLetter.Another.SpecificFileName = CommitmentLetter.SpecificFileName;
 
+        StructureGraph = new(flow.StructureGraph) { Label = "产品结构图", Filter = "文本|*.docx;*.doc;*.pdf", SpecificFileName = x => $"{fund}_产品结构图_{Date:yyyy年MM月dd日}{x}" };
+        StructureGraph.FileChanged += f => SaveFileChanged(new { StructureGraph = f });
+
+        Prospectus = new(flow.Prospectus) { Label = "推介材料", Filter = "文本|*.docx;*.doc;*.pdf", SpecificFileName = x => $"{fund}_推介材料_{Date:yyyy年MM月dd日}{x}" };
+        Prospectus.FileChanged += f => SaveFileChanged(new { Prospectus = f });
 
         //SignedSupplementary = new()
         //{

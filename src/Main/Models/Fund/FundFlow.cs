@@ -302,6 +302,16 @@ public class ContractModifyFlow : ContractFlow
 
     public MultiFile? SignedSupplementary { get; set; }
 
+    /// <summary>
+    /// 产品结构图
+    /// </summary>
+    public DualFile? StructureGraph { get; set; }
+
+    /// <summary>
+    /// 推介材料
+    /// </summary>
+    public DualFile? Prospectus { get; set; }
+
     //份额、要素
 
     public override string Name { get => "合同变更"; set { } }

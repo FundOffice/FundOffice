@@ -408,6 +408,7 @@ public partial class MultiFileViewModel : ObservableObject
     public void AddFile()
     {
         var fd = new OpenFileDialog();
+        fd.Multiselect = true;
         fd.Filter = Filter;
         if (fd.ShowDialog() != true) return;
 
