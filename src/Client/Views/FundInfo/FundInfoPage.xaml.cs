@@ -81,7 +81,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         //AllowSetTemporaryOpen = ele.TemporarilyOpenInfo.Current?.IsAllowed ?? false;
 
-        OpenAndOrderContext = new(FundId, shares, ele.TemporarilyOpenInfo.Current);
+        OpenAndOrderContext = new(FundId, FundName, shares, ele.TemporarilyOpenInfo.Current);
         //if (shares is not null && openRules.Length == shares?.Length)
         //{
         //    ShareOpenInfos = shares?.Index().Select(x => new ShareOpenInfo(x.Item, OpenRule.ApplyMany(DateTime.Now.Year, openRules[x.Index]))).ToArray() ?? [];

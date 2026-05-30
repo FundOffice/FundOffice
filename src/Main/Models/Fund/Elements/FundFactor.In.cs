@@ -1171,6 +1171,8 @@ public class DateOpenInfo : IDate
 /// </summary>
 public class FundOpenDay : IDate
 {
+    public string Id => $"{FundId}.{ShareId}.{Date.DayNumber}";
+
     public int FundId { get; set; }
 
     public int ShareId { get; set; }

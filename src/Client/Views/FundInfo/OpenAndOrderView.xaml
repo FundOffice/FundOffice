@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:local="clr-namespace:FMO"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:shared="https://handyorg.github.io/handycontrol"
@@ -63,146 +64,345 @@
         </Style>
 
 
+        <Style
+            x:Key="SearchBox"
+            BasedOn="{StaticResource ComboBoxBaseStyle}"
+            TargetType="ComboBox">
+            <Style.Triggers>
+                <!--  1. 获得键盘焦点时：打开下拉框  -->
+                <Trigger Property="IsKeyboardFocused" Value="True">
+                    <Setter Property="IsDropDownOpen" Value="True" />
+                </Trigger>
+
+                <!--  2. 焦点在控件内部（含下拉列表）时：保持打开状态  -->
+                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                    <Setter Property="IsDropDownOpen" Value="True" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
 
     </UserControl.Resources>
 
     <Border Background="WhiteSmoke">
-        <DockPanel Margin="5,10">
-            <StackPanel>
+        <StackPanel>
+            <DockPanel Margin="5,10">
 
-                <DockPanel>
-                    <ListBox
-                        BorderThickness="0"
-                        DockPanel.Dock="Top"
-                        ItemsSource="{Binding DayOfWeekList}"
-                        Style="{StaticResource ListBoxCustom}">
-                        <d:ListBoxItem>日</d:ListBoxItem>
-                        <d:ListBoxItem>一</d:ListBoxItem>
-                        <d:ListBoxItem>二</d:ListBoxItem>
-                        <d:ListBoxItem>三</d:ListBoxItem>
-                        <d:ListBoxItem>四</d:ListBoxItem>
-                        <d:ListBoxItem>五</d:ListBoxItem>
-                        <d:ListBoxItem>六</d:ListBoxItem>
-                        <ListBox.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="7" IsItemsHost="True" />
-                            </ItemsPanelTemplate>
-                        </ListBox.ItemsPanel>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock HorizontalAlignment="Center" Text="{Binding .}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-
-                    <ListBox
-                        BorderThickness="0"
-                        ItemsSource="{Binding SelectedShareOpenDays}"
-                        SelectedItem="{Binding SelectedDate}"
-                        Style="{StaticResource ListBox.Calender}">
-                        <ListBox.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="7" IsItemsHost="True" />
-                            </ItemsPanelTemplate>
-                        </ListBox.ItemsPanel>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <hc:SimplePanel Width="24" Height="24">
-
-                                    <Border x:Name="bkLeft" CornerRadius="15">
-                                        <Border.Clip>
-                                            <PathGeometry Figures="M 0,0 L 24,0 L 0,24 Z" />
-                                        </Border.Clip>
-                                        <TextBlock
-                                            x:Name="txtLeft"
-                                            Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
-                                            Margin="4"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            Text="{Binding Date.Day}"
-                                            TextAlignment="Center" />
-                                    </Border>
-
-                                    <Border x:Name="bkRight" CornerRadius="15">
-                                        <Border.Clip>
-                                            <PathGeometry Figures="M 24,24 L 24,0 L 0,24 Z" />
-                                        </Border.Clip>
-                                        <TextBlock
-                                            x:Name="txtRight"
-                                            Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
-                                            Margin="4"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            Text="{Binding Date.Day}"
-                                            TextAlignment="Center" />
-                                    </Border>
-                                </hc:SimplePanel>
-                                <DataTemplate.Triggers>
-                                    <DataTrigger Binding="{Binding AllowPushPurchase}" Value="True">
-                                        <Setter TargetName="bkLeft" Property="Background" Value="RoyalBlue" />
-                                        <Setter TargetName="txtLeft" Property="Foreground" Value="White" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding AllowPushRedemption}" Value="True">
-                                        <Setter TargetName="bkRight" Property="Background" Value="Orange" />
-                                        <Setter TargetName="txtRight" Property="Foreground" Value="White" />
-                                    </DataTrigger>
-
-                                </DataTemplate.Triggers>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </DockPanel>
-            </StackPanel>
-
-            <StackPanel Margin="10,0,0,0">
-                <StackPanel.Resources>
-                    <Style BasedOn="{StaticResource ButtonDefault.Small}" TargetType="Button" />
-                </StackPanel.Resources>
-                <DockPanel Visibility="{Binding HasMultipleShare, Converter={StaticResource Boolean2VisibilityConverter}}">
-                    <ListBox
-                        BorderThickness="0"
-                        ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
-                        ItemsPanel="{StaticResource UniformVerticalItemsPanelTemplate}"
-                        ItemsSource="{Binding ShareOpenInfos}"
-                        SelectedItem="{Binding SelectedShare}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Share.Name}" />
-                            </DataTemplate>
-
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                    <TextBlock Text="{Binding SelectedShare.Requirement}" TextWrapping="Wrap" />
-
+                <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+                    <TextBlock
+                        FontSize="22"
+                        FontWeight="Black"
+                        Text="开放日" />
+                    <Button
+                        hc:IconElement.Geometry="{StaticResource G.Refresh}"
+                        Command="{Binding RefreshOpenDayCommand}"
+                        Style="{StaticResource ButtonIcon}"
+                        Visibility="{Binding HasAPI, Converter={StaticResource Boolean2VisibilityConverter}}" />
                 </DockPanel>
 
-                <StackPanel
-                    Margin="0,10"
-                    HorizontalAlignment="Left"
-                    DataContext="{Binding SelectedOpenDay}"
-                    Visibility="{Binding ., Converter={StaticResource Object2VisibilityConverter}}">
-                    <Button Content="设置临时开放 (电签平台)" Visibility="{Binding AllowSetTemporaryOpen, Converter={StaticResource Boolean2VisibilityConverter}}" />
-                    <DockPanel Visibility="{Binding AllowPush, Converter={StaticResource Boolean2VisibilityConverter}}">
-                        <TextBlock Text="推送" />
+                <StackPanel Margin="0,5">
 
-                        <Button
-                            Background="RoyalBlue"
-                            Command="{Binding PushOrderCommand}"
-                            CommandParameter="True"
-                            Content="认申购"
-                            Foreground="White"
-                            Visibility="{Binding AllowPushPurchase, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                    <DockPanel>
+                        <ListBox
+                            BorderThickness="0"
+                            DockPanel.Dock="Top"
+                            ItemsSource="{Binding DayOfWeekList}"
+                            Style="{StaticResource ListBoxCustom}">
+                            <d:ListBoxItem>日</d:ListBoxItem>
+                            <d:ListBoxItem>一</d:ListBoxItem>
+                            <d:ListBoxItem>二</d:ListBoxItem>
+                            <d:ListBoxItem>三</d:ListBoxItem>
+                            <d:ListBoxItem>四</d:ListBoxItem>
+                            <d:ListBoxItem>五</d:ListBoxItem>
+                            <d:ListBoxItem>六</d:ListBoxItem>
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="7" IsItemsHost="True" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock HorizontalAlignment="Center" Text="{Binding .}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
 
-                        <Button
-                            Background="Orange"
-                            Command="{Binding PushOrderCommand}"
-                            CommandParameter="False"
-                            Content="赎回"
-                            Foreground="White"
-                            Visibility="{Binding AllowPushRedemption, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                        <ListBox
+                            BorderThickness="0"
+                            ItemsSource="{Binding SelectedShareOpenDays}"
+                            SelectedItem="{Binding SelectedOpenDay}"
+                            Style="{StaticResource ListBox.Calender}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="7" IsItemsHost="True" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <hc:SimplePanel Width="24" Height="24">
+
+                                        <Border x:Name="bkLeft" CornerRadius="15">
+                                            <Border.Clip>
+                                                <PathGeometry Figures="M 0,0 L 24,0 L 0,24 Z" />
+                                            </Border.Clip>
+                                            <TextBlock
+                                                x:Name="txtLeft"
+                                                Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                                                Margin="4"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Text="{Binding Date.Day}"
+                                                TextAlignment="Center" />
+                                        </Border>
+
+                                        <Border x:Name="bkRight" CornerRadius="15">
+                                            <Border.Clip>
+                                                <PathGeometry Figures="M 24,24 L 24,0 L 0,24 Z" />
+                                            </Border.Clip>
+                                            <TextBlock
+                                                x:Name="txtRight"
+                                                Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                                                Margin="4"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                Text="{Binding Date.Day}"
+                                                TextAlignment="Center" />
+                                        </Border>
+                                    </hc:SimplePanel>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding AllowPushPurchase}" Value="True">
+                                            <Setter TargetName="bkLeft" Property="Background" Value="RoyalBlue" />
+                                            <Setter TargetName="txtLeft" Property="Foreground" Value="White" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding AllowPushRedemption}" Value="True">
+                                            <Setter TargetName="bkRight" Property="Background" Value="Orange" />
+                                            <Setter TargetName="txtRight" Property="Foreground" Value="White" />
+                                        </DataTrigger>
+
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                     </DockPanel>
                 </StackPanel>
-            </StackPanel>
-        </DockPanel>
+
+                <StackPanel Margin="10,0,0,0">
+                    <StackPanel.Resources>
+                        <Style BasedOn="{StaticResource ButtonDefault.Small}" TargetType="Button" />
+                    </StackPanel.Resources>
+                    <DockPanel Visibility="{Binding HasMultipleShare, Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <ListBox
+                            BorderThickness="0"
+                            ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
+                            ItemsPanel="{StaticResource UniformVerticalItemsPanelTemplate}"
+                            ItemsSource="{Binding ShareOpenInfos}"
+                            SelectedItem="{Binding SelectedShare}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Share.Name}" />
+                                </DataTemplate>
+
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock Text="{Binding SelectedShare.Requirement}" TextWrapping="Wrap" />
+
+                    </DockPanel>
+
+                    <DockPanel>
+                        <TextBlock Text="近期无开放日" Visibility="{Binding DataContext.NoOpenDay, RelativeSource={RelativeSource AncestorType=local:OpenAndOrderView}, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+
+                        <TextBlock
+                            Foreground="Red"
+                            Text="临开申购"
+                            TextDecorations="Strikethrough"
+                            Visibility="{Binding DataContext.CurrentShareAllowSetTemporaryPurchase, RelativeSource={RelativeSource AncestorType=local:OpenAndOrderView}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                        <TextBlock
+                            Foreground="Red"
+                            Text="临开赎回"
+                            TextDecorations="Strikethrough"
+                            Visibility="{Binding DataContext.CurrentShareAllowSetTemporaryRedemption, RelativeSource={RelativeSource AncestorType=local:OpenAndOrderView}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                    </DockPanel>
+
+
+                    <StackPanel
+                        Margin="0,10"
+                        HorizontalAlignment="Left"
+                        DataContext="{Binding SelectedOpenDay}"
+                        Visibility="{Binding ., Converter={StaticResource Object2VisibilityConverter}}">
+
+                        <ListBox
+                            Background="Transparent"
+                            BorderThickness="0"
+                            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=local:OpenAndOrderView}}"
+                            ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
+                            ItemsPanel="{StaticResource WrapHorizontalItemsPanelTemplate}"
+                            ItemsSource="{Binding OrderTypesView}"
+                            SelectedItem="{Binding OrderType}"
+                            Style="{StaticResource ListBox.Small}">
+                            <ListBox.GroupStyle>
+                                <GroupStyle>
+                                    <GroupStyle.ContainerStyle>
+                                        <Style TargetType="GroupItem">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="GroupItem">
+                                                        <!--  水平排列：Header + Items  -->
+                                                        <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                                                            <!--  渲染 Header  -->
+                                                            <Border x:Name="br" Background="RoyalBlue">
+                                                                <TextBlock
+                                                                    Width="50"
+                                                                    VerticalAlignment="Center"
+                                                                    Foreground="White"
+                                                                    Text="{Binding Content.Name, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                    TextAlignment="Center" />
+                                                            </Border>
+                                                            <!--  渲染组内 Item  -->
+                                                            <ItemsPresenter />
+                                                        </StackPanel>
+                                                        <ControlTemplate.Triggers>
+                                                            <DataTrigger Binding="{Binding Name}" Value="赎回">
+                                                                <Setter TargetName="br" Property="Background" Value="Orange" />
+                                                            </DataTrigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </GroupStyle.ContainerStyle>
+                                </GroupStyle>
+                            </ListBox.GroupStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                    </StackPanel>
+                </StackPanel>
+            </DockPanel>
+
+
+            <hc:UniformSpacingPanel
+                Margin="10"
+                Orientation="Vertical"
+                VerticalSpacing="10">
+
+                <!--  申请  -->
+                <DockPanel LastChildFill="False" Visibility="{Binding SelectedOpenDay, Converter={StaticResource Object2VisibilityConverter}}">
+
+                    <TextBlock
+                        Width="60"
+                        VerticalAlignment="Center"
+                        Text="平台" />
+
+
+                    <ComboBox
+                        Width="90"
+                        DisplayMemberPath="Name"
+                        ItemsSource="{Binding Signings}"
+                        SelectedItem="{Binding SelectedSigner}" />
+
+
+                    <DockPanel Visibility="{Binding CanPushOrder, Converter={StaticResource Boolean2VisibilityConverter}}">
+
+                        <Button
+                            Width="100"
+                            Margin="10,0,0,0"
+                            Command="{Binding ConfirmCommand}"
+                            Content="确认"
+                            DockPanel.Dock="Right"
+                            Style="{StaticResource ButtonSuccess}" />
+
+                        <TextBlock VerticalAlignment="Center" Text="申请金额/份额" />
+
+                        <!--  申请金额/份额  -->
+                        <TextBox
+                            Width="auto"
+                            MinWidth="140"
+                            Margin="5,0,0,0"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            hc:InfoElement.Placeholder="金额/份额"
+                            Style="{StaticResource TextBoxExtend}"
+                            Text="{Binding Number, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+
+                    </DockPanel>
+
+
+                </DockPanel>
+
+                <StackPanel Orientation="Horizontal" Visibility="{Binding NeedCreateTemporaryInESigning, Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Foreground="Red"
+                        Text="此日期在电签平台中不可用，是否创建临时开放日" />
+                    <CheckBox Content="申购" IsChecked="{Binding CreateTemporaryWithPurchase}" />
+                    <CheckBox
+                        Margin="5,0"
+                        Content="赎回"
+                        IsChecked="{Binding CreateTemporaryWithRedemption}" />
+                    <Button
+                        Command="{Binding CreateTemporaryOpenCommand}"
+                        Content="创建并生成公告"
+                        Style="{StaticResource ButtonDashedPrimary.Small}" />
+                </StackPanel>
+
+                <TextBlock
+                    Foreground="Red"
+                    Text="电签平台中不可使用此固定开放日，请手动登陆查看开放日是否正确"
+                    Visibility="{Binding FixDayCannotUse, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                <hc:UniformSpacingPanel
+                    Orientation="Vertical"
+                    VerticalSpacing="10"
+                    Visibility="{Binding CanPushOrder, Converter={StaticResource Boolean2VisibilityConverter}}">
+
+
+
+                    <!--  投资人列表  -->
+                    <DockPanel Visibility="{Binding OrderType, Converter={StaticResource Object2VisibilityConverter}}">
+
+                        <TextBlock Width="60" Text="投资人" />
+
+
+                        <hc:SimplePanel>
+                            <TextBlock FontWeight="Black" Text="{Binding SelectedInvestor.Name}" />
+
+                            <ComboBox
+                                HorizontalContentAlignment="Center"
+                                DisplayMemberPath="Name"
+                                IsEditable="True"
+                                IsSynchronizedWithCurrentItem="False"
+                                IsTextSearchEnabled="True"
+                                ItemsSource="{Binding InvestorSource.View}"
+                                SelectedItem="{Binding SelectedInvestor}"
+                                Style="{StaticResource SearchBox}"
+                                Text="{Binding SearchInvestorKey, Mode=OneWayToSource, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        </hc:SimplePanel>
+
+                    </DockPanel>
+
+                    <DockPanel TextElement.Foreground="Gray">
+                        <TextBlock>
+                            <Run Text="当前持有" />
+                            <Run FontWeight="Black" Text="{Binding HoldingShare, StringFormat=N2}" />
+                            <Run Text="份额" />
+                        </TextBlock>
+
+                        <TextBlock Margin="25,0,10,0" Text="{Binding HoldingDay, StringFormat=yyyy-MM-dd}" />
+                        <TextBlock Text="{Binding HoldingValue, StringFormat=市值≈{0:N2}}" />
+
+                        <Button
+                            Command="{Binding RedeemAllCommand}"
+                            Content="全部赎回"
+                            Style="{StaticResource ButtonDanger.Small}" />
+                    </DockPanel>
+                </hc:UniformSpacingPanel>
+
+            </hc:UniformSpacingPanel>
+        </StackPanel>
     </Border>
 </UserControl>

@@ -1,4 +1,5 @@
-﻿using FMO.Disclosure;
+﻿using DocumentFormat.OpenXml.Spreadsheet;
+using FMO.Disclosure;
 
 using FMO.Models;
 using FMO.Utilities;
@@ -1152,11 +1153,11 @@ public partial class MeiShiAssit : ISigning
             return new(false, [], $"未找到Fund {fundId}");
 
 
-        return await QueryAvaliableOpenDay(fund.Name, share, flag);
+        return await QueryAvaliableOpenDayAsync(fund.Name, share, flag);
     }
 
 
-    public async Task<Return<DateOnly[]>> QueryAvaliableOpenDay(string fundName, string? share, OpenTradeType flag)
+    public async Task<Return<DateOnly[]>> QueryAvaliableOpenDayAsync(string fundName, string? share, OpenTradeType flag)
     {
         if (!IsValid) return new(false, [], "Invalid");
         if (!isLogin) isLogin = await LoginFromEsign();
@@ -1222,7 +1223,7 @@ public partial class MeiShiAssit : ISigning
         return new(true);
     }
 
-
+     
 
 
     /// <summary>

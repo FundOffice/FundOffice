@@ -55,6 +55,9 @@ public interface ISigning
 
     Task<ErrorReturn> QueryOrderAsync(TransferOrder order);
 
+
+     
+
     /// <summary>
     /// 创建临时开放日
     /// </summary>
@@ -86,6 +89,7 @@ public interface ISigning
     /// <returns></returns>
     Task<Return<DateOnly[]>> QueryAvaliableOpenDay(int fundId, string? share, OpenTradeType flag);
 
+    Task<Return<DateOnly[]>> QueryAvaliableOpenDayAsync(string fundName, string? share, OpenTradeType flag);
 
     /// <summary>
     /// 获取在签约平台中的基金信息

@@ -202,12 +202,12 @@ public partial class TrusteeWorker : ObservableObject
         try
         {
             WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"开始同步 募集户余额"));
-            if (trustees is null || trustees.Any()) trustees = Trustees;
+            if (trustees is null || !trustees.Any()) trustees = Trustees;
             List<WorkReturn> ret = new();
             // 保存数据库
             using var db = DbHelper.Base();
 
-            foreach (var tr in trustees)
+            foreach (var tr in trustees.Where(x => x.IsEnabled))
             {
                 if (!tr.IsValid)
                 {
@@ -261,13 +261,13 @@ public partial class TrusteeWorker : ObservableObject
         try
         {
             WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"开始同步 交易申请"));
-            if (trustees is null || trustees.Any()) trustees = Trustees;
+            if (trustees is null || !trustees.Any()) trustees = Trustees;
 
             List<WorkReturn> ret = new();
             // 保存数据库
             var method = nameof(ITrustee.QueryTransferRequests);
 
-            foreach (var tr in trustees)
+            foreach (var tr in trustees.Where(x => x.IsEnabled))
             {
                 if (!tr.IsValid)
                 {
@@ -345,7 +345,7 @@ public partial class TrusteeWorker : ObservableObject
         try
         {
             WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"开始同步 交易确认"));
-            if (trustees is null || trustees.Any()) trustees = Trustees;
+            if (trustees is null || !trustees.Any()) trustees = Trustees;
 
             List<WorkReturn> ret = new();
             // 保存数据库
@@ -354,7 +354,7 @@ public partial class TrusteeWorker : ObservableObject
             var method = nameof(ITrustee.QueryTransferRecords);
 
 
-            foreach (var tr in trustees)
+            foreach (var tr in trustees.Where(x => x.IsEnabled))
             {
                 if (!tr.IsValid)
                 {
@@ -420,7 +420,7 @@ public partial class TrusteeWorker : ObservableObject
     {
         try
         {
-            if (trustees is null || trustees.Any()) trustees = Trustees;
+            if (trustees is null || !trustees.Any()) trustees = Trustees;
 
             List<WorkReturn> ret = new();
             // 保存数据库
@@ -428,7 +428,7 @@ public partial class TrusteeWorker : ObservableObject
 
             var method = nameof(ITrustee.QueryFundDailyFee);
 
-            foreach (var tr in trustees)
+            foreach (var tr in trustees.Where(x => x.IsEnabled))
             {
                 if (!tr.IsValid)
                 {
@@ -501,13 +501,13 @@ public partial class TrusteeWorker : ObservableObject
     private async Task QueryRaisingAccountTransctionImpl(IEnumerable<ITrustee>? trustees = null)
     {
         WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"开始同步 募集户流水"));
-        if (trustees is null || trustees.Any()) trustees = Trustees;
+        if (trustees is null || !trustees.Any()) trustees = Trustees;
 
         List<WorkReturn> ret = new();
         // 保存数据库 
         var method = nameof(ITrustee.QueryRaisingAccountTransction);
 
-        foreach (var tr in trustees)
+        foreach (var tr in trustees.Where(x => x.IsEnabled))
         {
             if (!tr.IsValid)
             {
@@ -564,12 +564,12 @@ public partial class TrusteeWorker : ObservableObject
 
     private async Task QueryNetValueImpl(IEnumerable<ITrustee>? trustees = null)
     {
-        if (trustees is null || trustees.Any()) trustees = Trustees;
+        if (trustees is null || !trustees.Any()) trustees = Trustees;
 
 
         List<WorkReturn> ret = new();
         var method = nameof(ITrustee.QueryNetValue);
-        foreach (var tr in trustees)
+        foreach (var tr in trustees.Where(x => x.IsEnabled))
         {
             if (!tr.IsValid)
             {
@@ -612,6 +612,53 @@ public partial class TrusteeWorker : ObservableObject
             Save(NetValueConfig);
         }
     }
+
+    private async Task QueryOpenDaysImpl(IEnumerable<ITrustee>? trustees = null)
+    {
+        if (trustees is null || !trustees.Any()) trustees = Trustees;
+
+
+        List<WorkReturn> ret = new();
+        var method = nameof(ITrustee.QueryOpenDays);
+        foreach (var tr in trustees.Where(x => x.IsEnabled))
+        {
+            if (!tr.IsValid)
+            {
+                ret.Add(new(tr.Title, ReturnCode.ConfigInvalid));
+                continue;
+            }
+
+            try
+            {
+                // 获取历史区间
+                //var range = GetWorkedRange(tr.Identifier, method);
+
+                DateOnly begin = DateOnly.FromDateTime(DateTime.Now), end = Days.NextTradingDay(begin, 14);
+
+                var rc = await tr.QueryOpenDays(begin, end);
+
+                ///
+                // 保存数据库 
+                if (rc.Data is not null)
+                {
+                    DataTracker.OnFundOpenDays(rc.Data);
+                }
+
+                // 合并记录
+                ret.Add(new(tr.Title, rc.Code, rc.Data));
+            }
+            catch (Exception e)
+            {
+                ret.Add(new(tr.Title, ReturnCode.Unknown));
+                Logg.Error($"{method} {e}");
+            }
+
+            WeakReferenceMessenger.Default.Send(new TrusteeWorkResult(nameof(ITrustee.QueryNetValue), ret));
+            NetValueConfig.Last = DateTime.Now;
+            Save(NetValueConfig);
+        }
+    }
+
     #endregion
 
     /// <summary>
@@ -647,6 +694,7 @@ public partial class TrusteeWorker : ObservableObject
     /// <returns></returns>
     public async Task QueryRaisingBalanceOnce(IEnumerable<ITrustee>? trustees = null) => await RunTask(QueryRaisingBalanceImpl(trustees));
 
+    public async Task QueryOpenDaysOnce(IEnumerable<ITrustee>? trustees = null) => await RunTask(QueryOpenDaysImpl(trustees));
 
     /// <summary>
     /// 查询净值
@@ -669,6 +717,8 @@ public partial class TrusteeWorker : ObservableObject
         }
         else WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "未发现对应的API"));
     }
+
+
 
 
     private async Task RunTask(Task task, [CallerMemberName] string name = "")
