@@ -247,10 +247,6 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         {
             missingList.Add("冷静期");
         }
-        if (!ele.Callback.HasValue)
-        {
-            missingList.Add("回访");
-        }
         if (!ele.LockingRule.HasValue)
         {
             missingList.Add("锁定期");

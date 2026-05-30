@@ -29,7 +29,7 @@
 
             <Style BasedOn="{StaticResource {x:Type shared:FactorModifiableControl}}" TargetType="shared:FactorModifiableControl">
                 <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
-                <Setter Property="MinHeight" Value="22" /> 
+                <Setter Property="MinHeight" Value="22" />
                 <Setter Property="ContentTemplate" Value="{StaticResource DefaultCopyable}" />
             </Style>
 
@@ -37,7 +37,7 @@
             <Style BasedOn="{StaticResource Modifiable.Inherit}" TargetType="shared:ModifiableControl">
                 <Setter Property="IsReadOnly" Value="{Binding IsReadOnly}" />
                 <Setter Property="MinHeight" Value="24" />
-                
+
                 <Setter Property="ContentTemplate" Value="{StaticResource DefaultCopyable}" />
             </Style>
 
@@ -500,7 +500,7 @@
                                 Modifier="{Binding FundOpenRule}" />
 
 
-                            <shared:ModifiableControl
+                            <shared:FactorModifiableControl
                                 HorizontalAlignment="Left"
                                 Header="临时开放"
                                 Modifier="{Binding TemporarilyOpenInfo}" />

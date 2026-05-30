@@ -110,7 +110,7 @@ public partial class FundFactors
     /// <summary>
     /// 临时开放信息
     /// </summary>
-    public SingletonFactorItem<TemporarilyOpenInfo> TemporarilyOpenInfo { get; private set; } = null!;
+    public FactorItem<TemporarilyOpenInfo> TemporarilyOpenInfo { get; private set; } = null!;
 
     /// <summary>
     /// 冷静期信息
