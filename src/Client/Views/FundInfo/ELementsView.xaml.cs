@@ -264,26 +264,20 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         FundCode = fund.Code;
         var flow = db.GetCollection<FundFlow>().FindById(newValue);
         bool isori = flow is ContractFinalizeFlow;
-        var elements = db.GetCollection<FundElements>().FindById(FundId);
-
-        if (elements is null)
-            elements = new FundElements { Id = FundId };
 
 
 
         //IFundFactor[] factories = db.GetCollection<IFundFactor>().Query().Where(x => x.FundId == FundId).Where(LiteDB.Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x=> new LiteDB.BsonValue(x)))).ToArray();
-        FundFactors facts = db.QueryFactor(Id);
+        FundFactors factors = db.QueryFactor(Id);
 
-        FillBy(facts, newValue);
+        FillBy(factors, newValue);
 
-        IsSharesInherited = !facts.ShareClasses[newValue].Any(x => ShareClass.GetFlow(x.Id) == newValue);
+        ShareClass[] shares = factors.ShareClasses[newValue];
+        IsSharesInherited = !shares.Any(x => ShareClass.GetFlow(x.Id) == newValue);
 
         var type = GetType();
-        SetupDate = fund.SetupDate;
-        var cinfo = elements.ShareClasses.GetValue(newValue);
-
-        var sc = cinfo.Value ?? [ShareClass.DefaultShare];
-
+        SetupDate = fund.SetupDate; 
+          
 
         OnlyOneShare = Shares.Count <= 1;
 

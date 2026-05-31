@@ -13,6 +13,11 @@ public class ShareClass
     public required string Name { get; set; }
 
     /// <summary>
+    /// 份额对应名称，与托管一致
+    /// </summary>
+    public string? FundName { get; set; }
+
+    /// <summary>
     /// 对应托管外包机构的份额代码 6位
     /// </summary>
     public string? Code { get; set; }
