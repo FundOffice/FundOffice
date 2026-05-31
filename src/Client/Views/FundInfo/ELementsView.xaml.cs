@@ -397,7 +397,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         try
         {
             var wnd = new ModifyInheritWindow();
-            var context = new ModifyInheritWindowViewModel(FundId);
+            var context = new ModifyInheritWindowViewModel(FundId, FlowId);
             wnd.DataContext = context;
             wnd.Owner = App.Current.MainWindow;
 
