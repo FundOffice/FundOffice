@@ -369,8 +369,25 @@ public partial class OpenAndOrderViewModel : ObservableObject
     }
 
     [RelayCommand(CanExecute = nameof(CanConfirm))]
-    public void Confirm()
+    public async Task Confirm()
     {
+        SigningOrder order = new()
+        {
+            FundId = FundId,
+            InvestorId = SelectedInvestor!.Id,
+            OpenDate = SelectedOpenDay!.Date,
+            Number = Number!.Value,
+            OrderType = OrderType!.Value
+        };
+
+        await SelectedSigner!.PushOrder(order);
+
+
+
+        SelectedOpenDay = null;
+        SelectedInvestor = null;
+        Number = null;
+        OrderType = null;
 
     }
 
@@ -438,7 +455,7 @@ public partial class OpenAndOrderViewModel : ObservableObject
         TemporaryOpenNotice notice = new()
         {
             FundId = FundId,
-            FundCode = SelectedShare.Share.Code,
+            FundCode = SelectedShare.Share.Code!,
             FundName = FundName,
             AllowPurchase = CreateTemporaryWithPurchase,
             AllowRedemption = CreateTemporaryWithRedemption,

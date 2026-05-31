@@ -59,7 +59,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         FundId = fund.Id;
         FundName = fund.Name;
-        FundShortName = fund.ShortName;
+        FundShortName = fund.ShortName!;
         TrusteeName = fund.Trustee;
         SetupDate = fund.SetupDate;
         RegistDate = fund.AuditDate;

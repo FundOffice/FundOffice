@@ -99,6 +99,8 @@ public interface ISigning
 
 
     void OnConfig(ISigningConfig config);
+
+    Task<ErrorReturn> PushOrder(SigningOrder order);
 }
 
 internal static class ISigningExtensions
@@ -112,6 +114,21 @@ internal static class ISigningExtensions
         cf.IsValid = valid;
         db.GetCollection<ISigningConfig>().Update(cf);
     }
+}
+
+public class SigningOrder
+{ 
+
+    public int FundId { get; set; }
+
+    public int InvestorId { get; set; }
+
+    public TransferOrderType OrderType { get; set; }
+
+    public decimal Number { get; set; }
+
+    public decimal Fee { get; set; }
+    public DateOnly OpenDate { get; set; }
 }
 
 public record SigningCallHistory(string Identifier, string Method, DateTime Time, string Params, string? Json);
