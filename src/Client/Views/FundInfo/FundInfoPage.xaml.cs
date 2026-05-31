@@ -98,6 +98,8 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         InitFlows(fund);
 
 
+        // 初始化要素 
+        InitiatializeFactors(db);
 
         // 如果已定稿
         if (Flows?.Any(x => x is ContractFinalizeFlowViewModel f && f.IsReadOnly) ?? false)
@@ -126,6 +128,38 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         IsActive = true;
         //_initialized = true;
+    }
+
+    /// <summary>
+    /// 初始化要素
+    /// </summary>
+    /// <exception cref="NotImplementedException"></exception>
+    private void InitiatializeFactors(BaseDatabase db)
+    {
+        int firstFlowId = Flows.First().FlowId, lastFlowId = Flows.Last(x => x is ContractRelatedFlowViewModel).FlowId;
+
+        var tab = db.GetCollection<IFundFactor>();
+
+        if (tab.Query().Where(x => x.FundId == FundId && x.FactorId == FactorFields.ShareClasses).ToEnumerable().OfType<FundFactor<ShareClass[]>>().Count() == 0)
+            tab.Insert(new FundFactor<ShareClass[]>()
+            {
+                FundId = FundId,
+                FlowId = firstFlowId,
+                FactorId = FactorFields.ShareClasses,
+                Data = [new ShareClass {
+                    Name = ShareClass.SingletonName,
+                    Code = FundCode, 
+                    Id = ShareClass.MakeId(firstFlowId, 1)
+                }]
+            });
+
+
+        if (tab.Query().Where(x => x.FundId == FundId && x.FactorId == FactorFields.FullName).Count() == 0)
+            tab.Insert(new FundFactor<string>() { FundId = FundId, FlowId =lastFlowId, FactorId = FactorFields.FullName, Data = FundName });
+
+        if (tab.Query().Where(x => x.FundId == FundId && x.FactorId == FactorFields.ShortName).Count() == 0)
+            tab.Insert(new FundFactor<string>() { FundId = FundId, FlowId = lastFlowId, FactorId = FactorFields.ShortName, Data = FundShortName });
+
     }
 
     public void CheckAndTodo(FundFactors ele)

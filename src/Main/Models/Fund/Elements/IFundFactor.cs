@@ -117,7 +117,7 @@ public class ShareClassFactorItem(IEnumerable<FundFactor<ShareClass[]>> data) : 
 {
     public (int FlowId, ShareClass[] Factor)[] GetShares() => _flowGroupCache.Select(x => (x.FlowId, x.Factor.Data)).ToArray();
 
-    public override ShareClass[] this[int flowId] => _flowGroupCache.FirstOrDefault(x => x.FlowId <= flowId).Factor is { } f && f.Data.Length > 0 ? f.Data : ShareClass.Default;
+    public override ShareClass[] this[int flowId] => _flowGroupCache.FirstOrDefault(x => x.FlowId <= flowId).Factor is { } f && f.Data.Length > 0 ? f.Data : [];
 }
 
 
