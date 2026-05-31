@@ -2,6 +2,7 @@
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
+using MoT;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("MeiShi")]
@@ -136,17 +137,15 @@ public record SigningCallHistory(string Identifier, string Method, DateTime Time
 public record SigningWorkerLoopHistory(DateTime Time, string Method);
 
 public static class SigningLoger
-{
-    static ILiteDatabase db { get; } = new LiteDatabase(@$"FileName=data\platformlog.db;Connection=Shared");
-
+{ 
     public static void LogRun(this ISigning signing, string method, string param, string json)
     {
-        db.GetCollection<SigningCallHistory>().Insert(new SigningCallHistory(signing.Id, method, DateTime.Now, param, json));
+        Logg.Write(new SigningCallHistory(signing.Id, method, DateTime.Now, param, json));
     }
 
 
     public static void LogWorker(string method)
     {
-        db.GetCollection<SigningWorkerLoopHistory>().Insert(new SigningWorkerLoopHistory(DateTime.Now, method));
+        Logg.Write(new SigningWorkerLoopHistory(DateTime.Now, method));
     }
 }
