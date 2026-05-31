@@ -7,6 +7,19 @@ namespace FMO.Settings;
 
 
 
+public class UnitViewModel : ObservableObject
+{
+
+}
+
+
+[AutoViewModel(typeof(SwitchUnit))]
+public partial class SwitchUnitViewModel : UnitViewModel
+{
+    
+}
+
+
 [AutoViewModel(typeof(AbilityUnit))]
 public partial class AbilityUnitViewModel : ObservableObject
 {
@@ -15,13 +28,13 @@ public partial class AbilityUnitViewModel : ObservableObject
     {
         base.OnPropertyChanged(e);
 
-        if(e.PropertyName == nameof(IsEnabled) && !string.IsNullOrWhiteSpace(Name))
+        if (e.PropertyName == nameof(IsEnabled) && !string.IsNullOrWhiteSpace(Name))
         {
             if (IsEnabled)
                 SettingService.EnableAbility($"{Section}.{Name}");
-            else 
+            else
                 SettingService.DisableAbility($"{Section}.{Name}");
         }
     }
-   
+
 }

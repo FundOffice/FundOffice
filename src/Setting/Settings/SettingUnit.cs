@@ -1,6 +1,4 @@
-﻿using System.Collections.Immutable;
-
-namespace FMO.Settings;
+﻿namespace FMO.Settings;
 
 public class SettingUnit
 {
@@ -42,7 +40,7 @@ public static class SettingSections
 
 }
 
-  
+
 
 
 public class AbilityUnit : SettingUnit
@@ -53,3 +51,7 @@ public class AbilityUnit : SettingUnit
 
 
 
+public class SwitchUnit : SettingUnit
+{
+    public bool IsEnabled { get; set; }
+}

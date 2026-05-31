@@ -36,6 +36,10 @@ public partial class SettingsWindowViewModel : ObservableObject
 
     public AbilityUnitViewModel[] BasicGroups { get; set; }
 
+
+    public UnitViewModel[] OrderSection { get; set; }
+
+
     public SettingsWindowViewModel()
     {
         var dic = new Dictionary<string, string>
@@ -68,6 +72,12 @@ public partial class SettingsWindowViewModel : ObservableObject
         var basics = SettingService.GetAbilityUnits("Basic");//.Select(x => new AbilityUnitViewModel(x)).ToArray();
         BasicGroups = basics.Select(x => new AbilityUnitViewModel(x)).ToArray();
 
+
+        var u = SettingService.GetUnits("Order");
+        if (!u.Any(x => x.Name == "AllowCreateTemporaryInESigning"))
+            SettingService.RegisterSwitch("Order", "AllowCreateTemporaryInESigning", "允许在电签平台设置开放日", "允许在电签平台设置开放日，即使它未不是托管平台中的开放日", true);
+
+        OrderSection = [.. u.Select(x => SettingService.CreateViewModel(x) as UnitViewModel)];
     }
 
 
