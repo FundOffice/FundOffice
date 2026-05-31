@@ -83,7 +83,7 @@
 
     </UserControl.Resources>
 
-    <Border Background="WhiteSmoke">
+    <Border Background="AliceBlue" CornerRadius="5">
         <StackPanel>
             <DockPanel Margin="5,10">
 
@@ -239,7 +239,8 @@
                             ItemsPanel="{StaticResource WrapHorizontalItemsPanelTemplate}"
                             ItemsSource="{Binding OrderTypesView}"
                             SelectedItem="{Binding OrderType}"
-                            Style="{StaticResource ListBox.Small}">
+                            Style="{StaticResource ListBox.Small}"
+                            Visibility="{Binding Signings, Converter={StaticResource ListIsNotEmpty2VisibilityConverter}}">
                             <ListBox.GroupStyle>
                                 <GroupStyle>
                                     <GroupStyle.ContainerStyle>
@@ -288,7 +289,8 @@
             <hc:UniformSpacingPanel
                 Margin="10"
                 Orientation="Vertical"
-                VerticalSpacing="10">
+                VerticalSpacing="10"
+                Visibility="{Binding Signings, Converter={StaticResource ListIsNotEmpty2VisibilityConverter}}">
 
                 <!--  申请  -->
                 <DockPanel LastChildFill="False" Visibility="{Binding SelectedOpenDay, Converter={StaticResource Object2VisibilityConverter}}">
@@ -344,10 +346,12 @@
                         Margin="5,0"
                         Content="赎回"
                         IsChecked="{Binding CreateTemporaryWithRedemption}" />
-                    <Button
+                    <hc:ProgressButton
+                        Height="22"
+                        Padding="5,0"
                         Command="{Binding CreateTemporaryOpenCommand}"
                         Content="创建并生成公告"
-                        Style="{StaticResource ButtonDashedPrimary.Small}" />
+                        Style="{StaticResource ProgressButtonPrimary}" />
                 </StackPanel>
 
                 <TextBlock

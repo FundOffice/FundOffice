@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FMO.Disclosure;
 using FMO.ESigning;
 using FMO.Models;
 using FMO.Trustee;
@@ -432,6 +433,20 @@ public partial class OpenAndOrderViewModel : ObservableObject
             return;
         }
         UpdateESignerOpenDay();
+
+        // 创建公告
+        TemporaryOpenNotice notice = new()
+        {
+            FundId = FundId,
+            FundCode = SelectedShare.Share.Code,
+            FundName = FundName,
+            AllowPurchase = CreateTemporaryWithPurchase,
+            AllowRedemption = CreateTemporaryWithRedemption,
+            OpenDay = SelectedOpenDay.Date,
+            PublishDate = DateOnly.FromDateTime(DateTime.Now),
+            PublishTime = TimeOnly.FromDateTime(DateTime.Now)
+        };
+        DisclosureService.RegisterNotice(notice);
     }
 }
 

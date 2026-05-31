@@ -426,7 +426,7 @@
 
 
 
-            <local:OpenAndOrderView DataContext="{Binding OpenAndOrderContext}" />
+            <local:OpenAndOrderView Margin="0,20" DataContext="{Binding OpenAndOrderContext}" Visibility="{Binding ., Converter={StaticResource Object2VisibilityConverter}}" />
         </StackPanel>
 
     </Grid>

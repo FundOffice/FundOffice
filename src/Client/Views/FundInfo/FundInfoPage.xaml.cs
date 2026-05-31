@@ -80,8 +80,8 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
 
         //AllowSetTemporaryOpen = ele.TemporarilyOpenInfo.Current?.IsAllowed ?? false;
-
-        OpenAndOrderContext = new(FundId, FundName, shares, ele.TemporarilyOpenInfo.Current);
+        if (FundStatus == FundStatus.Normal)
+            OpenAndOrderContext = new(FundId, FundName, shares, ele.TemporarilyOpenInfo.Current);
         //if (shares is not null && openRules.Length == shares?.Length)
         //{
         //    ShareOpenInfos = shares?.Index().Select(x => new ShareOpenInfo(x.Item, OpenRule.ApplyMany(DateTime.Now.Year, openRules[x.Index]))).ToArray() ?? [];
@@ -148,6 +148,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
                 FactorId = FactorFields.ShareClasses,
                 Data = [new ShareClass {
                     Name = ShareClass.SingletonName,
+                    FundName = FundName,
                     Code = FundCode, 
                     Id = ShareClass.MakeId(firstFlowId, 1)
                 }]
@@ -505,11 +506,11 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     public partial bool IsEditable { get; set; }
 
     [ObservableProperty]
-    public partial string? FundName { get; set; }
+    public partial string FundName { get; set; } = null!;
 
 
     [ObservableProperty]
-    public partial string? FundShortName { get; set; }
+    public partial string FundShortName { get; set; } = null!;
 
 
     [ObservableProperty]
@@ -636,7 +637,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     public partial FundDisclosureViewModel AnnouncementContext { get; set; }
 
     [ObservableProperty]
-    public partial OpenAndOrderViewModel OpenAndOrderContext { get; set; }
+    public partial OpenAndOrderViewModel? OpenAndOrderContext { get; set; }
     #endregion
 
 
