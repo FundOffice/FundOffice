@@ -1,15 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.Messaging;
 
 using FMO.Models;
-using FMO.Trustee;
 using LiteDB;
 using MoT;
-using System.Text.RegularExpressions;
 namespace FMO.Utilities;
 
 internal record PatchRecord(int Id, DateTime Time);
 
-public  static partial class DatabaseAssist
+public static partial class DatabaseAssist
 {
 
 
@@ -61,19 +59,26 @@ public  static partial class DatabaseAssist
     }
 
     /// <summary>
-    /// call 默认是null，和false不一致，所以为每个fund，设置一个默认值
+    /// 设置share
     /// </summary>
     /// <param name="db"></param>
     private static void VerifyAndFixElements(BaseDatabase db)
     {
-        var pair = db.GetCollection<FundFlow>().Query().Select(x => new { x.FundId, x.Id }).ToArray().OrderBy(x => x.Id).GroupBy(x => x.FundId).Select(x => new { FundId = x.Key, Id = x.First().Id });
-        foreach (var item in pair)
+        var flows = db.GetCollection<FundFlow>().Query().ToEnumerable().OfType<ContractFlow>().GroupBy(x => x.FundId).Select(x => (x.Key, x.OrderBy(y => y.Id).First()));
+        foreach (var (k, f) in flows)
         {
-            var ele = db.GetCollection<FundElements>().FindById(item.FundId);
-            if (!ele.Callback.Changes.ContainsKey(item.Id))
+            var fund = db.GetCollection<Fund>().FindById(k);
+            var old = db.GetCollection<IFundFactor>().Query().Where(x => x.FundId == k && x.FlowId == f.Id && x.FactorId == FactorFields.ShareClasses).ToEnumerable().OfType<FundFactor<ShareClass[]>>().FirstOrDefault();
+            if(old is null) // 没有share的记录
             {
-                ele.Callback.SetValue(new(), item.Id);
-                db.GetCollection<FundElements>().Update(ele);
+                var ff = new FundFactor<ShareClass[]>
+                {
+                    FundId = k,
+                    FlowId = f.Id,
+                    FactorId = FactorFields.ShareClasses,
+                    Data = [new ShareClass { Id = ShareClass.MakeId(f.Id, 1), Name = ShareClass.SingletonName, Code = fund.Code, FundName = fund.Name }]
+                };
+                db.GetCollection<IFundFactor>().Insert(ff);
             }
         }
     }

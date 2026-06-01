@@ -270,14 +270,16 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         //IFundFactor[] factories = db.GetCollection<IFundFactor>().Query().Where(x => x.FundId == FundId).Where(LiteDB.Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x=> new LiteDB.BsonValue(x)))).ToArray();
         FundFactors factors = db.QueryFactor(Id);
 
+        // 检查份额
+        ShareClass[] shares = factors.ShareClasses[newValue];
+
         FillBy(factors, newValue);
 
-        ShareClass[] shares = factors.ShareClasses[newValue];
         IsSharesInherited = !shares.Any(x => ShareClass.GetFlow(x.Id) == newValue);
 
         var type = GetType();
-        SetupDate = fund.SetupDate; 
-          
+        SetupDate = fund.SetupDate;
+
 
         OnlyOneShare = Shares.Count <= 1;
 
@@ -396,8 +398,14 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
     {
         try
         {
+            if (string.IsNullOrWhiteSpace(FullName.OldValue))
+            {
+                Toast.Warning("请先设置基金全称");
+                return;
+            }
+
             var wnd = new ModifyInheritWindow();
-            var context = new ModifyInheritWindowViewModel(FundId, FlowId);
+            var context = new ModifyInheritWindowViewModel(FundId, FullName.OldValue, FlowId);
             wnd.DataContext = context;
             wnd.Owner = App.Current.MainWindow;
 

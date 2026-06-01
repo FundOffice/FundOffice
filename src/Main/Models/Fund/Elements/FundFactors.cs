@@ -4,7 +4,9 @@ using System.Collections.Immutable;
 namespace FMO.Models;
 
 
-
+/// <summary>
+/// 初始化默认share 在 DatabaseAssist.VerifyAndFixElements
+/// </summary>
 public partial class FundFactors
 {
     public int Id { get; }

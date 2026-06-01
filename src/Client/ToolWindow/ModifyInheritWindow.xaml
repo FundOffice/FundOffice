@@ -237,11 +237,20 @@
                                                                 Background="Transparent"
                                                                 BorderThickness="0"
                                                                 Style="{StaticResource ToggleButtonIcon.Small}"
-                                                                Visibility="{Binding IsInherited, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                                                                Visibility="Collapsed" />
                                                         </hc:SimplePanel>
 
-                                                        <Popup IsOpen="{Binding ElementName=tog, Path=IsChecked}" StaysOpen="False">
-                                                            <Border Background="White">
+                                                        <Popup
+                                                            AllowsTransparency="True"
+                                                            HorizontalOffset="-100"
+                                                            IsOpen="{Binding ElementName=tog, Path=IsChecked}"
+                                                            PlacementTarget="{Binding ElementName=tog}"
+                                                            StaysOpen="False">
+                                                            <Border
+                                                                Background="White"
+                                                                BorderBrush="RoyalBlue"
+                                                                BorderThickness="3"
+                                                                CornerRadius="4">
                                                                 <StackPanel Width="300" Margin="8">
 
                                                                     <DockPanel>
@@ -263,9 +272,14 @@
                                                                         <hc:TextBox
                                                                             Width="90"
                                                                             hc:InfoElement.Placeholder="托管产品编码"
-                                                                            Text="{Binding Code}"
+                                                                            Text="{Binding Code, UpdateSourceTrigger=PropertyChanged, Delay=300}"
                                                                             TextAlignment="Center" />
                                                                     </DockPanel>
+
+                                                                    <hc:TextBox
+                                                                        Margin="0,5"
+                                                                        hc:InfoElement.Placeholder="子份额产品名称"
+                                                                        Text="{Binding FundName, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
 
                                                                     <DockPanel Margin="0,5">
                                                                         <TextBlock
@@ -275,6 +289,7 @@
                                                                             Text="要求" />
                                                                         <hc:TextBox
                                                                             x:Name="t3"
+                                                                            Padding="4"
                                                                             HorizontalAlignment="Stretch"
                                                                             hc:InfoElement.Placeholder="份额对应的要求"
                                                                             Text="{Binding Requirement, UpdateSourceTrigger=PropertyChanged, Delay=300}"
@@ -292,6 +307,13 @@
                                                         <DataTrigger Binding="{Binding Name}" Value="单一份额">
                                                             <Setter TargetName="desp" Property="Visibility" Value="Collapsed" />
                                                         </DataTrigger>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding IsInherited}" Value="False" />
+                                                                <Condition Binding="{Binding DataContext.HasMultipleShare, RelativeSource={RelativeSource AncestorType=ItemsControl}}" Value="True" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter TargetName="tog" Property="Visibility" Value="Visible" />
+                                                        </MultiDataTrigger>
                                                     </DataTemplate.Triggers>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>

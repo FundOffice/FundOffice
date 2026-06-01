@@ -322,6 +322,7 @@ public partial class ModifyInheritWindow : Window
 public partial class ModifyInheritWindowViewModel : ObservableObject
 {
     public int FundId { get; set; }
+    public string FundName { get; }
     public int FlowId { get; }
 
     public List<Row> Data { get; set; }
@@ -332,9 +333,10 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(ConfirmCommand))]
     public partial bool Changed { get; private set; }
 
-    public ModifyInheritWindowViewModel(int fundId, int flowId)
+    public ModifyInheritWindowViewModel(int fundId, string fundName, int flowId)
     {
         FundId = fundId;
+        FundName = fundName;
         FlowId = flowId;
         using var db = DbHelper.Base();
 
@@ -348,10 +350,11 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
 
         _shareIds = shareInfo.SelectMany(x => x.Shares.Select(y => y.Id)).ToArray();
 
-        Data = shareInfo.OrderBy(x => x.FlowId).Select(x => new Row(this, x.FlowId, x.FlowName, x.Date, x.Shares.Select(y => new ShareItem
+        Data = shareInfo.OrderBy(x => x.FlowId).Select(x => new Row(this, FundName, x.FlowId, x.FlowName, x.Date, x.Shares.Select(y => new ShareItem
         {
             Id = y.Id,
             Name = y.Name,
+            FundName = y.FundName ?? fundName + y.Name,
             Code = y.Code!,
             Requirement = y.Requirement,
             Inherit = y.Inherit,
@@ -365,10 +368,11 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
             if (Data[i].FlowId < flowId && (i == Data.Count - 1 || Data[i + 1].FlowId > flowId))
             {
                 var x = Data[i];
-                Data.Insert(i + 1, new Row(this, flowId, x.FlowName, x.Date, x.Shares.Select(y => new ShareItem
+                Data.Insert(i + 1, new Row(this, fundName, flowId, x.FlowName, x.Date, x.Shares.Select(y => new ShareItem
                 {
                     Id = y.Id,
                     Name = y.Name,
+                    FundName = y.FundName!,
                     Code = y.Code,
                     Requirement = y.Requirement,
                     Inherit = y.Inherit,
@@ -387,6 +391,7 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
         {
             Id = x.Id,
             Name = x.Name,
+            FundName = x.FundName!,
             Code = x.Code,
             Requirement = x.Requirement,
             Inherit = x.Inherit
@@ -402,6 +407,18 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
         // 有变化 
         if (Changed)
         {
+            // 检验合法
+            var currentShares = Data.FirstOrDefault(x => x.FlowId == FlowId)!.Shares;
+            foreach (var share in currentShares)
+            {
+                if (string.IsNullOrWhiteSpace(share.Name) || string.IsNullOrWhiteSpace(share.Code) || string.IsNullOrWhiteSpace(share.FundName) || (currentShares.Count == 1 || string.IsNullOrWhiteSpace(share.Requirement)))
+                {
+                    HandyControl.Controls.MessageBox.Show($"请确保份额{share.Name}名称、代码、基金名称均不为空", "提示");
+                    return;
+                }
+            }
+
+
             using var db = DbHelper.Base();
 
             var upd = GetNew();
@@ -435,9 +452,10 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
 
     public partial class Row : ObservableObject
     {
-        public Row(ModifyInheritWindowViewModel viewModel, int flowId, string flowName, DateOnly date, ShareItem[] shares, bool isEnabled = false)
+        public Row(ModifyInheritWindowViewModel viewModel, string fundName, int flowId, string flowName, DateOnly date, ShareItem[] shares, bool isEnabled = false)
         {
             ViewModel = viewModel;
+            FundName = fundName;
             FlowId = flowId;
             FlowName = flowName;
             Date = date;
@@ -459,6 +477,8 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
 
         public ModifyInheritWindowViewModel ViewModel { get; }
 
+        public string FundName { get; }
+
         public int FlowId { get; set; }
 
         public string FlowName { get; }
@@ -469,7 +489,10 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
         public partial bool IsEnabled { get; set; }
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(HasMultipleShare))]
         public partial ObservableCollection<ShareItem> Shares { get; set; }
+
+        public bool HasMultipleShare => Shares.Count > 1;
 
         public List<ShareItem> Deleted { get; } = [];
 
@@ -497,6 +520,7 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
             {
                 Name = share.Name,
                 Code = share.Code,
+                FundName = share.FundName!,
                 Requirement = share.Requirement,
                 CopyFrom = share.Id,
                 FlowId = FlowId,
@@ -533,6 +557,7 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
             if (Shares.Count == 1)
             {
                 Shares[0].Name = "A";
+                Shares[0].FundName = FundName + "A";
                 Shares[0].Code = Shares[0].Code[1..] + "A";
                 if (Shares[0].IsInherited)
                 {
@@ -547,6 +572,7 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
             {
                 Name = scn,
                 Code = share.Code[..^1] + scn,
+                FundName = FundName + scn,
                 Requirement = "请填写份额要求",
                 FlowId = FlowId,
                 IsNew = true,
@@ -572,6 +598,7 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
                 {
                     Name = s.Name,
                     Code = s.Code,
+                    FundName = s.FundName,
                     Requirement = s.Requirement,
                     CopyFrom = s.Id,
                     FlowId = FlowId,
@@ -618,6 +645,7 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
                     if (item.Shares.Count == 1)
                     {
                         item.Shares[0].Name = ShareClass.SingletonName;
+                        item.Shares[0].FundName = FundName;
                         item.Shares[0].Requirement = null;
                     }
                 }
@@ -642,6 +670,8 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
             {
                 Shares[0].Name = ShareClass.SingletonName;
                 Shares[0].Code = "S" + Shares[0].Code[..^1];
+
+                Shares[0].FundName = FundName;
             }
             ViewModel.Changed = true;
         }
@@ -658,6 +688,10 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
         [ObservableProperty]
         public partial string Name { get; set; }
 
+
+
+        [ObservableProperty]
+        public partial string FundName { get; set; }
 
         [ObservableProperty]
         public partial string Code { get; set; }
