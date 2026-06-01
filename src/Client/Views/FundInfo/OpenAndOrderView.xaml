@@ -207,34 +207,33 @@
 
                     </DockPanel>
 
-                    <DockPanel>
-                        <TextBlock Text="近期无开放日" Visibility="{Binding DataContext.NoOpenDay, RelativeSource={RelativeSource AncestorType=local:OpenAndOrderView}, Converter={StaticResource Boolean2VisibilityConverter}}" />
-
-
-                        <TextBlock
-                            Foreground="Red"
-                            Text="临开申购"
-                            TextDecorations="Strikethrough"
-                            Visibility="{Binding DataContext.CurrentShareAllowSetTemporaryPurchase, RelativeSource={RelativeSource AncestorType=local:OpenAndOrderView}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-                        <TextBlock
-                            Foreground="Red"
-                            Text="临开赎回"
-                            TextDecorations="Strikethrough"
-                            Visibility="{Binding DataContext.CurrentShareAllowSetTemporaryRedemption, RelativeSource={RelativeSource AncestorType=local:OpenAndOrderView}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-                    </DockPanel>
-
 
                     <StackPanel
                         Margin="0,10"
                         HorizontalAlignment="Left"
-                        DataContext="{Binding SelectedOpenDay}"
-                        Visibility="{Binding ., Converter={StaticResource Object2VisibilityConverter}}">
+                        DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=local:OpenAndOrderView}}"
+                        Visibility="{Binding ShowPush, Converter={StaticResource Boolean2VisibilityConverter}}">
+
+                        <DockPanel>
+                            <TextBlock Text="近期无开放日" Visibility="{Binding NoOpenDay, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+
+                            <TextBlock
+                                Foreground="Red"
+                                Text="临开申购"
+                                TextDecorations="Strikethrough"
+                                Visibility="{Binding CurrentShareAllowSetTemporaryPurchase, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                            <TextBlock
+                                Foreground="Red"
+                                Text="临开赎回"
+                                TextDecorations="Strikethrough"
+                                Visibility="{Binding CurrentShareAllowSetTemporaryRedemption, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                        </DockPanel>
 
                         <ListBox
                             Background="Transparent"
                             BorderThickness="0"
-                            DataContext="{Binding DataContext, RelativeSource={RelativeSource AncestorType=local:OpenAndOrderView}}"
                             ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus.Small}"
                             ItemsPanel="{StaticResource WrapHorizontalItemsPanelTemplate}"
                             ItemsSource="{Binding OrderTypesView}"
@@ -290,7 +289,7 @@
                 Margin="10"
                 Orientation="Vertical"
                 VerticalSpacing="10"
-                Visibility="{Binding Signings, Converter={StaticResource ListIsNotEmpty2VisibilityConverter}}">
+                Visibility="{Binding ShowPush, Converter={StaticResource Boolean2VisibilityConverter}}">
 
                 <!--  申请  -->
                 <DockPanel LastChildFill="False" Visibility="{Binding SelectedOpenDay, Converter={StaticResource Object2VisibilityConverter}}">

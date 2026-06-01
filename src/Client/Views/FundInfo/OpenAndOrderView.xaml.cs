@@ -1,8 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using FMO.Disclosure;
 using FMO.ESigning;
 using FMO.Models;
+using FMO.Settings;
 using FMO.Trustee;
 using FMO.Utilities;
 using System.ComponentModel;
@@ -26,7 +28,7 @@ public partial class OpenAndOrderView : UserControl
 }
 
 
-public partial class OpenAndOrderViewModel : ObservableObject
+public partial class OpenAndOrderViewModel : ObservableObject, IRecipient<SettingUnit>
 {
     #region 开放
 
@@ -61,6 +63,13 @@ public partial class OpenAndOrderViewModel : ObservableObject
 
     [ObservableProperty]
     public partial OpenDayViewModel? SelectedOpenDay { get; set; }
+
+
+    [ObservableProperty]
+    public partial bool ShowPush { get; set; }
+
+    [ObservableProperty]
+    public partial bool AllowForceSetTemporary { get; set; }
 
     /// <summary>
     /// 电签平台中可用的日期
@@ -191,6 +200,8 @@ public partial class OpenAndOrderViewModel : ObservableObject
 
     public OpenAndOrderViewModel(int fundId, string fundName, ShareClass[] shares, TemporarilyOpenInfo?[] tempInfo)
     {
+        WeakReferenceMessenger.Default.RegisterAll(this);
+
         HasMultipleShare = shares.Length > 1;
         Signings = SigningGalley.Platforms.ToArray();
         FundId = fundId;
@@ -199,6 +210,9 @@ public partial class OpenAndOrderViewModel : ObservableObject
 
         if (shares.Length != tempInfo.Length && tempInfo.Length > 1)
             throw new InvalidDataException("临时开放规则与份额不匹配");
+
+        // 获取设置
+        AllowForceSetTemporary = SettingService.GetUnit<SwitchUnit>("Order.AllowCreateTemporaryInESigning")?.IsEnabled ?? false;
 
         var info = new ShareOpenInfo[shares.Length];
         if (TrusteeGallay.Find(fundId) is ITrustee api && api.IsValid)
@@ -312,7 +326,7 @@ public partial class OpenAndOrderViewModel : ObservableObject
                 CreateTemporaryWithPurchase = true;
                 CreateTemporaryWithRedemption = false;
             }
-            CanPushOrder = !FixDayCannotUse && !NeedCreateTemporaryInESigning;
+            CanPushOrder = !FixDayCannotUse && !NeedCreateTemporaryInESigning && (SelectedOpenDay?.AllowPush is true || AllowForceSetTemporary);
         }
         else if (OrderType is TransferOrderType.Amount or TransferOrderType.Share or TransferOrderType.RemainAmout)
         {
@@ -328,7 +342,7 @@ public partial class OpenAndOrderViewModel : ObservableObject
                 CreateTemporaryWithPurchase = false;
                 CreateTemporaryWithRedemption = true;
             }
-            CanPushOrder = !FixDayCannotUse && !NeedCreateTemporaryInESigning;
+            CanPushOrder = !FixDayCannotUse && !NeedCreateTemporaryInESigning && (SelectedOpenDay?.AllowPush is true || AllowForceSetTemporary);
         }
         else CanPushOrder = false;
     }
@@ -346,6 +360,9 @@ public partial class OpenAndOrderViewModel : ObservableObject
         TransferOrderType[] b = value?.AllowPushRedemption is true || SelectedShare?.TemporarilyOpenInfo.AllowRedemption is true ? [TransferOrderType.Share, TransferOrderType.Amount, TransferOrderType.RemainAmout] : [];
 
         OrderTypes = a.Union(b).ToArray();
+
+        ShowPush = value?.AllowPush is true || AllowForceSetTemporary;
+
         CheckOpenDayForPush();
     }
 
@@ -422,6 +439,8 @@ public partial class OpenAndOrderViewModel : ObservableObject
                     ShareOpenInfos[i] = sc with { DateInfo = OpenDayViewModel.Create(FundId, today, end, dd, sc.TemporarilyOpenInfo) };
                 }
             }
+
+            OnPropertyChanged(nameof(SelectedShare));
         }
     }
 
@@ -464,6 +483,16 @@ public partial class OpenAndOrderViewModel : ObservableObject
             PublishTime = TimeOnly.FromDateTime(DateTime.Now)
         };
         DisclosureService.RegisterNotice(notice);
+    }
+
+    public void Receive(SettingUnit unit)
+    {
+        if(unit.Id == "Order.AllowCreateTemporaryInESigning")
+        {
+            AllowForceSetTemporary = (unit as SwitchUnit)?.IsEnabled ?? false;
+            ShowPush = SelectedOpenDay?.AllowPush is true || AllowForceSetTemporary;
+            CheckOpenDayForPush();
+        }
     }
 }
 

@@ -1,4 +1,5 @@
 ﻿
+using CommunityToolkit.Mvvm.Messaging;
 using FMO.Models;
 using LiteDB;
 using MoT;
@@ -18,8 +19,8 @@ public static partial class SettingService
 
     public static void Initialize()
     {
-         
-  
+
+
         SettingUnits = db.GetCollection<SettingUnit>().FindAll().ToDictionary(x => x.Id);
 
 
@@ -118,12 +119,15 @@ public static partial class SettingService
         return SettingUnits.TryGetValue($"{section}.{name}", out var unit) ? unit : null;
     }
 
+    public static T? GetUnit<T>(string id) where T : SettingUnit => SettingUnits.TryGetValue(id, out var unit) ? unit as T : null;
 
 
     public static void Save(SettingUnit unit)
     {
         db.GetCollection<SettingUnit>().Upsert(unit);
         SettingUnits[unit.Id] = unit;
+
+        WeakReferenceMessenger.Default.Send(unit);
     }
 
 
