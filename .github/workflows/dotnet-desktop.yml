@@ -105,10 +105,10 @@ jobs:
           $solutionProjects = @()
 
           if ($slnxFile) {
-              Write-Host "  找到解决方案文件: $($slnFile.Name)" -ForegroundColor Cyan
+              Write-Host "  找到解决方案文件: $($slnxFile.Name)" -ForegroundColor Cyan
             
               # 使用 dotnet CLI 获取解决方案中的项目列表，原生完美兼容 .sln 和 .slnx
-              $slnListOutput = dotnet sln $slnFile.FullName list 2>$null
+              $slnListOutput = dotnet sln $slnxFile.FullName list 2>$null
             
               if ($LASTEXITCODE -eq 0) {
                   foreach ($line in $slnListOutput) {
@@ -117,7 +117,7 @@ jobs:
                       if ($trimmedLine -and $trimmedLine -notmatch "^(Project\(s\)|项目|-+)$") {
                           # 统一路径分隔符并转换为绝对路径
                           $relPath = $trimmedLine -replace '\\', [System.IO.Path]::DirectorySeparatorChar
-                          $absPath = Join-Path $slnFile.DirectoryName $relPath
+                          $absPath = Join-Path $slnxFile.DirectoryName $relPath
               
                           # 确保路径真实存在再加入列表
                           if (Test-Path $absPath) {
