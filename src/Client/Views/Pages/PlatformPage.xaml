@@ -125,7 +125,28 @@
 
 
 
-
+        <DataTemplate DataType="{x:Type local:TokenProviderViewModel}">
+            <DockPanel>
+                <hc:TextBox
+                    Width="100"
+                    hc:InfoElement.Placeholder="公司名"
+                    Text="{Binding Id}" />
+                <hc:TextBox
+                    Width="200"
+                    hc:InfoElement.Placeholder="URL"
+                    Text="{Binding Url}" />
+                <hc:TextBox
+                    Width="220"
+                    hc:InfoElement.Placeholder="密钥"
+                    Text="{Binding Key}" />
+                <ListBox
+                    ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
+                    ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
+                    ItemsSource="{Binding Source={x:Static local:TokenProviderViewModel.Styles}}"
+                    SelectedItem="{Binding Style}"
+                    Style="{StaticResource ListBox.Small}" />
+            </DockPanel>
+        </DataTemplate>
 
 
 
@@ -260,7 +281,7 @@
         </Style>
 
     </UserControl.Resources>
-    <DockPanel Background="Transparent">
+    <StackPanel Background="Transparent">
 
         <DockPanel
             Margin="0,8"
@@ -488,9 +509,54 @@
 
         </DockPanel>
 
+        <!--  AI  -->
+        <DockPanel MinHeight="34" LastChildFill="False">
+            <TextBlock
+                VerticalAlignment="Center"
+                FontSize="18"
+                FontWeight="Black"
+                Foreground="RoyalBlue"
+                Text="AI" />
 
+            <Button
+                hc:IconElement.Geometry="{StaticResource f.circle-plus}"
+                Command="{Binding AddTokenProviderCommand}"
+                Style="{StaticResource ButtonIcon.Small}" />
 
+            <ListBox
+                BorderThickness="0"
+                ItemsSource="{Binding AIProviders}"
+                Style="{StaticResource ListBoxCustom}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border
+                            BorderBrush="Gray"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                            <DockPanel MinHeight="32" Background="Transparent">
+                                <shared:ModifiableControl
+                                    BorderThickness="0"
+                                    IsReadOnly="{Binding ElementName=edit, Path=IsChecked}"
+                                    Modifier="{Binding}">
+                                    <shared:ModifiableControl.EditTemplate>
+                                        <DataTemplate>
+                                            <ContentPresenter Content="{Binding NewValue}" />
+                                        </DataTemplate>
+                                    </shared:ModifiableControl.EditTemplate>
+                                </shared:ModifiableControl>
+                                <ToggleButton
+                                    x:Name="edit"
+                                    Margin="5,0"
+                                    IsChecked="True"
+                                    Style="{StaticResource EditSwitch.Small}" />
+                            </DockPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
 
+        <!--  电签  -->
         <DockPanel Margin="0,10" DockPanel.Dock="Top">
             <DockPanel.Resources>
 
@@ -671,7 +737,7 @@
 
         </DockPanel>
 
-
+        <!--  托管  -->
         <DockPanel
             Margin="5"
             DockPanel.Dock="Top"
@@ -920,5 +986,5 @@
         </ListBox>
 
 
-    </DockPanel>
+    </StackPanel>
 </UserControl>

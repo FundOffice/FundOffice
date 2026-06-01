@@ -71,18 +71,20 @@
         <Setter Property="Header" Value="{Binding Modifier.Label, RelativeSource={RelativeSource Self}}" />
         <Setter Property="HeaderTemplate" Value="{StaticResource DefaultHeadTemplate}" />
         <Setter Property="ContentTemplate" Value="{StaticResource DefaultReadOnlyTemplate}" />
+        <Setter Property="BorderBrush" Value="Gray" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
         <!--<Setter Property="EditTemplate" Value="{StaticResource DefaultEditTemplate}" />-->
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type local:ModifiableControl}">
                     <Border
                         x:Name="RootBorder"
-                        Padding="{TemplateBinding Padding}"
-                        Background="Transparent"
-                        BorderBrush="Transparent"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="4">
-                        <Grid>
+                        <Grid Margin="{TemplateBinding Padding}">
                             <Grid.ColumnDefinitions>
                                 <!--  Header 区域（可定制）  -->
                                 <ColumnDefinition Width="Auto" />
@@ -102,20 +104,14 @@
 
                             <ContentPresenter
                                 Grid.Column="1"
-                                Margin="5,0,0,0"
+                                Margin="5,0"
                                 HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                 Content="{Binding Modifier.OldValue, RelativeSource={RelativeSource TemplatedParent}}"
                                 ContentTemplate="{TemplateBinding ContentTemplate}"
                                 Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
-                            <Border
-                                Grid.Column="1"
-                                Margin="5,0,0,0"
-                                BorderBrush="Gray"
-                                BorderThickness="1"
-                                CornerRadius="5"
-                                Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                            <Border Grid.Column="1" Visibility="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityReConverter}}">
                                 <DockPanel Margin="2,0">
 
                                     <hc:SimplePanel

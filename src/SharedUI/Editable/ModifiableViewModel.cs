@@ -172,8 +172,8 @@ public partial class ModifiableViewModel<TValue, TViewModel> : ModifiableViewMod
     {
         var eq = EqualityComparer<TValue?>.Default;
         bool oldIsFallback = eq.Equals(OldValue, FallbackValue);
-        bool newIsFallback = NewValue.Equals(FallbackValue);
-        bool newEqualsOld = NewValue.Equals(OldValue);
+        bool newIsFallback = NewValue?.Equals(FallbackValue) ?? false;
+        bool newEqualsOld = NewValue?.Equals(OldValue) ?? false;
 
         // 🔑 核心状态机：以 FallbackValue 为“未设置”基准线
         ChangeKind = newEqualsOld switch
