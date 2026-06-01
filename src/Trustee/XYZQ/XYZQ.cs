@@ -1,7 +1,6 @@
 ﻿
 using FMO.Models;
 using FMO.Utilities;
-using Microsoft.CodeAnalysis;
 using MoT;
 using System.Diagnostics;
 using System.Net.Http;
@@ -40,15 +39,13 @@ public class XYZQ : TrusteeApiBase
 
     private DateTime TokenTime { get; set; }
 
-    private IList<SubjectFundMapping>? FundMappings { get; set; }
-
 
     private IList<BankAccount>? RaisingAccount { get; set; }
 
     public override bool IsSuit(string? company) => string.IsNullOrWhiteSpace(company) ? false : Regex.IsMatch(company, $"兴业证券|兴业证券股份有限公司|{_Identifier}");
 
 
-    public override bool Prepare()
+    protected override bool InitializeOverride()
     {
         if (string.IsNullOrWhiteSpace(ClientId) || string.IsNullOrWhiteSpace(UserName) || string.IsNullOrWhiteSpace(Password) || ClientSecret is null)
             SetStatus();
@@ -170,10 +167,102 @@ public class XYZQ : TrusteeApiBase
         return result;
     }
 
-    public override Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end, string? fundCode = null)
+    public override async Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end, string? fundCode = null)
     {
-        throw new NotImplementedException();
+        var server = "TaNetvalueQuery";
+        var param = new { sdate = begin.ToString("yyyy-MM-dd"), cdate = end.ToString("yyyy-MM-dd"), fundcode = fundCode };
+
+        var data = await SyncWork<NetValueJson, NetValueJson>(server, null, x => x);
+
+
+        // map
+        if (data.Code != ReturnCode.Success || data.Data is null)
+            return new ReturnWrap<DailyValue>(data.Code, []);
+
+        using var db = DbHelper.Base();
+        List<DailyValue> ret = new List<DailyValue>(data.Data.Count);
+        foreach (var item in data.Data.GroupBy(x => x.FundCode))
+        {
+            var code = item.Key;
+
+            if (db.FindFundByCode(code) is var (ff, c) && ff is Fund f)
+            {
+                ret.AddRange(item.Select(x => new DailyValue
+                {
+                    FundId = f.Id,
+                    Class = x.IfGrading == "1" && x.InvestFunds == "2" ? c : null,
+                    Date = DateOnly.ParseExact(x.NetDate, "yyyyMMdd"),
+                    NetValue = ParseDecimal(x.Dwjz),
+                    CumNetValue = ParseDecimal(x.Ljdwjz),
+                    Asset = ParseDecimal(x.Zchj),
+                    Share = ParseDecimal(x.Zcfe),
+                    NetAsset = ParseDecimal(x.Zcjz),
+                    Source = DailySource.Custodian
+                }));
+            }
+            else JsonBase.ReportJsonUnexpected(Identifier, "QueryNetValue", $"Fund Code = {code}");
+        }
+
+        return new ReturnWrap<DailyValue>(ReturnCode.Success, ret.ToArray());
+
     }
+
+
+
+    public override async Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end, string fundCode)
+    {
+        var server = "queryProductCalendar";
+
+        var param = new { sdate = begin.ToString("yyyy-MM-dd"), cdate = end.ToString("yyyy-MM-dd"), year = end.Year, fundcode = fundCode };
+        var data = await SyncWork<OpenDayJson, OpenDayJson>(server, param, x => x);
+
+
+        // empty or error
+        if (data.Code != ReturnCode.Success || data.Data is null)
+            return new ReturnWrap<FundOpenDay>(data.Code, []);
+
+        // map
+        using var db = DbHelper.Base();
+        var ret = new List<FundOpenDay>(data.Data.Count);
+
+        foreach (var item in data.Data.GroupBy(x => x.FundCode))
+        {
+            var code = item.Key;
+            if (db.FindShare(code) is var (ff, c) && ff != 0)
+            {
+                ret.AddRange(item.Select(x => x.To(ff, c)));
+            }
+            else JsonBase.ReportJsonUnexpected(Identifier, "QueryOpenDays", $"Fund Code = {code}");
+        }
+
+
+        return new ReturnWrap<FundOpenDay>(ReturnCode.Success, ret.ToArray());
+    }
+
+    public override async Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end)
+    {
+        if (FundsInfo?.Length is null or 0)
+            await QuerySubjectFundMappings();
+
+
+        if (FundsInfo?.Length is null or 0)
+            return new(ReturnCode.XYZQ_NoFundIssued, []);
+
+
+        List<FundOpenDay> list = [];
+        foreach (var f in FundsInfo)
+        {
+            var r = await QueryOpenDays(begin, end, f.FundCode);
+            if (r.Code != ReturnCode.Success)
+                return new ReturnWrap<FundOpenDay>(r.Code, list);
+
+            if (r.Data?.Count > 0)
+                list.AddRange(r.Data);
+        }
+
+        return new(ReturnCode.Success, list);
+    }
+
 
     public override Task<ReturnWrap<RaisingBankTransaction>> QueryRaisingAccountTransction(DateOnly begin, DateOnly end, string? fundCode = null)
     {
@@ -191,7 +280,7 @@ public class XYZQ : TrusteeApiBase
     }
 
     /// <summary>
-    /// 纯SB设计
+    /// 
     /// </summary>
     /// <returns></returns>
     public override async Task<ReturnWrap<FundBankBalance>> QueryRaisingBalance()
@@ -218,35 +307,28 @@ public class XYZQ : TrusteeApiBase
 
         HttpRequestMessage request = new(new HttpMethod("GET"), url);
 
+        // FundCode XY...
         var map = await SyncWork<SubjectFundMapping, SubjectFundMappingJson>("productList", null, x => x.ToObject());
 
-        FundMappings = map.Data ?? [];
+        FundsInfo = map.Data?.ToArray() ?? [];
         return new(ReturnCode.Success, []);
     }
 
+    public override Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end) => QueryNetValue(begin, end, null);
 
-    public async Task<bool> EnsureToken()
-    {
-        if (string.IsNullOrWhiteSpace(AToken) && !await GetToken())
-        {
-            SetStatus();
-            return false;
-        }
-        return true;
-    }
 
 
     public override async Task<ReturnWrap<TransferRecord>> QueryTransferRecords(DateOnly begin, DateOnly end, string? fundCode = null)
     {
         if (fundCode is not null)
         {
-            if (FundMappings is null)
+            if (FundsInfo is null)
                 await QuerySubjectFundMappings();
 
-            if (FundMappings is null || FundMappings.Count == 0)
+            if (FundsInfo?.Length is null or 0)
                 return new(ReturnCode.XYZQ_FundCode, []);
 
-            fundCode = FundMappings.FirstOrDefault(x => x.AmacCode == fundCode)?.FundCode;
+            fundCode = FundsInfo.FirstOrDefault(x => x.AmacCode == fundCode)?.FundCode;
         }
 
 
@@ -259,7 +341,7 @@ public class XYZQ : TrusteeApiBase
             var dic = db.GetCollection<Fund>().Query().Select(x => new { x.Code, x.Id }).ToList().ToDictionary(x => x.Code!, x => x.Id);
             foreach (var item in result.Data.GroupBy(x => x.FundCode))
             {
-                var code = FundMappings?.FirstOrDefault(x => x.FundCode == item.Key)?.AmacCode;
+                var code = FundsInfo?.FirstOrDefault(x => x.FundCode == item.Key)?.AmacCode;
                 dic.TryGetValue(code!, out var id);
                 foreach (var g in item)
                 {
@@ -274,15 +356,15 @@ public class XYZQ : TrusteeApiBase
 
     public override async Task<ReturnWrap<TransferRequest>> QueryTransferRequests(DateOnly begin, DateOnly end, string? fundCode = null)
     {
-        if (FundMappings is null)
+        if (FundsInfo is null)
             await QuerySubjectFundMappings();
 
-        if (FundMappings is null || FundMappings.Count == 0)
+        if (FundsInfo?.Length is null or 0)
             return new(ReturnCode.XYZQ_NoFundIssued, []);
 
         if (fundCode is null)
-            fundCode = string.Join(',', FundMappings.Select(x => x.FundCode));
-        else fundCode = FundMappings.FirstOrDefault(x => x.AmacCode == fundCode)?.FundCode;
+            fundCode = string.Join(',', FundsInfo.Select(x => x.FundCode));
+        else fundCode = FundsInfo.FirstOrDefault(x => x.AmacCode == fundCode)?.FundCode;
 
         if (fundCode is null)
             return new(ReturnCode.XYZQ_FundCode, []);
@@ -290,6 +372,19 @@ public class XYZQ : TrusteeApiBase
         var result = await SyncWork<TransferRequest, RequestJson>("QueryTradeApplication", new { startdate = begin.ToString("yyyyMMdd"), enddate = end.ToString("yyyyMMdd"), fundcode = fundCode }, x => x.ToObject());
 
         return result;
+    }
+
+
+
+
+    public async Task<bool> EnsureToken()
+    {
+        if (string.IsNullOrWhiteSpace(AToken) && !await GetToken())
+        {
+            SetStatus();
+            return false;
+        }
+        return true;
     }
 
 

@@ -49,6 +49,21 @@ public class BaseDatabase : LiteDatabase
         return default;
     }
 
+    public (int FundId, ShareClass Class) FindShare(string? fundCode)
+    {
+        if (string.IsNullOrWhiteSpace(fundCode)) return default;
+
+        var all = GetCollection<IFundFactor>().Query().Where(x => x.FactorId == FactorFields.ShareClasses).OrderByDescending(x => x.FlowId).ToEnumerable().OfType<FundFactor<ShareClass[]>>().ToArray();
+        foreach (var fac in all)
+        {
+            var sc = fac.Data.FirstOrDefault(x => x.Code == fundCode);
+            if (sc is not null) return (fac.FundId, sc);
+        }
+        return default;
+    }
+
+
+
 
 
     public (Fund? Fund, string? Class) FindByName(string name)
@@ -95,7 +110,7 @@ public class BaseDatabase : LiteDatabase
 
 
     public FundFactor<T>[] QueryFundFactor<T>(string field)
-    { 
+    {
         var flowIds = GetCollection<FundFlow>().Query().Where(Query.Contains("_type", "Contract")).Select(x => x.Id).ToArray();
 
         return GetCollection<IFundFactor>().Query().Where(x => x.FactorId == field)
@@ -131,8 +146,11 @@ public class BaseDatabase : LiteDatabase
         return new FundFactors(fundId, factors);
     }
 
-
-
+    public ShareClass? QueryFundShare(int fundId, int shareId)
+    {
+        return GetCollection<IFundFactor>().Query().Where(x => x.FundId == fundId && x.FactorId == FactorFields.ShareClasses)
+           .OrderByDescending(x => x.FlowId).ToEnumerable().OfType<FundFactor<ShareClass[]>>().SelectMany(x => x.Data).FirstOrDefault(x => x.Id == shareId);
+    }
 }
 
 public static class DbHelper

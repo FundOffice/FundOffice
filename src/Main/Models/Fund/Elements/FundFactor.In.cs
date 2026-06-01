@@ -1125,7 +1125,7 @@ public enum OpenType
     /// <summary>
     /// 临时
     /// </summary>
-    Temperaty,
+    Temporary,
 
     /// <summary>
     /// 顺延的
@@ -1152,6 +1152,9 @@ public enum OpenTradeType
     Both = Purchase | Redemption
 }
 
+/// <summary>
+/// 日历
+/// </summary>
 public class DateOpenInfo : IDate
 {
     public required DateOnly Date { get; init; }
@@ -1163,7 +1166,36 @@ public class DateOpenInfo : IDate
     public OpenTradeType TradeType { get; set; }
 }
 
+/// <summary>
+/// 基金开放日
+/// </summary>
+public class FundOpenDay : IDate
+{
+    public string Id => $"{FundId}.{ShareId}.{Date.DayNumber}";
 
+    public int FundId { get; set; }
+
+    public int ShareId { get; set; }
+
+    public string? Code { get; set; }
+
+    public DateOnly Date { get; set; }
+
+    /// <summary>
+    /// 申购开放
+    /// </summary>
+    public OpenType OpenPurchase { get; set; }
+
+    /// <summary>
+    /// 赎回开放
+    /// </summary>
+    public OpenType OpenRedemption { get; set; }
+
+    /// <summary>
+    /// 来源：托管、电签、手动输入等
+    /// </summary>
+    public string? Source { get; set; }
+}
 
 #endregion
 

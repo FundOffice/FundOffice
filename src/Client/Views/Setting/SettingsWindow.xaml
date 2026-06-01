@@ -63,6 +63,14 @@
                 Style="{StaticResource ListBoxCustom}" />
 
 
+
+            <ContentControl Content="订单设置" ContentTemplate="{StaticResource chapter}" />
+            <ListBox
+                BorderThickness="0"
+                ItemsSource="{Binding OrderSection}"
+                Style="{StaticResource ListBoxCustom}" />
+
+
             <ContentControl
                 Margin="0,20,0,0"
                 Content="数据监控"

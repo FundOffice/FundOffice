@@ -10,7 +10,6 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using System.Transactions;
 using System.Web;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -105,9 +104,17 @@ public partial class CITICS : TrusteeApiBase
     }
 
 
-    public override Task<ReturnWrap<SubjectFundMapping>> QuerySubjectFundMappings()
+    public override async Task<ReturnWrap<SubjectFundMapping>> QuerySubjectFundMappings()
     {
-        return Task.FromResult(new ReturnWrap<SubjectFundMapping>(ReturnCode.NotImplemented, null));
+        var part = "/v1/fim/queryProductInfoForApi";
+
+        var data = await SyncWork<SubjectFundMapping, ProductInfoJson>(part, new { }, x => x.To());
+
+
+        if (data.Code == ReturnCode.Success && data.Data?.Count > 0)
+            FundsInfo = data.Data.ToArray();
+
+        return data;
     }
 
 
@@ -259,7 +266,7 @@ public partial class CITICS : TrusteeApiBase
                 if (result.Data?.Count > 0)
                     data.AddRange(result.Data);
             }
-            return new(ReturnCode.Success, data.ToArray()); 
+            return new(ReturnCode.Success, data.ToArray());
         }
     }
     public async Task<ReturnWrap<BankTransaction>> QueryCustodialAccountTransction(string code, DateOnly begin, DateOnly end = default)
@@ -455,6 +462,84 @@ public partial class CITICS : TrusteeApiBase
         return new ReturnWrap<DailyValue>(ReturnCode.Success, ret.ToArray());
     }
 
+    public override Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end) => QueryNetValue(begin, end, null);
+
+    /// <summary>
+    /// 特殊说明：每个日期的每种类型数据，都会返回一条数据，也就是某一天可能会存在多条数据。
+    /// 这是什么sb设计
+    /// </summary>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <param name="fundCode"></param>
+    /// <returns></returns>
+    public override async Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end, string? fundCode = null)
+    {
+        var part = "/v2/fim/queryOpeningDayForApi ";
+
+        List<OpenDayJson> list = [];
+        foreach (var src in new string[] { "2", "7" })
+        {
+            foreach (var type in new string[] { "7", "8" })
+            {
+                var param = new { beginDate = $"{begin:yyyyMMdd}", endDate = $"{end:yyyyMMdd}", openingType = type, openingSource = src, fundCode = fundCode };
+
+                var data = await SyncWork<OpenDayJson, OpenDayJson>(part, param, x => x);
+                if (data.Code != ReturnCode.Success)
+                    return new ReturnWrap<FundOpenDay>(data.Code, []);
+
+                if (data.Data?.Count > 0)
+                    list.AddRange(data.Data);
+            }
+        }
+
+
+        //var param = new { beginDate = $"{begin:yyyyMMdd}", endDate = $"{end:yyyyMMdd}", fundCode = fundCode };
+
+        // var data = await SyncWork<OpenDayJson, OpenDayJson>(part, param, x => x);
+
+        // empty or error
+        //if (data.Code != ReturnCode.Success || data.Data is null)
+        //    return new ReturnWrap<FundOpenDay>(data.Code, []);
+
+        // map
+        using var db = DbHelper.Base();
+        var ret = new List<FundOpenDay>(list.Count);
+
+        foreach (var item in list.GroupBy(x => x.FundCode))
+        {
+            var code = item.Key;
+            if (db.FindShare(code) is var (ff, c) && ff != 0)
+            {
+                ret.AddRange(item.Select(x => x.To(ff, c)));
+            }
+            else JsonBase.ReportJsonUnexpected(Identifier, "QueryOpenDays", $"Fund Code = {code}");
+        }
+
+        ret = ret.GroupBy(x => (x.FundId, x.ShareId, x.Date)).Select(item =>
+            MergeGroup(item, item.Key.FundId, item.Key.ShareId, item.Key.Date)).ToList();
+
+        return new ReturnWrap<FundOpenDay>(ReturnCode.Success, ret.ToArray());
+    }
+
+    FundOpenDay MergeGroup(IEnumerable<FundOpenDay> group, int fundId, int shareId, DateOnly date)
+    {
+        return new FundOpenDay
+        {
+            FundId = fundId,
+            ShareId = shareId,
+            Date = date,
+            Source = "api",
+
+            // 核心逻辑：合并 OpenType，Fixed 优先，其次 Temporary
+            OpenPurchase = MergeOpenType(group.Select(x => x.OpenPurchase)),
+            OpenRedemption = MergeOpenType(group.Select(x => x.OpenRedemption))
+        };
+
+        OpenType MergeOpenType(IEnumerable<OpenType> openTypes) => openTypes.MaxBy(x => x switch { OpenType.Fixed => 3, OpenType.Postpone => 2, OpenType.Temporary => 1, _ => 0 });
+    }
+
+
+    public override Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end) => QueryOpenDays(begin, end, null);
 
     //public   async Task<ReturnWrap<BankTransaction>> QueryShare(DateOnly begin, DateOnly end)
     //{
@@ -659,7 +744,7 @@ public partial class CITICS : TrusteeApiBase
         return true;
     }
 
-    public override bool Prepare()
+    protected override bool InitializeOverride()
     {
 
         return true;
@@ -701,6 +786,9 @@ public partial class CITICS : TrusteeApiBase
             default:
                 if (message?.Contains("API rate limit exceeded", StringComparison.OrdinalIgnoreCase) ?? false)
                     return ReturnCode.TrafficLimit;
+
+                if (message?.Contains("You cannot consume this service") is true)
+                    return ReturnCode.AccessDenied;
                 return ReturnCode.Unknown;
         }
     }

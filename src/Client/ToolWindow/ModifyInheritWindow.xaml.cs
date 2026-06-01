@@ -4,7 +4,8 @@ using CommunityToolkit.Mvvm.Messaging;
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
-using System.Diagnostics;
+using MoT;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -96,9 +97,6 @@ public partial class ModifyInheritWindow : Window
     }
     private void Window_PreviewMouseMove(object sender, MouseEventArgs e)
     {
-
-        Debug.WriteLine($"{_isDragging} {Stopwatch.GetTimestamp()}");
-
         if (!_isDragging || _dragSource == null) return;
 
 
@@ -151,6 +149,22 @@ public partial class ModifyInheritWindow : Window
             DrawBezier(_tempLine, startPos, endPos, isValid);
     }
 
+    protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+    {
+        base.OnRenderSizeChanged(sizeInfo);
+
+        UpdateLines();
+    }
+
+    private void Window_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    {
+        if (DataContext is ModifyInheritWindowViewModel vm)
+            vm.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(ModifyInheritWindowViewModel.Changed))
+                    UpdateLines();
+            };
+    }
 
     #endregion
 
@@ -243,13 +257,14 @@ public partial class ModifyInheritWindow : Window
         LinesCanvas.Children.Clear();
         if (DataContext is not ModifyInheritWindowViewModel vm || !HostGrid.IsLoaded) return;
 
-        var allItems = vm.Data.SelectMany(f => f.Shares.Where(x => ShareClass.GetFlow(x.Id) == x.FlowId)).ToDictionary(x => x.Id);
+        var allItems = vm.Data.SelectMany(f => f.Shares).ToLookup(x => x.Id);
 
         foreach (var item in vm.Data.SelectMany(f => f.Shares))
         {
             bool isFromAbove = ShareClass.GetFlow(item.Id) != item.FlowId;
             int targetId = isFromAbove ? item.Id : item.Inherit;
-            if (targetId <= 0 || !allItems.TryGetValue(targetId, out var targetItem)) continue;
+            if (targetId <= 0 || allItems[targetId].LastOrDefault(x => x.FlowId < item.FlowId) is not ShareItem targetItem) continue;
+
 
             if (_bottomPoints.TryGetValue(targetItem, out var bottomPoint) && _topPoints.TryGetValue(item, out var topPoint))
             {
@@ -260,11 +275,26 @@ public partial class ModifyInheritWindow : Window
                     var end = topPoint.TranslatePoint(new Point(topPoint.ActualWidth / 2, topPoint.ActualHeight / 2), HostGrid);
                     double dy = Math.Max(Math.Abs(end.Y - start.Y) * 0.5, 10);
 
-                    var path = new Path { Stroke = new SolidColorBrush(Color.FromRgb(100, 149, 237)), StrokeThickness = 2, IsHitTestVisible = false };
-                    path.Data = new PathGeometry { Figures = new PathFigureCollection { new PathFigure { StartPoint = start, Segments = new PathSegmentCollection { new BezierSegment { Point1 = new Point(start.X, start.Y + dy), Point2 = new Point(end.X, end.Y - dy), Point3 = end, IsStroked = true } } } } };
+                    var brush = item.Id == targetItem.Id ? Brushes.LightGray : new SolidColorBrush(Color.FromRgb(100, 149, 237));
+                    var path = new Path { Stroke = brush, StrokeThickness = 2, IsHitTestVisible = false };
+                    path.Data = new PathGeometry
+                    {
+                        Figures = new PathFigureCollection { new PathFigure {
+                        StartPoint = start, Segments = new PathSegmentCollection { new BezierSegment {
+                            Point1 = new Point(start.X, start.Y + dy),
+                            Point2 = new Point(end.X, end.Y - dy),
+                            Point3 = end,
+                            IsStroked = true
+                        } } } }
+                    };
                     LinesCanvas.Children.Add(path);
 
-                    var arrow = new Polygon { Points = new PointCollection { new Point(end.X, end.Y), new Point(end.X - 4, end.Y - 8), new Point(end.X + 4, end.Y - 8) }, Fill = path.Stroke, IsHitTestVisible = false };
+                    var arrow = new Polygon
+                    {
+                        Points = new PointCollection { new Point(end.X, end.Y), new Point(end.X - 4, end.Y - 8), new Point(end.X + 4, end.Y - 8) },
+                        Fill = brush,
+                        IsHitTestVisible = false
+                    };
                     LinesCanvas.Children.Add(arrow);
                 }
                 catch { }
@@ -279,6 +309,7 @@ public partial class ModifyInheritWindow : Window
 
     #endregion
 
+
 }
 
 
@@ -291,18 +322,20 @@ public partial class ModifyInheritWindow : Window
 public partial class ModifyInheritWindowViewModel : ObservableObject
 {
     public int FundId { get; set; }
-
+    public int FlowId { get; }
 
     public List<Row> Data { get; set; }
+
+    private int[] _shareIds;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ConfirmCommand))]
     public partial bool Changed { get; private set; }
 
-    public ModifyInheritWindowViewModel(int fundId)
+    public ModifyInheritWindowViewModel(int fundId, int flowId)
     {
         FundId = fundId;
-
+        FlowId = flowId;
         using var db = DbHelper.Base();
 
         var classes = db.QueryFundFactor<ShareClass[]>(fundId, FactorFields.ShareClasses);
@@ -311,30 +344,41 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
             Select(x => new { x.Id, x.Date, x.Name }).ToEnumerable().ToDictionary(x => x.Id, x => x);
 
 
-        var info = db.QueryFundShares(fundId);
+        var shareInfo = db.QueryFundShares(fundId);
 
-        Data = info.OrderBy(x => x.FlowId).Select(x => new Row(x.FlowId, x.FlowName, x.Date, x.Shares.Select(y => new ShareItem
+        _shareIds = shareInfo.SelectMany(x => x.Shares.Select(y => y.Id)).ToArray();
+
+        Data = shareInfo.OrderBy(x => x.FlowId).Select(x => new Row(this, x.FlowId, x.FlowName, x.Date, x.Shares.Select(y => new ShareItem
         {
             Id = y.Id,
             Name = y.Name,
+            Code = y.Code!,
             Requirement = y.Requirement,
             Inherit = y.Inherit,
             FlowId = x.FlowId,
-        }).ToArray())).ToList();
+        }).ToArray(), x.FlowId == flowId)).ToList();
 
-        foreach (var row in Data)
+        for (int i = 0; i < Data.Count; i++)
         {
-            foreach (var item in row.Shares)
+
+            // 缺少当前flow
+            if (Data[i].FlowId < flowId && (i == Data.Count - 1 || Data[i + 1].FlowId > flowId))
             {
-                item.PropertyChanged += (s, e) =>
+                var x = Data[i];
+                Data.Insert(i + 1, new Row(this, flowId, x.FlowName, x.Date, x.Shares.Select(y => new ShareItem
                 {
-                    if (e.PropertyName == nameof(ShareItem.Inherit))
-                    {
-                        Changed = true;
-                    }
-                };
+                    Id = y.Id,
+                    Name = y.Name,
+                    Code = y.Code,
+                    Requirement = y.Requirement,
+                    Inherit = y.Inherit,
+                    FlowId = flowId,
+                }).ToArray(), true));
+                break;
             }
         }
+
+
     }
 
     public FundFactor<ShareClass[]>[] GetNew()
@@ -343,6 +387,7 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
         {
             Id = x.Id,
             Name = x.Name,
+            Code = x.Code,
             Requirement = x.Requirement,
             Inherit = x.Inherit
         })]))];
@@ -359,8 +404,18 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
         {
             using var db = DbHelper.Base();
 
-            FundFactor<ShareClass[]>[] entities = GetNew();
-            db.GetCollection<IFundFactor>().Upsert(entities);
+            var upd = GetNew();
+            db.GetCollection<IFundFactor>().DeleteMany(x => x.FundId == FundId && x.FactorId == FactorFields.ShareClasses);
+            db.GetCollection<IFundFactor>().Upsert(upd);
+
+            // 删除关联要素
+            var newShareIds = upd.SelectMany(x => x.Data.Select(y => y.Id));
+            var del = _shareIds.Except(newShareIds).ToArray();
+            if (del.Length > 0)
+            {
+                Logg.Information($"删除份额相关要素：{string.Join(',', del)}");
+                db.GetCollection<IFundFactor>().DeleteMany(Query.And(Query.EQ(nameof(IFundFactor.FundId), FundId), Query.In(nameof(IFundFactor.ShareId), del.Select(x => new BsonValue(x)))));
+            }
 
             WeakReferenceMessenger.Default.Send(new FundShareChangedMessage { FundId = FundId, FlowId = -1 });
 
@@ -378,15 +433,31 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
     }
 
 
-    public class Row
+    public partial class Row : ObservableObject
     {
-        public Row(int flowId, string flowName, DateOnly date, ShareItem[] shares)
+        public Row(ModifyInheritWindowViewModel viewModel, int flowId, string flowName, DateOnly date, ShareItem[] shares, bool isEnabled = false)
         {
+            ViewModel = viewModel;
             FlowId = flowId;
             FlowName = flowName;
             Date = date;
-            Shares = shares;
+            Shares = new(shares);
+            IsEnabled = isEnabled;
+
+            var isInherit = Shares.Any(x => x.Id / 1000 < flowId);
+
+            foreach (var item in Shares)
+                item.Changed += () => viewModel.Changed = true;
+            Shares.CollectionChanged += (s, e) =>
+            {
+                viewModel.Changed = true;
+                if (e.NewItems is not null)
+                    foreach (var item in e.NewItems.OfType<ShareItem>())
+                        item.Changed += () => viewModel.Changed = true;
+            };
         }
+
+        public ModifyInheritWindowViewModel ViewModel { get; }
 
         public int FlowId { get; set; }
 
@@ -394,25 +465,240 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
 
         public DateOnly Date { get; }
 
-        public ShareItem[] Shares { get; set; }
+        [ObservableProperty]
+        public partial bool IsEnabled { get; set; }
+
+        [ObservableProperty]
+        public partial ObservableCollection<ShareItem> Shares { get; set; }
+
+        public List<ShareItem> Deleted { get; } = [];
+
+
+
+        private string GetNextClass()
+        {
+            var cnt = Shares.Count;
+            var tmp = ((char)('A' + cnt++)).ToString();
+            while (Shares.Any(x => x.Name == tmp))
+            {
+                tmp = ((char)('A' + cnt++)).ToString();
+            }
+            return tmp;
+        }
+
+        /// <summary>
+        /// share是继承的，复制一份成可编辑，不增加share数量
+        /// </summary>
+        [RelayCommand]
+        public void Copy(ShareItem share)
+        {
+            var id = Math.Max(Shares.Max(x => x.Id) + 1, ShareClass.MakeId(FlowId, 1));
+            var item = new ShareItem
+            {
+                Name = share.Name,
+                Code = share.Code,
+                Requirement = share.Requirement,
+                CopyFrom = share.Id,
+                FlowId = FlowId,
+                IsNew = true,
+                Inherit = share.Id,
+                Id = id
+            };
+            var idx = Shares.IndexOf(share);
+            Shares.RemoveAt(idx);
+            Shares.Insert(idx, item);
+
+            var relied = ViewModel.Data.Where(x => x.FlowId > FlowId && x.Shares.Any(y => y.Id == share.Id)).ToArray();
+            foreach (var row in relied)
+            {
+                foreach (var sc in row.Shares.ToArray())
+                {
+                    if (sc.Id == share.Id)
+                        sc.Id = item.Id;
+                    else if (sc.Inherit == share.Id)
+                        sc.Inherit = share.Inherit;
+                }
+            }
+            ViewModel.Changed = true;
+        }
+
+        /// <summary>
+        /// 从share复制，新增一个份额类别
+        /// </summary>
+        /// <param name="share"></param>
+        [RelayCommand]
+        public void Split(ShareItem share)
+        {
+            var id = Math.Max(Shares.Max(x => x.Id) + 1, ShareClass.MakeId(FlowId, 1));
+            if (Shares.Count == 1)
+            {
+                Shares[0].Name = "A";
+                Shares[0].Code = Shares[0].Code[1..] + "A";
+                if (Shares[0].IsInherited)
+                {
+                    Shares[0].Inherit = Shares[0].Id;
+                    Shares[0].CopyFrom = Shares[0].Id;
+                    Shares[0].Id = id++;
+                }
+            }
+
+            string scn = GetNextClass();
+            var item = new ShareItem
+            {
+                Name = scn,
+                Code = share.Code[..^1] + scn,
+                Requirement = "请填写份额要求",
+                FlowId = FlowId,
+                IsNew = true,
+                Inherit = share.IsInherited ? share.Id : share.Inherit,
+                CopyFrom = share.Id,
+                Id = id
+            };
+            Shares.Add(item);
+            ViewModel.Changed = true;
+        }
+
+        [RelayCommand]
+        public void Delete(ShareItem share)
+        {
+            // 全部删除，从上一个复制
+            if (Shares.Count == 1)
+            {
+                var last = ViewModel.Data.LastOrDefault(x => x.FlowId < FlowId);
+
+                if (last is null) return;
+
+                Shares = [..last.Shares.Select(s => new ShareItem
+                {
+                    Name = s.Name,
+                    Code = s.Code,
+                    Requirement = s.Requirement,
+                    CopyFrom = s.Id,
+                    FlowId = FlowId,
+                    IsNew = true,
+                    Inherit = s.Id,
+                    Id = s.Id
+                })];
+
+                // 处理后续依赖
+                foreach (var item in ViewModel.Data.Where(x => x.FlowId > FlowId))
+                {
+                    foreach (var sc in item.Shares)
+                    {
+                        if (sc.Id == share.Id)
+                            sc.Id = share.Inherit;
+                        else if (sc.Inherit == share.Id)
+                            sc.Inherit = share.Inherit;
+                    }
+                }
+
+                ViewModel.Changed = true;
+                return;
+            }
+
+            // 检查有没有后续flow依赖此份额
+            var relied = ViewModel.Data.Where(x => x.FlowId > FlowId && x.Shares.Any(y => y.Id == share.Id)).ToArray();
+            if (relied.Length > 0)
+            {
+                var mr = HandyControl.Controls.MessageBox.Show("是否同步删除后续流程中使用的此份额？\n\n确认：删除此份额\n取消：放弃",
+                    "提示", MessageBoxButton.OKCancel);
+
+                if (mr == MessageBoxResult.Cancel) return;
+
+
+                share.DeleteRelated = true;
+                foreach (var item in relied)
+                {
+                    foreach (var sc in item.Shares.ToArray())
+                    {
+                        if (sc.Id == share.Id)
+                            item.Shares.Remove(sc);
+                    }
+
+                    if (item.Shares.Count == 1)
+                    {
+                        item.Shares[0].Name = ShareClass.SingletonName;
+                        item.Shares[0].Requirement = null;
+                    }
+                }
+
+            }
+
+            foreach (var item in ViewModel.Data.Where(x => x.FlowId > FlowId))
+            {
+                foreach (var sc in item.Shares)
+                {
+                    if (sc.Inherit == share.Id)
+                        sc.Inherit = share.Inherit;
+                }
+            }
+
+
+
+            Deleted.Add(share);
+            Shares.Remove(share);
+
+            if (Shares.Count == 1)
+            {
+                Shares[0].Name = ShareClass.SingletonName;
+                Shares[0].Code = "S" + Shares[0].Code[..^1];
+            }
+            ViewModel.Changed = true;
+        }
     }
 
 
 
     public partial class ShareItem : ObservableObject
     {
-        public int Id { get; set; }
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsInherited))]
+        public partial int Id { get; set; }
 
-        public required string Name { get; set; }
+        [ObservableProperty]
+        public partial string Name { get; set; }
 
-        public string? Requirement { get; set; }
+
+        [ObservableProperty]
+        public partial string Code { get; set; }
+
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsInherited))]
+        public partial string? Requirement { get; set; }
+
+        public int CopyFrom { get; set; }
 
         [ObservableProperty]
         public partial int Inherit { get; set; }
 
         public int FlowId { get; set; }
 
+        /// <summary>
+        /// 新增加的
+        /// </summary>
+        public bool IsNew { get; set; }
+
         public bool IsInherited => ShareClass.GetFlow(Id) != FlowId;
+
+        public bool DeleteRelated { get; internal set; }
+
+        public delegate void ChangedHandler();
+        public event ChangedHandler? Changed;
+
+        partial void OnInheritChanged(int oldValue, int newValue)
+        {
+            if (oldValue > 0) Changed?.Invoke();
+        }
+
+        partial void OnNameChanged(string oldValue, string newValue)
+        {
+            if (!string.IsNullOrWhiteSpace(oldValue)) Changed?.Invoke();
+        }
+
+        partial void OnRequirementChanged(string? oldValue, string? newValue)
+        {
+            if (!string.IsNullOrWhiteSpace(oldValue)) Changed?.Invoke();
+        }
 
     }
 }

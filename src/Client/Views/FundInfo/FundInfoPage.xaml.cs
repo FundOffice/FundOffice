@@ -20,7 +20,6 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using Utilities;
 
 namespace FMO;
 /// <summary>
@@ -60,7 +59,7 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         FundId = fund.Id;
         FundName = fund.Name;
-        FundShortName = fund.ShortName;
+        FundShortName = fund.ShortName!;
         TrusteeName = fund.Trustee;
         SetupDate = fund.SetupDate;
         RegistDate = fund.AuditDate;
@@ -76,26 +75,31 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         using var db = DbHelper.Base();
         var ele = db.QueryFactor(FundId);
-        var shares = ele.ShareClasses.Current;
+        var shares = ele.ShareClasses.Current!;
         var openRules = ele.FundOpenRule.Current;
 
-        HasMultipleShare = shares?.Length > 1;
-        if (shares is not null && openRules.Length == shares?.Length)
-        {
-            OpenDays = shares?.Index().Select(x => new ShareOpenInfo(x.Item, OpenRule.ApplyMany(DateTime.Now.Year, openRules[x.Index]))).ToArray() ?? [];
 
-            SelectedShareOpenDays = OpenDays[0].DateInfo.Where(x => x.Date.Month == DateTime.Now.Month);
-        }
-        else
-        {
-            Toast.Error($"{FundName} 未设置开放日规则");
-            OpenDays = shares?.Index().Select(x => new ShareOpenInfo(x.Item, OpenRule.ApplyMany(DateTime.Now.Year, null))).ToArray() ?? [];
-            SelectedShareOpenDays = OpenDays[0].DateInfo.Where(x => x.Date.Month == DateTime.Now.Month);
-        }
+        //AllowSetTemporaryOpen = ele.TemporarilyOpenInfo.Current?.IsAllowed ?? false;
+        if (FundStatus == FundStatus.Normal)
+            OpenAndOrderContext = new(FundId, FundName, shares, ele.TemporarilyOpenInfo.Current);
+        //if (shares is not null && openRules.Length == shares?.Length)
+        //{
+        //    ShareOpenInfos = shares?.Index().Select(x => new ShareOpenInfo(x.Item, OpenRule.ApplyMany(DateTime.Now.Year, openRules[x.Index]))).ToArray() ?? [];
+
+        //    SelectedShareOpenDays = ShareOpenInfos[0].DateInfo.Where(x => x.Date.Month == DateTime.Now.Month);
+        //}
+        //else
+        //{
+        //    Toast.Error($"{FundName} 未设置开放日规则");
+        //    ShareOpenInfos = shares?.Index().Select(x => new ShareOpenInfo(x.Item, OpenRule.ApplyMany(DateTime.Now.Year, null))).ToArray() ?? [];
+        //    SelectedShareOpenDays = ShareOpenInfos[0].DateInfo.Where(x => x.Date.Month == DateTime.Now.Month);
+        //}
 
         InitFlows(fund);
 
 
+        // 初始化要素 
+        InitiatializeFactors(db);
 
         // 如果已定稿
         if (Flows?.Any(x => x is ContractFinalizeFlowViewModel f && f.IsReadOnly) ?? false)
@@ -124,6 +128,39 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
 
         IsActive = true;
         //_initialized = true;
+    }
+
+    /// <summary>
+    /// 初始化要素
+    /// </summary>
+    /// <exception cref="NotImplementedException"></exception>
+    private void InitiatializeFactors(BaseDatabase db)
+    {
+        int firstFlowId = Flows.First().FlowId, lastFlowId = Flows.Last(x => x is ContractRelatedFlowViewModel).FlowId;
+
+        var tab = db.GetCollection<IFundFactor>();
+
+        if (tab.Query().Where(x => x.FundId == FundId && x.FactorId == FactorFields.ShareClasses).ToEnumerable().OfType<FundFactor<ShareClass[]>>().Count() == 0)
+            tab.Insert(new FundFactor<ShareClass[]>()
+            {
+                FundId = FundId,
+                FlowId = firstFlowId,
+                FactorId = FactorFields.ShareClasses,
+                Data = [new ShareClass {
+                    Name = ShareClass.SingletonName,
+                    FundName = FundName,
+                    Code = FundCode, 
+                    Id = ShareClass.MakeId(firstFlowId, 1)
+                }]
+            });
+
+
+        if (tab.Query().Where(x => x.FundId == FundId && x.FactorId == FactorFields.FullName).Count() == 0)
+            tab.Insert(new FundFactor<string>() { FundId = FundId, FlowId =lastFlowId, FactorId = FactorFields.FullName, Data = FundName });
+
+        if (tab.Query().Where(x => x.FundId == FundId && x.FactorId == FactorFields.ShortName).Count() == 0)
+            tab.Insert(new FundFactor<string>() { FundId = FundId, FlowId = lastFlowId, FactorId = FactorFields.ShortName, Data = FundShortName });
+
     }
 
     public void CheckAndTodo(FundFactors ele)
@@ -246,10 +283,6 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         if (!ele.CoolingPeriod.HasValue)
         {
             missingList.Add("冷静期");
-        }
-        if (!ele.Callback.HasValue)
-        {
-            missingList.Add("回访");
         }
         if (!ele.LockingRule.HasValue)
         {
@@ -473,11 +506,11 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     public partial bool IsEditable { get; set; }
 
     [ObservableProperty]
-    public partial string? FundName { get; set; }
+    public partial string FundName { get; set; } = null!;
 
 
     [ObservableProperty]
-    public partial string? FundShortName { get; set; }
+    public partial string FundShortName { get; set; } = null!;
 
 
     [ObservableProperty]
@@ -495,17 +528,9 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     public bool IsCleared => FundStatus > FundStatus.StartLiquidation;
 
 
-    [ObservableProperty]
-    public partial bool HasMultipleShare { get; set; }
 
-    /// <summary>
-    /// 开放日
-    /// </summary>
-    [ObservableProperty]
-    public partial ShareOpenInfo[] OpenDays { get; set; }
 
-    [ObservableProperty]
-    public partial IEnumerable<DateOpenInfo> SelectedShareOpenDays { get; private set; }
+
 
     [ObservableProperty]
     public partial RiskLevel? RiskLevel { get; set; }
@@ -611,7 +636,11 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     [ObservableProperty]
     public partial FundDisclosureViewModel AnnouncementContext { get; set; }
 
+    [ObservableProperty]
+    public partial OpenAndOrderViewModel? OpenAndOrderContext { get; set; }
     #endregion
+
+
 
 
     partial void OnSelectedTabChanged(int value)
@@ -685,6 +714,9 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
                 break;
         }
     }
+
+
+
 
 
     /// <summary>
@@ -1236,7 +1268,6 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
     }
 }
 
-public record ShareOpenInfo(ShareClass Share, DateOpenInfo[] DateInfo);
 
 /// <summary>
 /// 最新的文件版本视图
@@ -1300,3 +1331,5 @@ public partial class LatestFileViewModel : ObservableObject
         }
     }
 }
+
+

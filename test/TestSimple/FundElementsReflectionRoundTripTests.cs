@@ -105,7 +105,7 @@ public class FundElementsReflectionRoundTripTests
                                         .Where(p => p.CanRead)
                                         .ToArray();
 
-        TestInit.SetAsDebug();
+        DataInject.SetAsDebug();
 
         using var db = DbHelper.Base();
         var fe = db.GetCollection<FundElements>().FindAll().ToArray();

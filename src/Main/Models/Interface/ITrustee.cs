@@ -35,7 +35,7 @@ public interface ITrustee
     /// </summary>
     bool IsEnabled { get; }
 
-    bool Prepare();
+    bool Initialize();
 
     string Title { get; }
 
@@ -94,8 +94,40 @@ public interface ITrustee
     /// <returns></returns>
     Task<ReturnWrap<FundBankBalance>> QueryRaisingBalance();
 
+    /// <summary>
+    /// 查询净值，单基金
+    /// </summary>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <param name="fundCode"></param>
+    /// <returns></returns>
+    Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end, string fundCode);
 
-    Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end, string? fundCode = null);
+    /// <summary>
+    /// 查询净值
+    /// </summary>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <returns></returns>
+    Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end);
+
+    /// <summary>
+    /// 查询开放日，单基金
+    /// </summary>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <param name="fundCode"></param>
+    /// <returns></returns>
+    Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end, string fundCode);
+
+    /// <summary>
+    /// 查询开放日
+    /// </summary>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    /// <returns></returns>
+    Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end);
+
 
     Task<bool> VerifyConfig();
 

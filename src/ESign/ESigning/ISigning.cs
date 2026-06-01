@@ -2,6 +2,7 @@
 using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
+using MoT;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("MeiShi")]
@@ -55,37 +56,41 @@ public interface ISigning
 
     Task<ErrorReturn> QueryOrderAsync(TransferOrder order);
 
+
+     
+
     /// <summary>
     /// 创建临时开放日
     /// </summary>
     /// <param name="fundId">Fund Id</param>
-    /// <param name="share">份额类别</param>
+    /// <param name="shareCode">份额类别</param>
     /// <param name="date">开放日</param>
     /// <param name="flag">申购标志</param>
     /// <param name="notify">通知投资人</param>
     /// <returns></returns>
-    Task<ErrorReturn> CreateTemporaryOpenDay(int fundId, string? share, DateOnly date, OpenFlag flag, bool notify);
+    Task<ErrorReturn> CreateTemporaryOpenDay(int fundId, string? shareCode, DateOnly date, OpenTradeType flag, bool notify);
 
     /// <summary>
     /// 创建临时开放日
     /// </summary>
     /// <param name="fundName">基金名称</param>
-    /// <param name="share">份额类别</param>
+    /// <param name="shareCode">份额类别</param>
     /// <param name="date">开放日</param>
     /// <param name="flag">申购标志</param>
     /// <param name="notify">通知投资人</param>
     /// <returns></returns>
-    Task<ErrorReturn> CreateTemporaryOpenDay(string fundName, string? share, DateOnly date, OpenFlag flag, bool notify);
+    Task<ErrorReturn> CreateTemporaryOpenDay(string fundName, string? shareCode, DateOnly date, OpenTradeType flag, bool notify);
 
 
     /// <summary>
     /// 查找当前可用的基金开放日
     /// </summary>
     /// <param name="fundId"></param>
-    /// <param name="share"></param>
+    /// <param name="shareCode"></param>
     /// <returns></returns>
-    Task<Return<DateOnly[]>> QueryAvaliableOpenDay(int fundId, string? share, OpenFlag flag);
+    Task<Return<DateOnly[]>> QueryAvaliableOpenDay(int fundId, string? shareCode, OpenTradeType flag);
 
+    Task<Return<DateOnly[]>> QueryAvaliableOpenDayAsync(string fundName, string? shareCode, OpenTradeType flag);
 
     /// <summary>
     /// 获取在签约平台中的基金信息
@@ -95,6 +100,8 @@ public interface ISigning
 
 
     void OnConfig(ISigningConfig config);
+
+    Task<ErrorReturn> PushOrder(SigningOrder order);
 }
 
 internal static class ISigningExtensions
@@ -110,22 +117,39 @@ internal static class ISigningExtensions
     }
 }
 
+public class SigningOrder
+{ 
+
+    public int FundId { get; set; }
+
+    public int ShareId { get; set; }
+
+    public int InvestorId { get; set; }
+
+
+    public TransferOrderType OrderType { get; set; }
+
+    public decimal? Number { get; set; }
+
+    public decimal? Fee { get; set; }
+
+    public DateOnly OpenDate { get; set; }
+}
+
 public record SigningCallHistory(string Identifier, string Method, DateTime Time, string Params, string? Json);
 
 public record SigningWorkerLoopHistory(DateTime Time, string Method);
 
 public static class SigningLoger
-{
-    static ILiteDatabase db { get; } = new LiteDatabase(@$"FileName=data\platformlog.db;Connection=Shared");
-
+{ 
     public static void LogRun(this ISigning signing, string method, string param, string json)
     {
-        db.GetCollection<SigningCallHistory>().Insert(new SigningCallHistory(signing.Id, method, DateTime.Now, param, json));
+        Logg.Write(new SigningCallHistory(signing.Id, method, DateTime.Now, param, json));
     }
 
 
     public static void LogWorker(string method)
     {
-        db.GetCollection<SigningWorkerLoopHistory>().Insert(new SigningWorkerLoopHistory(DateTime.Now, method));
+        Logg.Write(new SigningWorkerLoopHistory(DateTime.Now, method));
     }
 }

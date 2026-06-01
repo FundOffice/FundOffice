@@ -44,11 +44,6 @@ public partial class CSC : TrusteeApiBase
 
     private SM4? Decoder { get; set; }
 
-
-    // 产品列表
-    private List<SubjectFundMapping> FundsInfo { get; set; } = new();
-
-
     public override bool IsSuit(string? company) => string.IsNullOrWhiteSpace(company) ? false : Regex.IsMatch(company, $"中信建投证券|中信建投证券股份有限公司|{_Identifier}");
 
     /// <summary>
@@ -141,7 +136,7 @@ public partial class CSC : TrusteeApiBase
         var part = "/institution/tgpt/erp/product/query/findDailyFeeList";
 
         // 需要传FundCode
-        if (FundsInfo.Count == 0)
+        if (FundsInfo.Length == 0)
             await QuerySubjectFundMappings();
 
         List<FundDailyFee> list = [];
@@ -200,11 +195,11 @@ public partial class CSC : TrusteeApiBase
 
 
 
-    public override async Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end, string? fundCode = null)
+    public override async Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end, string fundCode)
     {
         var part = "/institution/tgpt/erp/product/query/findNetValList";
         var b = begin; var e = end;
-        object param = fundCode?.Length > 0 ? new { netDateBegin = $"{b:yyyyMMdd}", netDateEnd = $"{e:yyyyMMdd}", fundCode = fundCode } : new { netDateBegin = $"{b:yyyyMMdd}", netDateEnd = $"{e:yyyyMMdd}" };
+        object param = new { netDateBegin = $"{b:yyyyMMdd}", netDateEnd = $"{e:yyyyMMdd}", fundCode = fundCode };
 
         var data = await SyncWork<NetValueJson, NetValueJson>(part, param, x => x);
 
@@ -248,6 +243,74 @@ public partial class CSC : TrusteeApiBase
     }
 
 
+    public override async Task<ReturnWrap<DailyValue>> QueryNetValue(DateOnly begin, DateOnly end)
+    {
+        if (FundsInfo.Length == 0)
+            await QuerySubjectFundMappings();
+
+        List<DailyValue> list = [];
+        foreach (var f in FundsInfo)
+        {
+            var r = await QueryNetValue(begin, end, f.FundCode);
+            if (r.Code != ReturnCode.Success)
+                return new ReturnWrap<DailyValue>(r.Code, list);
+
+            if (r.Data?.Count > 0)
+                list.AddRange(r.Data);
+        }
+
+        return new(ReturnCode.Success, list);
+    }
+
+
+    public override async Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end, string fundCode)
+    {
+        var part = "/institution/tgpt/erp/product/query/findOpenDayList";
+        var b = begin; var e = end;
+        object param = new { openDayBegin = $"{b:yyyyMMdd}", openDayEnd = $"{e:yyyyMMdd}", fundCode = fundCode };
+        var data = await SyncWork<OpenDayJson, OpenDayJson>(part, param, x => x);
+
+        // empty or error
+        if (data.Code != ReturnCode.Success || data.Data is null)
+            return new ReturnWrap<FundOpenDay>(data.Code, []);
+
+        // map
+        using var db = DbHelper.Base();
+        var ret = new List<FundOpenDay>(data.Data.Count);
+
+        foreach (var item in data.Data.GroupBy(x => x.FundCode))
+        {
+            var code = item.Key;
+            if (db.FindShare(code) is var (ff, c) && ff != 0)
+            {
+                ret.AddRange(item.Select(x => x.To(ff, c)));
+            }
+            else JsonBase.ReportJsonUnexpected(Identifier, "QueryOpenDays", $"Fund Code = {code}");
+        }
+
+
+        return new ReturnWrap<FundOpenDay>(ReturnCode.Success, ret.ToArray());
+    }
+
+
+    public override async Task<ReturnWrap<FundOpenDay>> QueryOpenDays(DateOnly begin, DateOnly end)
+    {
+        if (FundsInfo.Length == 0)
+            await QuerySubjectFundMappings();
+
+        List<FundOpenDay> list = [];
+        foreach (var f in FundsInfo)
+        {
+            var r = await QueryOpenDays(begin, end, f.FundCode);
+            if (r.Code != ReturnCode.Success)
+                return new ReturnWrap<FundOpenDay>(r.Code, list);
+
+            if (r.Data?.Count > 0)
+                list.AddRange(r.Data);
+        }
+
+        return new(ReturnCode.Success, list);
+    }
 
 
 
@@ -278,7 +341,7 @@ public partial class CSC : TrusteeApiBase
         return true;
     }
 
-    public override bool Prepare()
+    protected override bool InitializeOverride()
     {
         if (string.IsNullOrWhiteSpace(EncryptKey))
             return false;

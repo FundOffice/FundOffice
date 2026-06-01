@@ -42,6 +42,7 @@ internal class DelayLoader
             // 加载配置
             WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "初始化配置"));
             SettingService.Initialize();
+            SettingViewModelsInitializer.Initialize();
 
             SettingService.RegisterAbility( "Basic", "AutoShowTodo", "自动显示待办事项", "在应用启动时自动显示待办事项", true, new AutoShowTodoFunction());
  

@@ -73,6 +73,33 @@ public partial class ManualApplyTradeWindowViewModel : ObservableObject
 
     }
 
+    public ManualApplyTradeWindowViewModel(int fundId, bool buy, DateOnly date)
+    {
+        IsBuy = buy;
+        IsBuySealed = true;
+
+        Date = new DateTime(date, default);
+        Signings = SigningGalley.Platforms.ToArray();
+
+        using var db = DbHelper.Base();
+
+        Investors = db.GetCollection<Investor>().FindAll().ToArray();
+        InvestorSource.Source = Investors;
+        InvestorSource.Filter += (s, e) =>
+        {
+            e.Accepted = (OrderType == TransferOrderType.FirstTrade || _currentHolding.ContainsKey((e.Item as Investor)!.Id)) && (string.IsNullOrWhiteSpace(SearchInvestorKey) || SearchInvestorKey == SelectedInvestor?.Name ? true : e.Item switch { Investor f => f.Name.Contains(SearchInvestorKey), _ => true });
+        };
+
+        SelectedFund = db.GetCollection<Fund>().FindById(fundId);
+        //Funds = [SelectedFund];
+
+    
+
+        if (Signings.Length == 1) SelectedSigner = Signings[0];
+    }
+
+
+
     [ObservableProperty]
     public partial bool IsBuy { get; set; }
 
@@ -124,7 +151,7 @@ public partial class ManualApplyTradeWindowViewModel : ObservableObject
 
 
     [ObservableProperty]
-    public partial TransferOrderType[] OrderTypes { get; set; } = [];
+    public partial TransferOrderType[] OrderTypes { get; set; } = [TransferOrderType.Share, TransferOrderType.Amount, TransferOrderType.RemainAmout];
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ConfirmCommand))]
@@ -202,14 +229,14 @@ public partial class ManualApplyTradeWindowViewModel : ObservableObject
 
     private async Task UpdateOpenDays(ISigning signer, int fundId)
     {
-        var days = await signer.QueryAvaliableOpenDay(fundId, null, IsBuy ? OpenFlag.Buy : OpenFlag.Sell);
+        var days = await signer.QueryAvaliableOpenDay(fundId, null, IsBuy ? OpenTradeType.Purchase : OpenTradeType.Redemption);
 
 
     }
 
 
 
-    partial void OnOrderTypeChanged(TransferOrderType? value) => UpdateInvestorList();
+    partial void OnOrderTypeChanged(TransferOrderType? value) =>  UpdateInvestorList(!(value is  null or TransferOrderType.FirstTrade));
 
 
     partial void OnSelectedInvestorChanged(Investor? value)

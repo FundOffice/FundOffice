@@ -16,7 +16,7 @@ public sealed class ScriptExec
     [TestMethod]
     public async Task TestMethod1()
     {
-        Initial.TestInit.SetAsDebug();
+        Initial.DataInject.SetAsDebug();
 
         var def =
            """
@@ -80,7 +80,7 @@ public sealed class ScriptExec
         int fid = 9;
         var date = new DateOnly(2025, 5, 4);
 
-        Initial.TestInit.SetAsDebug();
+        Initial.DataInject.SetAsDebug();
         using var db = DbHelper.Base();
         var ta = db.GetCollection<TransferRecord>().Query().Where(x => x.FundId == fid).ToArray();
 
@@ -153,7 +153,7 @@ public sealed class ScriptExec
         int fid = 9;
         var date = new DateOnly(2025, 5, 4);
 
-        Initial.TestInit.SetAsDebug();
+        Initial.DataInject.SetAsDebug();
         using var db = DbHelper.Base();
         var ta = db.GetCollection<TransferRecord>().Query().Where(x => x.FundId == fid).ToArray();
 
@@ -206,7 +206,7 @@ public sealed class ScriptExec
         int fid = 9;
         DateOnly[] dates = [new DateOnly(2025, 5, 4)];
         var date = dates[0];
-        Initial.TestInit.SetAsDebug();
+        Initial.DataInject.SetAsDebug();
         using var db = DbHelper.Base();
         var ta = db.GetCollection<TransferRecord>().Query().Where(x => x.FundId == fid).ToArray();
 

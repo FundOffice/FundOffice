@@ -13,6 +13,11 @@ public class ShareClass
     public required string Name { get; set; }
 
     /// <summary>
+    /// 份额对应名称，与托管一致
+    /// </summary>
+    public string? FundName { get; set; }
+
+    /// <summary>
     /// 对应托管外包机构的份额代码 6位
     /// </summary>
     public string? Code { get; set; }
@@ -29,9 +34,7 @@ public class ShareClass
 
     public const string SingletonName = "单一份额";
 
-    public static ShareClass DefaultShare { get; } = new ShareClass { Id = -1, Name = FundElements.SingleShareKey };
-
-    public static ShareClass[] Default { get; } = [DefaultShare];
+ 
 
 
     /// <summary>
@@ -40,6 +43,8 @@ public class ShareClass
     public ShareClass() { }
 
     public static int GetFlow(int id) => id / 1000;
-     
+
+    public static int MakeId(int flowId, int v) => flowId * 1000 + v;
+    
 }
 

@@ -11,6 +11,12 @@
     <Project Path="test/TestScript/TestScript.csproj" />
     <Project Path="test/TestSimple/TestSimple.csproj" />
   </Folder>
+  <Folder Name="/.Test/Trustee/">
+    <Project Path="test/TestCITICS/TestCITICS.csproj" Id="58f41c12-98d8-448e-a2d0-1a4dd243fcc5" />
+    <Project Path="test/TestCMS/TestCMS.csproj" Id="73eb8fc3-4227-4bb1-a028-148009444557" />
+    <Project Path="test/TestCSC/TestCSC.csproj" Id="b91a046c-fba1-41e1-a1be-4e6b510be303" />
+    <Project Path="test/TestXYZQ/TestXYZQ.csproj" Id="232e988b-f4cf-4029-9931-ca31db455d29" />
+  </Folder>
   <Folder Name="/Amac/">
     <Project Path="src/Amac/Direct/Amac.Direct.csproj" />
     <Project Path="src/Amac/Public/Amac.Public.csproj">

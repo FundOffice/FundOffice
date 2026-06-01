@@ -20,6 +20,7 @@ namespace FMO.Utilities;
 [Hookable(typeof(EntityChanged<FundElements, DateOnly, int>))]
 [Hookable(typeof(IEnumerable<FundShareRecordByDaily>))]
 [Hookable(typeof(IEnumerable<FundShareRecordByTransfer>))]
+[Hookable(typeof(IEnumerable<FundOpenDay>))]
 public sealed partial class DataHub
 {
     // 内部类型路由容器，对外完全透明

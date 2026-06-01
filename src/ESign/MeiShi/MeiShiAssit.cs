@@ -2,7 +2,6 @@
 
 using FMO.Models;
 using FMO.Utilities;
-using MoT;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -890,8 +889,12 @@ public partial class MeiShiAssit : ISigning
         try
         {
             var data = root.data.Deserialize<FundInfoJson[]>();
+            if (data is null) return [];
 
-            return data?.Select(x => new EsigningFundInfo(x.ProductId.ToString(), x.ProductFullName, x.FundRecordNumber, x.FundRecordNumber != x.PbInternalProductCode ? x.PbInternalProductCode : "", x.SetDate ?? default)).ToArray() ?? [];
+            // 主产品列表
+            var mainProducts = data.Where(x => x.FundRecordNumber == x.PbInternalProductCode).ToDictionary(x => x.FundRecordNumber, x => x.ProductFullName);
+
+            return data?.Select(x => new EsigningFundInfo(x.ProductId.ToString(), x.ProductFullName, x.PbInternalProductCode, mainProducts.GetValueOrDefault(x.FundRecordNumber, ""), x.FundRecordNumber, x.SetDate ?? default)).ToArray() ?? [];
 
         }
         catch (Exception ex)
@@ -1055,22 +1058,22 @@ public partial class MeiShiAssit : ISigning
     /// <summary>
     /// </summary>
     /// <param name="fundId"></param>
-    /// <param name="share">无分级=null</param>
+    /// <param name="shareCode">无分级=null</param>
     /// <param name="date"></param>
     /// <param name="notify"></param>
     /// <returns></returns>
-    public async Task<ErrorReturn> CreateTemporaryOpenDay(int fundId, string? share, DateOnly date, OpenFlag flag, bool notify)
+    public async Task<ErrorReturn> CreateTemporaryOpenDay(int fundId, string? shareCode, DateOnly date, OpenTradeType flag, bool notify)
     {
         using var db = DbHelper.Base();
         var fund = db.GetCollection<Fund>().FindById(fundId);
         if (fund is null)
             return new(false, $"未找到Fund {fundId}");
 
-        return await CreateTemporaryOpenDay(fund.Name, share, date, flag, notify);
+        return await CreateTemporaryOpenDay(fund.Name, shareCode, date, flag, notify);
     }
 
 
-    public async Task<ErrorReturn> CreateTemporaryOpenDay(string fundName, string? share, DateOnly date, OpenFlag flag, bool notify)
+    public async Task<ErrorReturn> CreateTemporaryOpenDay(string fundName, string? shareCode, DateOnly date, OpenTradeType flag, bool notify)
     {
 
         if (!IsValid) return new(false, "Invalid");
@@ -1080,18 +1083,18 @@ public partial class MeiShiAssit : ISigning
 
         var funds = await QueryFundInfo();
 
-        var fund = string.IsNullOrWhiteSpace(share) ? funds.FirstOrDefault(x => x.Name == fundName) : funds.FirstOrDefault(x => x.Name!.StartsWith(fundName) && x.Class == share);
+        var fund = string.IsNullOrWhiteSpace(shareCode) ? funds.FirstOrDefault(x => x.Name == fundName) : funds.FirstOrDefault(x => x.Name!.StartsWith(fundName) && x.ShareCode == shareCode);
 
         if (fund is null)
-            return new(false, $"易私募中未找到{fundName} {share}");
+            return new(false, $"易私募中未找到{fundName} {shareCode}");
 
 
         TemporaryOpenDayJson obj;
-        if (flag.HasFlag(OpenFlag.Sell))
+        if (flag.HasFlag(OpenTradeType.Redemption))
             obj = new TemporaryOpenDayWithRedemJson()
             {
                 ProductId = int.Parse(fund.Id!),
-                TradeTypes = flag switch { OpenFlag.Buy | OpenFlag.Sell => [1, 2], OpenFlag.Buy => [1], OpenFlag.Sell => [2], _ => [] },
+                TradeTypes = flag switch { OpenTradeType.Both => [1, 2], OpenTradeType.Purchase => [1], OpenTradeType.Redemption => [2], _ => [] },
                 NoticeRule = notify ? Math.Max(0, date.DayNumber - DateOnly.FromDateTime(DateTime.Now).DayNumber) : 0,
                 NotificationList = notify ? [1, 2] : [],
                 ProductName = fund.Name,
@@ -1101,7 +1104,7 @@ public partial class MeiShiAssit : ISigning
         else obj = new()
         {
             ProductId = int.Parse(fund.Id!),
-            TradeTypes = flag switch { OpenFlag.Buy | OpenFlag.Sell => [1, 2], OpenFlag.Buy => [1], OpenFlag.Sell => [2], _ => [] },
+            TradeTypes = flag switch { OpenTradeType.Both => [1, 2], OpenTradeType.Purchase => [1], OpenTradeType.Redemption => [2], _ => [] },
             NoticeRule = notify ? Math.Max(0, date.DayNumber - DateOnly.FromDateTime(DateTime.Now).DayNumber) : 0,
             NotificationList = notify ? [1, 2] : [],
             ProductName = fund.Name,
@@ -1144,7 +1147,7 @@ public partial class MeiShiAssit : ISigning
         }
     }
 
-    public async Task<Return<DateOnly[]>> QueryAvaliableOpenDay(int fundId, string? share, OpenFlag flag)
+    public async Task<Return<DateOnly[]>> QueryAvaliableOpenDay(int fundId, string? share, OpenTradeType flag)
     {
         using var db = DbHelper.Base();
         var fund = db.GetCollection<Fund>().FindById(fundId);
@@ -1152,11 +1155,11 @@ public partial class MeiShiAssit : ISigning
             return new(false, [], $"未找到Fund {fundId}");
 
 
-        return await QueryAvaliableOpenDay(fund.Name, share, flag);
+        return await QueryAvaliableOpenDayAsync(fund.Name, share, flag);
     }
 
 
-    public async Task<Return<DateOnly[]>> QueryAvaliableOpenDay(string fundName, string? share, OpenFlag flag)
+    public async Task<Return<DateOnly[]>> QueryAvaliableOpenDayAsync(string fundName, string? share, OpenTradeType flag)
     {
         if (!IsValid) return new(false, [], "Invalid");
         if (!isLogin) isLogin = await LoginFromEsign();
@@ -1165,17 +1168,20 @@ public partial class MeiShiAssit : ISigning
 
         var funds = await QueryFundInfo();
 
-        var fund = string.IsNullOrWhiteSpace(share) ? funds.FirstOrDefault(x => x.Name == fundName) : funds.FirstOrDefault(x => x.Name!.StartsWith(fundName) && x.Class == share);
+        var fund = string.IsNullOrWhiteSpace(share) ? funds.FirstOrDefault(x => x.ShareCode == share) : funds.FirstOrDefault(x => x.Name == fundName);
 
         if (fund is null)
             return new(false, [], $"易私募中未找到{fundName} {share}");
 
+        return await QueryAvaliableOpenDayAsync(fund.Id, flag);
+    }
 
-
+    private async Task<Return<DateOnly[]>> QueryAvaliableOpenDayAsync(string productId, OpenTradeType flag)
+    {
 
         HttpRequestMessage request = new();
         request.Method = HttpMethod.Get;
-        request.RequestUri = new Uri($"https://vipfunds.simu800.com/vip-manager/productDay/selectOpenDay?productId={fund.Id}&openType=3&tradeTypes={flag switch { OpenFlag.Buy => 1, _ => 2 }}&t={DateTime.Now.TimeStampByMilliseconds()}");
+        request.RequestUri = new Uri($"https://vipfunds.simu800.com/vip-manager/productDay/selectOpenDay?productId={productId}&openType=3&tradeTypes={flag switch { OpenTradeType.Purchase => 1, _ => 2 }}&t={DateTime.Now.TimeStampByMilliseconds()}");
         request.Headers.Add("tokenid", Token);
 
 
@@ -1204,24 +1210,169 @@ public partial class MeiShiAssit : ISigning
             return new(false, [], e.Message);
         }
 
-
     }
 
 
-    public async Task<ErrorReturn> SubmitOrder(int fundId, string? share, int investorId, TransferOrderType type, decimal number)
+
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="order"></param>
+    /// <returns></returns>
+    public async Task<ErrorReturn> PushOrder(SigningOrder order)
     {
-        //https://vipfunds.simu800.com/vip-manager/manager/signFlowController/createOnlineFlow/chooseProduct
-        //{"productId":888110481,"tradeType":2,"period":"2026-05-18T16:00:00.000+00:00","openType":1}
+        using var db = DbHelper.Base();
+        var sc = db.QueryFundShare(order.FundId, order.ShareId);
+        if (sc is null)
+            return new(false, $"order Fund:{order.FundId} Share:{order.ShareId}，未找到对应的份额信息");
 
-        //https://vipfunds.simu800.com/vip-manager/manager/signFlowController/createOnlineFlow/chooseCustomer
-        //{"formType":1,"customerReq":{"formType":1,"customerId":898419578}}
+        if (!IsValid) return new(false, "Invalid");
+        if (!isLogin) isLogin = await LoginFromEsign();
+        if (!isLogin) { Logg.Error("MeiShi Login Failed"); return new(false, "登录失败"); }
 
+        var funds = await QueryFundInfo();
+       
+        var fund = !string.IsNullOrWhiteSpace(sc.Code) ? funds.FirstOrDefault(x => x.ShareCode == sc.Code) : funds.FirstOrDefault(x => x.Name == sc.FundName);
 
+        if (fund is null)
+            return new(false, $"易私募中未找到{sc.FundName} {sc.Code}");
 
+        // 检验开放日
+        var openDayResult = await QueryAvaliableOpenDayAsync(fund.Id, order.OrderType switch
+        {
+            TransferOrderType.Buy or TransferOrderType.FirstTrade => OpenTradeType.Purchase,
+            TransferOrderType.Amount or TransferOrderType.Share or TransferOrderType.RemainAmout => OpenTradeType.Redemption,
+            _ => OpenTradeType.None
+        });
 
-        return new(true);
+        if (!openDayResult.Successed || !openDayResult.Data.Contains(order.OpenDate))
+            return new(false, "提交失败，所选日期非开放日");
+
+        // 选择产品
+        var r = await SelectFundForPushOrder(int.Parse(fund.Id!), order.OrderType switch { TransferOrderType.FirstTrade => 1, TransferOrderType.Buy => 2, _ => 3 }, 1);
+        if (!r.Successed)
+            return r;
+
+        // 选择投资人
+        var cus = db.GetCollection<Investor>().FindById(order.InvestorId);
+        if (cus is null)
+            return new(false, $"未找到投资人 {order.InvestorId}");
+        if(cus.Identity is null)
+            return new(false, $"投资人 {order.InvestorId} 证件号码缺失");
+
+        var investorResult = await SelectInvestor(cus.Name, cus.Identity.Id, order.Number, order.Fee);
+        if (!investorResult.Successed)
+            return investorResult;
+
+        // 提交订单
+
+        return await SubmitOrder();
     }
 
+    private async Task<ErrorReturn> SelectInvestor(string investorName, string investorCard, decimal? number, decimal? fee)
+    {
+        HttpRequestMessage request = new();
+        request.Method = HttpMethod.Post;
+        request.RequestUri = new Uri("https://vipfunds.simu800.com/vip-manager/customer/queryByCustomerName");
+        request.Headers.Add("tokenid", Token);
+        request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+
+        var response = await client.SendAsync(request);
+        var cont = await response.Content.ReadAsStringAsync();
+
+        SigningLoger.LogRun(this, nameof(SelectFundForPushOrder), "", cont);
+        if (Regex.IsMatch(cont, "token已失效|重新登录"))
+        {
+            isLogin = false;
+            return new(false, "请重新登录");
+        }
+
+        var root = JsonSerializer.Deserialize<RootJson>(cont);
+        var data = root?.data?.Deserialize<CustomerForOrderJson[]>();
+        var customer = data?.FirstOrDefault(x => x.cardNumber == investorCard && x.customerName == investorName);
+        if (customer is null)
+            return new(false, "未找到投资人");
+
+        ///////////////////////////
+        request = new();
+        request.Method = HttpMethod.Post;
+        request.RequestUri = new Uri("https://vipfunds.simu800.com/vip-manager/manager/signFlowController/createOnlineFlow/chooseCustomer");
+        request.Headers.Add("tokenid", Token);
+        var obj = new
+        {
+            formType = 1,
+            customerReq = new { formType = 1, customerId = customer.customerId, specifiedTradeAmount = number, specifiedTradeFee = fee },
+            specifiedTradeAmount = number,
+            specifiedTradeFee = fee
+        };
+
+        var jsonOptions = new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        };
+        request.Content = new StringContent(JsonSerializer.Serialize(obj, jsonOptions), Encoding.UTF8, "application/json");
+
+        response = await client.SendAsync(request);
+        cont = await response.Content.ReadAsStringAsync();
+
+        SigningLoger.LogRun(this, nameof(SelectFundForPushOrder), "", cont);
+        if (Regex.IsMatch(cont, "token已失效|重新登录"))
+        {
+            isLogin = false;
+            return new(false, "请重新登录");
+        }
+
+        root = JsonSerializer.Deserialize<RootJson>(cont);
+        return new(root?.code == 1008, root?.message ?? "未知错误");
+    }
+
+    private async Task<ErrorReturn> SelectFundForPushOrder(int pid, int tradeType, int openType)
+    {
+        HttpRequestMessage request = new();
+        request.Method = HttpMethod.Post;
+        request.RequestUri = new Uri("https://vipfunds.simu800.com/vip-manager/manager/signFlowController/createOnlineFlow/chooseProduct");
+        request.Headers.Add("tokenid", Token);
+        var obj = new { productId = pid, tradeType, period = DateTime.UtcNow, openType };
+        request.Content = new StringContent(JsonSerializer.Serialize(obj), Encoding.UTF8, "application/json");
+
+        var response = await client.SendAsync(request);
+        var cont = await response.Content.ReadAsStringAsync();
+
+        SigningLoger.LogRun(this, nameof(SelectFundForPushOrder), "", cont);
+        if (Regex.IsMatch(cont, "token已失效|重新登录"))
+        {
+            isLogin = false;
+            return new(false, "请重新登录");
+        }
+
+        var root = JsonSerializer.Deserialize<RootJson>(cont);
+        return new(root?.code == 1008, root?.message ?? "未知错误");
+    }
+
+    private async Task<ErrorReturn> SubmitOrder()
+    {
+        HttpRequestMessage request = new();
+        request.Method = HttpMethod.Post;
+        request.RequestUri = new Uri("https://vipfunds.simu800.com/vip-manager/manager/signFlowController/createOnlineFlow/doCreate");
+        request.Headers.Add("tokenid", Token);
+        var obj = new { sendMessage = true };
+        request.Content = new StringContent(JsonSerializer.Serialize(obj), Encoding.UTF8, "application/json");
+
+
+        var response = await client.SendAsync(request);
+        var cont = await response.Content.ReadAsStringAsync();
+
+        SigningLoger.LogRun(this, nameof(SelectFundForPushOrder), "", cont);
+        if (Regex.IsMatch(cont, "token已失效|重新登录"))
+        {
+            isLogin = false;
+            return new(false, "请重新登录");
+        }
+
+        var root = JsonSerializer.Deserialize<RootJson>(cont);
+        return new(root?.code == 1008, root?.message ?? "未知错误");
+    }
 
 
 

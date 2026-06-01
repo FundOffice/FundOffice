@@ -34,7 +34,11 @@ public partial class SettingsWindowViewModel : ObservableObject
     public SettingMonitorGroup[] MonitorGroups { get; set; }
 
 
-    public AbilityUnitViewModel[] BasicGroups { get; set; }
+    public IUnitViewModel?[] BasicGroups { get; set; }
+
+
+    public IUnitViewModel?[] OrderSection { get; set; }
+
 
     public SettingsWindowViewModel()
     {
@@ -55,7 +59,7 @@ public partial class SettingsWindowViewModel : ObservableObject
         {
             if (dic.TryGetValue(item.Key, out var title))
             {
-                units.Add(new() { Name = title, Units = item.Select(x => new AbilityUnitViewModel(x)) });
+                units.Add(new() { Name = title, Units = item.Select(x => SettingViewModels.CreateViewModel(x)) });
 
             }
 
@@ -66,8 +70,11 @@ public partial class SettingsWindowViewModel : ObservableObject
 
 
         var basics = SettingService.GetAbilityUnits("Basic");//.Select(x => new AbilityUnitViewModel(x)).ToArray();
-        BasicGroups = basics.Select(x => new AbilityUnitViewModel(x)).ToArray();
+        BasicGroups = basics.Select(x => SettingViewModels.CreateViewModel(x)).ToArray();
 
+
+        var u = SettingService.GetUnits("Order");
+        OrderSection = [.. u.Select(x => SettingViewModels.CreateViewModel(x))];
     }
 
 
@@ -91,6 +98,6 @@ public class SettingMonitorGroup
     public required string Name { get; set; }
 
 
-    public required IEnumerable<AbilityUnitViewModel> Units { get; set; }
+    public required IEnumerable<IUnitViewModel?> Units { get; set; }
 }
 

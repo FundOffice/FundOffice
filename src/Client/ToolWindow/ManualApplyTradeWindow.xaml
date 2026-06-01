@@ -116,48 +116,50 @@
                 SelectedItem="{Binding SelectedSigner}" />
 
 
-            <TextBlock
-                Margin="3,0"
-                VerticalAlignment="Center"
-                Text="开放日" />
+            <DockPanel Visibility="{Binding SelectedSigner, Converter={StaticResource Object2VisibilityConverter}}">
+                <TextBlock
+                    Margin="3,0"
+                    VerticalAlignment="Center"
+                    Text="开放日" />
 
-            <DatePicker
-                Width="100"
-                CalendarStyle="{StaticResource CalendarBlackStyle}"
-                SelectedDate="{Binding Date}">
-                <i:Interaction.Triggers>
-                    <i:EventTrigger EventName="Loaded">
-                        <i:InvokeCommandAction Command="{Binding RefreshDateCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=DatePicker}}" />
-                    </i:EventTrigger>
-                </i:Interaction.Triggers>
-            </DatePicker>
+                <DatePicker
+                    Width="100"
+                    CalendarStyle="{StaticResource CalendarBlackStyle}"
+                    SelectedDate="{Binding Date}">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="Loaded">
+                            <i:InvokeCommandAction Command="{Binding RefreshDateCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=DatePicker}}" />
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </DatePicker>
 
 
-            <UniformGrid
-                Margin="10,0,0,0"
-                Rows="1"
-                Visibility="{Binding IsBuySealed, Converter={StaticResource Boolean2VisibilityReConverter}}">
-                <RadioButton
-                    Width="auto"
-                    HorizontalAlignment="Stretch"
-                    Content="申购"
-                    Foreground="Green"
-                    IsChecked="{Binding IsBuy}"
-                    Style="{StaticResource ToggleButtonDefault}" />
-                <RadioButton
-                    HorizontalAlignment="Stretch"
-                    Content="赎回"
-                    Foreground="Red"
-                    Style="{StaticResource ToggleButtonDefault}" />
-            </UniformGrid>
-
+                <UniformGrid
+                    Margin="10,0,0,0"
+                    Rows="1"
+                    Visibility="{Binding IsBuySealed, Converter={StaticResource Boolean2VisibilityReConverter}}">
+                    <RadioButton
+                        Width="auto"
+                        HorizontalAlignment="Stretch"
+                        Content="申购"
+                        Foreground="Green"
+                        IsChecked="{Binding IsBuy}"
+                        Style="{StaticResource ToggleButtonDefault}" />
+                    <RadioButton
+                        HorizontalAlignment="Stretch"
+                        Content="赎回"
+                        Foreground="Red"
+                        IsChecked="{Binding IsBuy, Converter={StaticResource Boolean2BooleanReConverter}}"
+                        Style="{StaticResource ToggleButtonDefault}" />
+                </UniformGrid>
+            </DockPanel>
 
         </DockPanel>
 
         <hc:UniformSpacingPanel
             Orientation="Vertical"
             VerticalSpacing="10"
-            Visibility="{Binding Signings, Converter={StaticResource Object2VisibilityConverter}}">
+            Visibility="{Binding SelectedSigner, Converter={StaticResource Object2VisibilityConverter}}">
             <DockPanel Visibility="{Binding SelectedFund, Converter={StaticResource Object2VisibilityConverter}}">
 
                 <TextBlock Width="60" Text="交易类型" />

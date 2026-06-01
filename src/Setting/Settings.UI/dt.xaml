@@ -12,5 +12,12 @@
             ToolTip="{Binding Description}" />
     </DataTemplate>
 
+    <DataTemplate DataType="{x:Type local:SwitchUnitViewModel}">
+        <CheckBox
+            Margin="2"
+            Content="{Binding Title}"
+            IsChecked="{Binding IsEnabled}"
+            ToolTip="{Binding Description}" />
+    </DataTemplate>
 
 </ResourceDictionary>

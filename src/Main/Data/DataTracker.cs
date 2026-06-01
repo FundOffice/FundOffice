@@ -1023,6 +1023,21 @@ public static partial class DataTracker
     }
 
 
+    public static void OnFundOpenDays(IEnumerable<FundOpenDay> days)
+    {
+        try
+        {
+            using var db = DbHelper.Base();
+            db.GetCollection<FundOpenDay>().Upsert(days);
+
+            DataHub.Push(days);
+        }
+        catch (Exception e)
+        {
+            Logg.Error(e);
+        }
+    }
+
     private static void MapRequestRecord(IList<TransferRequest> data)
     {
         // 对应request 和 record

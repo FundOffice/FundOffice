@@ -9,8 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SettingGenerator\SettingGenerator.csproj"  OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all"/>
     <ProjectReference Include="..\Settings\Settings.csproj" />
-    <ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer"  ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"  PrivateAssets="all"/>
   </ItemGroup>
 
 

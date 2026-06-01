@@ -6,7 +6,7 @@ using System.Runtime.Intrinsics.X86;
 namespace Initial;
 
 #pragma warning disable CA1416 // 验证平台兼容性
-public class TestInit
+public class DataInject
 {
     public static void SetAsDebug()
     {

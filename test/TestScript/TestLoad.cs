@@ -42,7 +42,7 @@ public class TestLoad
 
         var tpl = await ExcelTemplate.Load("v1.tpl");
 
-        TestInit.SetAsDebug();
+        DataInject.SetAsDebug();
 
         var g = await tpl!.Prepare(new TemplateGlobal
         {

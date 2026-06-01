@@ -127,7 +127,7 @@ public partial class MeiShiAssit : IDisclosureChannel
     internal async Task<ErrorReturn> Disclosure(TemporaryOpenNotice notice, MeiShiWorkConfig? config)
     {
         var funds = await QueryFundInfo();
-        var fund = funds.FirstOrDefault(x => x.Name == notice.FundName && x.Code == notice.FundCode);
+        var fund = funds.FirstOrDefault(x => x.Name == notice.FundName && x.ShareCode == notice.FundCode);
         if (!long.TryParse(fund?.Id, out long fundId))
             return new ErrorReturn(false, "基金未找到");
 
@@ -157,7 +157,7 @@ public partial class MeiShiAssit : IDisclosureChannel
     internal async Task<ErrorReturn> Disclosure(HugeRedemptionNotice notice, MeiShiWorkConfig? config)
     {
         var funds = await QueryFundInfo();
-        var fund = funds.FirstOrDefault(x => x.Name == notice.FundName && x.Code == notice.FundCode);
+        var fund = funds.FirstOrDefault(x => x.Name == notice.FundName && x.ShareCode == notice.FundCode);
         if (!long.TryParse(fund?.Id, out long fundId))
             return new ErrorReturn(false, "基金未找到");
 
@@ -187,7 +187,7 @@ public partial class MeiShiAssit : IDisclosureChannel
     internal async Task<ErrorReturn> Disclosure(FundSetupNotice notice, MeiShiWorkConfig? config)
     {
         var funds = await QueryFundInfo();
-        var fund = funds.FirstOrDefault(x => x.Name == notice.FundName && x.Code == notice.FundCode);
+        var fund = funds.FirstOrDefault(x => x.Name == notice.FundName && x.ShareCode == notice.FundCode);
         if (!long.TryParse(fund?.Id, out long fundId))
             return new ErrorReturn(false, "基金未找到");
 
@@ -213,7 +213,7 @@ public partial class MeiShiAssit : IDisclosureChannel
     internal async Task<ErrorReturn> Disclosure(FundSacleWarningNotice notice, MeiShiWorkConfig? config)
     {
         var funds = await QueryFundInfo();
-        var fund = funds.FirstOrDefault(x => x.Name == notice.FundName && x.Code == notice.FundCode);
+        var fund = funds.FirstOrDefault(x => x.Name == notice.FundName && x.ShareCode == notice.FundCode);
         if (!long.TryParse(fund?.Id, out long fundId))
             return new ErrorReturn(false, "基金未找到");
 
@@ -281,7 +281,7 @@ public partial class MeiShiAssit : IDisclosureChannel
 
         // 获取对应产品
         var funds = await QueryFundInfo();
-        var fund = funds.FirstOrDefault(x => x.Name == fundName && x.Code == fundCode);
+        var fund = funds.FirstOrDefault(x => x.Name == fundName && x.ShareCode == fundCode);
         if (fund?.Id is null)
             return new ErrorReturn(false, "Fund not found");
 

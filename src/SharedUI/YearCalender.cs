@@ -1,5 +1,5 @@
 ﻿using FMO.Models;
-using System.IO;
+using System.Collections;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -93,7 +93,7 @@ public class YearCalender : Control
 
 
 
-public class SimpleCalender : Control
+public class SimpleCalender : ItemsControl
 {
 
     static SimpleCalender()
@@ -116,16 +116,18 @@ public class SimpleCalender : Control
 
 
 
-    public IEnumerable<IDate> ItemsSource
+
+    public IDate? SelectedDate
     {
-        get { return (IEnumerable<IDate>)GetValue(ItemsSourceProperty); }
-        set { SetValue(ItemsSourceProperty, value); }
+        get { return (IDate?)GetValue(SelectedDateProperty); }
+        set { SetValue(SelectedDateProperty, value); }
     }
 
-    // Using a DependencyProperty as the backing store for ItemsSource.  This enables animation, styling, binding, etc...
-    public static readonly DependencyProperty ItemsSourceProperty =
-        DependencyProperty.Register("ItemsSource", typeof(IEnumerable<IDate>), typeof(SimpleCalender),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsArrange | FrameworkPropertyMetadataOptions.AffectsRender, OnChanged));
+    // Using a DependencyProperty as the backing store for SelectedDate.  This enables animation, styling, binding, etc...
+    public static readonly DependencyProperty SelectedDateProperty =
+        DependencyProperty.Register(nameof(SelectedDate), typeof(IDate), typeof(SimpleCalender), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+
+
 
 
     // 2. 内部供 UI 绑定的数据源（包含 null 占位）
@@ -138,39 +140,31 @@ public class SimpleCalender : Control
         DependencyProperty.RegisterReadOnly("DisplayItems", typeof(IEnumerable<IDate?>), typeof(SimpleCalender), new PropertyMetadata(null));
 
     public static readonly DependencyProperty DisplayItemsProperty = DisplayItemsPropertyKey.DependencyProperty;
- 
 
-    private static void OnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+
+    protected override void OnItemsSourceChanged(IEnumerable oldValue, IEnumerable newValue)
     {
-        if (d is SimpleCalender sc)
+        if (newValue is IEnumerable<IDate> newItems)
         {
-            var first = sc.ItemsSource?.FirstOrDefault();
-            if (first is null) return;
-            
-            if(first.Date.Day > 1) 
-                throw new InvalidDataException("ItemsSource 中的第一个日期必须是当月的 1 号");
-
-            var offset = first.Date.DayOfWeek != DayOfWeek.Sunday ? (int)first.Date.DayOfWeek : 0; // 将 Sunday 的 offset 调整为 7
-
-
-            // 将带有 null 占位符的生成器赋值给 DisplayItems
-            sc.SetValue(DisplayItemsPropertyKey, sc.GenerateWithOffset(sc.ItemsSource, offset));
+            CalibrateItems(newItems);
+        }
+        else
+        {
+            SetValue(DisplayItemsPropertyKey, null);
         }
     }
-     
+
 
     private void CalibrateItems(IEnumerable<IDate> source)
     {
         int offset = 0;
-        if (source != null)
+
+        var firstDate = source.FirstOrDefault();
+        if (firstDate != null)
         {
-            var firstDate = source.FirstOrDefault();
-            if (firstDate != null)
-            {
-                // 假设你的 IDate 接口里有一个能获取 DateTime 的属性（例如 .Date）
-                // 如果 1 号是星期二 (DayOfWeek.Tuesday = 2)，offset 就是 2
-                offset = (int)firstDate.Date.DayOfWeek;
-            }
+            // 假设你的 IDate 接口里有一个能获取 DateTime 的属性（例如 .Date）
+            // 如果 1 号是星期二 (DayOfWeek.Tuesday = 2)，offset 就是 2
+            offset = (int)firstDate.Date.DayOfWeek;
         }
 
         // 将带有 null 占位符的生成器赋值给 DisplayItems
