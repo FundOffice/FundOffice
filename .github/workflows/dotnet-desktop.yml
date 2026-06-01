@@ -102,22 +102,60 @@ jobs:
 
           # 2.2 找 src 下有 Directory.Build.props 的目录，再按它发布
           $srcPath = Join-Path $scriptPath "src"
+          $solutionProjects = @()
+
+          if ($slnxFile) {
+              Write-Host "  找到解决方案文件: $($slnFile.Name)" -ForegroundColor Cyan
+            
+              # 使用 dotnet CLI 获取解决方案中的项目列表，原生完美兼容 .sln 和 .slnx
+              $slnListOutput = dotnet sln $slnFile.FullName list 2>$null
+            
+              if ($LASTEXITCODE -eq 0) {
+                  foreach ($line in $slnListOutput) {
+                      $trimmedLine = $line.Trim()
+                      # 过滤掉空行、表头 "Project(s)" / "项目" 和 分隔线 "----------"
+                      if ($trimmedLine -and $trimmedLine -notmatch "^(Project\(s\)|项目|-+)$") {
+                          # 统一路径分隔符并转换为绝对路径
+                          $relPath = $trimmedLine -replace '\\', [System.IO.Path]::DirectorySeparatorChar
+                          $absPath = Join-Path $slnFile.DirectoryName $relPath
+              
+                          # 确保路径真实存在再加入列表
+                          if (Test-Path $absPath) {
+                              $solutionProjects += (Get-Item $absPath).FullName
+                          }
+                      }
+                  }
+                  Write-Host "  解析到解决方案中包含 $($solutionProjects.Count) 个有效项目" -ForegroundColor Cyan
+              } else {
+                  Write-Host "  ⚠ 无法通过 dotnet CLI 解析解决方案，请确保安装了支持 .slnx 的较新 .NET SDK (如 .NET 9)" -ForegroundColor Yellow
+              }
+          } else {
+              Write-Host "  ⚠ 主目录下未找到 .sln 或 .slnx 解决方案文件" -ForegroundColor Yellow
+          }
+          # ----------------------------------------------------------------------
+        
           if (Test-Path $srcPath) {
               $srcPathNormalized = (Get-Item $srcPath).FullName
               $buildPropsFiles = Get-ChildItem -Path $srcPath -Filter "Directory.Build.props" -Recurse -File | 
-                                 Where-Object { $_.DirectoryName -ne $srcPathNormalized }
-
+                                  Where-Object { $_.DirectoryName -ne $srcPathNormalized }
+        
               if ($buildPropsFiles.Count -gt 0) {
                   Write-Host "  找到 $($buildPropsFiles.Count) 个子模块目录（已排除 src 根目录）" -ForegroundColor Green
                   $moduleProjects = @()
                   foreach ($propsFile in $buildPropsFiles) {
                       $moduleDir = $propsFile.DirectoryName
                       $projects = Get-ChildItem -Path $moduleDir -Include "*.csproj", "*.vbproj" -Recurse -File | 
-                                  Where-Object { $_.FullName -notin $publishedProjects -and $_.BaseName -notlike "*tmp*" -and $_.BaseName -notlike "*Test*" }
+                                  Where-Object { 
+                                      $_.FullName -notin $publishedProjects -and 
+                                      $_.BaseName -notlike "*tmp*" -and 
+                                      $_.BaseName -notlike "*Test*" -and
+                                      # 核心条件：要求项目必须属于解决方案
+                                      ($solutionProjects.Count -gt 0 -and $_.FullName -in $solutionProjects)
+                                  }
                       $moduleProjects += $projects
                   }
                   $moduleProjects = $moduleProjects | Sort-Object FullName -Unique
-                  
+                
                   if ($moduleProjects.Count -gt 0) {
                       Write-Host "  准备发布子模块目录下的 $($moduleProjects.Count) 个项目" -ForegroundColor Yellow
                       $idx = 1
@@ -133,7 +171,7 @@ jobs:
                           $idx++
                       }
                   } else {
-                      Write-Host "  ⚠ 子模块目录下未找到其他需要发布的项目" -ForegroundColor Yellow
+                      Write-Host "  ⚠ 子模块目录下未找到其他需要发布的项目，或项目不属于解决方案" -ForegroundColor Yellow
                   }
               } else {
                   Write-Host "  ⚠ 未在 src 的子目录中找到 Directory.Build.props 文件" -ForegroundColor Yellow
