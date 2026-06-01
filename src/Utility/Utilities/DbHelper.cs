@@ -56,7 +56,7 @@ public class BaseDatabase : LiteDatabase
         var all = GetCollection<IFundFactor>().Query().Where(x => x.FactorId == FactorFields.ShareClasses).OrderByDescending(x => x.FlowId).ToEnumerable().OfType<FundFactor<ShareClass[]>>().ToArray();
         foreach (var fac in all)
         {
-            var sc = fac.Data.FirstOrDefault(x=> x.Code == fundCode);
+            var sc = fac.Data.FirstOrDefault(x => x.Code == fundCode);
             if (sc is not null) return (fac.FundId, sc);
         }
         return default;
@@ -146,8 +146,11 @@ public class BaseDatabase : LiteDatabase
         return new FundFactors(fundId, factors);
     }
 
-
-
+    public ShareClass? QueryFundShare(int fundId, int shareId)
+    {
+        return GetCollection<IFundFactor>().Query().Where(x => x.FundId == fundId && x.FactorId == FactorFields.ShareClasses)
+           .OrderByDescending(x => x.FlowId).ToEnumerable().OfType<FundFactor<ShareClass[]>>().SelectMany(x => x.Data).FirstOrDefault(x => x.Id == shareId);
+    }
 }
 
 public static class DbHelper

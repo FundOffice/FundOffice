@@ -388,9 +388,22 @@ public partial class OpenAndOrderViewModel : ObservableObject, IRecipient<Settin
     [RelayCommand(CanExecute = nameof(CanConfirm))]
     public async Task Confirm()
     {
+        if (SelectedInvestor?.Identity is null)
+        {
+            Toast.Warning("投资人身份证信息不完整，无法推单");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(SelectedShare?.Share.Code))
+        {
+            Toast.Warning("份额信息不完整，请先在要素中设置份额");
+            return;
+        }
+
         SigningOrder order = new()
         {
             FundId = FundId,
+            ShareId = SelectedShare.Share.Id,
             InvestorId = SelectedInvestor!.Id,
             OpenDate = SelectedOpenDay!.Date,
             Number = Number!.Value,
@@ -487,7 +500,7 @@ public partial class OpenAndOrderViewModel : ObservableObject, IRecipient<Settin
 
     public void Receive(SettingUnit unit)
     {
-        if(unit.Id == "Order.AllowCreateTemporaryInESigning")
+        if (unit.Id == "Order.AllowCreateTemporaryInESigning")
         {
             AllowForceSetTemporary = (unit as SwitchUnit)?.IsEnabled ?? false;
             ShowPush = SelectedOpenDay?.AllowPush is true || AllowForceSetTemporary;

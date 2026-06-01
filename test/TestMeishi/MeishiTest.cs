@@ -1,8 +1,9 @@
-﻿using FMO.Models;
+﻿using FMO.ESigning;
+using FMO.ESigning.MeiShi;
+using FMO.Models;
 using FMO.Utilities;
 using Initial;
 using System.Text.Json.Serialization;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace TestMeishi;
 
@@ -13,17 +14,17 @@ public sealed class MeishiTest
     {
         DataInject.SetAsDebug();
     }
-        
+
     [TestMethod]
     public async Task CreateTemporaryOpenDay_FundNotFound()
-    { 
+    {
 
         var mei = new FMO.ESigning.MeiShi.MeiShiAssit();
 
         var date = DateOnly.FromDateTime(DateTime.Now);
         var result = await mei.CreateTemporaryOpenDay(2, null, date.AddDays(6), OpenTradeType.Purchase, true);
 
-       
+
     }
 
     [TestMethod]
@@ -41,6 +42,24 @@ public sealed class MeishiTest
 
         Console.WriteLine(d);
     }
+
+
+    [TestMethod]
+    public async Task TestPushOrder()
+    {
+        var mei = new MeiShiAssit();
+        var result = await mei.PushOrder(new SigningOrder
+        {
+            FundId = 9,
+            ShareId = 49001,
+            InvestorId = 119,
+            OpenDate = new DateOnly(2026, 6, 2),
+            OrderType = TransferOrderType.FirstTrade,
+        });
+    }
+
+
+
 }
 
 
