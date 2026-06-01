@@ -55,3 +55,5 @@ public class SwitchUnit : SettingUnit
 {
     public bool IsEnabled { get; set; }
 }
+
+

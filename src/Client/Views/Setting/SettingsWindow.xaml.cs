@@ -34,10 +34,10 @@ public partial class SettingsWindowViewModel : ObservableObject
     public SettingMonitorGroup[] MonitorGroups { get; set; }
 
 
-    public AbilityUnitViewModel[] BasicGroups { get; set; }
+    public IUnitViewModel?[] BasicGroups { get; set; }
 
 
-    public UnitViewModel[] OrderSection { get; set; }
+    public IUnitViewModel?[] OrderSection { get; set; }
 
 
     public SettingsWindowViewModel()
@@ -59,7 +59,7 @@ public partial class SettingsWindowViewModel : ObservableObject
         {
             if (dic.TryGetValue(item.Key, out var title))
             {
-                units.Add(new() { Name = title, Units = item.Select(x => new AbilityUnitViewModel(x)) });
+                units.Add(new() { Name = title, Units = item.Select(x => SettingViewModels.CreateViewModel(x)) });
 
             }
 
@@ -70,14 +70,11 @@ public partial class SettingsWindowViewModel : ObservableObject
 
 
         var basics = SettingService.GetAbilityUnits("Basic");//.Select(x => new AbilityUnitViewModel(x)).ToArray();
-        BasicGroups = basics.Select(x => new AbilityUnitViewModel(x)).ToArray();
+        BasicGroups = basics.Select(x => SettingViewModels.CreateViewModel(x)).ToArray();
 
 
         var u = SettingService.GetUnits("Order");
-        if (!u.Any(x => x.Name == "AllowCreateTemporaryInESigning"))
-            SettingService.RegisterSwitch("Order", "AllowCreateTemporaryInESigning", "允许在电签平台设置开放日", "允许在电签平台设置开放日，即使它未不是托管平台中的开放日", true);
-
-        OrderSection = [.. u.Select(x => SettingService.CreateViewModel(x) as UnitViewModel)];
+        OrderSection = [.. u.Select(x => SettingViewModels.CreateViewModel(x))];
     }
 
 
@@ -101,6 +98,6 @@ public class SettingMonitorGroup
     public required string Name { get; set; }
 
 
-    public required IEnumerable<AbilityUnitViewModel> Units { get; set; }
+    public required IEnumerable<IUnitViewModel?> Units { get; set; }
 }
 

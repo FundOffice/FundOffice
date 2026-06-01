@@ -16,30 +16,24 @@ public static partial class SettingService
     private static Dictionary<string, SettingUnit> SettingUnits { get; set; } = [];
 
 
-    private static Dictionary<Type, Delegate> _vmMap = [];
-
     public static void Initialize()
     {
-
-        //InitVerifySection();
+         
+  
         SettingUnits = db.GetCollection<SettingUnit>().FindAll().ToDictionary(x => x.Id);
+
+
+        var u = GetUnits("Order");
+        if (!u.Any(x => x.Name == "AllowCreateTemporaryInESigning"))
+            RegisterSwitch("Order", "AllowCreateTemporaryInESigning", "允许在电签平台设置开放日", "允许在电签平台设置开放日，即使它不是托管平台中的开放日", true);
+
+
     }
 
 
     public static AbilityUnit[] GetAbilityUnits(string section) => AbilitySection.Where(x => x.Key.StartsWith(section + ".")).Select(x => x.Value).ToArray();
 
 
-
-    public static void RegisterViewModel<TEntity, TViewModel>(Func<TEntity, TViewModel> func) where TEntity : SettingUnit
-    {
-        _vmMap[typeof(TEntity)] = func;
-    }
-
-
-    public static object? CreateViewModel<T>(T obj) where T : SettingUnit
-    {
-        return _vmMap.TryGetValue(typeof(T),out var func) ? func.DynamicInvoke(obj) : null;
-    }
 
 
     public static void RegisterAbility(string section, string name, string title, string description, bool isenable, ISettingFunction instance)
@@ -73,6 +67,7 @@ public static partial class SettingService
         if (!SettingUnits.TryGetValue(key, out var rule))
         {
             r = new SwitchUnit { Name = name, Section = section, Title = title, Description = description, IsEnabled = isenable };
+            SettingUnits.Add(r.Id, r);
         }
         else r = rule;
     }
@@ -114,7 +109,7 @@ public static partial class SettingService
 
     public static SettingUnit[] GetUnits(string seciton)
     {
-        return db.GetCollection<SettingUnit>().Find(x => x.Section == seciton).ToArray();
+        return SettingUnits.Where(x => x.Key.StartsWith(seciton)).Select(x => x.Value).ToArray();
     }
 
 
@@ -128,6 +123,7 @@ public static partial class SettingService
     public static void Save(SettingUnit unit)
     {
         db.GetCollection<SettingUnit>().Upsert(unit);
+        SettingUnits[unit.Id] = unit;
     }
 
 
