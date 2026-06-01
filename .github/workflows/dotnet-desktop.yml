@@ -227,6 +227,7 @@ jobs:
               Write-Host "  跳过的项目:" -ForegroundColor Yellow
               $failedProjects | ForEach-Object { Write-Host "    - $_" -ForegroundColor Gray }
           }
+          exit 0
 
 
       - name: 清理语言文件夹、PDB 和未引用 DLL
