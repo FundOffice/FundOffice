@@ -74,10 +74,18 @@ jobs:
           # 🔥 提取公共发布参数 (Splatting)，避免重复书写
           $publishArgs = @("-c", "Release", "-r", "win-x64", "--self-contained", "false", "-o", $publishDir, "/p:DebugSymbols=false", "/p:DebugType=None", "/p:UseAppHost=true", "/p:Version=$buildVersion", "--nologo")
 
-          # [1/4] NuGet Restore（必需）
+                   # [1/4] NuGet Restore（必需）
           Write-Host "`n[1/4] 执行 NuGet Restore..." -ForegroundColor Cyan
-          $slnxFile = Join-Path $scriptPath "FundOffice.slnx"
-          if (Test-Path $slnxFile) { dotnet restore $slnxFile } else { dotnet restore }
+          $slnxFilePath = Join-Path $scriptPath "FundOffice.slnx"
+          $slnxFile = $null
+          
+          if (Test-Path $slnxFilePath) { 
+              # 转换为 FileInfo 对象，这样才能使用 .Name 和 .DirectoryName 属性
+              $slnxFile = Get-Item $slnxFilePath 
+              dotnet restore $slnxFile.FullName 
+          } else { 
+              dotnet restore 
+          }
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
           # [2/4] 发布核心项目及 src 模块 (🔥 替换原主解决方案发布逻辑)
@@ -117,6 +125,8 @@ jobs:
                       if ($trimmedLine -and $trimmedLine -notmatch "^(Project\(s\)|项目|-+)$") {
                           # 统一路径分隔符并转换为绝对路径
                           $relPath = $trimmedLine -replace '\\', [System.IO.Path]::DirectorySeparatorChar
+                          
+                          # 现在 $slnxFile.DirectoryName 可以正常获取到目录了
                           $absPath = Join-Path $slnxFile.DirectoryName $relPath
               
                           # 确保路径真实存在再加入列表
