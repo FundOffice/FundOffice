@@ -467,25 +467,6 @@
                             <TextBlock Style="{StaticResource CategoryTab}" Text="申赎相关" />
                         </Border>
                         <StackPanel>
-                            <DockPanel LastChildFill="False" Visibility="{Binding IsSealingFund, Converter={StaticResource Boolean2VisibilityReConverter}}">
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    Foreground="Gray"
-                                    Text="固定开放日" />
-                                <!--<shared:ChangeableContainer HorizontalContentAlignment="Stretch" Binding="{Binding OpenDayInfo}" />-->
-
-                                <TextBlock
-                                    Margin="20,0"
-                                    VerticalAlignment="Center"
-                                    Text="{Binding OpenDayInfo.NewValue}" />
-
-                                <Button
-                                    Command="{Binding SetOpenRuleCommand}"
-                                    Content="开放日规则"
-                                    IsEnabled="{Binding IsReadOnly, Converter={StaticResource Boolean2BooleanReConverter}}"
-                                    Style="{StaticResource ButtonPrimary.Small}" />
-
-                            </DockPanel>
 
                             <shared:FactorModifiableControl
                                 ContentTemplate="{StaticResource DT.OpenRules}"
