@@ -109,9 +109,6 @@ public partial class ProxyViewModel : ObservableObject
 public partial class PlatformPageViewModel : ObservableObject, IRecipient<TrusteeRunMessage>, IRecipient<SigningRunMessage>
 {
 
-    private static bool _firstLoad = true;
-
-
     public TrusteeViewModelBase[] Trustees2 { get; }
 
     //public ObservableCollection<PlatformPageViewModelDigital> Digitals { get; } = new();
