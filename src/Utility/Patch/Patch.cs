@@ -63,8 +63,21 @@ public static partial class DatabaseAssist
         [148] = FixNoticeDate,
         [150] = MoveFundAccount,
         [152] = ChangeOpenRule,
-        [153] = AddCodeToShareClass
+        [153] = AddCodeToShareClass,
+        [154] = ModifyTokenTable
     };
+
+    /// <summary>
+    /// 修改token表结构
+    /// </summary>
+    /// <param name="database"></param>
+    /// <exception cref="NotImplementedException"></exception>
+    private static void ModifyTokenTable(BaseDatabase database)
+    {
+        var arr = database.GetCollection("TokenProvider").FindAll().ToArray();
+        
+        database.DropCollection("TokenProvider");
+    }
 
     private static void AddCodeToShareClass(BaseDatabase db)
     {

@@ -4,6 +4,7 @@
   </Folder>
   <Folder Name="/.Test/">
     <Project Path="test/Initial/Initial.csproj" />
+    <Project Path="test/TestAI/TestAI.csproj" Id="cb25d240-dcfa-4c28-9c21-b5963fcf6e30" />
     <Project Path="test/TestAmac/TestAmac.csproj" />
     <Project Path="test/TestDisclosureChannel/TestDisclosureChannel.csproj" />
     <Project Path="test/TestLitedb/TestLitedb.csproj" />
@@ -33,6 +34,8 @@
     <Project Path="src/ESign/MeiShi/MeiShi.csproj" />
   </Folder>
   <Folder Name="/Main/">
+    <Project Path="src/Generators/AIGenerator/AIGenerator.csproj" Id="751e0701-5697-4258-9673-22a435d5fe36" />
+    <Project Path="src/Main/AI/AI.csproj" Id="8289afad-794c-48cb-b71b-fb3c210e6c01" />
     <Project Path="src/Main/CustomAnalyzer/CustomAnalyzer.csproj" Id="5f161984-8108-451c-8e7f-f22be5c8e762">
       <Build Solution="Debug|*" Project="false" />
     </Project>

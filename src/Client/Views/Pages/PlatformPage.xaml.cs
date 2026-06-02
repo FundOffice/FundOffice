@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using FMO.AI;
 using FMO.ESigning;
 
 using FMO.Models;
@@ -180,7 +181,10 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
     [ObservableProperty]
     public partial ObservableCollection<ModifiableViewModel<TokenProvider, TokenProviderViewModel>> AIProviders { get; set; }
 
+    [ObservableProperty]
+    public partial bool ShowAICompanyList { get; set; }
 
+    public string[] AICompany { get; } = TokenProviderViewModel.Providers;
 
 
     public PlatformPageViewModel()
@@ -188,7 +192,7 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
         WeakReferenceMessenger.Default.RegisterAll(this);
 
         using var db = DbHelper.Base();
-        AIProviders = [.. db.GetCollection<TokenProvider>().FindAll().Select(x => new ModifiableViewModel<TokenProvider, TokenProviderViewModel>() { OldValue = x, NewValue = new(x) })];
+        AIProviders = [.. db.GetCollection<TokenProvider>().FindAll().Select(x => new ModifiableViewModel<TokenProvider, TokenProviderViewModel>() { OldValue = x, NewValue = TokenProviderViewModel.Create(x) })];
 
         foreach (var item in AIProviders)
             item.Changed += AI_Changed;
@@ -382,9 +386,11 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
     }
 
     [RelayCommand]
-    public void AddTokenProvider()
+    public void AddTokenProvider(string company)
     {
-        AIProviders.Add(new ModifiableViewModel<TokenProvider, TokenProviderViewModel>() { OldValue = null, NewValue = new TokenProviderViewModel { Url = "", Key = "", Style = TokenProviderStyle.None } });
+        ShowAICompanyList = false;
+        var vm = TokenProviderViewModel.Create(company);
+        AIProviders.Add(new ModifiableViewModel<TokenProvider, TokenProviderViewModel>() { OldValue = null, NewValue = vm });
     }
 
 
@@ -707,12 +713,5 @@ public partial class AmacDirectViewModel : ObservableObject
 }
 
 
-public partial class TokenProviderViewModel : IViewModel<TokenProvider, TokenProviderViewModel>, IDataValidation
-{
-    public static TokenProviderStyle[] Styles { get; } = [TokenProviderStyle.OpenAI, TokenProviderStyle.Anthropic];
 
-    public bool IsValid()
-    {
-        return !string.IsNullOrWhiteSpace(Id) && !string.IsNullOrWhiteSpace(Url) && !string.IsNullOrWhiteSpace(Key) && Style != TokenProviderStyle.None;
-    }
-}
+ 

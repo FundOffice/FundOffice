@@ -2,6 +2,7 @@
     x:Class="FMO.PlatformPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ai="clr-namespace:FMO.AI;assembly=AI"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:FMO"
@@ -125,12 +126,12 @@
 
 
 
-        <DataTemplate DataType="{x:Type local:TokenProviderViewModel}">
+        <DataTemplate DataType="{x:Type ai:TokenProviderViewModel}">
             <DockPanel>
                 <hc:TextBox
                     Width="100"
                     hc:InfoElement.Placeholder="公司名"
-                    Text="{Binding Id}" />
+                    Text="{Binding Company}" />
                 <hc:TextBox
                     Width="200"
                     hc:InfoElement.Placeholder="URL"
@@ -142,7 +143,7 @@
                 <ListBox
                     ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
                     ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
-                    ItemsSource="{Binding Source={x:Static local:TokenProviderViewModel.Styles}}"
+                    ItemsSource="{Binding Source={x:Static ai:TokenProviderViewModel.Styles}}"
                     SelectedItem="{Binding Style}"
                     Style="{StaticResource ListBox.Small}" />
             </DockPanel>
@@ -518,13 +519,32 @@
                 Foreground="RoyalBlue"
                 Text="AI" />
 
-            <Button
+            <ToggleButton
                 hc:IconElement.Geometry="{StaticResource f.circle-plus}"
-                Command="{Binding AddTokenProviderCommand}"
-                Style="{StaticResource ButtonIcon.Small}" />
+                IsChecked="{Binding ShowAICompanyList}"
+                Style="{StaticResource ToggleButtonIconTransparent.Small}" />
+
+            <ListBox
+                VerticalAlignment="Center"
+                BorderThickness="0"
+                ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
+                ItemsSource="{Binding AICompany}"
+                Style="{StaticResource ListBoxCustom}"
+                Visibility="{Binding ShowAICompanyList, Converter={StaticResource Boolean2VisibilityConverter}}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Button
+                            Command="{Binding DataContext.AddTokenProviderCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                            CommandParameter="{Binding}"
+                            Content="{Binding}"
+                            Style="{StaticResource ButtonDefault.Small}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
 
             <ListBox
                 BorderThickness="0"
+                ItemsPanel="{StaticResource WrapHorizontalItemsPanelTemplate}"
                 ItemsSource="{Binding AIProviders}"
                 Style="{StaticResource ListBoxCustom}">
                 <ListBox.ItemTemplate>
@@ -538,6 +558,11 @@
                                     BorderThickness="0"
                                     IsReadOnly="{Binding ElementName=edit, Path=IsChecked}"
                                     Modifier="{Binding}">
+                                    <shared:ModifiableControl.ContentTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding ., TargetNullValue=未设置}" />
+                                        </DataTemplate>
+                                    </shared:ModifiableControl.ContentTemplate>
                                     <shared:ModifiableControl.EditTemplate>
                                         <DataTemplate>
                                             <ContentPresenter Content="{Binding NewValue}" />
