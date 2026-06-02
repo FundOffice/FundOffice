@@ -52,9 +52,10 @@ public partial class ManagerPageViewModel :ObservableObject, IRecipient<Particip
 
 
     public ModifiableViewModel<string> RegisterNo { get; }
+
     public string InstitutionCode { get; }
 
-    public ModifiableViewModel<BooleanDate> ExpireDate { get; }
+    public ModifiableViewModel<DateOnly, BooleanDate> ExpireDate { get; private set; } = null!;
 
 
     [ObservableProperty]
@@ -155,8 +156,6 @@ public partial class ManagerPageViewModel :ObservableObject, IRecipient<Particip
 
         InstitutionCode = _manager.Identity!.Id;
 
-        ExpireDate = new() { NewValue = new(_manager.ExpireDate), OldValue = new(_manager.ExpireDate) };
-        ExpireDate.Changed += (e) => { _manager.ExpireDate = DateOnly.FromDateTime(ExpireDate.NewValue.Date ?? default); OnEntityChanged(); };
         FillBy(_manager);
 
 

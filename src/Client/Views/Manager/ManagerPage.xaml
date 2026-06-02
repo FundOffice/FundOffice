@@ -198,6 +198,7 @@
 
                     <shared:ModifiableControl
                         HorizontalAlignment="Left"
+                        ContentTemplate="{StaticResource DefaultDateReadOnlyTemplate}"
                         Header="成立日期"
                         Modifier="{Binding SetupDate}">
                         <shared:ModifiableControl.EditTemplate>
@@ -214,6 +215,7 @@
                     <shared:ModifiableControl
                         MinWidth="140"
                         HorizontalAlignment="Left"
+                        ContentTemplate="{StaticResource BooleanDateReadOnlyTemplate}"
                         Header="到期日"
                         Modifier="{Binding ExpireDate}">
                         <shared:ModifiableControl.EditTemplate>

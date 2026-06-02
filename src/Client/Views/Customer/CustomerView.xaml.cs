@@ -89,10 +89,10 @@ public partial class CustomerViewModel : ObservableObject, IRecipient<IEnumerabl
 
     private Investor _investor;
 
-    public ModifiableViewModel<DateEfficientViewModel> Efficient { get; private set; } = null!;
+    public ModifiableViewModel<DateEfficient?, DateEfficientViewModel> Efficient { get; private set; } = null!;
 
 
-    public ModifiableViewModel<IdentityViewMdoel> Identity { get; private set; } = null!;
+    public ModifiableViewModel<Identity, IdentityViewMdoel> Identity { get; private set; } = null!;
 
     [ObservableProperty]
     public partial AmacInvestorType[]? InvestorTypes { get; set; }
@@ -906,7 +906,7 @@ public partial class CustomerViewModel : ObservableObject, IRecipient<IEnumerabl
 //    }
 //}
 
-public partial class DateEfficientViewModel : ObservableObject, IEquatable<DateEfficientViewModel>, IViewModel<DateEfficient>
+public partial class DateEfficientViewModel : ObservableObject, IViewModel<DateEfficient?, DateEfficientViewModel>
 {
 
     [ObservableProperty]
@@ -998,8 +998,8 @@ public partial class RiskAssessmentViewModel : ObservableObject
 }
 
 
-[AutoViewModel(typeof(Identity))]
-public partial class IdentityViewMdoel : IViewModel<Identity> ,IEquatable<IdentityViewMdoel>, IDataValidation 
+
+public partial class IdentityViewMdoel : IViewModel<Identity, IdentityViewMdoel>, IDataValidation 
 {
     public bool Equals(IdentityViewMdoel? other)
     {

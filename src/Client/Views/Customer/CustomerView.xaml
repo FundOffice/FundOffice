@@ -26,14 +26,10 @@
                     </DataTemplate>
                 </Setter.Value>
             </Setter>
-            <Setter Property="ContentTemplate">
-                <Setter.Value>
-                    <DataTemplate>
-                        <shared:CopyableTextBlock Text="{Binding}" />
-                    </DataTemplate>
-                </Setter.Value>
-            </Setter>
+
         </Style>
+
+
 
         <SolidColorBrush x:Key="LabelBrush">Gray</SolidColorBrush>
 

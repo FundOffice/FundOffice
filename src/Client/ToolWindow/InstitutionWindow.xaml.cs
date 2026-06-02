@@ -30,7 +30,7 @@ public partial class InstitutionWindowViewModel : ObservableObject
 
     private Institution _org;
 
-    public ModifiableViewModel<BooleanDate> ExpireDate { get; }
+    public ModifiableViewModel<DateOnly, BooleanDate> ExpireDate { get; private set; } = null!;
 
 
     public ModifiableViewModel<IdentityViewMdoel> Identity { get; private set; } = null!;
@@ -91,8 +91,6 @@ public partial class InstitutionWindowViewModel : ObservableObject
 
         Id = _org.Id;
 
-        ExpireDate = new() { NewValue = new(_org.ExpireDate), OldValue = new(_org.ExpireDate) };
-        ExpireDate.Changed += e => { _org.ExpireDate = DateOnly.FromDateTime(ExpireDate.NewValue?.Date ?? default); OnEntityChanged(); };
         FillBy(_org);
 
         var rel = db.GetCollection<Ownership>().Find(x => x.InstitutionId == id).ToArray();

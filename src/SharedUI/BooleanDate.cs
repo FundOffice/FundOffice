@@ -1,9 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using FMO.Models;
 using System.Collections;
 
 namespace FMO.Shared;
 
-public partial class BooleanDate : ObservableObject, IEquatable<BooleanDate>
+public partial class BooleanDate : ObservableObject, IViewModel<DateOnly, BooleanDate>
 {
 
     public DateTime Today => DateTime.Today;
@@ -49,5 +50,22 @@ public partial class BooleanDate : ObservableObject, IEquatable<BooleanDate>
             Date = DateTime.MaxValue;
     }
 
+    public DateOnly Build() => Trans(this);
+
     public override string ToString() => IsLongTerm ? "长期" : Date?.ToString("yyyy/MM/dd") ?? "未设置";
+
+    public static DateOnly Trans(BooleanDate vm)
+    {
+        return vm.IsLongTerm ? DateOnly.MaxValue : vm.Date is null ? default : DateOnly.FromDateTime(vm.Date.Value);
+    }
+
+    public static BooleanDate Trans(DateOnly vm)
+    {
+        return new BooleanDate(vm);
+    }
+
+    public bool Equals(DateOnly other)
+    {
+        return Date is not null && DateOnly.FromDateTime(Date.Value) == other;
+    }
 }

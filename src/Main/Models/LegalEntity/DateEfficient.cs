@@ -14,6 +14,30 @@ public struct DateEfficient
     /// </summary>
     public bool LongTerm { get; set; }
 
+    #region 重载 == != 实现和default对比
+    public static bool operator ==(DateEfficient left, DateEfficient right)
+    {
+        return left.Begin == right.Begin
+            && left.End == right.End
+            && left.LongTerm == right.LongTerm;
+    }
+
+    public static bool operator !=(DateEfficient left, DateEfficient right)
+    {
+        return !(left == right);
+    }
+
+    // 规范：重写Equals和GetHashCode
+    public override bool Equals(object? obj)
+    {
+        return obj is DateEfficient other && this == other;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Begin, End, LongTerm);
+    }
+    #endregion
 
     public override string ToString()
     {

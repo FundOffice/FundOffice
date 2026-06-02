@@ -123,6 +123,7 @@
 
                     <shared:ModifiableControl
                         HorizontalContentAlignment="Stretch"
+                        ContentTemplate="{StaticResource DefaultDateReadOnlyTemplate}"
                         Header="成立日期"
                         Modifier="{Binding SetupDate}">
                         <shared:ModifiableControl.EditTemplate>
@@ -132,7 +133,10 @@
                         </shared:ModifiableControl.EditTemplate>
                     </shared:ModifiableControl>
 
-                    <shared:ModifiableControl Header="核销日期" Modifier="{Binding ExpireDate}">
+                    <shared:ModifiableControl
+                        ContentTemplate="{StaticResource BooleanDateReadOnlyTemplate}"
+                        Header="核销日期"
+                        Modifier="{Binding ExpireDate}">
                         <shared:ModifiableControl.EditTemplate>
                             <DataTemplate>
                                 <DockPanel MinHeight="28">

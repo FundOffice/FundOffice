@@ -4,7 +4,10 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:FMO"
     xmlns:mod="clr-namespace:FMO.Models;assembly=Models"
-    xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI">
+    xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+
 
 
     <DataTemplate x:Key="DT.TextBox.Center">

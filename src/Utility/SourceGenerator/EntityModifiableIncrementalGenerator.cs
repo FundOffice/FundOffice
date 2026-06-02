@@ -13,6 +13,9 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
 {
     private const string AttributeMetadataName = "FMO.Models.EntityModifiableAttribute";
 
+    private static readonly SymbolDisplayFormat FullyQualifiedWithNullableFormat = SymbolDisplayFormat.FullyQualifiedFormat
+        .AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var classDeclarations = context.SyntaxProvider
@@ -47,7 +50,7 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
     private static GenerationModel? BuildGenerationModel(INamedTypeSymbol targetClass, List<INamedTypeSymbol> entityTypes)
     {
         var logs = new List<string>();
-        logs.Add($"[Start] {targetClass.Name} <- [{string.Join(", ", entityTypes.Select(e => e.Name))}]");
+        logs.Add($"[Start] {targetClass.Name}");
 
         var ns = targetClass.ContainingNamespace.IsGlobalNamespace ? string.Empty : targetClass.ContainingNamespace.ToDisplayString();
         var className = targetClass.Name;
@@ -76,70 +79,49 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
                         !prop.IsStatic && prop.SetMethod != null && !prop.SetMethod.IsInitOnly)
                     {
                         bool isUserDeclared = declaredPropertiesMap.TryGetValue(prop.Name, out var declaredProp);
+                        string entityPropTypeStr = prop.Type.ToDisplayString(FullyQualifiedWithNullableFormat);
+                        bool isEntityValOrStr = prop.Type.IsValueType || prop.Type.SpecialType == SpecialType.System_String;
+                        bool isEntityString = GetCleanTypeName(prop.Type) == "string";
 
                         if (isUserDeclared && declaredProp != null)
                         {
                             var declaredType = declaredProp.Type as INamedTypeSymbol;
-                            if (declaredType != null && IsModifiableViewModel(declaredType) && declaredType.TypeArguments.Length > 0)
+                            if (declaredType != null && IsModifiableViewModel(declaredType))
                             {
-                                var vmInnerType = declaredType.TypeArguments[0];
-                                var entityPropType = prop.Type;
-
-                                // 🔍 诊断打印：输出两侧完整类型元数据
-                                logs.Add($"  🔍 [DEBUG] 检查属性: {prop.Name}");
-                                logs.Add(DumpTypeDebugInfo(vmInnerType, "VM Inner Type"));
-                                logs.Add(DumpTypeDebugInfo(entityPropType, "Entity Prop Type"));
-
-                                string vmClean = GetCleanTypeName(vmInnerType);
-                                string entityClean = GetCleanTypeName(entityPropType);
-                                logs.Add($"  📏 比对字符串: VM='{vmClean}' | Entity='{entityClean}'");
-
-                                bool isSimpleMatch = vmClean == entityClean;
-                                bool isComplexVm = false;
-
-                                if (!isSimpleMatch && vmInnerType is INamedTypeSymbol vmNamed)
+                                var typeArgs = declaredType.TypeArguments;
+                                if (typeArgs.Length > 0)
                                 {
-                                    isComplexVm = CheckIViewModelMatch(vmNamed, entityClean);
-                                    logs.Add($"  🔗 IViewModel<T> 接口匹配结果: {isComplexVm}");
-                                }
+                                    int argCount = typeArgs.Length;
+                                    var typeArg1 = typeArgs[0];
+                                    var typeArg2 = argCount > 1 ? typeArgs[1] : typeArgs[0];
 
-                                logs.Add($"  ✅ 最终匹配结果: Simple={isSimpleMatch} | Complex={isComplexVm}");
+                                    string t1Str = typeArg1.ToDisplayString(FullyQualifiedWithNullableFormat);
+                                    string t2Str = typeArg2.ToDisplayString(FullyQualifiedWithNullableFormat);
 
-                                if (isSimpleMatch || isComplexVm)
-                                {
-                                    string genericArg2 = vmInnerType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                                    bool isNullable2 = IsNullableType(vmInnerType);
+                                    string t1Clean = GetCleanTypeName(typeArg1);
+                                    string entityClean = GetCleanTypeName(prop.Type);
+                                    bool isT1Entity = t1Clean == entityClean;
 
-                                    bool isEntityValOrStr2 = prop.Type.IsValueType || prop.Type.SpecialType == SpecialType.System_String;
-                                    bool isVmNull2 = isNullable2;
+                                    bool isNullable = IsNullableType(typeArg1);
 
                                     properties.Add(new PropertyInfo(
-                                        prop.Name, genericArg2, isNullable2, isWritable: true,
-                                        entityType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                                        isUserDeclared: true, isComplexViewModel: isComplexVm,
-                                        isEntityValueTypeOrString: isEntityValOrStr2, isVmNullable: isVmNull2));
+                                        prop.Name, t1Str, t2Str, argCount, isT1Entity,
+                                        isNullable, true, entityPropTypeStr, true, isEntityValOrStr, isEntityString));
 
-                                    logs.Add($"  ➕ {prop.Name}: {genericArg2} (UserDeclared, {(isComplexVm ? "ComplexVM" : "SimpleNullable")})");
+                                    logs.Add($"  ➕ {prop.Name}: UserDeclared (Args:{argCount}, T1IsEntity:{isT1Entity})");
                                     continue;
                                 }
                             }
-                            logs.Add($"  ⏭️ {prop.Name}: Skipped (UserDeclared, type mismatch)");
+                            logs.Add($"  ⏭️ {prop.Name}: Skipped (UserDeclared, not ModifiableViewModel)");
                             continue;
                         }
 
-                        ITypeSymbol propType = prop.Type;
-                        string genericArg = propType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                        bool isNullable = IsNullableType(propType);
-
-                        bool isEntityValOrStr = propType.IsValueType || propType.SpecialType == SpecialType.System_String;
-                        bool isVmNull = isNullable;
-
+                        // 自动生成：默认只有 1 个参数，且就是 Entity 类型 (情况1)
                         properties.Add(new PropertyInfo(
-                            prop.Name, genericArg, isNullable, isWritable: true,
-                            entityType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
-                            isUserDeclared: false, isComplexViewModel: false,
-                            isEntityValueTypeOrString: isEntityValOrStr, isVmNullable: isVmNull));
-                        logs.Add($"  ➕ {prop.Name}: {genericArg} (AutoGenerated)");
+                            prop.Name, entityPropTypeStr, entityPropTypeStr, 1, true,
+                            IsNullableType(prop.Type), true, entityPropTypeStr, false, isEntityValOrStr, isEntityString));
+
+                        logs.Add($"  ➕ {prop.Name}: AutoGenerated");
                     }
                 }
                 currentType = currentType.BaseType;
@@ -152,61 +134,17 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
         return new GenerationModel(className, ns, entityTypes, properties, logs);
     }
 
-    /// <summary>
-    /// 精确判断类型是否为 Nullable (支持 C# 8.0+ Nullable 引用类型注解及 Nullable<T>)
-    /// </summary>
     private static bool IsNullableType(ITypeSymbol type)
     {
-        if (type.IsReferenceType)
-        {
-            // 对于引用类型，只要没有被显式标记为 NotAnnotated (非空)，就视作可为 null (包含 Annotated 和 oblivious 状态)
-            return type.NullableAnnotation != NullableAnnotation.NotAnnotated;
-        }
-        // 对于值类型，判断是否为 Nullable<T>
+        if (type.IsReferenceType) return type.NullableAnnotation != NullableAnnotation.NotAnnotated;
         return type is INamedTypeSymbol n && n.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T;
-    }
-
-    // 🔍 诊断辅助：格式化类型元数据
-    private static string DumpTypeDebugInfo(ITypeSymbol? type, string label)
-    {
-        if (type == null) return $"{label}: null";
-        var named = type as INamedTypeSymbol;
-        var typeArgInfo = named != null && named.IsGenericType && named.TypeArguments.Length > 0
-            ? $"TypeArg[0]: {named.TypeArguments[0].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}"
-            : "TypeArgs: N/A";
-
-        return $$"""
-{{label}}:
-  DisplayString: {{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}}
-  OriginalDef:   {{type.OriginalDefinition.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}}
-  SpecialType:   {{type.SpecialType}}
-  IsValueType:   {{type.IsValueType}}
-  NullableAnn:   {{type.NullableAnnotation}}
-  Namespace:     {{type.ContainingNamespace?.ToDisplayString()}}
-  {{typeArgInfo}}
-""";
     }
 
     private static string GetCleanTypeName(ITypeSymbol type)
     {
         if (type is INamedTypeSymbol named && named.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
             type = named.TypeArguments[0];
-
-        type = type.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
-        return type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-    }
-
-    private static bool CheckIViewModelMatch(INamedTypeSymbol vmType, string entityCleanName)
-    {
-        foreach (var iface in vmType.AllInterfaces)
-        {
-            if (iface.OriginalDefinition.Name == "IViewModel" && iface.TypeArguments.Length == 1)
-            {
-                if (GetCleanTypeName(iface.TypeArguments[0]) == entityCleanName)
-                    return true;
-            }
-        }
-        return false;
+        return type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
     }
 
     private static bool IsModifiableViewModel(INamedTypeSymbol type) =>
@@ -215,7 +153,6 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
 
     private static string GenerateSource(GenerationModel model)
     {
-        // 🔍 强制开启诊断日志输出（换行自动转注释格式）
         var debugHeader = string.Join("\n",
             new[] { "// 🔍 ===== EntityModifiable DEBUG DUMP =====" }
             .Concat(model.DebugLogs.Select(l => $"// {l.Replace("\n", "\n// ")}"))
@@ -226,7 +163,7 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
 
         var propertyDeclarations = string.Join("\n\n", model.Properties.Where(p => !p.IsUserDeclared).Select(prop =>
         {
-            var genericArgClean = prop.GenericArgument.TrimEnd('?');
+            var genericArgClean = prop.TypeArg1.TrimEnd('?');
             var nullableMark = prop.IsNullable ? "?" : "";
             return $$"""
         public ModifiableViewModel<{{genericArgClean}}{{nullableMark}}> {{prop.Name}} { get; private set; } = null!;
@@ -236,35 +173,47 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
         var initAssignments = string.Join("\n", model.Properties.Select(prop =>
         {
             var entityAccess = $"entity.{prop.Name}";
-
-            // 🎯 核心判定逻辑：非复杂VM && (实体属性是值类型或string) && (VM属性泛型是Nullable)
-            bool applyDefaultToNull = !prop.IsComplexViewModel && prop.IsEntityValueTypeOrString && prop.IsVmNullable;
-
-            if (prop.IsComplexViewModel)
-            {
-                return $$"""            {{prop.Name}} = new() { NewValue = new {{prop.GenericArgument}}({{entityAccess}}), OldValue = new {{prop.GenericArgument}}({{entityAccess}}) };""";
-            }
+            bool applyDefaultToNull = prop.IsEntityValueTypeOrString && prop.IsNullable;
 
             string newValueExpr;
             string oldValueExpr;
 
-            if (applyDefaultToNull)
+            if (prop.ArgCount == 2)
             {
-                // 当原始值为 default (如 int 的 0，string 的 null) 时，强行赋 null 给 NewValue / OldValue
-                var val = prop.IsUserDeclared ? entityAccess : $"CloneHelper.CloneValue({entityAccess})";
-                newValueExpr = $"{entityAccess} == default ? null : {val}";
-                oldValueExpr = $"{entityAccess} == default ? null : {entityAccess}";
+                // 🎯 情况三：ModifiableViewModel<TEntity, TVM>
+                // NewValue = new TVM(entity), OldValue = entity
+                newValueExpr = $"new {prop.TypeArg2}({entityAccess})";
+                oldValueExpr = applyDefaultToNull
+                    ? $"{entityAccess} == default ? null : {entityAccess}"
+                    : (prop.IsNullable ? $"{entityAccess} ?? default" : entityAccess);
             }
-            else if (prop.IsUserDeclared)
+            else if (prop.ArgCount == 1)
             {
-                newValueExpr = entityAccess;
-                oldValueExpr = entityAccess;
+                if (prop.IsT1Entity)
+                {
+                    // 🎯 情况一：ModifiableViewModel<TEntity>
+                    // NewValue = clone, OldValue = entity
+                    string cloneExpr = $"CloneHelper.CloneValue({entityAccess})";
+                    newValueExpr = applyDefaultToNull
+                        ? $"{entityAccess} == default ? null : {cloneExpr}"
+                        : cloneExpr;
+
+                    oldValueExpr = applyDefaultToNull
+                        ? $"{entityAccess} == default ? null : {entityAccess}"
+                        : (prop.IsNullable ? $"{entityAccess} ?? default" : entityAccess);
+                }
+                else
+                {
+                    // 🎯 情况二：ModifiableViewModel<TVM>
+                    // NewValue = new TVM(entity), OldValue = new TVM(entity)
+                    newValueExpr = $"new {prop.TypeArg1}({entityAccess})";
+                    oldValueExpr = $"new {prop.TypeArg1}({entityAccess})";
+                }
             }
             else
             {
-                newValueExpr = $"CloneHelper.CloneValue({entityAccess})";
-                var nullCoalesce = prop.IsNullable ? " ?? default" : "";
-                oldValueExpr = $"{entityAccess}{nullCoalesce}";
+                newValueExpr = entityAccess;
+                oldValueExpr = entityAccess;
             }
 
             return $$"""            {{prop.Name}} = new() { NewValue = {{newValueExpr}}, OldValue = {{oldValueExpr}} };""";
@@ -272,35 +221,34 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
 
         var eventSubscriptions = string.Join("\n", model.Properties.Where(p => p.IsWritable).Select(prop =>
         {
-            var genericArg = prop.GenericArgument;
             var entityAccess = $"entity.{prop.Name}";
 
-            if (prop.IsComplexViewModel)
+            // 🎯 铁律：Changed 事件中的泛型参数永远是第一个模板参数
+            string eventGenericType = prop.TypeArg1;
+
+            if (prop.ArgCount == 1 && !prop.IsT1Entity)
+            {
+                // 情况二：单泛型且是 TVM，ee.NewValue 是 TVM，需要 Build() 转回 Entity
                 return $$"""
             {{prop.Name}}.Changed += e =>
             {
-                if (e is ValueChangeEventArgs<{{genericArg}}> ee)
+                if (e is ValueChangeEventArgs<{{eventGenericType}}> ee)
                     {{entityAccess}} = ee.NewValue?.Build() ?? default;
                 _throttle.Execute(OnEntityChanged);
             };
 """;
-            else if (prop.IsUserDeclared)
-                return $$"""
-            {{prop.Name}}.Changed += e =>
-            {
-                if (e is ValueChangeEventArgs<{{genericArg}}> ee)
-                    {{entityAccess}} = ee.NewValue ?? default;
-                _throttle.Execute(OnEntityChanged);
-            };
-""";
+            }
             else
             {
+                // 情况一 (TEntity) 和 情况三 (TEntity, TVM)
+                // 第一个参数都是 TEntity，ee.NewValue 直接就是 Entity，不需要 Build()！
                 var nullCoalesce = prop.IsNullable ? " ?? default" : "";
-                var stringFix = (genericArg == "string") ? " ?? \"\"" : nullCoalesce;
+                var stringFix = prop.IsEntityString ? " ?? \"\"" : nullCoalesce;
+
                 return $$"""
             {{prop.Name}}.Changed += e =>
             {
-                if (e is ValueChangeEventArgs<{{genericArg}}> ee)
+                if (e is ValueChangeEventArgs<{{eventGenericType}}> ee)
                     {{entityAccess}} = ee.NewValue{{stringFix}};
                 _throttle.Execute(OnEntityChanged);
             };
@@ -364,30 +312,33 @@ using FMO.Shared;
     private class PropertyInfo
     {
         public string Name { get; }
-        public string GenericArgument { get; }
+        public string TypeArg1 { get; }
+        public string TypeArg2 { get; }
+        public int ArgCount { get; }
+        public bool IsT1Entity { get; }
+
         public bool IsNullable { get; }
         public bool IsWritable { get; }
         public string EntityTypeName { get; }
         public bool IsUserDeclared { get; }
-        public bool IsComplexViewModel { get; }
-
-        // 🎯 新增属性
         public bool IsEntityValueTypeOrString { get; }
-        public bool IsVmNullable { get; }
+        public bool IsEntityString { get; }
 
-        public PropertyInfo(string name, string genericArgument, bool isNullable, bool isWritable,
-            string entityTypeName, bool isUserDeclared, bool isComplexViewModel,
-            bool isEntityValueTypeOrString, bool isVmNullable)
+        public PropertyInfo(string name, string typeArg1, string typeArg2, int argCount, bool isT1Entity,
+            bool isNullable, bool isWritable, string entityTypeName, bool isUserDeclared,
+            bool isEntityValueTypeOrString, bool isEntityString)
         {
             Name = name;
-            GenericArgument = genericArgument;
+            TypeArg1 = typeArg1;
+            TypeArg2 = typeArg2;
+            ArgCount = argCount;
+            IsT1Entity = isT1Entity;
             IsNullable = isNullable;
             IsWritable = isWritable;
             EntityTypeName = entityTypeName;
             IsUserDeclared = isUserDeclared;
-            IsComplexViewModel = isComplexViewModel;
             IsEntityValueTypeOrString = isEntityValueTypeOrString;
-            IsVmNullable = isVmNullable;
+            IsEntityString = isEntityString;
         }
     }
 }
