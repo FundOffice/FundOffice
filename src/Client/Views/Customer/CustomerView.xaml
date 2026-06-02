@@ -8,6 +8,7 @@
     xmlns:local="clr-namespace:FMO"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
     Width="500"
     d:DataContext="{d:DesignInstance Type=local:CustomerViewModel}"
     d:DesignHeight="450"
@@ -29,6 +30,9 @@
 
         </Style>
 
+        <DataTemplate DataType="{x:Type sys:String}">
+            <shared:CopyableTextBlock VerticalAlignment="Center" Text="{Binding}" />
+        </DataTemplate>
 
 
         <SolidColorBrush x:Key="LabelBrush">Gray</SolidColorBrush>

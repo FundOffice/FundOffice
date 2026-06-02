@@ -245,6 +245,7 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
         Trustees2 = TrusteeGallay.TrusteeViewModels;
         var work = TrusteeGallay.Worker;
         TrusteeAPIButtons = [
+            new((Geometry)App.Current.Resources["f.calendar"], QueryOpenDaysOnceCommand, nameof(TrusteeWorker.QueryOpenDaysOnce), "同步开放日"),
             new((Geometry)App.Current.Resources["f.table-cells"], QueryNetValueOnceCommand, nameof(TrusteeWorker.QueryNetValueOnce), "同步净值"),
             new((Geometry)App.Current.Resources["f.hand-holding-dollar"], QueryRaisingBalanceOnceCommand, nameof(TrusteeWorker.QueryRaisingBalanceOnce), "同步募集户余额"),
             new((Geometry)App.Current.Resources["f.tornado"], QueryRaisingAccountTransctionOnceCommand,  nameof(TrusteeWorker.QueryRaisingAccountTransctionOnce),"同步募集户流水"),
@@ -324,6 +325,13 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
     }
 
     #region Trustee Buttons
+
+    [RelayCommand]
+    public async Task QueryOpenDaysOnce()
+    {
+        await Task.Run(() => TrusteeGallay.Worker.QueryOpenDaysOnce());
+    }
+
 
     [RelayCommand]
     public async Task QueryNetValueOnce()

@@ -41,9 +41,6 @@
         </DockPanel>
     </DataTemplate>
 
-    <DataTemplate DataType="{x:Type sys:String}">
-        <local:CopyableTextBlock VerticalAlignment="Center" Text="{Binding}" />
-    </DataTemplate>
 
 
     <!--  🔹 默认只读态显示模板（TextBlock）  -->
