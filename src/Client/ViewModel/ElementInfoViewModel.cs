@@ -325,11 +325,11 @@ public partial class PartFeeViewModel : ObservableObject, IViewModel<PartRedempt
 {
 
 
-    public PartFeeViewModel(PartRedemptionFee obj)
+    public PartFeeViewModel(PartRedemptionFee? obj)
     {
-        Month = obj.Month;
-        Include = obj.Include;
-        Fee = obj.Fee;
+        Month = obj?.Month;
+        Include = obj?.Include ?? false;
+        Fee = obj?.Fee;
     }
 
 

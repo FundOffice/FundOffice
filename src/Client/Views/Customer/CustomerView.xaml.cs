@@ -998,8 +998,8 @@ public partial class RiskAssessmentViewModel : ObservableObject
 }
 
 
-
-public partial class IdentityViewMdoel : IViewModel<Identity, IdentityViewMdoel>, IDataValidation 
+[ForceNull(nameof(Id))]
+public partial class IdentityViewMdoel : ObservableObject, IViewModel<Identity, IdentityViewMdoel>, IDataValidation 
 {
     public bool Equals(IdentityViewMdoel? other)
     {
