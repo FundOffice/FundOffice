@@ -94,6 +94,8 @@ public partial class ModifyInheritWindow : Window
 
         Mouse.Capture(null); // 释放捕获
         e.Handled = true;
+
+        UpdateLines();
     }
     private void Window_PreviewMouseMove(object sender, MouseEventArgs e)
     {
@@ -111,34 +113,39 @@ public partial class ModifyInheritWindow : Window
         _hoverBorder = null;
         _hoverTarget = null;
 
-        // 3. 🌟 纯数学矩形边界检测 (无视 Mouse.Capture 屏蔽、无视 Canvas 遮挡)
+        // 3. 🌟 纯数学矩形边界检测
         foreach (var border in _cardBorders)
         {
             if (!border.IsLoaded || border.DataContext is not ShareItem target) continue;
 
             try
             {
-                // 获取卡片左上角相对于 HostGrid 的坐标
                 Point borderPos = border.TranslatePoint(new Point(0, 0), HostGrid);
                 Rect rect = new Rect(borderPos, new Size(border.ActualWidth, border.ActualHeight));
 
-                // 判断鼠标是否落入该卡片矩形内
                 if (rect.Contains(mousePos))
                 {
                     _hoverBorder = border;
                     _hoverTarget = target;
                     isValid = IsValidTarget(_dragSource, target);
 
-                    // 实时变色反馈
-                    border.BorderThickness = new Thickness(2);
+                    // ✅ 修改后：移除 BorderThickness，改用 Effect 和 Brush
                     border.BorderBrush = new SolidColorBrush(isValid ? Colors.Green : Colors.Red);
                     border.Background = new SolidColorBrush(isValid ? Color.FromRgb(240, 255, 240) : Color.FromRgb(255, 240, 240));
 
-                    // 合法则吸附到目标底部锚点
+                    // 添加外发光效果，视觉上比单纯变粗更明显且不影响布局
+                    border.Effect = new System.Windows.Media.Effects.DropShadowEffect
+                    {
+                        Color = isValid ? Colors.Green : Colors.Red,
+                        BlurRadius = 8,
+                        ShadowDepth = 0,
+                        Opacity = 0.8
+                    };
+
                     if (isValid)
                         endPos = GetEllipseCenter(_bottomPoints, target);
 
-                    break; // 找到即退出
+                    break;
                 }
             }
             catch { }
@@ -204,8 +211,8 @@ public partial class ModifyInheritWindow : Window
     private void ResetBorderVisuals(Border border)
     {
         border.BorderBrush = new SolidColorBrush(Color.FromRgb(221, 221, 221));
-        border.BorderThickness = new Thickness(1);
         border.Background = Brushes.White;
+        border.Effect = null;
     }
 
     private void CardBorder_Loaded(object sender, RoutedEventArgs e)
@@ -339,6 +346,7 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
         FundName = fundName;
         FlowId = flowId;
         using var db = DbHelper.Base();
+        var curFlow = db.GetCollection<FundFlow>().FindById(flowId);
 
         var classes = db.QueryFundFactor<ShareClass[]>(fundId, FactorFields.ShareClasses);
 
@@ -368,7 +376,7 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
             if (Data[i].FlowId < flowId && (i == Data.Count - 1 || Data[i + 1].FlowId > flowId))
             {
                 var x = Data[i];
-                Data.Insert(i + 1, new Row(this, fundName, flowId, x.FlowName, x.Date, x.Shares.Select(y => new ShareItem
+                Data.Insert(i + 1, new Row(this, fundName, flowId, curFlow.Name, curFlow.Date ?? default, x.Shares.Select(y => new ShareItem
                 {
                     Id = y.Id,
                     Name = y.Name,
