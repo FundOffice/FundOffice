@@ -476,13 +476,13 @@
                         Header="变更公告"
                         Style="{StaticResource DualFileStyle2}" />
 
-                    <WrapPanel>
+                    <DockPanel>
                         <Button CommandParameter="{Binding CommitmentLetter}" Style="{StaticResource GeneratorButton}" />
                         <shared:FileView
                             Content="{Binding CommitmentLetter}"
                             Header="承诺函"
                             Style="{StaticResource DualFileStyle2}" />
-                    </WrapPanel>
+                    </DockPanel>
 
 
                     <shared:FileView
@@ -570,10 +570,10 @@
 
 
 
-                    <WrapPanel>
+                    <DockPanel>
                         <Button CommandParameter="{Binding Announcement}" Style="{StaticResource GeneratorButton}" />
                         <shared:FileView Content="{Binding Announcement}" Style="{StaticResource DualFileStyle2}" />
-                    </WrapPanel>
+                    </DockPanel>
 
 
                 </StackPanel>

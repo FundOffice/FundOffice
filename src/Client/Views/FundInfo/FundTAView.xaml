@@ -201,12 +201,6 @@
 
 
 
-                <Button
-                    Content="新申购"
-                    DockPanel.Dock="Right"
-                    Style="{StaticResource ButtonSuccess.Small}" />
-
-
                 <Border
                     VerticalAlignment="Top"
                     Background="Green"
@@ -346,44 +340,7 @@
                             </DataGridTemplateColumn.Header>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn>
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <DockPanel>
-                                        <Button
-                                            Command="{Binding PurchaseCommand}"
-                                            Content="申购"
-                                            Foreground="Green"
-                                            Style="{StaticResource ButtonDefault.Small}">
-                                            <i:Interaction.Triggers>
-                                                <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
-                                                    <i:InvokeCommandAction Command="{x:Static ApplicationCommands.NotACommand}" />
-                                                </i:EventTrigger>
-                                            </i:Interaction.Triggers>
-                                        </Button>
-                                        <Button
-                                            x:Name="redeem"
-                                            Command="{Binding RedeemCommand}"
-                                            Content="赎回"
-                                            Foreground="Red"
-                                            Style="{StaticResource ButtonDefault.Small}">
-                                            <i:Interaction.Triggers>
-                                                <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
-                                                    <i:InvokeCommandAction Command="{x:Static ApplicationCommands.NotACommand}" />
-                                                </i:EventTrigger>
-                                            </i:Interaction.Triggers>
-                                        </Button>
-                                    </DockPanel>
-                                    <DataTemplate.Triggers>
-                                        <DataTrigger Binding="{Binding Share}" Value="0">
-                                            <Setter TargetName="redeem" Property="Visibility" Value="Collapsed" />
-                                        </DataTrigger>
-                                    </DataTemplate.Triggers>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-
-
+                      
                         <!--<DataGridTemplateColumn>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
