@@ -14,7 +14,7 @@ public partial class App : Application
     {
         //if(!IsEnvironmentSafe()) this.Shutdown();
 
-        if (DateTime.Now.Year + 1010 > 3036 || DateTime.Now.Month > 5) this.Shutdown();
+        if (DateTime.Now.Year + 1010 > 3036 || DateTime.Now.Month > 7) this.Shutdown();
 
 #if RELEASE
     // 设置工作目录 
