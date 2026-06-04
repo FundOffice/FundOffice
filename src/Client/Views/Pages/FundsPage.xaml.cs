@@ -188,6 +188,7 @@ public partial class FundsPageViewModel : ObservableRecipient, IRecipient<Fund>
             var newf = funds./*ExceptBy(Funds.Select(x => x.Name), x => x.Name).*/Select(x => new Fund
             {
                 Name = x.Name!,
+                Code = $"unset.{x.Name!.GetHashCode()}",
                 ShortName = Fund.GetDefaultShortName(x.Name!),
                 Url = "https://gs.amac.org.cn/amac-infodisc/res/pof" + x.Url,
                 AsAdvisor = x.IsAdvisor,
@@ -196,11 +197,14 @@ public partial class FundsPageViewModel : ObservableRecipient, IRecipient<Fund>
 
             using HttpClient client = new HttpClient();
 
+            var dic = Funds.ToLookup(x => x.Code, x => x);
+
+
             foreach (var f in newf)
             {
                 await AmacAssist.SyncFundInfoAsync(f, client);
 
-                var old = Funds.FirstOrDefault(x => x.Code == f.Code);
+                var old = dic[f.Code].FirstOrDefault();
                 if (old is null) old = Funds.FirstOrDefault(x => string.IsNullOrWhiteSpace(x.Code) && x.Name == f.Name); // 未设置code
 
                 if (old is null) //新增的
@@ -412,7 +416,7 @@ public partial class FundsPageViewModel : ObservableRecipient, IRecipient<Fund>
         /// 备案号
         /// </summary>
         [ObservableProperty]
-        public partial string? Code { get; set; }
+        public partial string Code { get; set; }
 
 
         [ObservableProperty]

@@ -39,10 +39,6 @@ public class TransferRecord// : IEquatable<TransferRecord>
     public string? ExternalRequestId { get; set; }
 
 
-    /// <summary>
-    /// 份额类型
-    /// </summary>
-    public string? ShareClass { get; set; }
 
 
     /// <summary>

@@ -45,6 +45,9 @@ public class ShareClass
     public static int GetFlow(int id) => id / 1000;
 
     public static int MakeId(int flowId, int v) => flowId * 1000 + v;
+
+
+    public static ShareClass FromFlowSingleton(int flowId, string fundName, string shareCode) => new ShareClass() { Id = MakeId(flowId, 1), Name = SingletonName, FundName = fundName, Code = shareCode, };
     
 }
 

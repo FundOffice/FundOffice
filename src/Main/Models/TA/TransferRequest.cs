@@ -106,7 +106,6 @@ public class TransferRequest
     /// </summary>
     public string? Agency { get; set; }
 
-    public string? ShareClass { get; set; }
 
     /// <summary>
     /// 是否被取消

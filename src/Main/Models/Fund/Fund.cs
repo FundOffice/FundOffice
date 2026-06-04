@@ -38,7 +38,7 @@ public class Fund
     /// <summary>
     /// 备案号
     /// </summary>
-    public string? Code { get; set; }
+    public required string Code { get; set; }
 
     /// <summary>
     /// 最新更新日期
