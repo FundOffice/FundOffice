@@ -222,6 +222,7 @@ internal class TransferRecordJson : JsonBase
         var r = new TransferRecord
         {
             FundCode = FundCode,
+            ShareCode = FundCode,
             ConfirmedDate = DateOnly.ParseExact(ConfDate, "yyyyMMdd"),
             RequestDate = DateOnly.ParseExact(ApplyDate, "yyyyMMdd"),
             FundName = FundName,

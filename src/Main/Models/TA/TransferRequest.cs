@@ -65,6 +65,11 @@ public class TransferRequest
     /// </summary>
     public string? FundCode { get; set; }
 
+    public string? ShareClass { get; set; }
+
+    public string? ShareCode { get; set; }
+
+
     /// <summary>
     /// 业务类型
     /// </summary>

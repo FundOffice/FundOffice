@@ -138,6 +138,7 @@ internal class TransferRequestJson : JsonBase
             InvestorName = InvestorName,
             FundName = FundName,
             FundCode = FundCode,
+            ShareCode = FundCode,
             RequestDate = DateOnly.ParseExact(TransactionDate, "yyyyMMdd"),
             RequestType = transferRequestType,
             RequestAmount = ParseDecimal(ApplicationAmount),

@@ -93,16 +93,14 @@ public partial class CITICS : TrusteeApiBase
     public override async Task<ReturnWrap<TransferRequest>> QueryTransferRequests(DateOnly begin, DateOnly end, string? fundCode = null)
     {
         var part = "/v2/ta/queryTradeApplyForApi";
-        var result = await SyncWork<TransferRequest, TransferRequestJson>(part, new { requestBeginDate = $"{begin:yyyyMMdd}", requestEndDate = $"{end:yyyyMMdd}", fundCode = fundCode }, x => x.ToObject());
-        return result;
+        var data = await SyncWork<TransferRequest, TransferRequestJson>(part, new { requestBeginDate = $"{begin:yyyyMMdd}", requestEndDate = $"{end:yyyyMMdd}", fundCode = fundCode }, x => x.ToObject());
 
-        // 后处理 不处理，统一在DataTracker中
-        // 如果 api 更新基金份额映射，再添加
+        // 子产品 映射
+        if (data.Code == ReturnCode.Success && data.Data is not null)
+            await MapCode(data.Data);
 
-
-        //return   new(result.Code, result.Data?.Select(x=>x.ToObject()));
+        return data;
     }
-
 
     public override async Task<ReturnWrap<SubjectFundMapping>> QuerySubjectFundMappings()
     {
@@ -123,6 +121,7 @@ public partial class CITICS : TrusteeApiBase
     {
         var part = "/v1/ta/TradeConfirmationForApi";
         var result = await SyncWork<TransferRecordJson, TransferRecordJson>(part, new { ackBeginDate = $"{begin:yyyyMMdd}", ackEndDate = $"{end:yyyyMMdd}", fundCode = fundCode }, x => x);
+         
 
         List<TransferRecord> list = new();
         // 后处理
@@ -183,8 +182,11 @@ public partial class CITICS : TrusteeApiBase
             }
         }
 
+        // 子基金
+        if (list.Count > 0)
+            await MapCode(list);
+
         return new(result.Code, list);
-        //return new(result.Code, null);
     }
 
 

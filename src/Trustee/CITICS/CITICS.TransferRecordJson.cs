@@ -193,6 +193,7 @@ internal class TransferRecordJson : JsonBase
             Type = ParseRecordType(Apkind),
             FundCode = FundCode,
             FundName = "unset",
+            ShareCode = FundCode,
             Agency = AgencyName,
             RequestDate = DateOnly.ParseExact(ApplyDate, "yyyyMMdd"),
             RequestAmount = ParseDecimal(SubAmt),

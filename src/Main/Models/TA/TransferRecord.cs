@@ -26,6 +26,14 @@ public class TransferRecord// : IEquatable<TransferRecord>
     public string? FundCode { get; set; }
 
 
+    /// <summary>
+    /// 份额类型
+    /// </summary>
+    public string? ShareClass { get; set; }
+
+    public string? ShareCode { get; set; }
+
+
     public string? ExternalId { get; set; }
 
     public string? ExternalRequestId { get; set; }

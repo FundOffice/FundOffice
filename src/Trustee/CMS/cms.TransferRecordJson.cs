@@ -128,6 +128,7 @@ internal class TransferRecordJson : JsonBase
             PerformanceFee = ParseDecimal(Performance),
             ExternalRequestId = $"{CMS._Identifier}.{ApplyNo}",
             FundCode = FundCode,
+            ShareCode = FundCode,
             FundName = FundName, 
             Background = Regex.IsMatch(Note, "自动申购|付费强赎|子基金"),
             Source = "api",

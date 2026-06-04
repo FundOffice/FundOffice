@@ -168,6 +168,7 @@ public class TransferRequestJson : JsonBase
             InvestorName = CustName,
             FundName = FundName,
             FundCode = FundCode,
+            ShareCode = FundCode,
             Agency = AgencyName,
             CreateDate = DateOnly.FromDateTime(DateTime.Now),
             ExternalId = $"{CSC._Identifier}.{OriginalNo}", 

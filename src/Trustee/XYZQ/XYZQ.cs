@@ -332,26 +332,13 @@ public class XYZQ : TrusteeApiBase
         }
 
 
-        var result = await SyncWork<TransferRecord, RecordJson>("TaDataConfirmQuery", new { scdate = begin.ToString("yyyyMMdd"), ecdate = end.ToString("yyyyMMdd"), fundcode = fundCode }, x => x.ToObject());
+        var data = await SyncWork<TransferRecord, RecordJson>("TaDataConfirmQuery", new { scdate = begin.ToString("yyyyMMdd"), ecdate = end.ToString("yyyyMMdd"), fundcode = fundCode }, x => x.ToObject());
 
-        // code 
-        if (result.Data is not null)
-        {
-            using var db = DbHelper.Base();
-            var dic = db.GetCollection<Fund>().Query().Select(x => new { x.Code, x.Id }).ToList().ToDictionary(x => x.Code!, x => x.Id);
-            foreach (var item in result.Data.GroupBy(x => x.FundCode))
-            {
-                var code = FundsInfo?.FirstOrDefault(x => x.FundCode == item.Key)?.AmacCode;
-                dic.TryGetValue(code!, out var id);
-                foreach (var g in item)
-                {
-                    g.FundCode = code;
-                    g.FundId = id;
-                }
-            }
-        }
+        ///
+        if (data.Code == ReturnCode.Success && data.Data is not null)
+            await MapCode(data.Data);
 
-        return result;
+        return data;
     }
 
     public override async Task<ReturnWrap<TransferRequest>> QueryTransferRequests(DateOnly begin, DateOnly end, string? fundCode = null)
@@ -369,9 +356,12 @@ public class XYZQ : TrusteeApiBase
         if (fundCode is null)
             return new(ReturnCode.XYZQ_FundCode, []);
 
-        var result = await SyncWork<TransferRequest, RequestJson>("QueryTradeApplication", new { startdate = begin.ToString("yyyyMMdd"), enddate = end.ToString("yyyyMMdd"), fundcode = fundCode }, x => x.ToObject());
+        var data = await SyncWork<TransferRequest, RequestJson>("QueryTradeApplication", new { startdate = begin.ToString("yyyyMMdd"), enddate = end.ToString("yyyyMMdd"), fundcode = fundCode }, x => x.ToObject());
 
-        return result;
+        ///
+        if (data.Code == ReturnCode.Success && data.Data is not null)
+            await MapCode(data.Data);
+        return data;
     }
 
 

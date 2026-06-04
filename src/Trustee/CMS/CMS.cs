@@ -60,27 +60,10 @@ public partial class CMS : TrusteeApiBase
     public override async Task<ReturnWrap<TransferRequest>> QueryTransferRequests(DateOnly begin, DateOnly end, string? fundCode = null)
     {
         var data = await SyncWork<TransferRequest, TransferRequestJson>(1007, new { beginDate = $"{begin:yyyyMMdd}", endDate = $"{end:yyyyMMdd}", fundCode = fundCode }, x => x.ToObject());
-
-        // 无数据返回
-        if (data.Data?.Count == 0) return data;
-
+         
         // 子产品 映射
-        if (FundsInfo is null)
-            await QuerySubjectFundMappings();
-
         if (data.Code == ReturnCode.Success && data.Data is not null)
-        {
-            foreach (var item in data.Data)
-            {
-                if (FundsInfo?.FirstOrDefault(x => x.FundCode == item.FundCode) is SubjectFundMapping sfm && sfm.MasterCode is not null)
-                {
-                    item.FundCode = sfm.MasterCode;
-                    item.FundName = sfm.MasterName!;
-                    if (!string.IsNullOrWhiteSpace(sfm.ShareClass))
-                        item.ShareClass = sfm.ShareClass;
-                }
-            }
-        }
+            await MapCode(data.Data);
         return data;
     }
 
@@ -91,22 +74,8 @@ public partial class CMS : TrusteeApiBase
         var data = await SyncWork<TransferRecord, TransferRecordJson>(1006, new { beginDate = $"{begin:yyyyMMdd}", endDate = $"{end:yyyyMMdd}", fundCode = fundCode }, x => x.ToObject());
 
         // 子产品 映射
-        if (FundsInfo is null)
-            await QuerySubjectFundMappings();
-
         if (data.Code == ReturnCode.Success && data.Data is not null)
-        {
-            foreach (var item in data.Data)
-            {
-                if (FundsInfo?.FirstOrDefault(x => x.FundCode == item.FundCode) is SubjectFundMapping sfm && sfm.MasterCode is not null)
-                {
-                    item.FundCode = sfm.MasterCode;
-                    item.FundName = sfm.MasterName;
-                    if (!string.IsNullOrWhiteSpace(sfm.ShareClass))
-                        item.ShareClass = sfm.ShareClass;
-                }
-            }
-        }
+            await MapCode(data.Data);
         return data;
     }
 

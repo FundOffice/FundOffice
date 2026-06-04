@@ -47,13 +47,15 @@ public abstract class TrusteeApiBase : ITrustee
     /// 所有API 统一client，方便切换是否用proxy : TrusteeApiBase.SetProxy
     /// </summary>
     protected static HttpClient _client { get; private set; } = new();
-     
+
 
     public bool IsEnabled { get; internal set; }
 
 
     // 产品列表
     protected SubjectFundMapping[] FundsInfo { get; set; } = [];
+
+    private DateTime _queryFundMapTime;
 
     public async Task<bool> VerifyConfig()
     {
@@ -159,9 +161,9 @@ public abstract class TrusteeApiBase : ITrustee
 
     public bool Initialize()
     {
-        bool r= InitializeOverride();
-        if(!IsValid)
-            Task.Run(()=> VerifyConfig());
+        bool r = InitializeOverride();
+        if (!IsValid)
+            Task.Run(() => VerifyConfig());
 
         return r;
     }
@@ -178,7 +180,54 @@ public abstract class TrusteeApiBase : ITrustee
     /// <returns></returns>
     protected abstract ReturnCode CheckBreforeSync();
 
+    /// <summary>
+    /// 映射子基金关系
+    /// </summary>
+    /// <param name="data"></param>
+    /// <returns></returns>
+    protected async Task MapCode(IEnumerable<TransferRequest> data)
+    {
+        if (FundsInfo?.Length is null or 0 || (DateTime.Now - _queryFundMapTime).TotalMinutes > 15)
+        {
+            await QuerySubjectFundMappings();
+            _queryFundMapTime = DateTime.Now;
+        }
 
+        foreach (var item in data)
+        {
+            if (FundsInfo?.FirstOrDefault(x => x.FundCode == item.FundCode) is SubjectFundMapping sfm && sfm.AmacCode is not null)
+            {
+                item.FundCode = sfm.AmacCode;
+                item.FundName = sfm.MasterName;
+                if (!string.IsNullOrWhiteSpace(sfm.ShareClass))
+                    item.ShareClass = sfm.ShareClass;
+            }
+            else Logg.Error($"{item.FundName} {item.FundCode} 映射基金代码失败");
+        }
+
+    }
+
+    protected async Task MapCode(IEnumerable<TransferRecord> data)
+    {
+        if (FundsInfo?.Length is null or 0 || (DateTime.Now - _queryFundMapTime).TotalMinutes > 15)
+        {
+            await QuerySubjectFundMappings();
+            _queryFundMapTime = DateTime.Now;
+        }
+
+        foreach (var item in data)
+        {
+            if (FundsInfo?.FirstOrDefault(x => x.FundCode == item.FundCode) is SubjectFundMapping sfm && sfm.AmacCode is not null)
+            {
+                item.FundCode = sfm.AmacCode;
+                item.FundName = sfm.MasterName;
+                if (!string.IsNullOrWhiteSpace(sfm.ShareClass))
+                    item.ShareClass = sfm.ShareClass;
+            }
+            else Logg.Error($"{item.FundName} {item.FundCode} 映射基金代码失败");
+        }
+
+    }
 
 
 
@@ -215,7 +264,7 @@ public abstract class TrusteeApiBase : ITrustee
     }
 
 
- 
+
     protected void Log(string? caller, string? json, string? message)
     {
         Logg.Write(new LogInfo { Identifier = Identifier, Log = message, Method = caller, Content = json, Time = DateTime.Now });
@@ -239,7 +288,7 @@ public abstract class TrusteeApiBase : ITrustee
         Logg.Write(new TrusteeCallHistory(Identifier, caller ?? "unknown", DateTime.Now, System.Text.Json.JsonSerializer.Serialize(formatedParams), json));
     }
 
- 
+
 
 
     /// <summary>
@@ -316,7 +365,7 @@ public abstract class TrusteeApiBase : ITrustee
 #if DEBUG
     protected static string? GetCache(string Identifier, string Method, object Params)
     {
-        return Logg.Read<APIDebugCache>().Where(x => x.Identifier == Identifier && x.Method == Method && x.Params == Params).Select(x=>x.Json).FirstOrDefault();
+        return Logg.Read<APIDebugCache>().Where(x => x.Identifier == Identifier && x.Method == Method && x.Params == Params).Select(x => x.Json).FirstOrDefault();
 
         //return _db.GetCollection<APIDebugCache>().Find(x => x.Identifier == Identifier && x.Method == Method && x.Params == Params).LastOrDefault()?.Json;
     }
@@ -388,6 +437,8 @@ public abstract class TrusteeApiBase : ITrustee
     internal void Renew() => IsValid = true;
 
     public abstract bool IsSuit(string? comapny);
+
+
 
     public class LogInfo
     {

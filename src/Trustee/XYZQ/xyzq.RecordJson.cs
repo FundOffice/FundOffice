@@ -161,6 +161,7 @@ internal class RecordJson:JsonBase
         var r = new TransferRecord
         {
             FundCode = fundcode,
+            ShareCode = fundcode,
             ConfirmedDate = DateOnly.ParseExact(cdate, "yyyy-MM-dd"),
             RequestDate = DateOnly.ParseExact(date, "yyyy-MM-dd"),
             FundName = fundname,

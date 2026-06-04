@@ -14,17 +14,17 @@ public class SubjectFundMapping
     /// <summary>
     /// 主产品
     /// </summary>
-    public string? MasterName { get; set; }
+    public required string MasterName { get; set; }
 
     /// <summary>
     /// 主产品
     /// </summary>
-    public string? MasterCode { get; set; }
+    public required string MasterCode { get; set; }
 
     /// <summary>
     /// 协会
     /// </summary>
-    public string? AmacCode { get; set; }
+    public required string AmacCode { get; set; }
 
     /// <summary>
     /// 份额名

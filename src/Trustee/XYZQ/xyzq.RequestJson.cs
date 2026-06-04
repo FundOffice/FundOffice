@@ -116,6 +116,7 @@ internal class RequestJson : JsonBase
         {
             FundName = ProductName,
             FundCode = ProductCode,
+            ShareCode = ProductCode,
             InvestorIdentity = IdCardNumber,
             InvestorName = CustomerName,
             RequestDate = DateOnly.ParseExact(ApplicationDate, "yyyyMMdd"),
