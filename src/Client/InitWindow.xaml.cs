@@ -154,6 +154,7 @@ public partial class InitWindowViewModel : ObservableRecipient
         db.GetCollection<Fund>().InsertBulk(funds.Select(x => new Fund
         {
             Name = x.Name!,
+            Code = $"unset.{x.Name!.GetHashCode()}",
             ShortName = Fund.GetDefaultShortName(x.Name!),
             Url = "https://gs.amac.org.cn/amac-infodisc/res/pof" + x.Url,
             AsAdvisor = x.IsAdvisor,

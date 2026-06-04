@@ -471,6 +471,9 @@ internal class DelayLoader
                         db.GetCollection<Fund>().Update(f);
                         WeakReferenceMessenger.Default.Send(f);
 
+                        // 初始化flow和factor
+                        try { FundHelper.InitNew(f); } catch (Exception e) { Logg.Error(e); }
+
                         //
                         if (!cleared && f.Status > FundStatus.StartLiquidation)
                             DataTracker.OnFundCleared(f);
@@ -492,6 +495,10 @@ internal class DelayLoader
             }
         }
     }
+
+
+
+  
 
     private static bool VerifyDll(string dll)
     {

@@ -66,6 +66,8 @@ public static partial class DatabaseAssist
         [153] = AddCodeToShareClass,
         [154] = ModifyTokenTable,
         [157] = UpdateTAFlowId,
+        [154] = ModifyTokenTable,
+        [155] = InitFundFlowAndFactor
     };
 
     private static void UpdateTAFlowId(BaseDatabase db)
@@ -92,6 +94,15 @@ public static partial class DatabaseAssist
         db.GetCollection<TransferOrder>().Update(o);
         db.GetCollection<TransferRequest>().Update(q);
         db.GetCollection<TransferRecord>().Update(r);
+    }
+
+    /// <summary>
+    /// 弥补初始化缺失
+    /// </summary>
+    /// <param name="database"></param>
+    private static void InitFundFlowAndFactor(BaseDatabase database)
+    {
+        database.GetCollection<Fund>().FindAll().ToList().ForEach(FundHelper.InitNew);
     }
 
     /// <summary>
