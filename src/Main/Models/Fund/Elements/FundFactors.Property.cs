@@ -104,7 +104,7 @@ public partial class FundFactors
     /// <summary>
     /// 开放日规则（结构化）
     /// </summary>
-    [FactField("OpenRule")]
+    [FactorField("OpenRule")]
     public FactorItem<OpenRule[]> FundOpenRule { get; private set; } = null!;
 
     /// <summary>

@@ -48,6 +48,8 @@ public class OrderTransferFlowViewModel : TransferFlowViewModel
     {
         FundName = order.FundName;
         FundCode = order.FundCode;
+        ShareName = order.ShareClass;
+        ShareCode = order.
     }
 
 
@@ -55,7 +57,9 @@ public class OrderTransferFlowViewModel : TransferFlowViewModel
 
     public string FundCode { get; }
 
-    public string ShareName { get; }
+    public ShareClass Share { get; set; }
+
+    public string? ShareName { get; }
 
     public string ShareCode { get; }
 

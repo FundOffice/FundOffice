@@ -3,6 +3,11 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace FMO.Models;
 
+public class FactorField(string name) : Attribute
+{
+    public string Name { get; } = name;
+}
+
 public interface IFundFactor
 {
     internal string Id { get; }

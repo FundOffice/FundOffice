@@ -147,17 +147,17 @@ public class FundElementsReflectionRoundTripTests
     /// <summary>
     /// 根据 FactorFields 字段名查找对应的 FundElements 属性（处理别名映射）
     /// </summary>
-    private static PropertyInfo? FindPropertyByFactField(string factField)
+    private static PropertyInfo? FindPropertyByFactField(string FactorField)
     {
         // 策略1: 直接按属性名匹配（多数情况字段名=属性名）
         var directProp = typeof(FundElements)
-            .GetProperty(factField, BindingFlags.Public | BindingFlags.Instance);
+            .GetProperty(FactorField, BindingFlags.Public | BindingFlags.Instance);
         if (directProp != null) return directProp;
 
         // 策略2: 遍历 FactorFields 常量，匹配值相同的字段，再用常量名找属性
         foreach (var f in typeof(FactorFields).GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
         {
-            if (f.IsLiteral && !f.IsInitOnly && f.GetRawConstantValue() is string fieldValue && fieldValue == factField)
+            if (f.IsLiteral && !f.IsInitOnly && f.GetRawConstantValue() is string fieldValue && fieldValue == FactorField)
             {
                 // 常量名通常就是属性名（如 FullName → FullName）
                 // 特殊情况：OpenRule → FundOpenRule，需手动映射
