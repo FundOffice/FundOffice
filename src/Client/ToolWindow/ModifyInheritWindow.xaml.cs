@@ -419,9 +419,10 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
             var currentShares = Data.FirstOrDefault(x => x.FlowId == FlowId)!.Shares;
             foreach (var share in currentShares)
             {
-                if (string.IsNullOrWhiteSpace(share.Name) || string.IsNullOrWhiteSpace(share.Code) || string.IsNullOrWhiteSpace(share.FundName) || (currentShares.Count == 1 || string.IsNullOrWhiteSpace(share.Requirement)))
+                if (string.IsNullOrWhiteSpace(share.Name) || string.IsNullOrWhiteSpace(share.Code) || string.IsNullOrWhiteSpace(share.FundName) ||
+                    (currentShares.Count > 1 && (string.IsNullOrWhiteSpace(share.Requirement) || share.Requirement.Contains("输入"))))
                 {
-                    HandyControl.Controls.MessageBox.Show($"请确保份额{share.Name}名称、代码、基金名称均不为空", "提示");
+                    HandyControl.Controls.MessageBox.Show($"请确保份额{share.Name}名称、代码、基金名称 不能为空", "提示");
                     return;
                 }
             }
