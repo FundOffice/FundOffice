@@ -104,7 +104,7 @@ public partial class FactorModifiableViewModel<TValue> : ModifiableViewModel<TVa
 
     // 定义两个重载方法，编译器会根据 TValue 是 struct 还是 class 自动选择
 
-    void SaveChange<T>(int fundId, string factId, int flowId, int shareId, T value) 
+    void SaveChange<T>(int fundId, string factId, int flowId, int shareId, T value)
     {
         // 走引用类型逻辑：直接取值
         using var db = DbHelper.Base();
@@ -183,8 +183,11 @@ public partial class ShareFactorViewModel<TValue> : ObservableObject, IFactorMod
         Classes = sc;
 
 
+        var newsin = data.DistinctBy(x => x.New).Count() == 1;
+        var oldsin = data.DistinctBy(x => x.Old).Count() == 1;
+
         // 要素不拆分
-        if (data.Length == 1)
+        if (newsin)
         {
             CanDivide = sc.Length > 1;
             CanMerge = false;
@@ -197,10 +200,10 @@ public partial class ShareFactorViewModel<TValue> : ObservableObject, IFactorMod
                 ShareName = null,
                 NewValue = (data[0].New),
                 OldValue = CloneHelper.CloneValue(data[0].New),
-                FallbackValue = data[0].Old
+                FallbackValue = oldsin ? data[0].Old : default
             };
             Data.Add(u);
-        }
+        }        
         else
         {
             CanDivide = false;
@@ -311,7 +314,8 @@ public partial class ShareFactorViewModel<TValue> : ObservableObject, IFactorMod
         ///更新到数据库，删除所有要素
         using var db = DbHelper.Base();
         var e = db.GetCollection<IFundFactor>().DeleteMany(x => x.FlowId == FlowId && x.FactorId == FactorId && x.FundId == FundId);
-        db.GetCollection<IFundFactor>().Insert(new FundFactor<TValue>(factorId: FactorId, fundId: FundId, flowId: FlowId, data: unit.OldValue!));
+        db.GetCollection<IFundFactor>().Upsert(new FundFactor<TValue>(factorId: FactorId, fundId: FundId, flowId: FlowId, ShareClass.MakeId(FlowId, 0), data: unit.OldValue!));
+
 
 
         unit.ShareId = -1;
@@ -338,9 +342,11 @@ public partial class ShareFactorViewModel<TValue, TViewModel> : ObservableObject
         FactorId = factorId;
         Classes = sc;
 
+        var newsin = data.DistinctBy(x => x.New).Count() == 1;
+        var oldsin = data.DistinctBy(x => x.Old).Count() == 1;
 
         // 要素不拆分
-        if (data.Length == 1)
+        if (newsin)
         {
             CanDivide = sc.Length > 1;
             CanMerge = false;
@@ -353,7 +359,7 @@ public partial class ShareFactorViewModel<TValue, TViewModel> : ObservableObject
                 ShareName = null,
                 NewValue = TViewModel.Trans(data[0].New),
                 OldValue = data[0].New,
-                FallbackValue = data[0].Old
+                FallbackValue = oldsin ? data[0].Old : default
             };
             Data.Add(u);
         }
@@ -465,7 +471,7 @@ public partial class ShareFactorViewModel<TValue, TViewModel> : ObservableObject
         ///更新到数据库，删除所有要素
         using var db = DbHelper.Base();
         var e = db.GetCollection<IFundFactor>().DeleteMany(x => x.FlowId == FlowId && x.FactorId == FactorId && x.FundId == FundId);
-        db.GetCollection<IFundFactor>().Insert(new FundFactor<TValue>(FactorId, FundId, FlowId, unit.OldValue!));
+        db.GetCollection<IFundFactor>().Upsert(new FundFactor<TValue>(factorId: FactorId, fundId: FundId, flowId: FlowId, ShareClass.MakeId(FlowId, 0), data: unit.OldValue!));
 
 
 

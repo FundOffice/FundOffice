@@ -2,7 +2,7 @@
 
 namespace FMO.Models;
 
-public class FundFeeInfo
+public class FundFeeInfo : IEquatable<FundFeeInfo>
 {
     public FundFeeType Type { get; set; }
 
@@ -23,6 +23,13 @@ public class FundFeeInfo
     /// 特殊类型
     /// </summary>
     public string? Other { get; set; }
+
+    public override int GetHashCode() => HashCode.Combine(Type, HasFee, Fee, HasGuaranteedFee, GuaranteedFee, Other);
+
+    public bool Equals(FundFeeInfo? other)
+    {
+        return Type == other?.Type && HasFee == other?.HasFee && Fee == other?.Fee && HasGuaranteedFee == other?.HasGuaranteedFee && GuaranteedFee == other?.GuaranteedFee && Other == other?.Other;
+    }
 
     public override string ToString() => !HasFee ? "-" : Type switch { FundFeeType.Fix => $"固定费用：{Fee}元 / 年", FundFeeType.Ratio => $"{Fee}% / 年", FundFeeType.Other => Other, _ => $"未设置" } + (GuaranteedFee > 0 ? $" 有保底：{GuaranteedFee} / 年" : "");
 }

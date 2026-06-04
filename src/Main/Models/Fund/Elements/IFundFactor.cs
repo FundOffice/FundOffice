@@ -245,7 +245,7 @@ public class FactorItem<T> where T : class
                     currentLookupId = map.Inherit;
                 else
                     break;
-            }
+            } 
 
             // 当前share无效了，因为没有定义
             // flowId 早于 currentLookupId定义的flow
@@ -255,6 +255,11 @@ public class FactorItem<T> where T : class
             for (var i = 0; i < facts.Length; i++)
                 if (facts[i].ShareId == currentLookupId)
                     return (flowId, i);
+
+
+            // 多份额统一要素 
+            if (kvp.Value.Length == 1 && kvp.Value[0].ShareId == ShareClass.MakeId(flowId, 0))
+                return (flowId, 0);
         }
 
         return default;
@@ -309,6 +314,23 @@ public class FactorItem<T> where T : class
                     break;
                 }
             }
+
+
+            // 多份额统一要素 
+            if (kvp.Value.Length == 1 && kvp.Value[0].ShareId == ShareClass.MakeId(flowId, 0))
+            {
+                if (!foundCurrent)
+                {
+                    current = (flowId, 0);
+                    foundCurrent = true;
+                }
+                else
+                {
+                    // 已找到 Current，第二次匹配即为再向前一层的继承值
+                    inherited = (flowId, 0);
+                    return (current, inherited);
+                }
+            }
         }
 
         return (current, inherited);
@@ -324,8 +346,8 @@ public class FactorItem<T> where T : class
     public virtual (T? Old, T? New)[] GetInheritValues(int flowId, params int[] classId)
     {
         var idx = Enumerable.Range(0, classId.Length).Select(x => ResolveWithInherit(flowId, classId[x])).ToArray();
-        if (idx.DistinctBy(x => x.Current).Count() == 1) // 同源
-            return [(GetValue(idx[0].Inherited), GetValue(idx[0].Current))];
+        //if (idx.Distinct().Count() == 1) // 同源
+        //    return [(GetValue(idx[0].Inherited), GetValue(idx[0].Current))];
 
         return idx.Select(x => (GetValue(x.Inherited), GetValue(x.Current))).ToArray();
     }

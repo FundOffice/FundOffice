@@ -324,11 +324,11 @@
                                     Visibility="{Binding IsSharesInherited, Converter={StaticResource Boolean2VisibilityConverter}}">
                                     <Path Data="{StaticResource f.arrow-turn-down}" Fill="Brown" />
                                 </Viewbox>
- 
+
 
                                 <Button
                                     hc:IconElement.Geometry="{StaticResource f.pencil}"
-                                    Command="{Binding ModifyInheritCommand}" 
+                                    Command="{Binding ModifyInheritCommand}"
                                     Style="{StaticResource ButtonIcon.Small}"
                                     ToolTip="修改"
                                     Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
