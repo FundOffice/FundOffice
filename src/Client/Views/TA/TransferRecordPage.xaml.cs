@@ -102,17 +102,8 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
 
     public GridFilter OrderStatusFilter { get; }
 
-
-
-
-
-
-
-
-
-
-
-
+    [ObservableProperty]
+    public partial ObservableCollection<TransferFlowViewModel> Flows { get; private set; } = null!;
 
     public TransferRecordPageViewModel()
     {
@@ -129,14 +120,21 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
             using var db = DbHelper.Base();
             var funds = db.GetCollection<Fund>().FindAll().Select(x => (x.Id, x.Name, x.Code, x.ClearDate)).ToArray();
 
-            //var map = db.GetCollection<TransferMapping>().FindAll().ToList();
 
-
-
-            //var mapd = map.ToDictionary(x => x.OrderId, x => x);
 
             List<string?> list = [DataTracker.GetUniformTip(TipType.TANoOwner), DataTracker.GetUniformTip(TipType.TransferRequestMissing)];
             ErrorMessage = [.. list.OfType<string>()];
+
+
+            var flowids = db.GetCollection<TransferOrder>().Query().Select(x=>x.FlowId).ToList();
+            flowids.AddRange(db.GetCollection<TransferRequest>().Query().Select(x => x.FlowId).ToEnumerable());
+            flowids.AddRange(db.GetCollection<TransferRecord>().Query().Select(x => x.FlowId).ToEnumerable());
+            Flows = [..flowids.Distinct().Select(x=> new TransferFlowViewModel(x)).OrderByDescending(x=>x.Date)];
+
+
+
+
+
 
 
             var tr = db.GetCollection<TransferRecord>().Query().OrderByDescending(x => x.RequestDate).Limit(100).ToList();//FindAll().ToList();

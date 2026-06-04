@@ -256,34 +256,7 @@ public abstract partial class AddOrderWindowViewModelBase : ObservableObject
 
 
 
-    private TransferOrder? Parse(string text)
-    {
-        TransferOrder order = new();
-        var m = Regex.Match(text, @"姓名/名称：([-\(\)（）\w]+)");
-        if (!m.Success)
-            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "交易申请单中，未找到投资人名称"));
-        order.InvestorName = m.Groups[1].Value;
 
-        m = Regex.Match(text, @"证件号码：([\da-zA-Z]+)");
-        if (!m.Success)
-            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "交易申请单中，未找到证件号码"));
-        order.InvestorIdentity = m.Groups[1].Value;
-
-        m = Regex.Match(text, @"产品名称：([\da-zA-Z]+)");
-        if (!m.Success)
-            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "交易申请单中，未找到产品名称"));
-        order.FundName = m.Groups[1].Value;
-
-        m = Regex.Match(text, @"赎回方式：([\da-zA-Z]+)");
-        if (!m.Success)
-            WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "交易申请单中，未找到产品名称"));
-        order.FundName = m.Groups[1].Value;
-
-
-
-
-        return order;
-    }
 
 }
 
@@ -395,6 +368,7 @@ public partial class AddOrderWindowViewModel : AddOrderWindowViewModelBase
                 Date = DateOnly.FromDateTime(Date ?? default),
                 FundId = SelectedFund!.Id,
                 FundName = SelectedFund!.Name,
+                FundCode = SelectedFund!.Code!,
                 ShareClass = ShareClass,
                 InvestorId = SelectedInvestor!.Id,
                 InvestorName = SelectedInvestor.Name,
@@ -627,6 +601,7 @@ public partial class SupplementaryOrderWindowViewModel : AddOrderWindowViewModel
                 Date = DateOnly.FromDateTime(Date ?? default),
                 FundId = Record.FundId ?? 0,
                 FundName = Record.FundName,
+                FundCode = Record.FundCode,
                 ShareClass = Record.ShareClass,
                 InvestorId = Record.InvestorId ?? 0,
                 InvestorIdentity = Record.InvestorIdentity,

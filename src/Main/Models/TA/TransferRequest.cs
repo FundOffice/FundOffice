@@ -1,5 +1,4 @@
 ﻿using FMO.Utilities;
-using System.ComponentModel;
 
 namespace FMO.Models;
 
@@ -13,6 +12,21 @@ public class TransferRequest
     public int Id { get; set; }
 
     public int OrderId { get; set; }
+
+
+    public string FlowId => RequestType switch
+    {
+        TransferRequestType.InitialOffer => TransferFlow.MakeId(TransferFlowType.SetUp, FundId, RequestDate),
+        TransferRequestType.Distribution => TransferFlow.MakeId(TransferFlowType.Dividend, FundId, RequestDate),
+        TransferRequestType.BonusType => TransferFlow.MakeId(TransferFlowType.Desire, FundId, RequestDate),
+        TransferRequestType.Abort => "Canceled",
+        TransferRequestType.Purchase or TransferRequestType.Subscription or TransferRequestType.Redemption or TransferRequestType.ForceRedemption => 
+                OrderId != 0? TransferFlow.MakeId(TransferFlowType.Order, OrderId, RequestDate) : TransferFlow.MakeId( TransferFlowType.OrderMissing, Id, RequestDate),
+        TransferRequestType.Increase or TransferRequestType.Decrease => TransferFlow.MakeId(TransferFlowType.Adjustment, FundId, RequestDate),
+        TransferRequestType.TransferIn or TransferRequestType.TransferOut => TransferFlow.MakeId(TransferFlowType.Transfer, FundId, RequestDate),
+        TransferRequestType.SwitchIn or TransferRequestType.SwitchOut => TransferFlow.MakeId(TransferFlowType.Convert, FundId, RequestDate),
+        _ => "Unknown"
+    };
 
     /// <summary>
     /// 在托管外包系统中的id
@@ -105,8 +119,6 @@ public class TransferRequest
     /// 销售机构
     /// </summary>
     public string? Agency { get; set; }
-
-    public string? ShareClass { get; set; }
 
     /// <summary>
     /// 是否被取消

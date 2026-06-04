@@ -227,6 +227,7 @@ public class OrderInfoJson
         return new TransferOrder
         {
             FundName = this.ProductName,
+            FundCode = "",
             OpenDate = DateTimeHelper.TryParse(this.OpenDay, out var d) ? d : default,
             Type = GetOrderType(),
             Number = GetOrderNumber(),

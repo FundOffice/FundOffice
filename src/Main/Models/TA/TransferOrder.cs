@@ -41,6 +41,7 @@ public class TransferOrder
 {
     public int Id { get; set; }
 
+    public string FlowId => TransferFlow.MakeId(TransferFlowType.Order, Id, OpenDate); 
 
     public int InvestorId { get; set; }
 
@@ -51,7 +52,10 @@ public class TransferOrder
     /// </summary>
     public string? ShareClass { get; set; }
 
-    public string? FundName { get; set; }
+    public required string FundName { get; set; }
+
+    public required string FundCode { get; set; }
+
 
     /// <summary>
     /// sign date
@@ -74,10 +78,10 @@ public class TransferOrder
     /// 客户Id
     /// </summary>
     [Description("证件号码")]
-    public string? InvestorIdentity { get; set; }
+    public required string InvestorIdentity { get; set; }
 
     [Description("客户名称")]
-    public string? InvestorName { get; set; }
+    public required string InvestorName { get; set; }
 
 
     public DateOnly CreateDate { get; set; }

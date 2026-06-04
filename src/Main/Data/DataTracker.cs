@@ -720,6 +720,9 @@ public static partial class DataTracker
         using var db = DbHelper.Base();
 
         db.GetCollection<TransferOrder>().Upsert(data);
+        // 更新flowid，因为保存后orderid赋值了
+        db.GetCollection<TransferOrder>().Upsert(data);
+
 
         try { WeakReferenceMessenger.Default.Send(data); } catch (Exception e) { Logg.Error(e); }
 
@@ -807,7 +810,7 @@ public static partial class DataTracker
         // 获取删除的订单，更新 IList<TransferRequest> data
         var dates = data.Select(x => x.RequestDate.DayNumber).Distinct().Select(x => new BsonValue(x)).ToArray();
         var olds = db.GetCollection<TransferRequest>().Query().Where(Query.In("RequestDate.DayNumber", dates)).Select(x => x.Id).ToArray();
-        if(olds.Length > 0)
+        if (olds.Length > 0)
         {
             var del = olds.ExceptBy(data.Select(x => x.Id), x => x).Select(x => new BsonValue(x)).ToList();
             db.GetCollection<TransferRequest>().UpdateMany($"{{ {nameof(TransferRequest.IsCanceled)} : True }}", Query.In("_id", del));
@@ -930,7 +933,12 @@ public static partial class DataTracker
 
         //MapRequestRecord(data);
 
-        MapRequestToOrder();
+        var map = MapRequestToOrder();
+
+        if (map.Count > 0)
+        {
+            WeakReferenceMessenger.Default.Send(map.AsEnumerable());
+        }
 
         var handled = data.Select(x => x.Id).ToList();
         db.GetCollection<PostHandleIds>("ph_request").DeleteMany(x => handled.Contains(x.Id));
@@ -1229,70 +1237,78 @@ public static partial class DataTracker
         db.GetCollection<TransferMapping>().Upsert(newMap);
     }
 
-    public static void MapRequestToOrder()
+    public static List<LinkOrderMessage> MapRequestToOrder()
     {
-        using var db = DbHelper.Base();
-        var unmapRequset = db.GetCollection<TransferRequest>().Find(x => x.OrderId == 0).ToList();
-        var mapedOrderIds = db.GetCollection<TransferRequest>().Query().Where(x => x.OrderId != 0).Select(x => x.OrderId).ToList();
-        var unmapOrder = db.GetCollection<TransferOrder>().Find(x => !mapedOrderIds.Contains(x.Id)).ToList();
-
-        List<LinkOrderMessage> msg = new();
-        db.BeginTrans();
-        var reqDict = unmapRequset.OrderBy(x => x.RequestDate).GroupBy(x => ((long)x.FundId << 32) | (long)x.InvestorId).ToDictionary(x => x.Key);
-        foreach (var o in unmapOrder)
+        try
         {
-            // 筛选同Fund 同investor
-            var gid = ((long)o.FundId << 32) | (long)o.InvestorId;
+            using var db = DbHelper.Base();
+            var unmapRequset = db.GetCollection<TransferRequest>().Find(x => x.OrderId == 0).ToList();
+            var mapedOrderIds = db.GetCollection<TransferRequest>().Query().Where(x => x.OrderId != 0).Select(x => x.OrderId).ToList();
+            var unmapOrder = db.GetCollection<TransferOrder>().Find(x => !mapedOrderIds.Contains(x.Id)).ToList();
 
-            if (reqDict.ContainsKey(gid))
+            List<LinkOrderMessage> msg = new();
+            db.BeginTrans();
+            var reqDict = unmapRequset.OrderBy(x => x.RequestDate).GroupBy(x => ((long)x.FundId << 32) | (long)x.InvestorId).ToDictionary(x => x.Key);
+            foreach (var o in unmapOrder)
             {
-                List<TransferRequest> req = [.. reqDict[gid]];
+                // 筛选同Fund 同investor
+                var gid = ((long)o.FundId << 32) | (long)o.InvestorId;
 
-                // 找 o.Date 后一个日期的所有同fundId InvestorId的 request
-                // 使用二分查找找到第一个符合条件的请求
-                int index = req.Select(x => x.RequestDate).ToList().BinarySearch(o.Date);
-                if (index < 0) index = ~index;
-
-                var take = 1;
-                for (int i = index + 1; i < req.Count; i++, take++)
+                if (reqDict.ContainsKey(gid))
                 {
-                    if (req[i].RequestDate != req[index].RequestDate)
-                        break;
-                }
+                    List<TransferRequest> req = [.. reqDict[gid]];
 
-                // 日期和类型匹配
-                var may = req.Skip(index).Take(take).Where(x => x.IsCompatible(o));
+                    // 找 o.Date 后一个日期的所有同fundId InvestorId的 request
+                    // 使用二分查找找到第一个符合条件的请求
+                    int index = req.Select(x => x.RequestDate).ToList().BinarySearch(o.Date);
+                    if (index < 0) index = ~index;
 
-                bool pair = false;
-
-                // 检验 金额 一致，默认同一天只有一个订单，可能多个申请，因为多卡打款，申请有多个
-                switch (o.Type)
-                {
-                    case TransferOrderType.FirstTrade:
-                    case TransferOrderType.Buy:
-                    case TransferOrderType.Amount:
-                    case TransferOrderType.RemainAmout:
-                        pair = o.Number == may.Sum(x => x.RequestAmount);
-                        break;
-                    case TransferOrderType.Share:
-                        pair = o.Number == may.Sum(x => x.RequestShare);
-                        break;
-                }
-
-                if (pair)
-                {
-                    foreach (var item in may)
+                    var take = 1;
+                    for (int i = index + 1; i < req.Count; i++, take++)
                     {
-                        item.OrderId = o.Id;
-                        msg.Add(new LinkOrderMessage(0, item.OrderId, item.Id));
+                        if (req[i].RequestDate != req[index].RequestDate)
+                            break;
                     }
-                    db.GetCollection<TransferRequest>().Update(may);
+
+                    // 日期和类型匹配
+                    var may = req.Skip(index).Take(take).Where(x => x.IsCompatible(o));
+
+                    bool pair = false;
+
+                    // 检验 金额 一致，默认同一天只有一个订单，可能多个申请，因为多卡打款，申请有多个
+                    switch (o.Type)
+                    {
+                        case TransferOrderType.FirstTrade:
+                        case TransferOrderType.Buy:
+                        case TransferOrderType.Amount:
+                        case TransferOrderType.RemainAmout:
+                            pair = o.Number == may.Sum(x => x.RequestAmount);
+                            break;
+                        case TransferOrderType.Share:
+                            pair = o.Number == may.Sum(x => x.RequestShare);
+                            break;
+                    }
+
+                    if (pair)
+                    {
+                        foreach (var request in may)
+                        {
+                            request.OrderId = o.Id;
+                            msg.Add(new LinkOrderMessage(0, request.OrderId, request.Id));
+                        }
+                        db.GetCollection<TransferRequest>().Update(may);
+                    }
                 }
             }
-        }
 
-        db.Commit();
-        WeakReferenceMessenger.Default.Send(msg.AsEnumerable());
+            db.Commit();
+            return msg;
+        }
+        catch (Exception e)
+        {
+            Logg.Error(e);
+            return [];
+        }
     }
 
 

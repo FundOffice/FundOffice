@@ -160,7 +160,9 @@ public class ESigningWorker
                     {
                         item.FundId = f.Id;
                         item.FundName = f.Name;
+                        item.FundCode = f.Code!;
                         item.ShareClass = c;
+                        
                     }
                     else { Logg.Error($"Sync Order Fund Not Exists {item.FundName}, in {item.InvestorName} {item.Date} {item.Type}"); }
 

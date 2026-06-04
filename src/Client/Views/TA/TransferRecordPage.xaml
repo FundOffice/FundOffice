@@ -341,6 +341,20 @@
 
             <TabItem Visibility="Hidden" />
 
+            <TabItem Header="订单流">
+                <ListBox ItemsSource="{Binding Flows}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel>
+                                <TextBlock Text="{Binding Date, StringFormat=yyyy-M-d}" />
+                                <TextBlock Text="{Binding Type}" />
+                            </DockPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </TabItem>
+
+
             <TabItem>
                 <TabItem.Header>
                     <DockPanel Margin="0,0,5,0" LastChildFill="False">

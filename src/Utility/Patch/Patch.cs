@@ -64,8 +64,35 @@ public static partial class DatabaseAssist
         [150] = MoveFundAccount,
         [152] = ChangeOpenRule,
         [153] = AddCodeToShareClass,
-        [154] = ModifyTokenTable
+        [154] = ModifyTokenTable,
+        [157] = UpdateTAFlowId,
     };
+
+    private static void UpdateTAFlowId(BaseDatabase db)
+    {
+        var o = db.GetCollection<TransferOrder>().FindAll().ToArray();
+        var q = db.GetCollection<TransferRequest>().FindAll().ToArray();
+        var r = db.GetCollection<TransferRecord>().FindAll().ToArray();
+
+        var dic = o.ToDictionary(x => x.Id, x => x);
+        foreach (var item in q)
+        {
+            if (item.OrderId != 0 && dic.TryGetValue(item.OrderId, out var to))
+                to.OpenDate = item.RequestDate;                
+        }
+
+        //q.Select(x => x.RequestType).Distinct().ToList().ForEach(x=> Debug.WriteLine(x));
+
+        //Debug.WriteLine("-------------------------");
+        //r.Select(x => x.Type).Distinct().ToList().ForEach(x => Debug.WriteLine(x));
+
+        //var qf = q.Select(x => x.FlowId).Distinct().ToArray();
+        //var rf = r.Select(x => x.FlowId).Distinct().ToArray();
+
+        db.GetCollection<TransferOrder>().Update(o);
+        db.GetCollection<TransferRequest>().Update(q);
+        db.GetCollection<TransferRecord>().Update(r);
+    }
 
     /// <summary>
     /// 修改token表结构
@@ -75,7 +102,7 @@ public static partial class DatabaseAssist
     private static void ModifyTokenTable(BaseDatabase database)
     {
         var arr = database.GetCollection("TokenProvider").FindAll().ToArray();
-        
+
         database.DropCollection("TokenProvider");
     }
 
@@ -100,7 +127,7 @@ public static partial class DatabaseAssist
             db.GetCollection<IFundFactor>().Upsert(shares.Select(x => new FundFactor<ShareClass[]> { FundId = item.Id, FlowId = x.FlowId, FactorId = FactorFields.ShareClasses, Data = x.Shares }));
         }
 
-        
+
     }
 
 
