@@ -64,8 +64,18 @@ public static partial class DatabaseAssist
         [150] = MoveFundAccount,
         [152] = ChangeOpenRule,
         [153] = AddCodeToShareClass,
-        [154] = ModifyTokenTable
+        [154] = ModifyTokenTable,
+        [155] = InitFundFlowAndFactor
     };
+
+    /// <summary>
+    /// 弥补初始化缺失
+    /// </summary>
+    /// <param name="database"></param>
+    private static void InitFundFlowAndFactor(BaseDatabase database)
+    {
+        database.GetCollection<Fund>().FindAll().ToList().ForEach(FundHelper.InitNew);
+    }
 
     /// <summary>
     /// 修改token表结构

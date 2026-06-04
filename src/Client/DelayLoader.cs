@@ -472,7 +472,7 @@ internal class DelayLoader
                         WeakReferenceMessenger.Default.Send(f);
 
                         // 初始化flow和factor
-                        try { InitFundFlowAndFactor(f); } catch (Exception e) { Logg.Error(e); }
+                        try { FundHelper.InitNew(f); } catch (Exception e) { Logg.Error(e); }
 
                         //
                         if (!cleared && f.Status > FundStatus.StartLiquidation)
@@ -498,52 +498,7 @@ internal class DelayLoader
 
 
 
-    public static void InitFundFlowAndFactor(Fund fund)
-    {
-        using var db = DbHelper.Base();
-        var flows = db.GetCollection<FundFlow>().Find(x => x.FundId == fund.Id).OrderBy(x => x.Id).ToList();
-        if (!flows.Any(x => x is InitiateFlow))
-        {
-            var f = new InitiateFlow { FundId = fund.Id, ElementFiles = new() { Label = "基金要素" }, ContractFiles = new() { Label = "基金合同" }, CustomFiles = new() };
-            flows.Insert(0, f);
-            db.GetCollection<FundFlow>().Insert(f);
-        }
-
-        if (!flows.Any(x => x is ContractFinalizeFlow))
-        {
-            var f = new ContractFinalizeFlow { FundId = fund.Id, CustomFiles = new() };
-            flows.Insert(1, f);
-            db.GetCollection<FundFlow>().Insert(f);
-            // 默认份额类型
-            db.GetCollection<IFundFactor>().Upsert(new FundFactor<ShareClass[]>(FactorFields.ShareClasses, fund.Id, f.Id, [ShareClass.FromFlowSingleton(f.Id, fund.Name, fund.Code)]));
-        }
-
-        if (fund.Status >= FundStatus.Setup && !flows.Any(x => x is SetupFlow))
-        {
-            var f = new SetupFlow { FundId = fund.Id, Date = fund.SetupDate, CustomFiles = new() };
-            flows.Insert(2, f);
-            db.GetCollection<FundFlow>().Insert(f);
-        }
-
-
-        if (fund.Status >= FundStatus.Registration && !flows.Any(x => x is RegistrationFlow))
-        {
-            var f = new RegistrationFlow { FundId = fund.Id, Date = fund.AuditDate, CustomFiles = new() };
-            flows.Add(f);
-            db.GetCollection<FundFlow>().Insert(f);
-        }
-
-        if (fund.Status >= FundStatus.StartLiquidation && !flows.Any(x => x is LiquidationFlow))
-        {
-            var f = new LiquidationFlow { FundId = fund.Id, CustomFiles = new() };
-            flows.Add(f);
-            db.GetCollection<FundFlow>().Insert(f);
-        }
-
-
-
-
-    }
+  
 
     private static bool VerifyDll(string dll)
     {

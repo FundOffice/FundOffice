@@ -269,7 +269,10 @@ public partial class FundsPageViewModel : ObservableRecipient, IRecipient<Fund>
 
         if (dc.Name is not null)
         {
-            var f = new Fund { Name = dc.Name, ShortName = dc.ShortName, Code = dc.Code };
+            var f = new Fund { Name = dc.Name, ShortName = dc.ShortName, Code = dc.Code! };
+
+            using var db = DbHelper.Base();
+            db.GetCollection<Fund>().Insert(f);
             FundHelper.InitNew(f);
 
 
