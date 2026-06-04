@@ -208,13 +208,7 @@ public partial class FundElements
 
 
 
-    public static FundElements Create(int fundid, int firstFlow)
-    {
-        var e = new FundElements { Id = fundid, };
-        e.ShareClasses.SetValue([new ShareClass { Id = -1, Name = FundElements.SingleShareKey }], 0);
-        e.Callback.SetValue(new CallbackInfo(), firstFlow);
-        return e;
-    }
+
 
 
     public bool Init()
@@ -412,62 +406,6 @@ public partial class FundElements
     //        SetAsDefault(flowId);
     //}
 
-    public void ShareClassChange(int flowId, (int Id, string Name)[] add, (int Id, string Name)[] remove, (int Id, string Name)[] change)
-    {
-        var old = ShareClasses!.GetValue(flowId).Value?.ToList() ?? new();
-        old.AddRange(add.Select(x => new ShareClass { Id = x.Id, Name = x.Name }));
-
-        //删除份额类型
-        foreach (var item in remove)
-            RemoveShareRelated(flowId, item.Id);
-        old.RemoveAll(x => remove.Any(y => x.Id == y.Id));
-
-        //更名
-        foreach (var item in change)
-        {
-            var v = old.FirstOrDefault(x => x.Id == item.Id);
-            if (v is not null) v.Name = item.Name;
-        }
-
-        //如果只有一个，强制更名
-        if (old.Count == 1) old[0].Name = SingleShareKey;
-
-        ShareClasses!.SetValue(old.ToArray(), flowId);
-    }
-
-    public void ShareClassChange(int flowId, (int Id, string Name, string? Requirement)[] add, ShareClass[] remove, (int Id, string Name, string? Requirement)[] change)
-    {
-        var old = ShareClasses!.GetValue(flowId).Value?.ToList() ?? new();
-        old.AddRange(add.Select(x => new ShareClass { Id = x.Id, Name = x.Name, Requirement = x.Requirement }));
-
-        //删除份额类型
-        foreach (var item in remove)
-            RemoveShareRelated(flowId, item.Id);
-        old.RemoveAll(x => remove.Any(y => x.Id == y.Id));
-
-        //更名
-        foreach (var item in change)
-        {
-            var v = old.FirstOrDefault(x => x.Id == item.Id);
-            if (v is not null)
-            {
-                v.Name = item.Name;
-                v.Requirement = item.Requirement;
-            }
-        }
-
-        //如果只有一个，强制更名
-        if (old.Count == 1)
-        {
-            old[0].Name = SingleShareKey;
-            SwitchShareAsUnion(flowId, old[0].Id);
-            old[0].Id = -1;
-        }
-        else if (old.Count > 1 && old.FirstOrDefault(x => x.Id == -1) is ShareClass sc)
-            old.Remove(sc);
-
-        ShareClasses!.SetValue(old.DistinctBy(x => x.Id).ToArray(), flowId);
-    }
 
 
      
