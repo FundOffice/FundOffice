@@ -8,6 +8,7 @@ using LiteDB;
 using MoT;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using Utilities;
 
 namespace FMO.Trustee;
 
@@ -82,6 +83,11 @@ public partial class TrusteeWorker : ObservableObject
 
     HashSet<ITrustee> Trustees { get; }
 
+
+    private WorkConfig FundInfoConfig { get; set; }
+
+    private WorkConfig OpenDayConfig { get; set; }
+
     private WorkConfig RaisingBalanceConfig { get; set; }
 
     private WorkConfig TransferRecordConfig { get; set; }
@@ -110,6 +116,10 @@ public partial class TrusteeWorker : ObservableObject
             cfg = db.GetCollection<WorkConfig>().FindAll().ToArray();
             maps = db.GetCollection<TrusteeApiMap>().FindAll().ToArray();
         }
+
+
+        FundInfoConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QuerySubjectFundMappings)) ?? new(nameof(ITrustee.QuerySubjectFundMappings)) { Interval = 60 * 8 };
+        OpenDayConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryOpenDays)) ?? new(nameof(ITrustee.QueryOpenDays)) { Interval = 60 * 8 };
         RaisingBalanceConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryRaisingBalance)) ?? new(nameof(ITrustee.QueryRaisingBalance));
         TransferRecordConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryTransferRecords)) ?? new(nameof(ITrustee.QueryTransferRecords)) { Interval = 60 }; // 每6个小时
         TransferRequestConfig = cfg.FirstOrDefault(x => x.Id == nameof(ITrustee.QueryTransferRequests)) ?? new(nameof(ITrustee.QueryTransferRequests));
@@ -153,6 +163,11 @@ public partial class TrusteeWorker : ObservableObject
 
 
         tasks = [
+
+                (FundInfoConfig , QueryFundInfoOnce),
+
+                (OpenDayConfig , QueryOpenDaysOnce),
+
                 // 募集余额查询任务：
                 // 使用 RaisingBalanceConfig 配置（如执行间隔、上次运行时间等）
                 // 触发 QueryRaisingBalanceOnceCommand 命令执行单次查询
@@ -192,6 +207,60 @@ public partial class TrusteeWorker : ObservableObject
     public ITrustee? Find(int fundId) => Maps.FirstOrDefault(x => x.FundId == fundId)?.Trustee;
 
     #region Impl
+
+    private async Task QueryFundInfoOnce(IEnumerable<ITrustee> trustees) => await RunTask(QueryFundInfoImpl(trustees));
+
+    private async Task QueryFundInfoImpl(IEnumerable<ITrustee> trustees)
+    {
+        try
+        {
+            if (trustees is null || !trustees.Any()) trustees = Trustees;
+
+            Dictionary<string, ShareInfo[]> tmp = [];
+            foreach (var tr in trustees.Where(x => x.IsEnabled))
+            {
+                try
+                {
+                    var rc = await tr.QuerySubjectFundMappings();
+
+                    if (rc.Code != ReturnCode.Success && rc.Code != ReturnCode.TrafficLimit)
+                    {
+                        Logg.Error($"{rc.Code} {rc.Data?.Count} {tr.Title} 获取的基金信息数据异常");
+                        WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Error, $"{tr.Title} 获取的基金信息数据异常"));
+                        return;
+                    }
+
+                    if (rc.Data?.Count is null or 0)
+                    {
+                        Logg.Warning($"{rc.Code} {rc.Data?.Count} {tr.Title} 获取的基金信息为空");
+                        WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, $"{tr.Title} 获取的基金信息为空"));
+                        return;
+                    }
+
+                    foreach (var g in rc.Data.GroupBy(x => x.AmacCode))
+                        tmp[g.Key] = g.Select(x => new ShareInfo(x.ShareClass ?? "", x.FundName, x.FundCode)).ToArray();
+                }
+                catch (Exception ex)
+                {
+                    Logg.Error(ex);
+                    Toast.Error($"从托管【{tr.Title}】同步基金信息出错");
+                }
+            }
+
+            // 保存最新份额信息
+            using var db = DbHelper.Base();
+            var fdic = db.GetCollection<Fund>().Query().Select(x => new { x.Id, x.Code }).ToEnumerable().ToDictionary(x => x.Code, x => x.Id);
+            db.GetCollection<FundShares>().Upsert(tmp.Select(x => new FundShares(fdic[x.Key], x.Value)));
+
+        }
+        catch (Exception e)
+        {
+            Logg.Error(e);
+            Toast.Error($"从托管同步基金信息出错");
+        }
+    }
+
+
 
     /// <summary>
     /// 获取募集户余额

@@ -3,6 +3,11 @@
 namespace FMO.Models;
 
 
+public record ShareInfo(string ShareName, string FundName, string FundCode);
+
+public record FundShares(int FundId, ShareInfo[] Shares);
+
+
 /// <summary>
 /// 产品
 /// </summary>
