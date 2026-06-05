@@ -41,7 +41,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial ObservableCollection<TransferOrderViewModel>? Orders { get; set; }
 
-    public CollectionViewSource RecordsSource { get; } = new() ;
+    public CollectionViewSource RecordsSource { get; } = new();
     public CollectionViewSource OrderSource { get; } = new();
 
 
@@ -126,14 +126,12 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
             ErrorMessage = [.. list.OfType<string>()];
 
 
-            var flowids = db.GetCollection<TransferOrder>().Query().Select(x=>x.FlowId).ToList();
-            flowids.AddRange(db.GetCollection<TransferRequest>().Query().Select(x => x.FlowId).ToEnumerable());
-            flowids.AddRange(db.GetCollection<TransferRecord>().Query().Select(x => x.FlowId).ToEnumerable());
-            Flows = [..flowids.Distinct().Select(x=> new TransferFlowViewModel(x)).OrderByDescending(x=>x.Date)];
+            //var flowids = db.GetCollection<TransferOrder>().Query().Select(x=>x.FlowId).ToList();
+            //flowids.AddRange(db.GetCollection<TransferRequest>().Query().Select(x => x.FlowId).ToEnumerable());
+            //flowids.AddRange(db.GetCollection<TransferRecord>().Query().Select(x => x.FlowId).ToEnumerable());
 
 
-
-
+            var cus = db.GetCollection<Investor>().FindAll().ToList();
 
 
 
@@ -142,6 +140,16 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
 
             //var t3 = db.GetCollection<TransferOrder>().FindAll().ToList();
             var t3 = db.GetCollection<TransferOrder>().Query().OrderByDescending(x => x.Date).Limit(50).ToList();
+
+            var fundl = funds.ToDictionary(x => x.Id);
+            var invl = cus.ToDictionary(x => x.Id);
+            var t1l = t3.ToLookup(x => x.FlowId);
+            var t2l = tr2.ToLookup(x => x.FlowId);
+            var t3l = tr.ToLookup(x => x.FlowId);
+
+            var flows = db.GetCollection<TransferFlow>().FindAll().ToList();
+            Flows = [.. flows.Distinct().Select(x => new TransferFlowViewModel(x, fundl[x.FundId], invl[x.InvestorId], t1l[x.Id], t2l[x.Id], t3l[x.Id])).OrderByDescending(x => x.Date)];
+
 
             var records = tr.Select(x => new TransferRecordViewModel(x)).ToArray();
             var orders = t3.Select(x => new TransferOrderViewModel(x)).ToArray();
@@ -162,7 +170,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
 
             ///////////////////////////
             var hasCusIds = tr.Select(x => x.InvestorId).Union(tr2.Select(x => x.InvestorId)).Union(t3.Select(x => x.InvestorId)).Distinct().OrderBy(x => x).ToArray();
-            var investors = db.GetCollection<Investor>().Query().Where(Query.In("_id", hasCusIds.Select(x=>new BsonValue(x)))).Select(x => x.Name).ToArray();
+            var investors = db.GetCollection<Investor>().Query().Where(Query.In("_id", hasCusIds.Select(x => new BsonValue(x)))).Select(x => x.Name).ToArray();
 
 
             FundNameFilter.Filters = funds.Select(x => new GridFilterItem

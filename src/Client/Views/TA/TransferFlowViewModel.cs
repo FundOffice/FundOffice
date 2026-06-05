@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using FMO.Models;
+using System.Diagnostics.Contracts;
 
 namespace FMO;
 
@@ -27,6 +28,23 @@ public partial class TransferFlowViewModel : ObservableObject, ITransferFlowView
         else FundId = idd;
     }
 
+ 
+
+    public TransferFlowViewModel(TransferFlow f, (int Id, string Name, string Code, DateOnly ClearDate) fund, Investor investor, IEnumerable<TransferOrder> enumerable1, IEnumerable<TransferRequest> enumerable2, IEnumerable<TransferRecord> enumerable3)
+    {
+        Id = f.Id;
+        Date = f.Date;
+        Type = f.Type;
+        FundId = f.FundId;
+        FundName = fund.Name;
+        Code = fund.Code;
+        InvestorId = f.InvestorId;
+
+        Orders = enumerable1.ToArray();
+        Requests = enumerable2.ToArray();
+        Records = enumerable3.ToArray();
+    }
+
     public string Id { get; }
 
     public DateOnly Date { get; set; }
@@ -35,29 +53,55 @@ public partial class TransferFlowViewModel : ObservableObject, ITransferFlowView
 
     public int FundId { get; set; }
 
+    public string FundName { get; set; }
+
+    public string Code { get; set; }
+    
+
+    public int InvestorId { get; }
+
     public int OrderId { get; set; }
 
     public int RequestId { get; set; }
 
 
+    public TransferOrder[] Orders { get; set; }
+
+    public TransferRequest[] Requests { get; set; }
+
+    public TransferRecord[] Records { get; set; }
+
 }
+
+
+
 
 public class OrderTransferFlowViewModel : TransferFlowViewModel
 {
-    public OrderTransferFlowViewModel(string id, TransferOrder order, TransferRequest[] requests, TransferRecord[] records) : base(id)
+    public OrderTransferFlowViewModel(string id, string shareCode, TransferOrder order, TransferRequest[] requests, TransferRecord[] records) : base(id)
     {
         FundName = order.FundName;
         FundCode = order.FundCode;
         ShareName = order.ShareClass;
-        ShareCode = order.
+        ShareCode = shareCode;
+
+        InvestorName = order.InvestorName;
+        InvestorCard = order.InvestorIdentity;
+        OrderType = order.Type;
+        Number = order.Number;
+        Fee = order.Fee;
+        Contract = order.Contract;
+        RiskDiscloure = order.RiskDiscloure;
+        OrderSheet = order.OrderSheet;
+        RiskPair = order.RiskPair;
+        Videotape = order.Videotape;
+        Review = order.Review;
     }
 
 
     public string FundName { get; }
 
     public string FundCode { get; }
-
-    public ShareClass Share { get; set; }
 
     public string? ShareName { get; }
 
@@ -72,9 +116,6 @@ public class OrderTransferFlowViewModel : TransferFlowViewModel
     public decimal Number { get; set; }
 
     public decimal Fee { get; set; }
-
-
-    public TransferOrder Order { get; set; }
 
 
 

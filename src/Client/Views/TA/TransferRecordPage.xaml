@@ -345,10 +345,18 @@
                 <ListBox ItemsSource="{Binding Flows}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <DockPanel>
-                                <TextBlock Text="{Binding Date, StringFormat=yyyy-M-d}" />
-                                <TextBlock Text="{Binding Type}" />
-                            </DockPanel>
+                            <StackPanel>
+                                <hc:UniformSpacingPanel Spacing="5">
+                                    <TextBlock Text="{Binding Date, StringFormat=yyyy-M-d}" />
+
+                                    <TextBlock Text="{Binding Type}" />
+                                </hc:UniformSpacingPanel>
+
+                                <ListBox ItemsSource="{Binding Orders}" />
+                                <ListBox ItemsSource="{Binding Requests}" />
+                                <ListBox ItemsSource="{Binding Records}" />
+
+                            </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>

@@ -66,7 +66,7 @@ public static partial class DatabaseAssist
         [153] = AddCodeToShareClass,
         [154] = ModifyTokenTable,
         [155] = InitFundFlowAndFactor,
-        [157] = UpdateTAFlowId,
+        [159] = UpdateTAFlowId,
     };
 
     private static void UpdateTAFlowId(BaseDatabase db)
@@ -75,24 +75,188 @@ public static partial class DatabaseAssist
         var q = db.GetCollection<TransferRequest>().FindAll().ToArray();
         var r = db.GetCollection<TransferRecord>().FindAll().ToArray();
 
+        List<TransferFlow> f = [];
+        // 原有Order批量生成Flow不动（如需统一格式也可改循环，需求没提则保留）
+        f.AddRange(o.Select(x => new TransferFlow { Date = x.OpenDate, FundId = x.FundId, InvestorId = x.InvestorId, Type = TransferFlowType.Order }));
+
+        // ========== TransferRequest 分组循环改造 ==========
+        foreach (var req in q.GroupBy(x => x.RequestType))
+        {
+            TransferRequest one = req.First();
+            switch (req.Key)
+            {
+                case TransferRequestType.InitialOffer:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.SetUp, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRequestType.Subscription:
+                case TransferRequestType.Purchase:
+                case TransferRequestType.Redemption:
+                case TransferRequestType.ForceRedemption:
+                    // 原AddRange改为逐个循环
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Date = one.RequestDate, FundId = one.FundId, InvestorId = k.InvestorId, Type = TransferFlowType.Order };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRequestType.Increase:
+                case TransferRequestType.Decrease:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.Adjustment, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRequestType.TransferIn:
+                case TransferRequestType.TransferOut:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.Transfer, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRequestType.SwitchIn:
+                case TransferRequestType.SwitchOut:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.Convert, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRequestType.Distribution:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.Dividend, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRequestType.BonusType:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.Desire, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRequestType.Clear:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.Clear, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRequestType.Abort:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // ========== TransferRecord 分组循环改造 ==========
+        foreach (var req in r.GroupBy(x => x.Type))
+        {
+            var one = req.First();
+            switch (req.Key)
+            {
+                case TransferRecordType.InitialOffer:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.SetUp, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRecordType.Subscription:
+                case TransferRecordType.Purchase:
+                case TransferRecordType.Redemption:
+                case TransferRecordType.ForceRedemption:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Date = one.RequestDate, FundId = one.FundId, InvestorId = k.InvestorId, Type = TransferFlowType.Order };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRecordType.Increase:
+                case TransferRecordType.Decrease:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.Adjustment, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRecordType.TransferIn:
+                case TransferRecordType.TransferOut:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.Transfer, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRecordType.SwitchIn:
+                case TransferRecordType.SwitchOut:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.Convert, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRecordType.Distribution:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.Dividend, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRecordType.BonusType:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.Desire, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRecordType.Clear:
+                    foreach (var k in req)
+                    {
+                        var flow = new TransferFlow { Type = TransferFlowType.Clear, Date = one.RequestDate, FundId = one.FundId };
+                        k.FlowId = flow.Id;
+                        f.Add(flow);
+                    }
+                    break;
+                case TransferRecordType.Abort:
+                    break;
+                default:
+                    break;
+            }
+        }
+
         var dic = o.ToDictionary(x => x.Id, x => x);
         foreach (var item in q)
         {
             if (item.OrderId != 0 && dic.TryGetValue(item.OrderId, out var to))
-                to.OpenDate = item.RequestDate;                
+                to.OpenDate = item.RequestDate;
         }
-
-        //q.Select(x => x.RequestType).Distinct().ToList().ForEach(x=> Debug.WriteLine(x));
-
-        //Debug.WriteLine("-------------------------");
-        //r.Select(x => x.Type).Distinct().ToList().ForEach(x => Debug.WriteLine(x));
-
-        //var qf = q.Select(x => x.FlowId).Distinct().ToArray();
-        //var rf = r.Select(x => x.FlowId).Distinct().ToArray();
 
         db.GetCollection<TransferOrder>().Update(o);
         db.GetCollection<TransferRequest>().Update(q);
         db.GetCollection<TransferRecord>().Update(r);
+        db.GetCollection<TransferFlow>().Upsert(f);
     }
 
     /// <summary>

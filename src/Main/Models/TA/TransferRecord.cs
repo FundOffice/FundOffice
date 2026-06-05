@@ -19,19 +19,20 @@ public class TransferRecord// : IEquatable<TransferRecord>
 
     public int RequestId { get; set; }
 
-    public string FlowId => Type switch
-    {
-        TransferRecordType.InitialOffer => TransferFlow.MakeId(TransferFlowType.SetUp, FundId, RequestDate),
-        TransferRecordType.Distribution => TransferFlow.MakeId(TransferFlowType.Dividend, FundId, RequestDate),
-        TransferRecordType.BonusType => TransferFlow.MakeId(TransferFlowType.Desire, FundId, RequestDate),
-        TransferRecordType.Abort => "Canceled",
-        TransferRecordType.Purchase or TransferRecordType.Subscription or TransferRecordType.Redemption or TransferRecordType.ForceRedemption =>
-                    OrderId != 0 ? TransferFlow.MakeId(TransferFlowType.Order, OrderId, RequestDate) : TransferFlow.MakeId(TransferFlowType.OrderMissing, Id, RequestDate),
-        TransferRecordType.Increase or TransferRecordType.Decrease => TransferFlow.MakeId(TransferFlowType.Adjustment, FundId, RequestDate),
-        TransferRecordType.TransferIn or TransferRecordType.TransferOut => TransferFlow.MakeId(TransferFlowType.Transfer, FundId, RequestDate),
-        TransferRecordType.SwitchIn or TransferRecordType.SwitchOut => TransferFlow.MakeId(TransferFlowType.Convert, FundId, RequestDate),
-        _ => "Unknown"
-    };
+    public string FlowId { get; set; } = null!;
+    //public string FlowId => Type switch
+    //{
+    //    TransferRecordType.InitialOffer => TransferFlow.MakeId(TransferFlowType.SetUp, FundId, RequestDate),
+    //    TransferRecordType.Distribution => TransferFlow.MakeId(TransferFlowType.Dividend, FundId, RequestDate),
+    //    TransferRecordType.BonusType => TransferFlow.MakeId(TransferFlowType.Desire, FundId, RequestDate),
+    //    TransferRecordType.Abort => "Canceled",
+    //    TransferRecordType.Purchase or TransferRecordType.Subscription or TransferRecordType.Redemption or TransferRecordType.ForceRedemption =>
+    //                OrderId != 0 ? TransferFlow.MakeId(TransferFlowType.Order, OrderId, RequestDate) : TransferFlow.MakeId(TransferFlowType.OrderMissing, Id, RequestDate),
+    //    TransferRecordType.Increase or TransferRecordType.Decrease => TransferFlow.MakeId(TransferFlowType.Adjustment, FundId, RequestDate),
+    //    TransferRecordType.TransferIn or TransferRecordType.TransferOut => TransferFlow.MakeId(TransferFlowType.Transfer, FundId, RequestDate),
+    //    TransferRecordType.SwitchIn or TransferRecordType.SwitchOut => TransferFlow.MakeId(TransferFlowType.Convert, FundId, RequestDate),
+    //    _ => "Unknown"
+    //};
 
     public int FundId { get; set; }
 

@@ -41,7 +41,8 @@ public class TransferOrder
 {
     public int Id { get; set; }
 
-    public string FlowId => TransferFlow.MakeId(TransferFlowType.Order, Id, OpenDate); 
+    public string FlowId { get; set; } = null!;
+     
 
     public int InvestorId { get; set; }
 
