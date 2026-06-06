@@ -443,6 +443,12 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
                 db.GetCollection<IFundFactor>().DeleteMany(Query.And(Query.EQ(nameof(IFundFactor.FundId), FundId), Query.In(nameof(IFundFactor.ShareId), del.Select(x => new BsonValue(x)))));
             }
 
+            // 如果是最新的要素，更新FundShares
+            if(FlowId == Data.LastOrDefault()?.FlowId)
+            {
+                db.GetCollection<FundShares>().Upsert(new FundShares(FundId, currentShares.Select(x => new ShareInfo(x.Name, x.FundName, x.Code)).ToArray()));
+            }
+
             WeakReferenceMessenger.Default.Send(new FundShareChangedMessage { FundId = FundId, FlowId = -1 });
 
             wnd.DialogResult = true;

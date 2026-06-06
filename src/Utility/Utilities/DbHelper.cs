@@ -162,6 +162,8 @@ public static class DbHelper
 
     private readonly static string _exeFolder;
 
+    public static bool IsMock { get; private set; }
+
     static DbHelper()
     {
         _exeFolder = AppDomain.CurrentDomain.BaseDirectory;
@@ -169,7 +171,8 @@ public static class DbHelper
 
     public static void Init(string? mode = null)
     {
-        _dbfolder = mode == "-m" ? "mock" : "data";
+        IsMock = mode == "-m";
+        _dbfolder = IsMock ? "mock" : "data";
         Directory.CreateDirectory(_dbfolder);
 
 

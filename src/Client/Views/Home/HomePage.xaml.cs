@@ -1,13 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FMO.Disclosure;
-using FMO.ESigning;
-using FMO.IO.AMAC;
 
 using FMO.Models;
-using FMO.Schedule;
-using FMO.Settings;
 using FMO.Trustee;
 using FMO.Utilities;
 using Microsoft.Win32;
@@ -20,10 +15,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
-using System.Net.Http;
-using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Runtime.Loader;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
@@ -110,7 +102,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
     {
         WeakReferenceMessenger.Default.RegisterAll(this);
 
-         
+
         // 每小时运行一次，判断是不是新的一天，5秒后启动
         _dailyTimer = new Timer(x => OnNewDate(), null, 5000, 1000 * 60 * 60);
 
@@ -123,7 +115,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
 
     }
 
-    
+
 
 
 
@@ -378,7 +370,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         {
             var di = new DirectoryInfo(System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName).Parent!;
 
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = Path.Combine(di.FullName, $"{exeName}.exe"), WorkingDirectory = Directory.GetCurrentDirectory() });
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = Path.Combine(di.FullName, $"{exeName}.exe" + (DbHelper.IsMock ? "-m" : "")), WorkingDirectory = Directory.GetCurrentDirectory() });
         }
         catch (Exception e)
         {
@@ -427,7 +419,7 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
                       fs.Close();
                       File.Delete(path);
                       BackupProcess = 0;
-                      HandyControl.Controls.Growl.Info("备份取消"); 
+                      HandyControl.Controls.Growl.Info("备份取消");
                   }
               }
               catch (Exception e)
