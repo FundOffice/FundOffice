@@ -158,7 +158,7 @@ public static class DbHelper
     private static string _password = "";
 
 
-    private const string _dbfolder = "data";
+    private static string _dbfolder = "data";
 
     private readonly static string _exeFolder;
 
@@ -167,8 +167,9 @@ public static class DbHelper
         _exeFolder = AppDomain.CurrentDomain.BaseDirectory;
     }
 
-    public static void Init()
+    public static void Init(string? mode = null)
     {
+        _dbfolder = mode == "-m" ? "mock" : "data";
         Directory.CreateDirectory(_dbfolder);
 
 
