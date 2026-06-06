@@ -1,16 +1,5 @@
 ﻿namespace FMO.FeeCalc;
-
-/// <summary>
-/// 分配方案
-/// </summary>
-public class DividendPlan
-{
-
-    public List<ProfitAllocation> Plan { get; set; } = [];
-
-
-}
-
+ 
 
 /// <summary>
 /// 分配方案项

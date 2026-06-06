@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Data;
 using Growl = HandyControl.Controls.Growl;
 using MessageBox = HandyControl.Controls.MessageBox;
 
@@ -54,6 +55,12 @@ public partial class MainWindowViewModel : ObservableObject
 {
     [ObservableProperty]
     public partial FundInfo[]? Funds { get; set; }
+
+
+    [ObservableProperty]
+    public partial string? SearchFundKey { get; set; }
+
+    public CollectionViewSource FundSource { get; }
 
     public MonthQuarter[] MonthQuarters { get; } = (MonthQuarter[])Enum.GetValues(typeof(MonthQuarter));
 
@@ -105,6 +112,8 @@ public partial class MainWindowViewModel : ObservableObject
 
         debouncer = new Debouncer(Update);
 
+        FundSource = new();
+        FundSource.Filter += FundSource_Filter;
 
         //var files = new DirectoryInfo("plugins").GetFiles("*.dll");
 
@@ -123,6 +132,11 @@ public partial class MainWindowViewModel : ObservableObject
         //}
     }
 
+    private void FundSource_Filter(object sender, FilterEventArgs e)
+    {
+        e.Accepted = string.IsNullOrWhiteSpace(SearchFundKey) || (e.Item is FundInfo info && (info.Fund.Code.Contains(SearchFundKey) || info.Fund.Name.Contains(SearchFundKey)));
+    }
+
     partial void OnBeginChanged(DateTime? value)
     {
         debouncer.Invoke();
@@ -137,6 +151,7 @@ public partial class MainWindowViewModel : ObservableObject
     private void Update()
     {
         Funds = FeeDB.GetCollection<Fund>().FindAll().Where(x => x.Status <= FundStatus.StartLiquidation || Begin switch { DateTime d => x.ClearDate > DateOnly.FromDateTime(d), _ => true }).Select(x => new FundInfo { Fund = x, FeeDB = FeeDB }).ToArray();
+        App.Current.Dispatcher.Invoke(() => FundSource.Source = Funds);
         FeeDB.GetCollection<TransferRecord>().Upsert(FeeDB.GetCollection<TransferRecord>().FindAll().ToArray());
 
         var end = DateOnly.FromDateTime(End!.Value);
@@ -169,6 +184,8 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 
+
+    partial void OnSearchFundKeyChanged(string? value) => FundSource.View.Refresh();
 
     [RelayCommand]
     public void SetDateRange(MonthQuarter d)
@@ -719,6 +736,25 @@ public partial class MainWindowViewModel : ObservableObject
         wnd.ShowDialog();
     }
 
+    [RelayCommand]
+    public void SelectAll()
+    {
+        if (FundSource.View?.IsEmpty ?? true) return;
+
+        foreach (FundInfo f in FundSource.View)
+            if (f.IsDataValid)
+                f.IsChoosed = true;
+    }
+
+
+    [RelayCommand]
+    public void DeselectAll()
+    {
+        if (FundSource.View?.IsEmpty ?? true) return;
+
+        foreach (FundInfo f in FundSource.View)
+            f.IsChoosed = false;
+    }
 
 
     private async Task Calc(IGrouping<string, FundInfo> col, List<DateOnly> dates)
@@ -1017,6 +1053,8 @@ public partial class MainWindowViewModel : ObservableObject
                     }
                 }
 
+
+
                 ////////////////////////////////////////////////////////////
 
 
@@ -1032,9 +1070,55 @@ public partial class MainWindowViewModel : ObservableObject
                 sheet3.Column(2).Style.NumberFormat.Format = numfmt;
 
 
+
+                /////////////////////////////////////////////////////////////
+                ///分成
+                var alloc = FeeDB.GetCollection<ProfitAllocation>().Query().Where(Query.In(nameof(ProfitAllocation.TargetId), hasFeeIds.Select(x => new BsonValue(x)))).ToEnumerable();
+                var parter = alloc.Select(x => x.Name).Distinct().ToList();
+                if (parter.Count == 0) parter.Add("管理人");
+                var lookup = alloc.ToLookup(x => x.TargetId);
+
+                for (int i = 0; i < parter.Count; i++)
+                {
+                    sheet3.Cell(2, colSumLast + 1 + i).Value = parter[i];
+                    sheet3.Range(1, colSumLast + 1 + i, 2, colSumLast + 1 + i).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                    sheet3.Column(colSumLast + 1 + i).Width = 20;
+                    sheet3.Column(colSumLast + 1 + i).Style.NumberFormat.Format = numfmt;
+                }
+
+                sheet3.Cell(1, colSumLast + 1).Value = "收入分成";
+                // 合并
+                if (parter.Count > 1)
+                    sheet3.Range(1, colSumLast + 1, 1, colSumLast + parter.Count).Merge();
+
+
+                for (int i = 0; i < hasFeeIds.Count; i++)
+                {
+                    var cusId = hasFeeIds[i];
+
+                    var plan = lookup[cusId].ToDictionary(x => x.Name, x => x.Ratio);
+                    if (plan.Count == 0) plan["管理人"] = 100m;
+
+                    for (int j = 0; j < parter.Count; j++)
+                    {
+                        int rowIdx = rowst + i, colIdx = colSumLast + 1 + j;
+                        var name = parter[j];
+
+                        sheet3.Cell(rowIdx, colIdx).FormulaR1C1 = $"R{rowIdx}C2 * {(plan.TryGetValue(name, out var ratio) ? ratio : 0)}%";
+                    }
+
+
+                }
+
+                sheet3.Range(3, 1, ar + 3, colSumLast + parter.Count + 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                sheet3.Range(3, 1, ar + 3, colSumLast + parter.Count + 1).Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+
+
+
                 // 下方合计 
                 sheet3.Cell(rowSum, 1).Value = "合计";
-                for (int j = 2; j <= colSumLast; j++)
+                for (int j = 2; j <= colSumLast + parter.Count; j++)
                     sheet3.Cell(rowSum, j).FormulaR1C1 = $"SUM(R{rowst}C{j}:R{rowSum - 1}C{j})";
                 sheet3.Row(rowSum).Height = 40;
 
@@ -1160,7 +1244,7 @@ public partial class FundInfo : ObservableObject
         if (!IsDataValid)
         {
             // 尝试从 中同步
-            var data = pdb.GetCollection<FundDailyFee>().Find(x => x.FundId == Fund.Id).ToArray();
+            var data = FeeDB.GetCollection<FundDailyFee>().Find(x => x.FundId == Fund.Id).ToArray();
             var nvs = pdb.GetDailyCollection(Fund.Id).FindAll().OrderBy(x => x.Date).ToList();
             var fe = data.Select(x => new ManageFeeDetail(x.Date.DayNumber, x.Date, x.ManagerFeeAccrued, nvs.LastOrDefault(y => y.Date <= x.Date)?.Share ?? 0));
 

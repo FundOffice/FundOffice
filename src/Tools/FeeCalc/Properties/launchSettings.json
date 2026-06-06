@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "FeeCalc": {
+      "commandName": "Project",
+      "commandLineArgs": "-m"
+    }
+  }
+}
