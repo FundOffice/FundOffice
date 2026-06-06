@@ -1,0 +1,40 @@
+﻿<Window
+    x:Class="FMO.FeeCalc.AllocWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO.FeeCalc"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="分配方案"
+    Width="800"
+    Height="450"
+    mc:Ignorable="d">
+    <DockPanel Margin="8">
+        <DockPanel DockPanel.Dock="Top">
+            <hc:TextBox
+                Width="300"
+                hc:InfoElement.Placeholder="请输入投资者名称"
+                Text="{Binding SearchInvestor, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+
+            <Border>
+                <DockPanel LastChildFill="False">
+                    <TextBlock VerticalAlignment="Center" Text="添加客户经理、代销" />
+                    <TextBox
+                        Width="200"
+                        Margin="5,0"
+                        Text="{Binding NewOwner, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                    <Button
+                        Command="{Binding AddOwnerCommand}"
+                        Content="确认"
+                        Style="{StaticResource ButtonSuccess}" />
+                </DockPanel>
+            </Border>
+
+        </DockPanel>
+
+
+        <ListBox ItemsSource="{Binding }"/>
+
+    </DockPanel>
+</Window>

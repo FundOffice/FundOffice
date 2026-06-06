@@ -103,7 +103,7 @@ public partial class MainWindowViewModel : ObservableObject
         FeeDB.GetCollection<FundDailyFee>().Upsert(db.GetCollection<FundDailyFee>().FindAll().ToArray());
 
 
-        debouncer = new Debouncer(() => Update());
+        debouncer = new Debouncer(Update);
 
 
         //var files = new DirectoryInfo("plugins").GetFiles("*.dll");
@@ -707,6 +707,17 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
 
+    [RelayCommand]
+    public void SetAlloc()
+    {
+        var wnd = new AllocWindow()
+        {
+            Owner = App.Current.MainWindow,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            DataContext = new AllocWindowViewModel(FeeDB)
+        };
+        wnd.ShowDialog();
+    }
 
 
 

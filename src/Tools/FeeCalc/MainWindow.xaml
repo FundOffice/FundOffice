@@ -45,6 +45,13 @@
                         Command="{Binding ImportTADataCommand}"
                         Content="导入TA数据"
                         Style="{StaticResource ButtonInfo}" />
+
+                    <Button
+                        Margin="10,0"
+                        Background="Gold"
+                        Command="{Binding SetAllocCommand}"
+                        Content="配置分配方案" />
+
                 </DockPanel>
 
                 <DockPanel IsEnabled="{Binding IsWorking, Converter={StaticResource Boolean2BooleanReConverter}}">
