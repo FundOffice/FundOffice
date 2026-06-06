@@ -95,7 +95,7 @@ public partial class App : Application
 
         StartupUri = new Uri("MainWindow.xaml", UriKind.Relative);
 
-        DbHelper.Init();
+        DbHelper.Init(e.Args.FirstOrDefault());
         //加载插件
         PluginManager.Init();
 
