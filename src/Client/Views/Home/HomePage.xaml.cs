@@ -370,7 +370,12 @@ public partial class HomePageViewModel : ObservableObject, IRecipient<FundTipMes
         {
             var di = new DirectoryInfo(System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName).Parent!;
 
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = Path.Combine(di.FullName, $"{exeName}.exe" + (DbHelper.IsMock ? "-m" : "")), WorkingDirectory = Directory.GetCurrentDirectory() });
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = Path.Combine(di.FullName, $"{exeName}.exe"),
+                Arguments = DbHelper.IsMock ? " -m" : "",
+                WorkingDirectory = Directory.GetCurrentDirectory()
+            });
         }
         catch (Exception e)
         {

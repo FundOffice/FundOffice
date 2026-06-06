@@ -6,7 +6,7 @@
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:FMO.FeeCalc"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="管理费计算器"
+    Title="管理费计算器   -   暂不支持差异化管理费的基金"
     Width="800"
     Height="450"
     Icon="/logo.ico"
@@ -37,8 +37,14 @@
                     <Button
                         Margin="10,0"
                         Command="{Binding ImportFeeDataCommand}"
-                        Content="从表格导入费用数据"
-                        Style="{StaticResource ButtonPrimary}" />
+                        Content="导入费用数据"
+                        Style="{StaticResource ButtonInfo}" />
+
+                    <Button
+                        Margin="10,0"
+                        Command="{Binding ImportTADataCommand}"
+                        Content="导入TA数据"
+                        Style="{StaticResource ButtonInfo}" />
                 </DockPanel>
 
                 <DockPanel IsEnabled="{Binding IsWorking, Converter={StaticResource Boolean2BooleanReConverter}}">

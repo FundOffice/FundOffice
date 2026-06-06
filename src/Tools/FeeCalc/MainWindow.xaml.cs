@@ -1,17 +1,20 @@
 ﻿using ClosedXML.Excel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ExcelDataReader;
 using FMO.Models;
 using FMO.Trustee;
 using FMO.Utilities;
 using LiteDB;
 using Microsoft.Win32;
 using System.ComponentModel;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
+using Growl = HandyControl.Controls.Growl;
+using MessageBox = HandyControl.Controls.MessageBox;
 
 namespace FMO.FeeCalc;
 
@@ -75,9 +78,31 @@ public partial class MainWindowViewModel : ObservableObject
 
     Debouncer debouncer;
 
+    LiteDatabase FeeDB { get; }
 
     public MainWindowViewModel()
     {
+
+        try
+        {
+            FeeDB = new LiteDatabase(@$"FileName=data\feecalc.db;Password={MachineCodeHelper.GetMachineCode()};Connection=Shared");
+            _ = FeeDB.GetCollectionNames();
+        }
+        catch
+        {
+            File.Delete("data\\feecalc.db");
+            FeeDB = new LiteDatabase(@$"FileName=data\feecalc.db;Password={MachineCodeHelper.GetMachineCode()};Connection=Shared");
+        }
+
+        // 同步数据
+        using var db = DbHelper.Base();
+        FeeDB.GetCollection<Fund>().Upsert(db.GetCollection<Fund>().FindAll().ToArray());
+        FeeDB.GetCollection<FundShares>().Upsert(db.GetCollection<FundShares>().FindAll().ToArray());
+        FeeDB.GetCollection<Investor>().Upsert(db.GetCollection<Investor>().FindAll().ToArray());
+        FeeDB.GetCollection<TransferRecord>().Upsert(db.GetCollection<TransferRecord>().FindAll().ToArray());
+        FeeDB.GetCollection<FundDailyFee>().Upsert(db.GetCollection<FundDailyFee>().FindAll().ToArray());
+
+
         debouncer = new Debouncer(() => Update());
 
 
@@ -111,9 +136,8 @@ public partial class MainWindowViewModel : ObservableObject
 
     private void Update()
     {
-        using var db = DbHelper.Base();
-        Funds = db.GetCollection<Fund>().FindAll().Where(x => x.Status <= FundStatus.StartLiquidation || Begin switch { DateTime d => x.ClearDate > DateOnly.FromDateTime(d), _ => true }).Select(x => new FundInfo { Fund = x }).ToArray();
-
+        Funds = FeeDB.GetCollection<Fund>().FindAll().Where(x => x.Status <= FundStatus.StartLiquidation || Begin switch { DateTime d => x.ClearDate > DateOnly.FromDateTime(d), _ => true }).Select(x => new FundInfo { Fund = x, FeeDB = FeeDB }).ToArray();
+        FeeDB.GetCollection<TransferRecord>().Upsert(FeeDB.GetCollection<TransferRecord>().FindAll().ToArray());
 
         var end = DateOnly.FromDateTime(End!.Value);
         List<DateOnly> dates = new List<DateOnly>();
@@ -127,6 +151,24 @@ public partial class MainWindowViewModel : ObservableObject
             f.PropertyChanged += (s, e) => Application.Current.Dispatcher.BeginInvoke(() => CalcCommand.NotifyCanExecuteChanged());// OnPropertyChanged(nameof(CanCalc));
         }
     }
+
+    private void Check()
+    {
+        if (Funds is not { Length: > 0 }) return;
+
+        var end = DateOnly.FromDateTime(End!.Value);
+        List<DateOnly> dates = new List<DateOnly>();
+        dates.Add(DateOnly.FromDateTime(Begin!.Value));
+        while (dates[^1] < end)
+            dates.Add(dates[^1].AddDays(1));
+
+        foreach (var f in Funds)
+        {
+            f.CheckData(dates, DateOnly.FromDateTime(Begin!.Value), DateOnly.FromDateTime(End!.Value));
+            f.PropertyChanged += (s, e) => Application.Current.Dispatcher.BeginInvoke(() => CalcCommand.NotifyCanExecuteChanged());// OnPropertyChanged(nameof(CanCalc));
+        }
+    }
+
 
     [RelayCommand]
     public void SetDateRange(MonthQuarter d)
@@ -211,8 +253,6 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     public void ImportFeeData()
     {
-        Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
         var dlg = new OpenFileDialog();
         dlg.Title = "请选择每日费用明细";
         dlg.Filter = "Excel|*.xls;*.xlsx";
@@ -280,13 +320,12 @@ public partial class MainWindowViewModel : ObservableObject
         using var fdb = DbHelper.Base();
         var funds = fdb.GetCollection<Fund>().FindAll().ToArray();
 
-        using var db = new LiteDatabase(@"FileName=data\feecalc.db;Connection=Shared");
         foreach (var f in fees.GroupBy(x => x.Code))
         {
             var fund = funds.FirstOrDefault(x => x.Code == f.Key);
             if (fund is null) continue;
 
-            var old = db.GetCollection<ManageFeeDetail>($"f{fund.Id}").FindAll().OrderBy(x => x.Date).ToList();
+            var old = FeeDB.GetCollection<ManageFeeDetail>($"f{fund.Id}").FindAll().OrderBy(x => x.Date).ToList();
             foreach (var n in f.Select(x => x.Fee))
             {
                 var v = old.FirstOrDefault(x => x.Date == n.Date);
@@ -294,22 +333,356 @@ public partial class MainWindowViewModel : ObservableObject
                 else old.Add(n);
             }
 
-            //db.GetCollection<ManageFeeDetail>($"f{fund.Id}").EnsureIndex(x => x.Date, true);
-            db.GetCollection<ManageFeeDetail>($"f{fund.Id}").Upsert(old);
+            FeeDB.GetCollection<ManageFeeDetail>($"f{fund.Id}").Upsert(old);
         }
 
 
-        HandyControl.Controls.Growl.Success("导入成功");
+        Growl.Success("导入成功");
+        Check();
     }
 
+
+
+    [RelayCommand]
+    public void ImportTAData()
+    {
+
+        var dlg = new OpenFileDialog
+        {
+            Title = "请选择基金从成立至今的交易确认明细",
+            Filter = "Excel|*.xls;*.xlsx",
+            Multiselect = false
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        var file = dlg.FileName;
+
+        // 表头下标（证件号不再是必填，可为-1）
+        int idxFundCode = -1;        //产品代码→FundCode（必填）
+        int idxInvestorName = -1;    //投资人名称→InvestorName（必填，无证件时必须有）
+        int idxInvestorIdCard = -1;  //证件号码→InvestorIdentity（可选）
+        int idxConfirmDate = -1;     //确认日期→ConfirmedDate（必填）
+        int idxBusinessType = -1;    //业务类型→Type(枚举)（必填）
+        int idxConfirmedShare = -1;  //确认份额→ConfirmedShare（必填）
+        int idxPerformace = -1;
+
+        var regexOpt = RegexOptions.IgnoreCase | RegexOptions.Compiled;
+
+        using var fs = new FileStream(file, FileMode.Open, FileAccess.Read);
+        using var read = ExcelReaderFactory.CreateReader(fs);
+
+        if (!read.Read())
+        {
+            Growl.Error("Excel无表头数据");
+            return;
+        }
+
+        //遍历表头匹配（证件号列无匹配也不报错）
+        for (int i = 0; i < read.FieldCount; i++)
+        {
+            var head = read.GetString(i)?.Trim() ?? "";
+            if (string.IsNullOrWhiteSpace(head)) continue;
+
+            if (idxFundCode == -1 && Regex.IsMatch(head, @"产品代码", regexOpt)) idxFundCode = i;
+            if (idxInvestorName == -1 && Regex.IsMatch(head, @"投资人名称|客户名称", regexOpt)) idxInvestorName = i;
+            if (idxInvestorIdCard == -1 && Regex.IsMatch(head, @"证件号码", regexOpt)) idxInvestorIdCard = i;
+            if (idxConfirmDate == -1 && Regex.IsMatch(head, @"确认日期", regexOpt)) idxConfirmDate = i;
+            if (idxBusinessType == -1 && Regex.IsMatch(head, @"业务类型", regexOpt)) idxBusinessType = i;
+            if (idxConfirmedShare == -1 && Regex.IsMatch(head, @"确认份额", regexOpt)) idxConfirmedShare = i;
+            if (idxPerformace == -1 && Regex.IsMatch(head, @"业绩报酬", regexOpt)) idxPerformace = i;
+        }
+
+        //必填字段校验（移除证件号码，仅校验核心必填项）
+        List<string> miss = new();
+        if (idxFundCode == -1) miss.Add("产品代码");
+        if (idxInvestorName == -1) miss.Add("投资人名称/客户名称");
+        if (idxConfirmDate == -1) miss.Add("确认日期");
+        if (idxBusinessType == -1) miss.Add("业务类型");
+        if (idxConfirmedShare == -1) miss.Add("确认份额");
+        if (idxPerformace == -1) miss.Add("业绩报酬");
+
+        if (miss.Any())
+        {
+            Growl.Error($"缺失必填表头：{string.Join("、", miss)}");
+            return;
+        }
+
+        //【业务类型文本→枚举映射】根据你实际Excel业务名称补充
+        Dictionary<string, TransferRecordType> typeMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        {"基金成立",TransferRecordType.Subscription},
+        {"申购",TransferRecordType.Subscription},
+        {"认购",TransferRecordType.Purchase},
+        {"赎回",TransferRecordType.Redemption},
+        {"认购结果",TransferRecordType.Purchase},
+        {"申购确认",TransferRecordType.Subscription},
+        {"认购确认",TransferRecordType.Purchase},
+        {"赎回确认",TransferRecordType.Redemption},
+        {"强制赎回",TransferRecordType.ForceRedemption},
+        {"红利再投",TransferRecordType.Distribution},
+        {"基金分红",TransferRecordType.Distribution},
+        {"分红",TransferRecordType.Distribution},
+        {"分红确认",TransferRecordType.Distribution},
+        {"分红方式变更",TransferRecordType.BonusType},
+        {"设置分红方式",TransferRecordType.BonusType},
+        {"份额增加",TransferRecordType.Increase},
+        {"份额调增",TransferRecordType.Increase},
+        {"份额减少",TransferRecordType.Decrease},
+        {"份额调减",TransferRecordType.Decrease},
+    };
+
+        // 基金字典：按产品代码匹配
+        var fundDic = FeeDB.GetCollection<Fund>().FindAll().ToDictionary(k => k.Code.Trim(), v => v.Id, StringComparer.OrdinalIgnoreCase);
+        var shareDic = FeeDB.GetCollection<FundShares>().FindAll().Select(x => x.Shares.Select(y => (y.FundCode, x.FundId))).SelectMany(x => x).DistinctBy(x => x.FundCode).ToDictionary(k => k.FundCode, v => v.FundId);
+
+        // 投资人字典1：优先按证件号匹配（和原逻辑一致）
+        var invCardDic = FeeDB.GetCollection<Investor>().FindAll()
+            .Where(x => x.Identity is not null && !string.IsNullOrWhiteSpace(x.Identity.Id))
+            .ToDictionary(k => k.Identity!.Id.Trim(), v => v.Id, StringComparer.OrdinalIgnoreCase);
+        // 投资人字典2：兜底按名称匹配（同名称取第一条，避免重复键异常）
+        var invNameDic = FeeDB.GetCollection<Investor>().FindAll()
+            .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+            .GroupBy(x => x.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase);
+
+        var invCol = FeeDB.GetCollection<Investor>();
+        int maxInvId = invCol.Max(x => (int?)x.Id) ?? 0;
+
+
+        List<TransferRecord> saveList = new();
+        int rowNo = 1;
+        int success = 0, skip = 0, err = 0;
+        List<ImportItemInfo> errLog = new();
+
+        while (read.Read())
+        {
+            rowNo++;
+            try
+            {
+                // 文本字段读取：代码、名称、证件、业务类型、日期文本
+                string SafeStr(int idx)
+                {
+                    if (read.IsDBNull(idx)) return string.Empty;
+                    var val = read.GetValue(idx);
+                    return val?.ToString()?.Trim() ?? "";
+                }
+
+                // 数值专用：直接decimal，避免字符串中转
+                decimal SafeDecimal(int idx)
+                {
+                    if (read.IsDBNull(idx)) return 0m;
+                    var val = read.GetValue(idx);
+                    if (decimal.TryParse(val.ToString(), out var d))
+                        return d;
+                    return 0m;
+                }/// <summary>
+                 /// 兼容 yyyyMMdd / yyyy-MM-dd / yyyy/MM/dd
+                 /// </summary>
+                bool SafeParseDate(string dateText, out DateOnly result)
+                {
+                    result = default;
+                    if (string.IsNullOrWhiteSpace(dateText)) return false;
+
+                    // 优先 8位纯数字 yyyyMMdd
+                    if (dateText.Length == 8 && dateText.All(char.IsDigit))
+                    {
+                        if (DateOnly.TryParseExact(dateText, "yyyyMMdd", out var dt))
+                        {
+                            result = dt;
+                            return true;
+                        }
+                    }
+
+                    // 常规 - / 分隔
+                    string[] fmt = { "yyyy-MM-dd", "yyyy/MM/dd" };
+                    return DateOnly.TryParseExact(dateText, fmt, out result)
+                        || DateOnly.TryParse(dateText, out result);
+                }
+
+
+                // 文本字段
+                string fundCode = SafeStr(idxFundCode);
+                string invName = SafeStr(idxInvestorName);
+                string invIdCard = idxInvestorIdCard == -1 ? "" : SafeStr(idxInvestorIdCard);
+                string confirmDateStr = SafeStr(idxConfirmDate);
+                string bizTypeName = SafeStr(idxBusinessType);
+
+                // 【关键】份额直接读出decimal，不再走string→decimal二次解析
+                decimal confirmShare = SafeDecimal(idxConfirmedShare);
+                decimal performace = SafeDecimal(idxPerformace);
+                string confirmShareStr = confirmShare.ToString(); // 仅日志报错用
+
+                if (string.IsNullOrWhiteSpace(fundCode) || string.IsNullOrWhiteSpace(confirmDateStr) || string.IsNullOrWhiteSpace(bizTypeName))
+                {
+                    skip++;
+                    errLog.Add(new ImportItemInfo(rowNo, ImportItemType.Skip, "产品代码/确认日期/业务类型为空，已跳过"));
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(invIdCard) && string.IsNullOrWhiteSpace(invName))
+                {
+                    skip++;
+                    errLog.Add(new ImportItemInfo(rowNo, ImportItemType.Skip, "证件号码和投资人名称均为空，无法匹配客户，已跳过"));
+                    continue;
+                }
+
+                if (!SafeParseDate(confirmDateStr, out var confirmDate))
+                {
+                    err++;
+                    errLog.Add(new ImportItemInfo(rowNo, ImportItemType.Error, $"确认日期[{confirmDateStr}]格式错误，支持格式：yyyyMMdd、yyyy-MM-dd、yyyy/MM/dd"));
+                    continue;
+                }
+
+                if (!typeMap.TryGetValue(bizTypeName, out var recordType))
+                {
+                    err++;
+                    errLog.Add(new ImportItemInfo(rowNo, ImportItemType.Error, $"未知业务类型[{bizTypeName}]"));
+                    continue;
+                }
+
+
+                decimal reqShare = 0, reqAmt = 0, confirmAmt = 0;
+                DateOnly reqDate = confirmDate;
+                string? agency = null;
+
+                if (!fundDic.TryGetValue(fundCode, out var fundId) && !shareDic.TryGetValue(fundCode, out fundId))
+                {
+                    err++;
+                    errLog.Add(new ImportItemInfo(rowNo, ImportItemType.Error, $"【{fundCode}】不在基金列表中，跳过本条记录"));
+                    continue;
+                }
+
+                int invId = 0;
+                //优先证件匹配
+                if (!string.IsNullOrWhiteSpace(invIdCard) && invCardDic.TryGetValue(invIdCard, out var idByCard))
+                {
+                    invId = idByCard;
+                }
+                //其次名称匹配（使用项目自带IsNamePair名称去符号比对）
+                else if (!string.IsNullOrWhiteSpace(invName))
+                {
+                    //遍历字典用IsNamePair模糊匹配（适配项目名称去括号空格规则）
+                    int? tempId = null;
+                    foreach (var kv in invNameDic)
+                    {
+                        if (Investor.IsNamePair(kv.Key, invName))
+                        {
+                            tempId = kv.Value;
+                            break;
+                        }
+                    }
+                    if (tempId.HasValue)
+                    {
+                        invId = tempId.Value;
+                    }
+                    else
+                    {
+                        //证件+名称都没匹配：自动新增投资人
+                        maxInvId += 1;
+                        var newInv = new Investor
+                        {
+                            Id = maxInvId,
+                            Name = invName,
+                            CreateTime = DateTime.Now,
+                            //证件有值就赋值Identity，无则Identity=null
+                            Identity = string.IsNullOrWhiteSpace(invIdCard) ? null : new Identity { Id = invIdCard },
+                            //其余字段自动取构造默认值
+                        };
+                        invCol.Insert(newInv);
+
+                        //同步更新内存字典，本批次后续行复用
+                        invId = maxInvId;
+                        if (!string.IsNullOrWhiteSpace(invIdCard))
+                            invCardDic[invIdCard] = invId;
+                        invNameDic[invName.Trim()] = invId;
+
+                        //自动新增客户用Info提示日志
+                        errLog.Add(new ImportItemInfo(rowNo, ImportItemType.Info, $"客户[{invName}]证件[{invIdCard}]系统不存在，已自动新增投资人(Id:{invId})"));
+                    }
+                }
+                else
+                {
+                    //名称为空无法新建，保留0
+                    errLog.Add(new ImportItemInfo(rowNo, ImportItemType.Error, "客户名称为空无法创建投资人，InvestorId=0"));
+                }
+
+                var item = new TransferRecord
+                {
+                    FundId = fundId,
+                    FundCode = fundCode,
+                    ShareCode = fundCode,
+                    InvestorId = invId,
+                    InvestorName = invName,
+                    InvestorIdentity = invIdCard,
+                    ConfirmedDate = confirmDate,
+                    RequestDate = reqDate,
+                    Type = recordType,
+
+                    RequestShare = reqShare,
+                    RequestAmount = reqAmt,
+                    ConfirmedShare = confirmShare, // 直接赋值
+                    ConfirmedAmount = confirmAmt,
+                    PerformanceFee = performace,
+
+                    Agency = agency,
+                    Source = "TAExcel导入",
+                    IsLiquidating = false,
+                    Background = false,
+                    IsFailed = false,
+                    ExternalId = null,
+                    ExternalRequestId = null,
+                };
+
+                saveList.Add(item);
+                success++;
+            }
+            catch (Exception ex)
+            {
+                err++;
+                errLog.Add(new ImportItemInfo(rowNo, ImportItemType.Error, $"行异常：{ex.Message}"));
+            }
+        }
+
+        //批量入库（保留原逻辑：先删同基金旧数据，再Upsert）
+        if (saveList.Count > 0)
+        {
+            var col = FeeDB.GetCollection<TransferRecord>();
+
+            // 仅删除有匹配基金的旧数据，避免误删FundId=0的无效数据
+            var validFundIds = saveList.Where(x => x.FundId != 0).Select(x => new BsonValue(x.FundId)).Distinct().ToList();
+            if (validFundIds.Any())
+            {
+                col.DeleteMany(Query.In(nameof(TransferRecord.FundId), validFundIds));
+            }
+
+            col.Upsert(saveList);
+        }
+
+        Check();
+
+        //结果弹窗 
+        if (errLog.Any())
+        {
+            var wnd = new TipWindow()
+            {
+                SizeToContent = SizeToContent.WidthAndHeight,
+                ShowInTaskbar = false,
+                Owner = App.Current.MainWindow,
+                DataContext = new TipWindowViewModel { Items = errLog.ToArray() },
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+            wnd.ShowDialog();
+        }
+        else Growl.Success("导入成功");
+
+    }
 
     [RelayCommand]
     public async Task SyncByAPI()
     {
         if (Begin is null || End is null) return;
 
-        using var db = DbHelper.Base();
-        var funds = db.GetCollection<Fund>().FindAll().ToArray();
+        var funds = FeeDB.GetCollection<Fund>().FindAll().ToArray();
 
         foreach (var t in TrusteeGallay.Trustees)
         {
@@ -326,7 +699,7 @@ public partial class MainWindowViewModel : ObservableObject
                     f.FundId = funds.FirstOrDefault(x => x.Code == f.FundCode)?.Id ?? 0;
                 }
 
-                db.GetCollection<FundDailyFee>().Upsert(rc.Data);
+                FeeDB.GetCollection<FundDailyFee>().Upsert(rc.Data);
             }
         }
 
@@ -342,14 +715,13 @@ public partial class MainWindowViewModel : ObservableObject
         foreach (var f in col)
         {
             f.IsWorking = true;
-            using var db = new LiteDatabase(@"FileName=data\feecalc.db;Connection=Shared");
             var begin = dates[0];
             var end = dates[^1];
 
             // var dc = db.GetDailyCollection(f.Fund.Id);
             // var fees = db.GetCollection<FundDailyFee>().Find(x => x.FundId == f.Fund.Id && x.Date >= begin && x.Date <= end).OrderBy(x => x.Date).Select(x => new ManageFeeDetail(0, x.Date, x.ManagerFeeAccrued, dc.FindOne(y=>y.Date == x.Date)?.Share??0)).ToList();
 
-            var fees = db.GetCollection<ManageFeeDetail>($"f{f.Fund.Id}").Find(x => x.Date >= begin && x.Date <= end).OrderBy(x => x.Date).ToList();
+            var fees = FeeDB.GetCollection<ManageFeeDetail>($"f{f.Fund.Id}").Find(x => x.Date >= begin && x.Date <= end).OrderBy(x => x.Date).ToList();
             var fdate = fees.Select(x => x.Date).ToArray();
 
 
@@ -373,7 +745,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         try
         {
-            var (dd, ids, names, array) = FundHelper.GenerateShareSheet(f.Fund.Id, dates[0], dates[^1]);
+            var (dd, ids, names, array) = GenerateShareSheet(f.Fund.Id, dates[0], dates[^1]);
 
             // 份额一致
             bool sharepair = true;
@@ -523,8 +895,7 @@ public partial class MainWindowViewModel : ObservableObject
 
                 // 写入业绩报酬 
                 int rowSum = ar;
-                using var db = DbHelper.Base();
-                var per = db.GetCollection<TransferRecord>().Find(x => x.FundId == f.Fund.Id && x.PerformanceFee > 0).Where(x => x.RequestDate >= dd[0] && x.RequestDate <= dd[^1]).ToArray();
+                var per = FeeDB.GetCollection<TransferRecord>().Find(x => x.FundId == f.Fund.Id && x.PerformanceFee > 0).Where(x => x.RequestDate >= dd[0] && x.RequestDate <= dd[^1]).ToArray();
 
 
                 // 业绩报酬 
@@ -686,6 +1057,64 @@ public partial class MainWindowViewModel : ObservableObject
             Debug.WriteLine(e.Message);
         }
     }
+
+
+
+    /// <summary>
+    /// 生成每日份额表
+    /// </summary>
+    /// <param name="fundId"></param>
+    /// <param name="begin"></param>
+    /// <param name="end"></param>
+    public (IList<DateOnly> Dates, IList<int> InvestorIds, IList<string> Names, decimal[,] Data) GenerateShareSheet(int fundId, DateOnly begin, DateOnly end)
+    {
+        IEnumerable<TransferRecord> uncheck = FeeDB.GetCollection<TransferRecord>().Find(x => x.FundId == 0);
+        if (uncheck.Count() > 0)
+        {
+            var funds = FeeDB.GetCollection<Fund>().FindAll().Select(x => new { x.Id, x.Code, x.Name }).ToArray();
+            foreach (var item in uncheck)
+            {
+                item.FundId = (funds.FirstOrDefault(x => x.Code == item.FundCode) ?? funds.FirstOrDefault(x => x.Name == item.FundName))!.Id;
+            }
+            FeeDB.GetCollection<TransferRecord>().Update(uncheck);
+        }
+
+        // 计算份额表，排除已全部赎回的
+        var data = FeeDB.GetCollection<TransferRecord>().Find(x => x.FundId == fundId).OrderBy(x => x.ConfirmedDate).ToList();
+        data = data.GroupBy(x => x.InvestorId).Where(x => x.Max(y => y.ConfirmedDate) >= begin || x.Sum(y => y.ShareChange()) > 0).SelectMany(x => x).ToList();
+
+        /// 生成行、列头
+        List<DateOnly> dates = new List<DateOnly>();
+        var idname = data.Select(x => (x.InvestorId, x.InvestorName)).DistinctBy(x => x.InvestorId);
+        var ids = idname.Select(x => x.InvestorId).ToList();
+        var names = idname.Select(x => x.InvestorName).ToList();
+
+        var date = begin;
+        while (date <= end)
+        {
+            dates.Add(date);
+            date = date.AddDays(1);
+        }
+
+        var array = new decimal[dates.Count, ids.Count];
+
+        Dictionary<DateOnly, Dictionary<int, decimal>> result = new();
+
+
+        for (int i = 0; i < dates.Count; i++)
+        {
+            foreach (var d in data)
+            {
+                if (d.ConfirmedDate >= dates[i]) continue;
+
+                var cid = ids.IndexOf(d.InvestorId);
+                array[i, cid] += d.ShareChange();
+            }
+        }
+
+
+        return (dates, ids, names, array);
+    }
 }
 
 
@@ -706,32 +1135,31 @@ public partial class FundInfo : ObservableObject
     [ObservableProperty]
     public partial string? Error { get; internal set; }
 
+    public required LiteDatabase FeeDB { get; set; }
+
     public void CheckData(List<DateOnly> dates, DateOnly begin, DateOnly end)
     {
         // 从platform中同步
         using var pdb = DbHelper.Base();
-        var data = pdb.GetCollection<FundDailyFee>().Find(x => x.FundId == Fund.Id).ToArray();
 
-
-        using var db = new LiteDatabase(@"FileName=data\feecalc.db;Connection=Shared");
-        var fees = db.GetCollection<ManageFeeDetail>($"f{Fund.Id}").Find(x => x.Date >= begin && x.Date <= end).OrderBy(x => x.Date).DistinctBy(x => x.Date).ToList();
+        var fees = FeeDB.GetCollection<ManageFeeDetail>($"f{Fund.Id}").Find(x => x.Date >= begin && x.Date <= end).OrderBy(x => x.Date).DistinctBy(x => x.Date).ToList();
         var fdate = fees.Select(x => x.Date).ToArray();
 
         IsDataValid = dates.SequenceEqual(fdate);
         if (!IsDataValid)
         {
             // 尝试从 中同步
+            var data = pdb.GetCollection<FundDailyFee>().Find(x => x.FundId == Fund.Id).ToArray();
             var nvs = pdb.GetDailyCollection(Fund.Id).FindAll().OrderBy(x => x.Date).ToList();
             var fe = data.Select(x => new ManageFeeDetail(x.Date.DayNumber, x.Date, x.ManagerFeeAccrued, nvs.LastOrDefault(y => y.Date <= x.Date)?.Share ?? 0));
 
             // 保存
-            db.GetCollection<ManageFeeDetail>($"f{Fund.Id}").Upsert(fe);
-            // db.GetCollection<ManageFeeDetail>($"f{Fund.Id}").DeleteMany(x => x.Id < 10000);
+            FeeDB.GetCollection<ManageFeeDetail>($"f{Fund.Id}").Upsert(fe);
 
         }
 
         // 再次加载
-        fees = db.GetCollection<ManageFeeDetail>($"f{Fund.Id}").Find(x => x.Date >= begin && x.Date <= end).OrderBy(x => x.Date).DistinctBy(x => x.Date).ToList();
+        fees = FeeDB.GetCollection<ManageFeeDetail>($"f{Fund.Id}").Find(x => x.Date >= begin && x.Date <= end).OrderBy(x => x.Date).DistinctBy(x => x.Date).ToList();
         fdate = fees.Select(x => x.Date).ToArray();
 
         IsDataValid = dates.SequenceEqual(fdate);
@@ -752,3 +1180,5 @@ public partial class FundInfo : ObservableObject
 
     }
 }
+
+

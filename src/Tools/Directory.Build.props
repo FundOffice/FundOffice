@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <OutputPath>$(MSBuildThisFileDirectory)..\Client\bin\$(Configuration)\</OutputPath>
+    <BaseOutputPath>$(OutputPath)</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(MSBuildProjectDirectory)\obj\$(Configuration)\</BaseIntermediateOutputPath>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+</Project>

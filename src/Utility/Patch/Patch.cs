@@ -66,7 +66,7 @@ public static partial class DatabaseAssist
         [153] = AddCodeToShareClass,
         [154] = ModifyTokenTable,
         [155] = InitFundFlowAndFactor,
-        [157] = UpdateTAFlowId,
+        //[157] = UpdateTAFlowId,
     };
 
     /// <summary>

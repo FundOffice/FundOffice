@@ -15,6 +15,7 @@ public class FundDailyFee
 
     public required string FundCode { get; set; }
 
+    public required string ShareCode { get; set; }
 
     public DateOnly Date { get; set; }
 
