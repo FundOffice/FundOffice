@@ -94,11 +94,6 @@ public partial class MainWindowViewModel : ObservableObject
             return;
         }
 
-        if(value == "log")
-        {
-            Data = doc!.Select(x => BsonMapper.Global.ToObject<LogInfo>(x)).OrderByDescending(x => x.Time);
-            return;
-        }
 
 
         var types = AssemblyLoadContext.Default.Assemblies.SelectMany(x => x.GetTypes());

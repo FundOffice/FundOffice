@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using FMO.Utilities;
+using Microsoft.Win32;
 using System.IO;
 using System.Windows;
 
@@ -11,6 +12,13 @@ public partial class App : Application
 {
     public App()
     {
+
+    }
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+
 #if RELEASE
         // 设置工作目录
         
@@ -37,5 +45,8 @@ public partial class App : Application
                 }
             }
         }
+
+        DbHelper.Init();
     }
+
 }
