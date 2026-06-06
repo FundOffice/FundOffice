@@ -202,7 +202,7 @@ public abstract class TrusteeApiBase : ITrustee
                 if (!string.IsNullOrWhiteSpace(sfm.ShareClass))
                     item.ShareClass = sfm.ShareClass;
             }
-            else Logg.Error($"{item.FundName} {item.FundCode} 映射基金代码失败");
+            else Logg.Error($"{item.FundName} {item.ShareCode} 映射基金代码失败");
         }
 
     }
@@ -224,11 +224,28 @@ public abstract class TrusteeApiBase : ITrustee
                 if (!string.IsNullOrWhiteSpace(sfm.ShareClass))
                     item.ShareClass = sfm.ShareClass;
             }
-            else Logg.Error($"{item.FundName} {item.FundCode} 映射基金代码失败");
+            else Logg.Error($"{item.FundName} {item.ShareCode} 映射基金代码失败");
         }
 
     }
+    protected async Task MapCode(IEnumerable<FundDailyFee> data)
+    {
+        if (FundsInfo?.Length is null or 0 || (DateTime.Now - _queryFundMapTime).TotalMinutes > 15)
+        {
+            await QuerySubjectFundMappings();
+            _queryFundMapTime = DateTime.Now;
+        }
 
+        foreach (var item in data)
+        {
+            if (FundsInfo?.FirstOrDefault(x => x.FundCode == item.FundCode) is SubjectFundMapping sfm && sfm.AmacCode is not null)
+            {
+                item.FundCode = sfm.AmacCode;
+            }
+            else Logg.Error($"{item.ShareCode} 映射基金代码失败");
+        }
+
+    }
 
 
     public bool LoadConfig()

@@ -120,6 +120,7 @@ public partial class CSC : TrusteeApiBase
                 list.AddRange(result.Data);
         }
 
+        await MapCode(list);
         return new(ReturnCode.Success, list.ToArray());
     }
 

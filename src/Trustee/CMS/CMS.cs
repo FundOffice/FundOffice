@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
+using System.Windows.Documents;
 
 namespace FMO.Trustee;
 
@@ -95,6 +96,9 @@ public partial class CMS : TrusteeApiBase
             if (data.Data?.Count > 0)
                 transactions.AddRange(data.Data);
         }
+
+
+        await MapCode(transactions);
         return new(ReturnCode.Success, transactions.ToArray());
     }
 

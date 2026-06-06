@@ -104,6 +104,7 @@ internal class FundDailyFeeJson : JsonBase
         return new FundDailyFee
         {
             FundCode = FundCode,
+            ShareCode = FundCode,
             Date = DateOnly.ParseExact(BusiDate, "yyyyMMdd"),
             // 管理费
             ManagerFeeAccrued = ParseDecimal(ManagementFeeJt),

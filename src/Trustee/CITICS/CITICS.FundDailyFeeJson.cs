@@ -20,7 +20,7 @@ internal class FundDailyFeeJson : JsonBase
     /// 分级产品代码
     /// </summary>
     [JsonPropertyName("ffjdm")]
-    public string? ClassificationCode { get; set; }
+    public string ClassificationCode { get; set; }
 
     /// <summary>
     /// 产品名称
@@ -197,13 +197,14 @@ internal class FundDailyFeeJson : JsonBase
 
     public FundDailyFee ToObject()
     {
-        var code = ClassificationCode switch { "M" => ProductCode, null => ProductCode, var n => n };
+        //var code = ClassificationCode switch { "M" => ProductCode, null => ProductCode, var n => n };
 
 
 
         return new FundDailyFee
         {
-            FundCode = code,
+            FundCode = ProductCode,
+            ShareCode = ClassificationCode,
             Date = DateOnly.ParseExact(BusinessDate, "yyyy-MM-dd"),
             ManagerFeeAccrued = ParseDecimal(AccruedManagementFee),
             ManagerFeePaid = ParseDecimal(PaidManagementFee),

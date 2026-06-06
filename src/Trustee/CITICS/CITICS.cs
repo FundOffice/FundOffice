@@ -86,6 +86,8 @@ public partial class CITICS : TrusteeApiBase
 
         var result = await SyncWork<FundDailyFee, FundDailyFeeJson>(part, new { startDate = $"{begin:yyyyMMdd}", endDate = $"{end:yyyyMMdd}" }, x => x.ToObject());
 
+        if (result.Data?.Count > 0)
+            await MapCode(result.Data);
         return result;
     }
 
@@ -121,7 +123,7 @@ public partial class CITICS : TrusteeApiBase
     {
         var part = "/v1/ta/TradeConfirmationForApi";
         var result = await SyncWork<TransferRecordJson, TransferRecordJson>(part, new { ackBeginDate = $"{begin:yyyyMMdd}", ackEndDate = $"{end:yyyyMMdd}", fundCode = fundCode }, x => x);
-         
+
 
         List<TransferRecord> list = new();
         // 后处理

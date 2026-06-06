@@ -179,6 +179,7 @@ public class FundDailyFeeJson : JsonBase
         return new FundDailyFee
         {
             FundCode = FundCode,
+            ShareCode = FundCode,
             Date = DateOnly.ParseExact(ConfDate, "yyyyMMdd"),
 
             ManagerFeeAccrued = ParseDecimal(ManagementFee),
