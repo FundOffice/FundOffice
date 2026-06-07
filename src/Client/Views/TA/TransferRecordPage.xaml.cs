@@ -195,11 +195,11 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
             if (db.GetCollection<Manager>().Query().First().Identity?.Id is string s)
                 cert.Add(s);
 
-            foreach (var item in requests.Where(x => cert.BinarySearch(x.InvestorIdentity) >= 0))
+            foreach (var item in requests.Where(x => x.InvestorIdentity is not null && cert.BinarySearch(x.InvestorIdentity) >= 0))
             {
                 item.IsSameManager = true;
             }
-            foreach (var item in records.Where(x => cert.BinarySearch(x.InvestorIdentity) >= 0))
+            foreach (var item in records.Where(x => x.InvestorIdentity is not null && cert.BinarySearch(x.InvestorIdentity) >= 0))
             {
                 item.IsSameManager = true;
             }
@@ -676,7 +676,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
         if (db.GetCollection<Manager>().Query().First().Identity?.Id is string s)
             cert.Add(s);
 
-        foreach (var item in requests.Where(x => cert.BinarySearch(x.InvestorIdentity) >= 0))
+        foreach (var item in requests.Where(x => x.InvestorIdentity is not null && cert.BinarySearch(x.InvestorIdentity) >= 0))
         {
             item.IsSameManager = true;
         }
@@ -701,7 +701,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
         if (db.GetCollection<Manager>().Query().First().Identity?.Id is string s)
             cert.Add(s);
 
-        foreach (var item in records.Where(x => cert.BinarySearch(x.InvestorIdentity) >= 0))
+        foreach (var item in records.Where(x => x.InvestorIdentity is not null && cert.BinarySearch(x.InvestorIdentity) >= 0))
         {
             item.IsSameManager = true;
         }
@@ -811,7 +811,7 @@ public partial class TransferRecordPageViewModel : ObservableObject, IDisposable
             var codes = db.GetCollection<Fund>().Query().Select(x => x.Code).ToList(); codes.Sort();
             foreach (var item in add)
             {
-                if (codes.BinarySearch(item.InvestorIdentity) >= 0)
+                if (item.InvestorIdentity is not null && codes.BinarySearch(item.InvestorIdentity) >= 0)
                     item.IsSameManager = true;
             }
 
