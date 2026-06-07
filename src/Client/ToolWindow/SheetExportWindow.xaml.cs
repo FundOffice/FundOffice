@@ -4,12 +4,12 @@ using CommunityToolkit.Mvvm.Input;
 using FMO.Models;
 using FMO.TPL;
 using FMO.Utilities;
+using Microsoft.Win32;
 using MoT;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Input;
 using Utilities;
 
 namespace FMO;
@@ -49,6 +49,10 @@ public partial class SheetExportWindowViewModel : ObservableObject
     public partial string? SelectedFile { get; set; } = "默认模板";
 
 
+    [ObservableProperty]
+    public partial bool IsWorking { get; set; }
+
+
     public bool CanGenerate => SelectedFile?.Length > 1 && Inputs?.All(x => x.IsFilled) == true;
 
     public SheetExportWindowViewModel(ExcelTemplate t)
@@ -70,7 +74,7 @@ public partial class SheetExportWindowViewModel : ObservableObject
     private void InitInputs()
     {
         List<InputViewModel> vm = [];
- 
+
         foreach (var item in Template.Script.Input)
         {
             switch (item)
@@ -91,8 +95,8 @@ public partial class SheetExportWindowViewModel : ObservableObject
                 case InputDate input:
                     vm.Add(new DateInputViewModel
                     {
-                        Title = item.Tilte, 
-                        
+                        Title = item.Tilte,
+
                     });
 
 
@@ -115,24 +119,47 @@ public partial class SheetExportWindowViewModel : ObservableObject
 
 
     [RelayCommand(CanExecute = nameof(CanGenerate))]
-    public async Task GenerateSheet()
+    public async Task GenerateSheet(Window wnd)
     {
+        IsWorking = true;
 
-        try
-        {
-            var data = await Template.Prepare(Global);
-            var path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            path = Path.Combine(path, $"{Template.Meta.Name}.xlsx");
-            await Template.SaveTo(path, data, @$"files\tpl\excel\{Id}\{SelectedFile}.xlsx");
+        await Task.Run(async () =>
+         {
+             try
+             {
+                 Global.inputs = Inputs?.Select(x => x.Value).OfType<object>().ToArray() ?? [];
+                 var data = await Template.Prepare(Global);
+                 //var path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
-            Toast.Success("导出成功");
-        }
-        catch (Exception e)
-        {
-            Logg.Error(e);
-            Toast.Warning("导出报告失败");
-        }
-        App.Current.Windows[^1].Close();
+
+                 var fsd = new SaveFileDialog();
+                 fsd.FileName = $"{Template.Meta.Name}.xlsx";
+                 fsd.DefaultExt = ".xlsx";
+                 fsd.Filter = "Excel|*.xlsx";
+                 if (fsd.ShowDialog() is not true)
+                 {
+                     IsWorking = false;
+                     return;
+                 }
+
+                 var path = fsd.FileName;
+                 var dir = new FileInfo(path).Directory;
+                 await Template.SaveTo(path, data, @$"files\tpl\excel\{Id}\{SelectedFile}.xlsx");
+
+                 Toast.Success("导出成功");
+
+                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = dir!.FullName, UseShellExecute = true });
+
+             }
+             catch (Exception e)
+             {
+                 Logg.Error(e);
+                 Toast.Warning("导出报告失败");
+             }
+         });
+
+        IsWorking = false;
+        wnd.Close();
     }
 
 
@@ -141,7 +168,7 @@ public partial class SheetExportWindowViewModel : ObservableObject
     public void ModifyFile()
     {
         var path = @$"files\tpl\excel\{Id}\{SelectedFile}.xlsx";
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = path, UseShellExecute = true }); 
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = path, UseShellExecute = true });
     }
 }
 
@@ -159,7 +186,7 @@ public abstract partial class InputViewModel : ObservableObject
 
     public partial bool IsFilled { get; set; }
 
- 
+
 
 
 
@@ -228,7 +255,7 @@ public partial class FundInputViewModel : InputViewModel
 }
 
 public partial class DateInputViewModel : InputViewModel
-{ 
+{
 
     [ObservableProperty]
     public partial DateTime Selected { get; set; }

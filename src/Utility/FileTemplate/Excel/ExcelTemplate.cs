@@ -153,7 +153,7 @@ public class ExcelTemplate
 
         for (int i = 0; i < Script.Input.Length; i++)
         {
-            if (Script.Input[i] is InputFund)
+            if (Script.Input[i] is InputFund funds)
                 sg.Funds = sg.inputs[i] as Fund[];
             else if(Script.Input[i] is InputInvestor)
                 sg.Investors = sg.inputs[i] as Investor[];

@@ -9,6 +9,7 @@
     Title="报表生成"
     Width="500"
     Height="450"
+    d:DataContext="{d:DesignInstance Type=local:SheetExportWindowViewModel}"
     SizeToContent="Height"
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
@@ -83,17 +84,26 @@
     <Grid Margin="6">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
-            <RowDefinition Height="40" />
-            <RowDefinition Height="239*" />
+            <RowDefinition MaxHeight="40" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
 
         <DockPanel LastChildFill="False">
+            <hc:CircleProgressBar
+                Width="22"
+                Height="22"
+                DockPanel.Dock="Right"
+                IsIndeterminate="True"
+                Visibility="{Binding IsWorking, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
             <Button
                 Command="{Binding GenerateSheetCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
                 Content="生成报表"
                 DockPanel.Dock="Right"
-                Style="{StaticResource ButtonPrimary}" />
+                Style="{StaticResource ButtonPrimary}"
+                Visibility="{Binding IsWorking, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
             <TextBlock
                 VerticalAlignment="Center"
@@ -126,7 +136,10 @@
         </DockPanel>
 
 
-        <DockPanel Grid.Row="1">
+        <DockPanel
+            Grid.Row="1"
+            IsEnabled="{Binding IsWorking, Converter={StaticResource Boolean2BooleanReConverter}}"
+            Visibility="{Binding Inputs, Converter={StaticResource ListIsNotEmpty2VisibilityConverter}}">
             <Separator DockPanel.Dock="Top" />
 
             <ListBox
@@ -157,7 +170,10 @@
         </DockPanel>
 
 
-        <hc:SimplePanel Grid.Row="2">
+        <hc:SimplePanel
+            Grid.Row="2"
+            IsEnabled="{Binding IsWorking, Converter={StaticResource Boolean2BooleanReConverter}}"
+            Visibility="{Binding Inputs, Converter={StaticResource ListIsNotEmpty2VisibilityConverter}}">
 
             <Separator VerticalAlignment="Top" DockPanel.Dock="Top" />
             <ContentPresenter Content="{Binding InputContext}" />

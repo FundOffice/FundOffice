@@ -36,7 +36,7 @@ public enum ChooseType
 public class InputFund : InputInfo
 {
 
-    public ChooseType ChooseType { get; }
+    public ChooseType ChooseType { get; set; }
 
     public InputFund()
     {
@@ -53,7 +53,7 @@ public class InputFund : InputInfo
 public class InputInvestor : InputInfo
 {
 
-    public ChooseType ChooseType { get; }
+    public ChooseType ChooseType { get; set; }
 
     public InputInvestor()
     {
