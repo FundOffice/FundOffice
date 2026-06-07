@@ -134,96 +134,6 @@
 
 
 
-        <DataTemplate x:Key="DT.File">
-
-            <DockPanel Background="Transparent" LastChildFill="False">
-
-
-                <hc:SimplePanel>
-                    <DockPanel>
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            Foreground="RoyalBlue"
-                            Text="{Binding Time, StringFormat=yyyy-MM-dd}" />
-                        <shared:AbbreviationText
-                            x:Name="file"
-                            Margin="5,2"
-                            VerticalContentAlignment="Center"
-                            Text="{Binding Name}" />
-                    </DockPanel>
-                    <hc:SimplePanel
-                        x:Name="p"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Stretch"
-                        Background="White"
-                        Visibility="Collapsed">
-                        <hc:SimplePanel.Resources>
-                            <Style BasedOn="{StaticResource ButtonIcon.Small}" TargetType="Button">
-                                <Setter Property="Margin" Value="2,-5" />
-                            </Style>
-                        </hc:SimplePanel.Resources>
-                        <DockPanel Margin="5,2" LastChildFill="False">
-                            <DockPanel LastChildFill="False">
-                                <Button
-                                    hc:IconElement.Geometry="{DynamicResource f.book-open-reader}"
-                                    Command="{Binding RelativeSource={RelativeSource AncestorType=shared:MultipleFileView}, Path=Binding.ViewCommand}"
-                                    CommandParameter="{Binding .}"
-                                    Foreground="Lime"
-                                    ToolTip="查看" />
-
-                                <Button
-                                    hc:IconElement.Geometry="{DynamicResource f.clone}"
-                                    Command="{Binding RelativeSource={RelativeSource AncestorType=shared:MultipleFileView}, Path=Binding.CopyCommand}"
-                                    CommandParameter="{Binding .}"
-                                    Foreground="RoyalBlue"
-                                    ToolTip="复制" />
-
-                                <Button
-                                    hc:IconElement.Geometry="{DynamicResource f.file-export}"
-                                    Command="{Binding RelativeSource={RelativeSource AncestorType=shared:MultipleFileView}, Path=Binding.SaveAsCommand}"
-                                    CommandParameter="{Binding .}"
-                                    ToolTip="另存为" />
-
-
-                            </DockPanel>
-
-                            <Button
-                                Margin="-5"
-                                hc:IconElement.Geometry="{DynamicResource f.xmark}"
-                                Command="{Binding Binding.DeleteFileCommand, RelativeSource={RelativeSource AncestorType=shared:MultipleFileView}}"
-                                CommandParameter="{Binding .}"
-                                Foreground="Red"
-                                Style="{DynamicResource ButtonIcon.Small}"
-                                ToolTip="删除"
-                                Visibility="{Binding DataContext.IsReadOnly, RelativeSource={RelativeSource AncestorType=ListBox}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-                        </DockPanel>
-                    </hc:SimplePanel>
-
-                </hc:SimplePanel>
-                <TextBlock
-                    Margin="6,0,0,0"
-                    VerticalAlignment="Center"
-                    FontSize="8"
-                    Foreground="Red"
-                    Text="文件已被删除"
-                    Visibility="{Binding Exists, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-            </DockPanel>
-            <DataTemplate.Triggers>
-                <MultiDataTrigger>
-                    <MultiDataTrigger.Conditions>
-                        <Condition Binding="{Binding Exists, TargetNullValue=False}" Value="True" />
-                        <Condition Binding="{Binding IsMouseOver, RelativeSource={RelativeSource Self}}" Value="True" />
-                    </MultiDataTrigger.Conditions>
-                    <Setter TargetName="p" Property="Visibility" Value="Visible" />
-                </MultiDataTrigger>
-
-                <DataTrigger Binding="{Binding Exists, TargetNullValue=False}" Value="False">
-                    <Setter TargetName="file" Property="Foreground" Value="Gray" />
-                </DataTrigger>
-
-            </DataTemplate.Triggers>
-        </DataTemplate>
 
         <CollectionViewSource x:Key="idcards" Source="{Binding IDCards.Files}">
             <CollectionViewSource.SortDescriptions>
@@ -340,12 +250,6 @@
                     Header="地址"
                     Modifier="{Binding Address}" />
 
-
-                <!--<local:MultiFileDisplay
-                    Margin="0,5"
-                    Files="{Binding}"
-                    Header="身份证明文件"
-                    IsReadOnly="{Binding IsReadOnly}" />-->
 
                 <DockPanel LastChildFill="False">
                     <!--<shared:MultipleFileView
