@@ -81,36 +81,25 @@ public partial class StatementPageViewModel : ObservableObject
         wnd.ShowDialog();
     }
 
-    [RelayCommand]
-    public void OpenTemplateManager()
-    {
-        try
-        {
-            var di = new DirectoryInfo(System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName).Parent!;
-
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = Path.Combine(di.FullName, $"FMO.TemplateManager.exe"),
-                WorkingDirectory = Directory.GetCurrentDirectory()
-            });
-        }
-        catch (Exception e)
-        {
-            HandyControl.Controls.Growl.Warning($"无法启动应用，{e.Message}");
-        }
-    }
 
 
     [RelayCommand]
     public void LoadTemplates()
     {
+        try
+        {
+            using var db = DbHelper.Template();
+            var metas = db.GetCollection<TemplateMeta>().FindAll().ToArray();
 
-        using var db = DbHelper.Template();
-        var metas = db.GetCollection<TemplateMeta>().FindAll().ToArray();
+            ExcelTemplates = [.. metas.Select(x => new FileTemplateViewModel(x))];
 
-        ExcelTemplates = [.. metas.Select(x => new FileTemplateViewModel(x))];
-
-        ExcelTemplateSource.Source = ExcelTemplates;
+            App.Current.Dispatcher.InvokeAsync(() => ExcelTemplateSource.Source = ExcelTemplates);
+        }
+        catch (Exception e)
+        {
+            Logg.Error(e);
+            Toast.Error("加载Excel模板出错");
+        }
     }
 
     [RelayCommand]
@@ -120,7 +109,7 @@ public partial class StatementPageViewModel : ObservableObject
             return;
 
         _ = Task.Run(async () =>
-            { 
+            {
                 foreach (var p in path)
                 {
                     try
@@ -135,7 +124,6 @@ public partial class StatementPageViewModel : ObservableObject
                 }
 
                 LoadTemplates();
-                Toast.Info("成功导入模板");
             });
     }
 

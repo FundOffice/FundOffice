@@ -28,11 +28,10 @@
             <GroupBox.Header>
                 <DockPanel LastChildFill="False">
                     <TextBlock VerticalAlignment="Center" Text="生成报表" />
-                    <Button
-                        hc:IconElement.Geometry="{StaticResource f.table-columns}"
-                        Command="{Binding OpenTemplateManagerCommand}"
-                        Foreground="#2A91DF"
-                        Style="{StaticResource ButtonIcon}" />
+                    <TextBlock
+                        Margin="20,0,0,0"
+                        Foreground="Gray"
+                        Text="拖动.tpl文件下方导入模板" />
                 </DockPanel>
             </GroupBox.Header>
 
