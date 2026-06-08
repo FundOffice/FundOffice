@@ -8,7 +8,6 @@ using FMO.Utilities;
 using MoT;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -525,9 +524,15 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
     {
         try
         {
-            // 读取资源 
-            var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FMO.res.onepage.html");
-            using var sr = new StreamReader(stream!);
+            // 读取资源
+            var frame = @"files\brochure\.frame";
+            if (!File.Exists(frame))
+            {
+                Toast.Warning("框架资源丢失");
+                return;
+            }
+
+            using var sr = new StreamReader(frame);
             var html = sr.ReadToEnd();
 
             // 写json
@@ -540,8 +545,30 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
 
             var fund = db.GetCollection<Fund>().FindById(FundId);
             var factors = db.QueryFactor(FundId);
-            BrochureInvestManager[] investManagers = [new("张三", "介绍", [])];
-            var bro = BrochureFactor.Create(manager, logo, [], investManagers, fund, factors, FlowId);
+
+            // 获取投资经理
+            List<BrochureInvestManager> investManagers = [];
+            var flowDate = db.GetCollection<FundFlow>().FindById(FlowId)?.Date ?? fund.SetupDate;
+            var ims = db.GetCollection<FundInvestmentManager>().Query().Where(x => x.FundId == FundId && x.End.DayNumber >= flowDate.DayNumber).ToArray();
+            foreach (var nn in ims)
+            {
+                using var ps = new MemoryStream();
+                Participant participant = db.GetCollection<Participant>().FindById(nn.PersonId);
+
+                if (participant is not null)
+                {
+                    if (string.IsNullOrWhiteSpace(nn.Profile))
+                        nn.Profile = participant.Profile;
+
+                    if (db.FileStorage.Exists($"Photo.Participant.{participant.Id}"))
+                        db.FileStorage.Download($"Photo.Participant.{participant.Id}", ps);
+                }
+                var ddd = db.FileStorage.FindAll().ToArray();
+                investManagers.Add(new BrochureInvestManager(nn.Name, nn.Profile ?? "", ps.ToArray()));
+            }
+
+
+            var bro = BrochureFactor.Create(manager, logo, [], [.. investManagers], fund, factors, FlowId);
 
             ///json
             var jsonOptions = new JsonSerializerOptions
@@ -556,7 +583,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
             html = html.Replace("###DATA###", json);
 
             // 读取模板 <div>...</div>
-            var templateFiles = new DirectoryInfo(@"files\onepage").GetFiles("*.html");
+            var templateFiles = new DirectoryInfo(@"files\brochure").GetFiles("*.html");
 
             // 获取所有模板文件（按文件名排序，保证索引稳定）
             var listItemHtmlSb = new StringBuilder();       // 左侧文件名列表HTML
@@ -587,7 +614,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
 
 
 
-            var fileInfo = new FileInfo(@$"temp\{FundId}\onepage.html");
+            var fileInfo = new FileInfo(@$"temp\{FundId}\brochure.html");
             if (!fileInfo.Directory!.Exists)
                 fileInfo.Directory.Create();
 

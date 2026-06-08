@@ -30,7 +30,21 @@
             <DatePicker
                 MinWidth="110"
                 BorderThickness="0"
-                SelectedDate="{Binding NewValue, UpdateSourceTrigger=PropertyChanged, Delay=100}" />
+                SelectedDate="{Binding Modifier.NewValue, Converter={StaticResource DataTimeDateOnlySwitchConverter}, RelativeSource={RelativeSource AncestorType=shared:ModifiableControl}}" />
+        </DataTemplate>
+
+
+        <DataTemplate x:Key="DT.Date.Display">
+            <shared:CopyableTextBlock MinWidth="100" Text="{Binding ., StringFormat=yyyy-MM-dd}" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="DT.Date.End">
+            <shared:CopyableTextBlock x:Name="tb" Text="{Binding ., StringFormat=yyyy-MM-dd}" />
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding DayNumber}" Value="3652058">
+                    <Setter TargetName="tb" Property="Text" Value="至今" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
         </DataTemplate>
 
         <Style BasedOn="{StaticResource {x:Type shared:ModifiableControl}}" TargetType="shared:ModifiableControl">
@@ -133,17 +147,20 @@
                                         Modifier="{Binding Name}" />
 
                                     <shared:ModifiableControl
+                                        ContentTemplate="{StaticResource DT.Date.Display}"
                                         EditTemplate="{StaticResource DT.Date}"
                                         Header="起始日期"
                                         Modifier="{Binding Start}" />
 
-                                    <shared:ModifiableControl Header="结束日期" Modifier="{Binding End}">
+                                    <shared:ModifiableControl
+                                        ContentTemplate="{StaticResource DT.Date.End}"
+                                        Header="结束日期"
+                                        Modifier="{Binding End}">
                                         <shared:ModifiableControl.EditTemplate>
                                             <DataTemplate>
                                                 <DockPanel>
                                                     <DatePicker
                                                         Width="110"
-                                                        BorderThickness="0"
                                                         SelectedDate="{Binding NewValue.Date}"
                                                         Visibility="{Binding NewValue.IsLongTerm, Mode=OneWay, Converter={StaticResource Boolean2VisibilityReConverter}}" />
                                                     <CheckBox
@@ -270,9 +287,16 @@
                                         </shared:ModifiableControl.EditTemplate>
                                     </shared:ModifiableControl>
 
-                                    <shared:ModifiableControl EditTemplate="{StaticResource DT.Date}" Modifier="{Binding Start}" />
+                                    <shared:ModifiableControl
+                                        ContentTemplate="{StaticResource DT.Date.Display}"
+                                        EditTemplate="{StaticResource DT.Date}"
+                                        Header="起始日期"
+                                        Modifier="{Binding Start}" />
 
-                                    <shared:ModifiableControl Modifier="{Binding End}">
+                                    <shared:ModifiableControl
+                                        ContentTemplate="{StaticResource DT.Date.End}"
+                                        Header="终止日期"
+                                        Modifier="{Binding End}">
                                         <shared:ModifiableControl.EditTemplate>
                                             <DataTemplate>
                                                 <DockPanel>

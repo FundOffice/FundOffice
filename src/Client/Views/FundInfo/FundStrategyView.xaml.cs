@@ -86,9 +86,12 @@ public partial class FundStrategyViewModel : ObservableObject
             HandyControl.Controls.Growl.Warning("请先设置已有的投资经理");
             return;
         }
-        InvestManagerViewModel st = new(new FundInvestmentManager { FundId = FundId });
+        InvestManagerViewModel st = new(FundId);
         st.IsReadOnly = false;
-        st.Start.NewValue = Managers.Count == 0 ? FundSetupDate : Strategies.LastOrDefault()?.End?.OldValue?.Date switch { DateTime t => DateOnly.FromDateTime(t < DateTime.MaxValue.Date ? t.AddDays(1) : t), _ => null };
+        if (Managers.Count == 0)
+            st.Start.NewValue = FundSetupDate;
+        if (Managers.LastOrDefault() is InvestManagerViewModel last && last.End.OldValue != DateOnly.MaxValue)
+            st.Start.NewValue = last.End.OldValue.AddDays(1);
         Managers.Add(st);
     }
 
@@ -146,6 +149,17 @@ public partial class StrategyInfoViewModel : ObservableObject
 
         WeakReferenceMessenger.Default.Send(new FundStrategyChangedMessage(FundId));
     }
+
+    [RelayCommand]
+    protected void Save()
+    {
+        if (this.Name.CanConfirm)
+            Name.Apply();
+        if (this.Start.CanConfirm)
+            Start.Apply();
+        if (this.End.CanConfirm)
+            End.Apply();
+    }
 }
 
 [EntityModifiable(typeof(FundInvestmentManager))]
@@ -153,7 +167,37 @@ public partial class InvestManagerViewModel : ObservableObject
 {
     private readonly FundInvestmentManager investmentManager;
 
-    public int Id { get; }
+    public int Id { get; private set; }
+
+    public InvestManagerViewModel(int fundId)
+    {
+        FundId = fundId;
+        investmentManager = new() { Name = "", FundId = fundId };
+
+        FillBy(investmentManager);
+
+        using var db = DbHelper.Base();
+        var managers = db.GetCollection<Participant>().FindAll().ToArray().Where(x => x.Role.HasFlag(PersonRole.InvestmentManager));
+        Managers = new(managers.Select(x => new PersonInfo(x.Id, x.Name!, x.Profile)));
+
+
+        Person = new() { NewValue = Managers.FirstOrDefault(x => x.Id == investmentManager.PersonId), OldValue = Managers.FirstOrDefault(x => x.Id == investmentManager.PersonId) };
+        Person.Changed += (e) =>
+        {
+            if (e.NewValue is null) return;
+            investmentManager.PersonId = e.NewValue.Id;
+            investmentManager.Name = e.NewValue.Name;
+            OnEntityChanged();
+        };
+        Person.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(Person.NewValue))
+            {
+                if (string.IsNullOrWhiteSpace(Profile.NewValue))
+                    Profile.NewValue = Person.NewValue?.Profile;
+            }
+        };
+    }
 
     public InvestManagerViewModel(FundInvestmentManager value)
     {
@@ -165,15 +209,16 @@ public partial class InvestManagerViewModel : ObservableObject
 
         using var db = DbHelper.Base();
         var managers = db.GetCollection<Participant>().FindAll().ToArray().Where(x => x.Role.HasFlag(PersonRole.InvestmentManager));
-        Managers = new(managers.Select(x => new PersonInfo(x.Id, x.Name!)));
+        Managers = new(managers.Select(x => new PersonInfo(x.Id, x.Name!, x.Profile)));
 
-        End = new() { NewValue = new(investmentManager.End), OldValue = new(investmentManager.End) };
-        End.Changed += (e) => { investmentManager.End = DateOnly.FromDateTime(End.NewValue?.Date ?? default); OnEntityChanged(); };
+        if (string.IsNullOrWhiteSpace(Profile.NewValue) && db.GetCollection<Participant>().FindById(value.PersonId) is Participant pp)
+            Profile.NewValue = pp.Profile;
 
         Person = new() { NewValue = Managers.FirstOrDefault(x => x.Id == investmentManager.PersonId), OldValue = Managers.FirstOrDefault(x => x.Id == investmentManager.PersonId) };
         Person.Changed += (e) =>
         {
-            investmentManager.PersonId = e.NewValue?.Id ?? 0;
+            if (e.NewValue is null) return;
+            investmentManager.PersonId = e.NewValue.Id;
             OnEntityChanged();
         };
 
@@ -189,7 +234,7 @@ public partial class InvestManagerViewModel : ObservableObject
 
     public ModifiableViewModel<DateOnly?> Start { get; private set; } = null!;
 
-    public ModifiableViewModel<BooleanDate> End { get; private set; } = null!;
+    public ModifiableViewModel<DateOnly, BooleanDate> End { get; private set; } = null!;
 
 
     [ObservableProperty]
@@ -203,14 +248,33 @@ public partial class InvestManagerViewModel : ObservableObject
     {
         using var db = DbHelper.Base();
         db.GetCollection<FundInvestmentManager>().Upsert(investmentManager);
-
+        if (Id == 0) Id = investmentManager.Id;
     }
 
 
-    public class PersonInfo(int Id, string Name) :   IEquatable<PersonInfo>
+
+    [RelayCommand]
+    protected void Save()
+    {
+        if (this.Name.CanConfirm)
+            Name.Apply();
+        if (Person.CanConfirm)
+            Person.Apply();
+        if (this.Start.CanConfirm)
+            Start.Apply();
+        if (this.End.CanConfirm)
+            End.Apply();
+        if (this.Profile.CanConfirm)
+            Profile.Apply();
+    }
+
+    public class PersonInfo(int Id, string Name, string? Profile) : IEquatable<PersonInfo>
     {
         public int Id { get; } = Id;
+        
         public string Name { get; } = Name;
+
+        public string? Profile { get; set; } = Profile;
 
         public bool Equals(PersonInfo? other) => Id == other?.Id;
 

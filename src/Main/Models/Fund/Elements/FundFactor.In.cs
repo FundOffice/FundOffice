@@ -1345,7 +1345,7 @@ public class FundInvestmentManager
     /// <summary>
     /// 姓名
     /// </summary>
-    public string? Name { get; set; }
+    public required string Name { get; set; }
 
     /// <summary>
     /// 简介

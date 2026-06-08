@@ -19,7 +19,7 @@
         <ComboBox
             Width="120"
             ItemsSource="{Binding Source={x:Static local:ElementsViewModel.SecurityFundTypes}}"
-            SelectedItem="{Binding .}">
+            SelectedItem="{Binding Modifier.NewValue, RelativeSource={RelativeSource AncestorType=shared:ModifiableControl}}">
             <ComboBox.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
@@ -1009,7 +1009,7 @@
     </DataTemplate>
 
 
-    <DataTemplate DataType="{x:Type local:FundOpenRuleViewModel}">
+    <DataTemplate DataType="{x:Type local:FundOpenRuleViewModel}"> 
         <DockPanel>
             <Button
                 hc:IconElement.Geometry="{StaticResource f.circle-plus}"
@@ -1047,7 +1047,7 @@
                                     <Button
                                         Padding="2,0"
                                         hc:IconElement.Geometry="{StaticResource f.pen}"
-                                        Command="{Binding DataContext.SetOpenRuleCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                        Command="{Binding DataContext.SetOpenRuleCommand, ElementName=ls}"
                                         CommandParameter="{Binding}"
                                         Style="{StaticResource ButtonIcon.Small}" />
 
@@ -1055,7 +1055,7 @@
                                     <Button
                                         Padding="2,0"
                                         hc:IconElement.Geometry="{StaticResource f.circle-minus}"
-                                        Command="{Binding DataContext.DeleteRuleCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                        Command="{Binding DataContext.DeleteRuleCommand, ElementName=ls}"
                                         CommandParameter="{Binding .}"
                                         Foreground="Red"
                                         Style="{StaticResource ButtonIcon.Small}" />

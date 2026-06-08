@@ -544,8 +544,8 @@
                     IsOpen="{Binding ShowMemberPopup}"
                     Placement="Bottom"
                     PlacementTarget="{Binding ElementName=memberList}"
-                    StaysOpen="False">
-                    <Border MaxWidth="600" Background="WhiteSmoke">
+                    StaysOpen="{Binding MemberContext.StayOpen}">
+                    <Border MaxWidth="700" Background="WhiteSmoke">
                         <local:ManagerMemberView Margin="0,5" DataContext="{Binding MemberContext}" />
                     </Border>
                 </Popup>

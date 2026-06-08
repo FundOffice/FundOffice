@@ -4,10 +4,12 @@ using FMO.Plugin;
 using FMO.Utilities;
 using Microsoft.Win32;
 using MoT;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Windows;
+using System.Windows.Diagnostics;
 
 namespace FMO;
 
@@ -50,6 +52,14 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+#if DEBUG
+        // 把所有绑定错误转为调试输出
+        PresentationTraceSources.DataBindingSource.Switch.Level = SourceLevels.Error;
+        PresentationTraceSources.DataBindingSource.Listeners.Add(new ConsoleTraceListener());
+
+#endif
+
+
         if (CheckIsFirstRun())
         {
             _firstRun = true;

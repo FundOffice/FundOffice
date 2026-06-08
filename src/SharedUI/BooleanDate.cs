@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using FMO.Models;
-using System.Collections;
 
 namespace FMO.Shared;
 
@@ -26,7 +25,9 @@ public partial class BooleanDate : ObservableObject, IViewModel<DateOnly, Boolea
 
     public BooleanDate(DateOnly date)
     {
-        Date = new(date, TimeOnly.MaxValue);
+        if (date == default) Date = null;
+        else
+            Date = new(date, TimeOnly.MaxValue);
         IsLongTerm = date.Year > 2099;
     }
 
@@ -46,7 +47,7 @@ public partial class BooleanDate : ObservableObject, IViewModel<DateOnly, Boolea
     {
         if (!value && Date >= DateTime.MaxValue.Date)
             Date = null;
-        else 
+        else
             Date = DateTime.MaxValue;
     }
 

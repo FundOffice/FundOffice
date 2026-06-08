@@ -27,10 +27,11 @@ internal class DelayLoader
 
         DataSelfTest();
 
+        Task.Run(ReleaseFiles);
 
         Task.Run(() =>
         {
-            
+
             WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "加载任务组件"));
             InitMission();
             WeakReferenceMessenger.Default.Send(new MainMenuEnableMessage("Task", true));
@@ -44,8 +45,8 @@ internal class DelayLoader
             SettingService.Initialize();
             SettingViewModelsInitializer.Initialize();
 
-            SettingService.RegisterAbility( "Basic", "AutoShowTodo", "自动显示待办事项", "在应用启动时自动显示待办事项", true, new AutoShowTodoFunction());
- 
+            SettingService.RegisterAbility("Basic", "AutoShowTodo", "自动显示待办事项", "在应用启动时自动显示待办事项", true, new AutoShowTodoFunction());
+
 
         });
 
@@ -498,7 +499,7 @@ internal class DelayLoader
 
 
 
-  
+
 
     private static bool VerifyDll(string dll)
     {
@@ -528,4 +529,20 @@ internal class DelayLoader
         }
     }
 
+
+    private static void ReleaseFiles()
+    {
+        if (!Directory.Exists(@"files\brochure"))
+            Directory.CreateDirectory(@"files\brochure");
+
+        string target = @"files\brochure\.frame";
+        if (!File.Exists(target) && Assembly.GetExecutingAssembly().GetManifestResourceStream("FMO.res.onepage.html") is Stream stream)
+        {
+            byte[] buffer = new byte[stream.Length];
+            stream.ReadExactly(buffer, 0, buffer.Length);
+            File.WriteAllBytes(target, buffer);
+        }
+
+
+    }
 }

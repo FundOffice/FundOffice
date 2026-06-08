@@ -340,7 +340,7 @@
                             </DataGridTemplateColumn.Header>
                         </DataGridTemplateColumn>
 
-                      
+
                         <!--<DataGridTemplateColumn>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>

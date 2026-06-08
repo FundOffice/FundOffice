@@ -4,6 +4,7 @@ using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -370,11 +371,19 @@ public partial class AgencyInfoViewModel : IDataValidation, IViewModel<AgencyInf
 }
 
 
-public partial class TemporarilyOpenInfoViewModel : IDataValidation, IViewModel<TemporarilyOpenInfo?, TemporarilyOpenInfoViewModel>
+public partial class TemporarilyOpenInfoViewModel : ObservableObject, IDataValidation, IViewModel<TemporarilyOpenInfo?, TemporarilyOpenInfoViewModel>
 {
     public bool IsValid() => !IsAllowed || (AllowPurchase || AllowRedemption);
 
     public override string ToString() => !IsAllowed ? "不允许临开" : (IsLimited ? "仅合同变更、法规变更时，" : "") + $"允许{(AllowPurchase ? "申购" : "")}{(AllowRedemption ? "赎回" : "")}";
+
+    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+
+        if (e.PropertyName == nameof(IsLimited))
+            AllowPurchase = false;
+    }
 }
 
 
