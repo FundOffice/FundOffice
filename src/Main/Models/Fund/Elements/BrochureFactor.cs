@@ -330,15 +330,15 @@ public class BrochureFactor
         // 实体数组 -> 字符串数组【C#14 集合表达式 []】
         var lockingRule = factories.LockingRule[flowId]?.Select(x => x?.ToString() ?? unset).ToArray() ?? [];
         var tempOpenInfo = factories.TemporarilyOpenInfo[flowId]?.Select(x => x?.ToString() ?? unset).ToArray() ?? [];
-        var subscriptionRule = factories.SubscriptionRule[flowId]?.Select(x => x?.ToString() ?? unset).ToArray() ?? [];
-        var purchasRule = factories.PurchasRule[flowId]?.Select(x => x?.ToString() ?? unset).ToArray() ?? [];
+        var subscriptionRule = factories.SubscriptionRule[flowId]?.Select(x => x?.ToString()?.Replace("费用", "认购费") ?? unset).ToArray() ?? [];
+        var purchasRule = factories.PurchasRule[flowId]?.Select(x => x?.ToString()?.Replace("费用", "申购费") ?? unset).ToArray() ?? [];
         var manageFee = factories.ManageFee[flowId]?.Select(x => x?.ToString() ?? unset).ToArray() ?? [];
         var redemptionFee = factories.RedemptionFee[flowId]?.Select(x => x?.ToString() ?? unset).ToArray() ?? [];
         string[] perfFeeStatement = factories.PerformanceFeeStatement[flowId]?.Select(x => x ?? unset)?.ToArray() ?? [unset];
 
         // 开放日文本规则
         var openRules = factories.FundOpenRule[flowId];
-        string[] openDayInfo = openRules is null ? [unset] : [.. openRules.Select(x => string.Join(",", x?.ToString() ?? unset))];
+        string[] openDayInfo = openRules is null ? [unset] : [.. openRules.Select(x => x is null ? unset : string.Join(",", x.OfType<OpenRule>().Select(y => y.ToString())))];
 
         // 风控数值
         var stopLine = factories.StopLine[flowId];

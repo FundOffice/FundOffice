@@ -292,8 +292,8 @@ public class FundPurchaseRule
     public override string ToString()
     {
         var a = MinDeposit == default ? null : $"{MinDeposit / 10000}万起投" + (AdditionalDeposit > 0 ? $"，追加{AdditionalDeposit / 10000}万起" : "") + (HasRequirement ? Statement : "");
-        var b = HasFee ? $"   " + PayMethod switch { FundFeePayType.Out => "价外收取", FundFeePayType.Extra => "额外收取", FundFeePayType.Other => PayOther, _ => "" } + Type switch { FundFeeType.Ratio => $"{Fee}%", FundFeeType.Fix => $"{Fee}元", FundFeeType.Other => Other, _ => "未知费用" } : null;
-        var c = HasGuaranteedFee ? $"  保底 {GuaranteedFee}元" : null;
+        var b = HasFee ? $"，费用：" + PayMethod switch { FundFeePayType.Out => "价外收取", FundFeePayType.Extra => "额外收取", FundFeePayType.Other => PayOther, _ => "" } + Type switch { FundFeeType.Ratio => $"{Fee}%", FundFeeType.Fix => $"{Fee}元", FundFeeType.Other => Other, _ => "未知费用" } : null;
+        var c = HasGuaranteedFee ? $"，保底 {GuaranteedFee}元" : null;
         return (a + b + c) switch { null or "" => "未设置", var x => x };
     }
 }
@@ -1310,10 +1310,10 @@ public class AgencyInfo
         if (!HasAgency || string.IsNullOrWhiteSpace(Name)) return "未设置";
 
 
-        return Name + FeeInfo();
+        return $"{Name}，费用：{FeeInfo()}";
     }
 
-    public string FeeInfo() => (!HasFee ? "无费用" : FeeType switch { FundFeeType.Fix => $"固定费用：{Fee}元 / 年", FundFeeType.Ratio => $"{Fee}% / 年", FundFeeType.Other => Other, _ => $"未设置" } + (GuaranteedFee > 0 ? $" 有保底：{GuaranteedFee} / 年" : ""));
+    public string FeeInfo() => !HasFee ? "-" : "" + FeeType switch { FundFeeType.Fix => $"固定：{Fee}元 / 年", FundFeeType.Ratio => $"{Fee}% / 年", FundFeeType.Other => Other, _ => $"未设置" } + (GuaranteedFee > 0 ? $"，保底：{GuaranteedFee} / 年" : "");
 
 }
 

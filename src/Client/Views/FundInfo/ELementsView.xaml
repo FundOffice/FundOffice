@@ -697,13 +697,134 @@
             Margin="10,-25"
             HorizontalAlignment="Right"
             VerticalAlignment="Top">
+            <DockPanel.Resources>
+
+                <Style x:Key="RainbowGlowIconButton" TargetType="Button">
+                    <Setter Property="Background" Value="{DynamicResource RegionBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+                    <Setter Property="BorderThickness" Value="0" />
+                    <Setter Property="Cursor" Value="Hand" />
+                    <Setter Property="Width" Value="28" />
+                    <Setter Property="Height" Value="28" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="hc:IconElement.Width" Value="14" />
+                    <Setter Property="hc:IconElement.Height" Value="14" />
+                    <Setter Property="SnapsToDevicePixels" Value="True" />
+                    <Setter Property="UseLayoutRounding" Value="True" />
+
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Grid ClipToBounds="False">
+
+                                    <!--  🔵 外层彩虹光圈 (收紧光晕)  -->
+                                    <Border
+                                        x:Name="RainbowRing"
+                                        Margin="-2"
+                                        CacheMode="BitmapCache"
+                                        CornerRadius="1000"
+                                        Opacity="0.85"
+                                        RenderTransformOrigin="0.5,0.5">
+
+                                        <Border.Triggers>
+                                            <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation
+                                                            RepeatBehavior="Forever"
+                                                            Storyboard.TargetProperty="RenderTransform.Angle"
+                                                            From="0"
+                                                            To="360"
+                                                            Duration="0:0:4" />
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </EventTrigger>
+                                        </Border.Triggers>
+
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Offset="0.00" Color="#FF0055" />
+                                                <GradientStop Offset="0.14" Color="#FF7F00" />
+                                                <GradientStop Offset="0.28" Color="#FFFF00" />
+                                                <GradientStop Offset="0.42" Color="#00FF00" />
+                                                <GradientStop Offset="0.57" Color="#00FFFF" />
+                                                <GradientStop Offset="0.71" Color="#0000FF" />
+                                                <GradientStop Offset="0.85" Color="#8B00FF" />
+                                                <GradientStop Offset="1.00" Color="#FF0055" />
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <Border.RenderTransform>
+                                            <RotateTransform Angle="0" />
+                                        </Border.RenderTransform>
+                                        <Border.Effect>
+                                            <BlurEffect Radius="3" RenderingBias="Performance" />
+                                        </Border.Effect>
+                                    </Border>
+
+                                    <!--  ⚪ 内层按钮主体 (紧凑贴合)  -->
+                                    <Border
+                                        x:Name="InnerBorder"
+                                        Margin="4"
+                                        Padding="{TemplateBinding Padding}"
+                                        Background="{TemplateBinding Background}"
+                                        CornerRadius="1000"
+                                        RenderTransformOrigin="0.5,0.5">
+                                        <Viewbox
+                                            Width="{TemplateBinding hc:IconElement.Width}"
+                                            Height="{TemplateBinding hc:IconElement.Height}"
+                                            Stretch="Uniform">
+                                            <Path
+                                                Data="{Binding Path=(hc:IconElement.Geometry), RelativeSource={RelativeSource TemplatedParent}}"
+                                                Fill="{TemplateBinding Foreground}"
+                                                Stretch="Uniform" />
+                                        </Viewbox>
+                                    </Border>
+                                </Grid>
+
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="RainbowRing" Property="Opacity" Value="1" />
+                                        <Setter TargetName="RainbowRing" Property="Effect">
+                                            <Setter.Value>
+                                                <!--  悬停时稍微增强一点，但依然保持紧凑  -->
+                                                <BlurEffect Radius="5" RenderingBias="Performance" />
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Setter TargetName="InnerBorder" Property="Background" Value="{DynamicResource SecondaryRegionBrush}" />
+                                    </Trigger>
+
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="InnerBorder" Property="RenderTransform">
+                                            <Setter.Value>
+                                                <ScaleTransform ScaleX="0.92" ScaleY="0.92" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="RainbowRing" Property="Opacity" Value="0.25" />
+                                        <Setter TargetName="InnerBorder" Property="Opacity" Value="0.5" />
+                                        <Setter TargetName="RainbowRing" Property="Effect">
+                                            <Setter.Value>
+                                                <BlurEffect Radius="1" RenderingBias="Performance" />
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+
+            </DockPanel.Resources>
 
 
             <Button
-                Margin="20,0"
+                Margin="10,0"
+                hc:IconElement.Geometry="{StaticResource f.audible}"
                 Command="{Binding GenerateBrochureCommand}"
-                Content="生成宣传册"
-                Style="{StaticResource ButtonPrimary}" />
+                Style="{StaticResource RainbowGlowIconButton}"
+                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
             <Button
                 hc:IconElement.Geometry="{StaticResource f.floppy-disk}"

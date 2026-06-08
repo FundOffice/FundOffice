@@ -367,6 +367,15 @@
         window.factorData = broData;
         } catch (e) { console.error("❌ JSON 解析失败:", e); }
 
+        // ✅ 新增：动态获取产品简称作为导出文件名前缀
+        function getExportName(suffix) {
+        const d = window.broData || {};
+        // 兼容多种常见的字段命名格式
+        const shortName = d.ShortName || d.FullName || '宣传要素';
+        // 过滤掉 Windows/Mac 系统中不允许作为文件名的非法字符
+        return `${shortName}`.replace(/[\\/:*?"<>|]/g, '') + suffix;
+        }
+
         const templates = ###TEMPLATE_ARR###;
         const listContainer = document.getElementById('list-container');
         const templateView = document.getElementById('template-view');
@@ -494,15 +503,32 @@
 
         if (type === 'pdf') {
         await html2pdf().set({
-        margin: 10, filename: '宣传要素.pdf', image: { type: 'jpeg', quality: 0.98 },
+        margin: 10, filename: getExportName('.pdf'), image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: null },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
         }).from(templateView).save();
         } else {
-        const canvas = await html2canvas(templateView, { scale: 2, useCORS: true, logging: false, backgroundColor: null });
+        const canvas = await html2canvas(templateView, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: null,
+        width: templateView.scrollWidth,
+        windowWidth: templateView.scrollWidth,
+        height: templateView.scrollHeight,
+        windowHeight: templateView.scrollHeight,
+        onclone: function(clonedDoc) {
+        const clonedBody = clonedDoc.body;
+        if (clonedBody) { clonedBody.style.height = 'auto'; clonedBody.style.overflow = 'visible'; }
+        const clonedMain = clonedDoc.querySelector('.main-area');
+        if (clonedMain) { clonedMain.style.overflow = 'visible'; clonedMain.style.height = 'auto'; clonedMain.style.flex = 'none'; }
+        const clonedWrapper = clonedDoc.querySelector('.canvas-wrapper');
+        if (clonedWrapper) { clonedWrapper.style.overflow = 'visible'; clonedWrapper.style.height = 'auto'; clonedWrapper.style.flex = 'none'; }
+        }
+        });
         const link = document.createElement('a');
-        link.download = '宣传要素.png';
+        link.download = getExportName('.png');
         link.href = canvas.toDataURL('image/png');
         link.click();
         }
@@ -543,15 +569,32 @@
 
         if (type === 'pdf') {
         await html2pdf().set({
-        margin: 0, filename: '宣传要素.pdf', image: { type: 'jpeg', quality: 0.98 },
+        margin: 0, filename: getExportName('.pdf'), image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: null },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
         }).from(templateView).save();
         } else {
-        const canvas = await html2canvas(templateView, { scale: 2, useCORS: true, logging: false, backgroundColor: null });
+        const canvas = await html2canvas(templateView, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: null,
+        width: templateView.scrollWidth,
+        windowWidth: templateView.scrollWidth,
+        height: templateView.scrollHeight,
+        windowHeight: templateView.scrollHeight,
+        onclone: function(clonedDoc) {
+        const clonedBody = clonedDoc.body;
+        if (clonedBody) { clonedBody.style.height = 'auto'; clonedBody.style.overflow = 'visible'; }
+        const clonedMain = clonedDoc.querySelector('.main-area');
+        if (clonedMain) { clonedMain.style.overflow = 'visible'; clonedMain.style.height = 'auto'; clonedMain.style.flex = 'none'; }
+        const clonedWrapper = clonedDoc.querySelector('.canvas-wrapper');
+        if (clonedWrapper) { clonedWrapper.style.overflow = 'visible'; clonedWrapper.style.height = 'auto'; clonedWrapper.style.flex = 'none'; }
+        }
+        });
         const link = document.createElement('a');
-        link.download = '宣传要素.png';
+        link.download = getExportName('.png');
         link.href = canvas.toDataURL('image/png');
         link.click();
         }
@@ -630,11 +673,29 @@
         if (i > 0) pdf.addPage();
         pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
         }
-        pdf.save('宣传要素-折页.pdf');
+        pdf.save(getExportName('-折页.pdf'));
         } else {
+        const imgCanvas = await html2canvas(templateView, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: bgColor === 'transparent' ? null : bgColor,
+        width: templateView.scrollWidth,
+        windowWidth: templateView.scrollWidth,
+        height: templateView.scrollHeight,
+        windowHeight: templateView.scrollHeight,
+        onclone: function(clonedDoc) {
+        const clonedBody = clonedDoc.body;
+        if (clonedBody) { clonedBody.style.height = 'auto'; clonedBody.style.overflow = 'visible'; }
+        const clonedMain = clonedDoc.querySelector('.main-area');
+        if (clonedMain) { clonedMain.style.overflow = 'visible'; clonedMain.style.height = 'auto'; clonedMain.style.flex = 'none'; }
+        const clonedWrapper = clonedDoc.querySelector('.canvas-wrapper');
+        if (clonedWrapper) { clonedWrapper.style.overflow = 'visible'; clonedWrapper.style.height = 'auto'; clonedWrapper.style.flex = 'none'; }
+        }
+        });
         const link = document.createElement('a');
-        link.download = '宣传要素-折页.png';
-        link.href = fullCanvas.toDataURL('image/png');
+        link.download = getExportName('-折页.png');
+        link.href = imgCanvas.toDataURL('image/png');
         link.click();
         }
 

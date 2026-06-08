@@ -23,7 +23,8 @@ public sealed class TestGenHtml
     {
         int FundId = 9, FlowId = 68;
         // 读取资源  
-        var stream = new FileStream(AppDomain.CurrentDomain.BaseDirectory  +"\\onepage.html", FileMode.Open);// Assembly.GetExecutingAssembly().GetManifestResourceStream("FMO.res.onepage.html");
+        var path = @"D:\Project\FundOffice\src\Client\res\onepage.html";
+        var stream = new FileStream(path, FileMode.Open);// Assembly.GetExecutingAssembly().GetManifestResourceStream("FMO.res.onepage.html");
         using var sr = new StreamReader(stream!);
         var html = sr.ReadToEnd();
 
