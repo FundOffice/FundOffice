@@ -13,6 +13,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using Utilities;
 using static FMO.ModifyInheritWindowViewModel;
 
 namespace FMO;
@@ -411,49 +412,56 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(Changed))]
     public void Confirm(Window wnd)
     {
-
-        // 有变化 
-        if (Changed)
+        try
         {
-            // 检验合法
-            var currentShares = Data.FirstOrDefault(x => x.FlowId == FlowId)!.Shares;
-            foreach (var share in currentShares)
+            // 有变化 
+            if (Changed)
             {
-                if (string.IsNullOrWhiteSpace(share.Name) || string.IsNullOrWhiteSpace(share.Code) || string.IsNullOrWhiteSpace(share.FundName) ||
-                    (currentShares.Count > 1 && (string.IsNullOrWhiteSpace(share.Requirement) || share.Requirement.Contains("输入"))))
+                // 检验合法
+                var currentShares = Data.FirstOrDefault(x => x.FlowId == FlowId)!.Shares;
+                foreach (var share in currentShares)
                 {
-                    HandyControl.Controls.MessageBox.Show($"请确保份额{share.Name}名称、代码、基金名称 不能为空", "提示");
-                    return;
+                    if (string.IsNullOrWhiteSpace(share.Name) || string.IsNullOrWhiteSpace(share.Code) || string.IsNullOrWhiteSpace(share.FundName) ||
+                        (currentShares.Count > 1 && (string.IsNullOrWhiteSpace(share.Requirement) || share.Requirement.Contains("输入"))))
+                    {
+                        HandyControl.Controls.MessageBox.Show($"请确保份额{share.Name}名称、代码、基金名称 不能为空", "提示");
+                        return;
+                    }
                 }
+
+
+                using var db = DbHelper.Base();
+
+                var upd = GetNew();
+                db.GetCollection<IFundFactor>().DeleteMany(x => x.FundId == FundId && x.FactorId == FactorFields.ShareClasses);
+                db.GetCollection<IFundFactor>().Upsert(upd);
+
+                // 删除关联要素
+                var newShareIds = upd.SelectMany(x => x.Data.Select(y => y.Id));
+                var del = _shareIds.Except(newShareIds).ToArray();
+                if (del.Length > 0)
+                {
+                    Logg.Information($"删除份额相关要素：{string.Join(',', del)}");
+                    db.GetCollection<IFundFactor>().DeleteMany(Query.And(Query.EQ(nameof(IFundFactor.FundId), FundId), Query.In(nameof(IFundFactor.ShareId), del.Select(x => new BsonValue(x)))));
+                }
+
+                // 如果是最新的要素，更新FundShares
+                if (FlowId == Data.LastOrDefault()?.FlowId)
+                {
+                    db.GetCollection<FundShares>().Upsert(new FundShares(FundId, currentShares.Select(x => new ShareInfo(x.Name, x.FundName, x.Code)).ToArray()));
+                }
+
+                WeakReferenceMessenger.Default.Send(new FundShareChangedMessage { FundId = FundId, FlowId = -1 });
+
+                wnd.DialogResult = true;
             }
-
-
-            using var db = DbHelper.Base();
-
-            var upd = GetNew();
-            db.GetCollection<IFundFactor>().DeleteMany(x => x.FundId == FundId && x.FactorId == FactorFields.ShareClasses);
-            db.GetCollection<IFundFactor>().Upsert(upd);
-
-            // 删除关联要素
-            var newShareIds = upd.SelectMany(x => x.Data.Select(y => y.Id));
-            var del = _shareIds.Except(newShareIds).ToArray();
-            if (del.Length > 0)
-            {
-                Logg.Information($"删除份额相关要素：{string.Join(',', del)}");
-                db.GetCollection<IFundFactor>().DeleteMany(Query.And(Query.EQ(nameof(IFundFactor.FundId), FundId), Query.In(nameof(IFundFactor.ShareId), del.Select(x => new BsonValue(x)))));
-            }
-
-            // 如果是最新的要素，更新FundShares
-            if(FlowId == Data.LastOrDefault()?.FlowId)
-            {
-                db.GetCollection<FundShares>().Upsert(new FundShares(FundId, currentShares.Select(x => new ShareInfo(x.Name, x.FundName, x.Code)).ToArray()));
-            }
-
-            WeakReferenceMessenger.Default.Send(new FundShareChangedMessage { FundId = FundId, FlowId = -1 });
-
-            wnd.DialogResult = true;
+            wnd.Close();
         }
-        wnd.Close();
+        catch (Exception e)
+        {
+            Logg.Error(e);
+            Toast.Warning(e.Message);
+        }
     }
 
 
@@ -530,35 +538,43 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
         [RelayCommand]
         public void Copy(ShareItem share)
         {
-            var id = Math.Max(Shares.Max(x => x.Id) + 1, ShareClass.MakeId(FlowId, 1));
-            var item = new ShareItem
+            try
             {
-                Name = share.Name,
-                Code = share.Code,
-                FundName = share.FundName!,
-                Requirement = share.Requirement,
-                CopyFrom = share.Id,
-                FlowId = FlowId,
-                IsNew = true,
-                Inherit = share.Id,
-                Id = id
-            };
-            var idx = Shares.IndexOf(share);
-            Shares.RemoveAt(idx);
-            Shares.Insert(idx, item);
-
-            var relied = ViewModel.Data.Where(x => x.FlowId > FlowId && x.Shares.Any(y => y.Id == share.Id)).ToArray();
-            foreach (var row in relied)
-            {
-                foreach (var sc in row.Shares.ToArray())
+                var id = Math.Max(Shares.Max(x => x.Id) + 1, ShareClass.MakeId(FlowId, 1));
+                var item = new ShareItem
                 {
-                    if (sc.Id == share.Id)
-                        sc.Id = item.Id;
-                    else if (sc.Inherit == share.Id)
-                        sc.Inherit = share.Inherit;
+                    Name = share.Name,
+                    Code = share.Code,
+                    FundName = share.FundName!,
+                    Requirement = share.Requirement,
+                    CopyFrom = share.Id,
+                    FlowId = FlowId,
+                    IsNew = true,
+                    Inherit = share.Id,
+                    Id = id
+                };
+                var idx = Shares.IndexOf(share);
+                Shares.RemoveAt(idx);
+                Shares.Insert(idx, item);
+
+                var relied = ViewModel.Data.Where(x => x.FlowId > FlowId && x.Shares.Any(y => y.Id == share.Id)).ToArray();
+                foreach (var row in relied)
+                {
+                    foreach (var sc in row.Shares.ToArray())
+                    {
+                        if (sc.Id == share.Id)
+                            sc.Id = item.Id;
+                        else if (sc.Inherit == share.Id)
+                            sc.Inherit = share.Inherit;
+                    }
                 }
+                ViewModel.Changed = true;
             }
-            ViewModel.Changed = true;
+            catch (Exception e)
+            {
+                Logg.Error(e);
+                Toast.Warning(e.Message);
+            }
         }
 
         /// <summary>
@@ -568,127 +584,143 @@ public partial class ModifyInheritWindowViewModel : ObservableObject
         [RelayCommand]
         public void Split(ShareItem share)
         {
-            var id = Math.Max(Shares.Max(x => x.Id) + 1, ShareClass.MakeId(FlowId, 1));
-            if (Shares.Count == 1)
+            try
             {
-                Shares[0].Name = "A";
-                Shares[0].FundName = FundName + "A";
-                Shares[0].Code = Shares[0].Code[1..] + "A";
-                if (Shares[0].IsInherited)
+                var id = Math.Max(Shares.Max(x => x.Id) + 1, ShareClass.MakeId(FlowId, 1));
+                if (Shares.Count == 1)
                 {
-                    Shares[0].Inherit = Shares[0].Id;
-                    Shares[0].CopyFrom = Shares[0].Id;
-                    Shares[0].Id = id++;
+                    Shares[0].Name = "A";
+                    Shares[0].FundName = FundName + "A";
+                    Shares[0].Code = Shares[0].Code[1..] + "A";
+                    if (Shares[0].IsInherited)
+                    {
+                        Shares[0].Inherit = Shares[0].Id;
+                        Shares[0].CopyFrom = Shares[0].Id;
+                        Shares[0].Id = id++;
+                    }
                 }
-            }
 
-            string scn = GetNextClass();
-            var item = new ShareItem
+                string scn = GetNextClass();
+                var item = new ShareItem
+                {
+                    Name = scn,
+                    Code = share.Code[..^1] + scn,
+                    FundName = FundName + scn,
+                    Requirement = "请填写份额要求",
+                    FlowId = FlowId,
+                    IsNew = true,
+                    Inherit = share.IsInherited ? share.Id : share.Inherit,
+                    CopyFrom = share.Id,
+                    Id = id
+                };
+                Shares.Add(item);
+                ViewModel.Changed = true;
+            }
+            catch (Exception e)
             {
-                Name = scn,
-                Code = share.Code[..^1] + scn,
-                FundName = FundName + scn,
-                Requirement = "请填写份额要求",
-                FlowId = FlowId,
-                IsNew = true,
-                Inherit = share.IsInherited ? share.Id : share.Inherit,
-                CopyFrom = share.Id,
-                Id = id
-            };
-            Shares.Add(item);
-            ViewModel.Changed = true;
+                Logg.Error(e);
+                Toast.Warning(e.Message);
+            }
         }
 
         [RelayCommand]
         public void Delete(ShareItem share)
         {
-            // 全部删除，从上一个复制
-            if (Shares.Count == 1)
+            try
             {
-                var last = ViewModel.Data.LastOrDefault(x => x.FlowId < FlowId);
-
-                if (last is null) return;
-
-                Shares = [..last.Shares.Select(s => new ShareItem
+                // 全部删除，从上一个复制
+                if (Shares.Count == 1)
                 {
-                    Name = s.Name,
-                    Code = s.Code,
-                    FundName = s.FundName,
-                    Requirement = s.Requirement,
-                    CopyFrom = s.Id,
-                    FlowId = FlowId,
-                    IsNew = true,
-                    Inherit = s.Id,
-                    Id = s.Id
-                })];
+                    var last = ViewModel.Data.LastOrDefault(x => x.FlowId < FlowId);
 
-                // 处理后续依赖
+                    if (last is null) return;
+
+                    Shares = [..last.Shares.Select(s => new ShareItem
+                    {
+                        Name = s.Name,
+                        Code = s.Code,
+                        FundName = s.FundName,
+                        Requirement = s.Requirement,
+                        CopyFrom = s.Id,
+                        FlowId = FlowId,
+                        IsNew = true,
+                        Inherit = s.Id,
+                        Id = s.Id
+                    })];
+
+                    // 处理后续依赖
+                    foreach (var item in ViewModel.Data.Where(x => x.FlowId > FlowId))
+                    {
+                        foreach (var sc in item.Shares)
+                        {
+                            if (sc.Id == share.Id)
+                                sc.Id = share.Inherit;
+                            else if (sc.Inherit == share.Id)
+                                sc.Inherit = share.Inherit;
+                        }
+                    }
+
+                    ViewModel.Changed = true;
+                    return;
+                }
+
+                // 检查有没有后续flow依赖此份额
+                var relied = ViewModel.Data.Where(x => x.FlowId > FlowId && x.Shares.Any(y => y.Id == share.Id)).ToArray();
+                if (relied.Length > 0)
+                {
+                    var mr = HandyControl.Controls.MessageBox.Show("是否同步删除后续流程中使用的此份额？\n\n确认：删除此份额\n取消：放弃",
+                        "提示", MessageBoxButton.OKCancel);
+
+                    if (mr == MessageBoxResult.Cancel) return;
+
+
+                    share.DeleteRelated = true;
+                    foreach (var item in relied)
+                    {
+                        foreach (var sc in item.Shares.ToArray())
+                        {
+                            if (sc.Id == share.Id)
+                                item.Shares.Remove(sc);
+                        }
+
+                        if (item.Shares.Count == 1)
+                        {
+                            item.Shares[0].Name = ShareClass.SingletonName;
+                            item.Shares[0].FundName = FundName;
+                            item.Shares[0].Requirement = null;
+                        }
+                    }
+
+                }
+
                 foreach (var item in ViewModel.Data.Where(x => x.FlowId > FlowId))
                 {
                     foreach (var sc in item.Shares)
                     {
-                        if (sc.Id == share.Id)
-                            sc.Id = share.Inherit;
-                        else if (sc.Inherit == share.Id)
+                        if (sc.Inherit == share.Id)
                             sc.Inherit = share.Inherit;
                     }
                 }
 
+
+
+                Deleted.Add(share);
+                Shares.Remove(share);
+
+                if (Shares.Count == 1)
+                {
+                    Shares[0].Name = ShareClass.SingletonName;
+                    Shares[0].Code = "S" + Shares[0].Code[..^1];
+
+                    Shares[0].FundName = FundName;
+                }
                 ViewModel.Changed = true;
-                return;
             }
-
-            // 检查有没有后续flow依赖此份额
-            var relied = ViewModel.Data.Where(x => x.FlowId > FlowId && x.Shares.Any(y => y.Id == share.Id)).ToArray();
-            if (relied.Length > 0)
+            catch (Exception e)
             {
-                var mr = HandyControl.Controls.MessageBox.Show("是否同步删除后续流程中使用的此份额？\n\n确认：删除此份额\n取消：放弃",
-                    "提示", MessageBoxButton.OKCancel);
-
-                if (mr == MessageBoxResult.Cancel) return;
-
-
-                share.DeleteRelated = true;
-                foreach (var item in relied)
-                {
-                    foreach (var sc in item.Shares.ToArray())
-                    {
-                        if (sc.Id == share.Id)
-                            item.Shares.Remove(sc);
-                    }
-
-                    if (item.Shares.Count == 1)
-                    {
-                        item.Shares[0].Name = ShareClass.SingletonName;
-                        item.Shares[0].FundName = FundName;
-                        item.Shares[0].Requirement = null;
-                    }
-                }
-
+                Logg.Error(e);
+                Toast.Warning(e.Message);
             }
-
-            foreach (var item in ViewModel.Data.Where(x => x.FlowId > FlowId))
-            {
-                foreach (var sc in item.Shares)
-                {
-                    if (sc.Inherit == share.Id)
-                        sc.Inherit = share.Inherit;
-                }
-            }
-
-
-
-            Deleted.Add(share);
-            Shares.Remove(share);
-
-            if (Shares.Count == 1)
-            {
-                Shares[0].Name = ShareClass.SingletonName;
-                Shares[0].Code = "S" + Shares[0].Code[..^1];
-
-                Shares[0].FundName = FundName;
-            }
-            ViewModel.Changed = true;
         }
     }
 
