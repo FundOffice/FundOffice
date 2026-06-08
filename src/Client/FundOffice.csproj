@@ -93,6 +93,7 @@
     <None Remove="res\laws.db" />
     <None Remove="res\logo.ico" />
     <None Remove="res\logo2.ico" />
+    <None Remove="res\onepage.html" />
     <None Remove="res\securitycompany.txt" />
   </ItemGroup>
 
@@ -140,6 +141,10 @@
   
   <ItemGroup>
     <CompileVisibleProperty Include="RootNamespace" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Include="res\onepage.html" />
   </ItemGroup>
   
   <ItemGroup>

@@ -697,6 +697,14 @@
             Margin="10,-25"
             HorizontalAlignment="Right"
             VerticalAlignment="Top">
+
+
+            <Button
+                Margin="20,0"
+                Command="{Binding GenerateBrochureCommand}"
+                Content="生成宣传册"
+                Style="{StaticResource ButtonPrimary}" />
+
             <Button
                 hc:IconElement.Geometry="{StaticResource f.floppy-disk}"
                 Command="{Binding SaveCommand}"

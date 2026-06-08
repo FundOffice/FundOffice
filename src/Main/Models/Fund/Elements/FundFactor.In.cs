@@ -1310,11 +1310,23 @@ public class AgencyInfo
         if (!HasAgency || string.IsNullOrWhiteSpace(Name)) return "未设置";
 
 
-        return Name + (!HasFee ? "无费用" : FeeType switch { FundFeeType.Fix => $"固定费用：{Fee}元 / 年", FundFeeType.Ratio => $"{Fee}% / 年", FundFeeType.Other => Other, _ => $"未设置" } + (GuaranteedFee > 0 ? $" 有保底：{GuaranteedFee} / 年" : ""));
+        return Name + FeeInfo();
     }
+
+    public string FeeInfo() => (!HasFee ? "无费用" : FeeType switch { FundFeeType.Fix => $"固定费用：{Fee}元 / 年", FundFeeType.Ratio => $"{Fee}% / 年", FundFeeType.Other => Other, _ => $"未设置" } + (GuaranteedFee > 0 ? $" 有保底：{GuaranteedFee} / 年" : ""));
+
 }
 
 
+/// <summary>
+/// 结构化基金
+/// </summary>
+public class StructureInfo
+{
+    public bool IsStructured { get; set; }
+
+
+}
 
 
 

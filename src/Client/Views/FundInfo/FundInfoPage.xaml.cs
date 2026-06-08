@@ -192,10 +192,6 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
                 missingList.Add("封闭期");
             }
 
-            if (!ele.OpenDayInfo.HasValue)
-            {
-                missingList.Add("开放日规则");
-            }
             if (!ele.FundOpenRule.HasValue)
             {
                 missingList.Add("开放规则");

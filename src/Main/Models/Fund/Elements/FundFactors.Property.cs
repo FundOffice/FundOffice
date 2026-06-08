@@ -59,6 +59,11 @@ public partial class FundFactors
     /// </summary>
     public SingletonValueFactorItem<DateOnly> ExpirationDate { get; private set; } = null!;
 
+    /// <summary>
+    /// 结构化信息
+    /// </summary>
+    public SingletonFactorItem<StructureInfo> StructureInfo { get; set; }
+
     #endregion
 
     #region 账户信息
@@ -99,7 +104,7 @@ public partial class FundFactors
     /// <summary>
     /// 开放日规则（文本描述）
     /// </summary>
-    public SingletonFactorItem<string> OpenDayInfo { get; private set; } = null!;
+    //public SingletonFactorItem<string> OpenDayInfo { get; private set; } = null!;
 
     /// <summary>
     /// 开放日规则（结构化）

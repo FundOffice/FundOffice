@@ -518,7 +518,7 @@ public partial class FundElements
         {
             foreach (var (flowId, value) in m_OpenDayInfo.Changes)
             {
-                Factors.Add(new FundFactor<string> { FundId = fundId, FlowId = flowId, ShareId = ShareClass.Singleton, FactorId = FactorFields.OpenDayInfo, Data = value });
+               // Factors.Add(new FundFactor<string> { FundId = fundId, FlowId = flowId, ShareId = ShareClass.Singleton, FactorId = FactorFields.OpenDayInfo, Data = value });
             }
         }
         if (this.FundOpenRule is Mutable<global::FMO.Models.OpenRule> m_FundOpenRule && m_FundOpenRule.Changes.Count > 0)
@@ -952,19 +952,19 @@ public partial class FundElements
                 target.SetValue(ff.Data!, f.FlowId);
             }
         }
-        if (FactorGroups.TryGetValue(FactorFields.OpenDayInfo, out var g_OpenDayInfo))
-        {
-            var target = elements.OpenDayInfo;
-            target.Changes.Clear();
-            foreach (var f in g_OpenDayInfo)
-            {
-                if (f is not FundFactor<string> ff)
-                    throw new InvalidOperationException($"Factor type mismatch for FactorId 'FactorFields.OpenDayInfo': expected FundFactor<string>, but got '{f.GetType().Name}'. FundId: {f.FundId}, FlowId: {f.FlowId}");
-                if (ff.Data == null)
-                    throw new InvalidOperationException($"Factor data is null for FactorId 'FactorFields.OpenDayInfo'. FundId: {f.FundId}, FlowId: {f.FlowId}");
-                target.SetValue(ff.Data!, f.FlowId);
-            }
-        }
+        //if (FactorGroups.TryGetValue(FactorFields.OpenDayInfo, out var g_OpenDayInfo))
+        //{
+        //    var target = elements.OpenDayInfo;
+        //    target.Changes.Clear();
+        //    foreach (var f in g_OpenDayInfo)
+        //    {
+        //        if (f is not FundFactor<string> ff)
+        //            throw new InvalidOperationException($"Factor type mismatch for FactorId 'FactorFields.OpenDayInfo': expected FundFactor<string>, but got '{f.GetType().Name}'. FundId: {f.FundId}, FlowId: {f.FlowId}");
+        //        if (ff.Data == null)
+        //            throw new InvalidOperationException($"Factor data is null for FactorId 'FactorFields.OpenDayInfo'. FundId: {f.FundId}, FlowId: {f.FlowId}");
+        //        target.SetValue(ff.Data!, f.FlowId);
+        //    }
+        //}
         if (FactorGroups.TryGetValue(FactorFields.FundOpenRule, out var g_FundOpenRule))
         {
             var target = elements.FundOpenRule;

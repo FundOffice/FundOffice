@@ -9,6 +9,7 @@
     <Project Path="test/TestDisclosureChannel/TestDisclosureChannel.csproj" />
     <Project Path="test/TestLitedb/TestLitedb.csproj" />
     <Project Path="test/TestMeishi/TestMeishi.csproj" />
+    <Project Path="test/TestOnePage/TestOnePage.csproj" Id="a88ff41d-42aa-41da-beed-ae3a3006ab3d" />
     <Project Path="test/TestScript/TestScript.csproj" />
     <Project Path="test/TestSimple/TestSimple.csproj" />
   </Folder>
