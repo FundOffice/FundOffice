@@ -10,6 +10,7 @@ using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Data;
+using Utilities;
 
 namespace FMO.Shared;
 
@@ -98,7 +99,7 @@ public partial class ReadOnlyFileMetaViewModel : ObservableObject
         int a = cnt / 3, b = cnt * 2 / 3;
         return name switch { string s => s.Length > a + b ? s[..a] + " ...... " + s[^b..] : s, _ => name };
     }
-     
+
 
 
     [RelayCommand]
@@ -111,11 +112,14 @@ public partial class ReadOnlyFileMetaViewModel : ObservableObject
             Directory.CreateDirectory(@$"temp\{Id}");
             string tmp = @$"temp\{Id}\{Name}";
 
-            if (!File.Exists(tmp))
-                FileMeta.CreateHardLink(@$"files\hardlink\{Id}", tmp);
+            File.Copy(@$"files\hardlink\{Id}", tmp, true);
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(tmp) { UseShellExecute = true });
         }
-        catch (Exception e) { Logg.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "无法打开文件")); }
+        catch (Exception e)
+        {
+            Logg.Error(e);
+            Toast.Warning($"无法打开文件：{e.Message}");
+        }
     }
 
 
@@ -128,36 +132,39 @@ public partial class ReadOnlyFileMetaViewModel : ObservableObject
         {
             Directory.CreateDirectory(@$"temp\{Id}");
             string tmp = @$"temp\{Id}\{Name}";
-            if (!File.Exists(tmp))
-                FileMeta.CreateHardLink(@$"files\hardlink\{Id}", tmp);
+            File.Copy(@$"files\hardlink\{Id}", tmp, true);
 
             tmp = Path.GetFullPath(tmp);
             var obj = new DataObject(DataFormats.FileDrop, new string[] { tmp });
             obj.SetText(tmp);
             Clipboard.SetDataObject(obj);
         }
-        catch (Exception e) { Logg.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "无法复制文件")); }
+        catch (Exception e)
+        {
+            Logg.Error(e);
+            Toast.Warning($"无法复制文件：{e.Message}");
+        }
     }
 
 
     [RelayCommand]
-    public void SaveAs()
+    public void ApplyFileChanges()
     {
         if (!Exists) return;
 
         try
         {
-            var d = new SaveFileDialog();
-            d.FileName = Name!;
-            d.DefaultExt = Path.GetExtension(Name!);
-            d.AddExtension = true;
-            if (d.ShowDialog() == true)
-                File.Copy(@$"files\hardlink\{Id}", d.FileName);
+            var tmp = @$"temp\{Id}\{Name}";
+            File.Copy(tmp, @$"files\hardlink\{Id}", true);
         }
-        catch (Exception e) { Logg.Error(e); WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Warning, "文件另存为失败")); }
+        catch (Exception e)
+        {
+            Logg.Error(e);
+            Toast.Warning($"应用文件更新失败：{e.Message}");
+        }
     }
 
-    
+
 }
 
 
