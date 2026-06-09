@@ -1,0 +1,921 @@
+<style>
+/* ========== 基础重置 ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+.brochure-container {
+  font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  color: #2d3748;
+  line-height: 1.7;
+  font-size: 14px;
+  background: #f0f4f8;
+  overflow: hidden;
+}
+.brochure-container img { max-width: 100%; height: auto; display: block; }
+.brochure-container table { width: 100%; border-collapse: collapse; }
+
+/* ========== 三种视图模式：原始尺寸 ========== */
+.mode-original .brochure-container {
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  border-radius: 8px;
+}
+
+/* ========== 三种视图模式：A4 纸张 ========== */
+.mode-a4 .brochure-container {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 15mm;
+  box-shadow: none;
+  border-radius: 0;
+  background: #fff;
+  margin: 0 auto;
+}
+.mode-a4 .brochure-section { break-inside: avoid; page-break-inside: avoid; }
+.mode-a4 .brochure-manager { break-inside: avoid; page-break-inside: avoid; }
+.mode-a4 .brochure-table { break-inside: avoid; page-break-inside: avoid; }
+
+/* ========== 三种视图模式：多折页（横向多列） ========== */
+.mode-wide .brochure-container {
+  width: 100%;
+  margin: 0 auto;
+  box-shadow: none;
+  border-radius: 0;
+  background: #f0f4f8;
+}
+.mode-wide .brochure-main {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+.mode-wide .brochure-main > .brochure-section { width: 100%; }
+.mode-wide .brochure-header { grid-column: 1 / -1; }
+.mode-wide .brochure-disclaimer { grid-column: 1 / -1; }
+.mode-wide .brochure-managers { grid-column: 1 / -1; }
+
+/* ========== 打印优化 ========== */
+@media print {
+  .brochure-container { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: #fff !important; }
+  .brochure-section { break-inside: avoid; page-break-inside: avoid; }
+}
+
+/* ========== 通用区块样式 ========== */
+.brochure-section {
+  background: #fff;
+  margin: 16px;
+  padding: 24px 28px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.brochure-section__title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a365d;
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+  border-bottom: 2px solid #1a365d;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.brochure-section__title::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 18px;
+  background: linear-gradient(180deg, #c6a84c, #d4af37);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ========== 头部区域 ========== */
+.brochure-header {
+  background: linear-gradient(135deg, #1a365d 0%, #2c5282 60%, #1a365d 100%);
+  color: #fff;
+  margin: 0;
+  padding: 36px 32px 30px;
+  border-radius: 0;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+.brochure-header::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(198,168,76,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.brochure-header__top {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+.brochure-header__logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.15);
+  border: 2px solid rgba(255,255,255,0.3);
+  object-fit: contain;
+  flex-shrink: 0;
+  padding: 6px;
+}
+.brochure-header__manager-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.brochure-header__manager-en {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+.brochure-header__amac {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  background: rgba(198,168,76,0.25);
+  color: #f6e6b0;
+  padding: 2px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(198,168,76,0.4);
+}
+.brochure-header__fund-name {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.brochure-header__sub {
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.8;
+  margin-top: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ========== 信息网格 ========== */
+.brochure-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0;
+}
+.brochure-info-grid--three {
+  grid-template-columns: repeat(3, 1fr);
+}
+.brochure-info-item {
+  display: flex;
+  padding: 10px 0;
+  border-bottom: 1px dashed #e2e8f0;
+  align-items: baseline;
+}
+.brochure-info-item:nth-last-child(-n+2) { border-bottom: none; }
+.brochure-info-grid--three .brochure-info-item:nth-last-child(-n+3) { border-bottom: none; }
+.brochure-info-item__label {
+  color: #718096;
+  font-size: 13px;
+  min-width: 90px;
+  flex-shrink: 0;
+  position: relative;
+  padding-left: 12px;
+}
+.brochure-info-item__label::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  background: #c6a84c;
+  border-radius: 50%;
+}
+.brochure-info-item__value {
+  color: #2d3748;
+  font-size: 13px;
+  font-weight: 500;
+  word-break: break-all;
+  flex: 1;
+}
+
+/* ========== 表格样式 ========== */
+.brochure-table {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.brochure-table th {
+  background: linear-gradient(180deg, #edf2f7, #e2e8f0);
+  color: #1a365d;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 2px solid #cbd5e0;
+}
+.brochure-table td {
+  padding: 10px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid #edf2f7;
+  color: #4a5568;
+}
+.brochure-table tr:last-child td { border-bottom: none; }
+.brochure-table tr:nth-child(even) td { background: #fafbfc; }
+
+/* ========== 份额属性映射展示 ========== */
+.brochure-class-property {
+  margin: 6px 0;
+  padding: 8px 14px;
+  background: #f7fafc;
+  border-radius: 4px;
+  border-left: 3px solid #c6a84c;
+  font-size: 13px;
+}
+.brochure-class-property__name {
+  font-weight: 600;
+  color: #1a365d;
+  margin-right: 6px;
+}
+.brochure-class-property__value {
+  color: #4a5568;
+}
+.brochure-plain-value {
+  font-size: 13px;
+  color: #4a5568;
+  padding: 4px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.8;
+}
+
+/* ========== 基金经理卡片 ========== */
+.brochure-managers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.brochure-manager {
+  flex: 1 1 280px;
+  min-width: 240px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 20px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  display: flex;
+  gap: 16px;
+}
+.brochure-manager__photo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 3px solid #edf2f7;
+  background: #edf2f7;
+}
+.brochure-manager__info { flex: 1; min-width: 0; }
+.brochure-manager__name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a365d;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #edf2f7;
+}
+.brochure-manager__profile {
+  font-size: 12px;
+  color: #718096;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ========== 社交账号 ========== */
+.brochure-social-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.brochure-social-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f7fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  min-width: 120px;
+}
+.brochure-social-item__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a365d;
+}
+.brochure-social-item__qr {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #fff;
+  border: 1px solid #edf2f7;
+}
+
+/* ========== 投资信息文本块 ========== */
+.brochure-text-block {
+  font-size: 13px;
+  color: #4a5568;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  word-break: break-all;
+  padding: 10px 0;
+}
+
+/* ========== 风险提示与免责声明 ========== */
+.brochure-disclaimer {
+  background: linear-gradient(180deg, #fffaf0, #fff);
+  border: 1px solid #e9d8a6;
+  margin: 16px;
+  padding: 20px 24px;
+  border-radius: 6px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.brochure-disclaimer__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #975a16;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.brochure-disclaimer__title::before {
+  content: "⚠";
+  font-size: 16px;
+}
+.brochure-disclaimer__list {
+  list-style: none;
+  counter-reset: disclaimer;
+}
+.brochure-disclaimer__list li {
+  counter-increment: disclaimer;
+  font-size: 12px;
+  color: #744210;
+  line-height: 1.9;
+  padding: 3px 0 3px 24px;
+  position: relative;
+}
+.brochure-disclaimer__list li::before {
+  content: counter(disclaimer) "、";
+  position: absolute;
+  left: 0;
+  font-weight: 600;
+  color: #975a16;
+}
+
+/* ========== 错误提示 ========== */
+.brochure-error {
+  color: #e53e3e;
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 14px;
+}
+
+/* ========== 响应式微调 ========== */
+@media (max-width: 640px) {
+  .brochure-info-grid,
+  .brochure-info-grid--three { grid-template-columns: 1fr; }
+  .brochure-header__fund-name { font-size: 20px; }
+  .brochure-manager { flex-direction: column; align-items: center; text-align: center; }
+}
+</style>
+
+<div class="brochure-container" id="brochureRoot">
+
+  <!-- 头部：管理人 & 基金名称 -->
+  <div class="brochure-header" id="secHeader">
+    <div class="brochure-header__top">
+      <img class="brochure-header__logo" id="headerLogo" alt="Logo" style="display:none;" />
+      <div>
+        <div class="brochure-header__manager-name" id="headerManagerName"></div>
+        <div class="brochure-header__manager-en" id="headerManagerEn"></div>
+        <div class="brochure-header__amac" id="headerAmac"></div>
+      </div>
+    </div>
+    <div class="brochure-header__fund-name" id="headerFundName"></div>
+    <div class="brochure-header__sub" id="headerSub"></div>
+  </div>
+
+  <!-- 主体内容区 -->
+  <div class="brochure-main">
+
+    <!-- 基金基本要素 -->
+    <div class="brochure-section" id="secBasicInfo" style="display:none;">
+      <div class="brochure-section__title">基金基本要素</div>
+      <div class="brochure-info-grid" id="gridBasicInfo"></div>
+    </div>
+
+    <!-- 投资经理与投资信息 (合并，整体放基本信息下方，人物在上) -->
+    <div class="brochure-section" id="secInvestManager" style="display:none;">
+      <div class="brochure-section__title">投资经理与投资信息</div>
+      <div class="brochure-managers" id="managerList" style="margin-bottom: 16px;"></div>
+      <div id="investContent"></div>
+    </div>
+
+    <!-- 份额类型 -->
+    <div class="brochure-section" id="secShareClass" style="display:none;">
+      <div class="brochure-section__title">份额类型</div>
+      <table class="brochure-table">
+        <thead><tr><th style="width:40%;">份额名称</th><th>份额要求</th></tr></thead>
+        <tbody id="tbodyShareClass"></tbody>
+      </table>
+    </div>
+
+    <!-- 募集账户 -->
+    <div class="brochure-section" id="secAccount" style="display:none;">
+      <div class="brochure-section__title">募集账户</div>
+      <div id="accountContent"></div>
+    </div>
+
+    <!-- 开放/认购/申购规则 -->
+    <div class="brochure-section" id="secOpenRule" style="display:none;">
+      <div class="brochure-section__title">开放与申赎规则</div>
+      <div id="openRuleContent"></div>
+    </div>
+
+    <!-- 费用信息 -->
+    <div class="brochure-section" id="secFee" style="display:none;">
+      <div class="brochure-section__title">费用信息</div>
+      <div id="feeContent"></div>
+    </div>
+
+    <!-- 机构信息 -->
+    <div class="brochure-section" id="secOrg" style="display:none;">
+      <div class="brochure-section__title">服务机构</div>
+      <div class="brochure-info-grid" id="gridOrg"></div>
+    </div>
+
+    <!-- 社交账号 -->
+    <div class="brochure-section" id="secSocial" style="display:none;">
+      <div class="brochure-section__title">公众账号</div>
+      <div class="brochure-social-list" id="socialList"></div>
+    </div>
+
+  </div>
+
+  <!-- 风险提示与免责声明 -->
+  <div class="brochure-disclaimer">
+    <div class="brochure-disclaimer__title">风险提示与免责声明</div>
+    <ol class="brochure-disclaimer__list">
+      <li>本宣传资料仅为产品信息展示，不构成任何投资邀约、推介或交易要约；</li>
+      <li>私募基金存在市场风险、流动性风险、信用风险等多重风险，过往业绩不代表未来收益；</li>
+      <li>投资者应当具备相应风险识别能力和风险承担能力，自行审慎评估自身财务状况与风险承受能力；</li>
+      <li>请仔细阅读基金合同、风险揭示书、投资者适当性匹配文件等全部法律文件，独立做出投资决策；</li>
+      <li>管理人、托管人及外包机构不对投资本金及收益作出任何保本、保收益承诺；</li>
+      <li>本资料内容仅供内部参考，不得作为公开募集、对外推销使用，复制传播前须经管理人书面许可。</li>
+    </ol>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  // ===== 调试日志（强制） =====
+  console.log('[Brochure] broData:', window.broData);
+
+  var root = document.getElementById('brochureRoot');
+  if (!root) return;
+
+  // ===== 数据校验：无数据时直接提示 =====
+  if (!window.broData) {
+    root.innerHTML = '<p class="brochure-error">暂无数据 (window.broData 未定义)</p>';
+    return;
+  }
+
+  try {
+    var d = window.broData;
+
+    // ========== 工具函数 ==========
+    // 过滤 null / undefined / "" / "未设置"；数组递归过滤
+    function isValid(val) {
+      if (val === null || val === undefined) return false;
+      if (typeof val === 'string') {
+        var s = val.trim();
+        return s !== '' && s !== '未设置';
+      }
+      if (Array.isArray(val)) {
+        var filtered = val.filter(function (v) { return isValid(v); });
+        return filtered.length > 0;
+      }
+      if (typeof val === 'number') return !isNaN(val);
+      if (typeof val === 'boolean') return true;
+      if (typeof val === 'object') return true;
+      return false;
+    }
+
+    // 日期校验：在 isValid 基础上过滤 C# 默认日期
+    function isValidDate(val) {
+      if (!isValid(val)) return false;
+      var s = String(val).trim();
+      var invalidDates = ['0001-01-01', '1900-01-01', '0001/01/01', '1900/01/01', '0001-01-01T00:00:00', '1900-01-01T00:00:00'];
+      for (var i = 0; i < invalidDates.length; i++) {
+        if (s.indexOf(invalidDates[i]) === 0) return false;
+      }
+      return true;
+    }
+
+    // XSS 防护
+    function escapeHtml(text) {
+      if (text === null || text === undefined) return '';
+      var s = String(text);
+      var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+      return s.replace(/[&<>"']/g, function (m) { return map[m]; });
+    }
+
+    // 多行文本处理：\n 转 <br>
+    function nl2br(text) {
+      if (!isValid(text)) return '';
+      return escapeHtml(String(text)).replace(/\n/g, '<br>');
+    }
+
+    // 字节数组 / Base64 转图片 URL
+    function toImageUrl(data) {
+      if (!data) return '';
+      if (typeof data === 'string') {
+        var s = data.trim();
+        if (!s) return '';
+        if (s.indexOf('data:') === 0) return s;
+        // 假设是纯 base64
+        return 'data:image/png;base64,' + s;
+      }
+      if (Array.isArray(data) || (data instanceof Uint8Array)) {
+        try {
+          var bytes = new Uint8Array(data);
+          var binary = '';
+          for (var i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          return 'data:image/png;base64,' + btoa(binary);
+        } catch (e) {
+          return '';
+        }
+      }
+      return '';
+    }
+
+    // 过滤数组中的无效项
+    function filterValid(arr) {
+      if (!Array.isArray(arr)) return [];
+      return arr.filter(function (v) { return isValid(v); });
+    }
+
+    // 判断份额类型是否有效（>1 且 Name 非空）
+    var validShareClasses = [];
+    if (Array.isArray(d.ShareClasses)) {
+      validShareClasses = d.ShareClasses.filter(function (sc) {
+        return sc && isValid(sc.Name);
+      });
+    }
+    var hasMultipleShareClasses = validShareClasses.length > 1;
+
+    // 渲染 info-grid 条目 (单行展示)
+    function makeInfoItem(label, value) {
+      if (!isValid(value)) return '';
+      return '<div class="brochure-info-item">' +
+        '<span class="brochure-info-item__label">' + escapeHtml(label) + '</span>' +
+        '<span class="brochure-info-item__value">' + nl2br(value) + '</span>' +
+        '</div>';
+    }
+
+    // 渲染单行展示的带标题映射属性块 (针对开放与申赎、费用信息)
+    function renderInlineClassProperty(label, arr) {
+      var validArr = filterValid(arr);
+      if (validArr.length === 0) return '';
+      if (validArr.length === 1) {
+        return makeInfoItem(label, validArr[0]);
+      }
+      // 多元素：保持原有的 class-property 块状展示，独占一行
+      var html = '<div style="margin-bottom:14px; width: 100%; grid-column: 1 / -1;">' +
+        '<div style="font-weight:600;color:#1a365d;font-size:13px;margin-bottom:6px;">' + escapeHtml(label) + '</div>';
+      for (var i = 0; i < validArr.length; i++) {
+        var name = '';
+        if (validShareClasses && i < validShareClasses.length && isValid(validShareClasses[i].Name)) {
+          name = escapeHtml(validShareClasses[i].Name);
+        } else {
+          name = '类别' + (i + 1);
+        }
+        html += '<div class="brochure-class-property">' +
+          '<span class="brochure-class-property__name">' + name + '：</span>' +
+          '<span class="brochure-class-property__value">' + nl2br(validArr[i]) + '</span>' +
+          '</div>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    // 渲染带标题的文本块 (用于投资信息等长文本)
+    function makeTextBlock(title, content) {
+      if (!isValid(content)) return '';
+      return '<div style="margin-bottom:14px;">' +
+        '<div style="font-weight:600;color:#1a365d;font-size:13px;margin-bottom:4px;">' + escapeHtml(title) + '</div>' +
+        '<div class="brochure-text-block">' + nl2br(content) + '</div>' +
+        '</div>';
+    }
+
+    // 渲染带标题的映射属性块 (用于其他区块)
+    function makeClassPropertyBlock(title, arr) {
+      var validArr = filterValid(arr);
+      if (validArr.length === 0) return '';
+      if (validArr.length === 1) {
+        return '<div style="margin-bottom:14px;">' +
+          '<div style="font-weight:600;color:#1a365d;font-size:13px;margin-bottom:6px;">' + escapeHtml(title) + '</div>' +
+          '<div class="brochure-plain-value">' + nl2br(validArr[0]) + '</div>' +
+          '</div>';
+      }
+      var html = '<div style="margin-bottom:14px;">' +
+        '<div style="font-weight:600;color:#1a365d;font-size:13px;margin-bottom:6px;">' + escapeHtml(title) + '</div>';
+      for (var i = 0; i < validArr.length; i++) {
+        var name = '';
+        if (validShareClasses && i < validShareClasses.length && isValid(validShareClasses[i].Name)) {
+          name = escapeHtml(validShareClasses[i].Name);
+        } else {
+          name = '类别' + (i + 1);
+        }
+        html += '<div class="brochure-class-property">' +
+          '<span class="brochure-class-property__name">' + name + '：</span>' +
+          '<span class="brochure-class-property__value">' + nl2br(validArr[i]) + '</span>' +
+          '</div>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    // =====================================================
+    // 1. 头部区域
+    // =====================================================
+    var headerHtml = '';
+    if (isValid(d.ManagerLogo)) {
+      var logoUrl = toImageUrl(d.ManagerLogo);
+      if (logoUrl) {
+        var logoEl = document.getElementById('headerLogo');
+        logoEl.src = logoUrl;
+        logoEl.style.display = 'block';
+      }
+    }
+    if (isValid(d.ManagerName)) {
+      document.getElementById('headerManagerName').textContent = d.ManagerName;
+      headerHtml += '1';
+    }
+    if (isValid(d.ManagerEnglishName)) {
+      document.getElementById('headerManagerEn').textContent = d.ManagerEnglishName;
+      document.getElementById('headerManagerEn').style.display = 'block';
+      headerHtml += '1';
+    } else {
+      document.getElementById('headerManagerEn').style.display = 'none';
+    }
+    if (isValid(d.ManagerAmacCode)) {
+      document.getElementById('headerAmac').textContent = '备案编号：' + d.ManagerAmacCode;
+      headerHtml += '1';
+    } else {
+      document.getElementById('headerAmac').style.display = 'none';
+    }
+    if (isValid(d.FundName)) {
+      document.getElementById('headerFundName').textContent = d.FundName;
+      headerHtml += '1';
+    }
+    var subParts = [];
+    if (isValid(d.ShortName) && d.ShortName !== d.FundName) subParts.push('简称：' + d.ShortName);
+    if (isValid(d.Code)) subParts.push('产品编码：' + d.Code);
+    if (subParts.length > 0) {
+      document.getElementById('headerSub').textContent = subParts.join('  |  ');
+      headerHtml += '1';
+    } else {
+      document.getElementById('headerSub').style.display = 'none';
+    }
+    if (!headerHtml) document.getElementById('secHeader').style.display = 'none';
+
+    // =====================================================
+    // 2. 基金基本要素
+    // =====================================================
+    var basicHtml = '';
+    basicHtml += makeInfoItem('基金全称', d.FundName);
+    basicHtml += makeInfoItem('基金简称', d.ShortName);
+    basicHtml += makeInfoItem('产品编码', d.Code);
+    basicHtml += makeInfoItem('基金类型', d.Type);
+    basicHtml += makeInfoItem('证券基金类型', d.SecurityFundType);
+    basicHtml += makeInfoItem('运作方式', d.FundModeInfo);
+    basicHtml += makeInfoItem('风险等级', d.RiskLevel);
+    basicHtml += makeInfoItem('是否结构化', d.IsStructured ? '是' : '否');
+    if (isValidDate(d.SetupDate)) basicHtml += makeInfoItem('成立日期', d.SetupDate);
+    if (isValidDate(d.AuditDate)) basicHtml += makeInfoItem('备案日期', d.AuditDate);
+    if (isValidDate(d.ExpirationDate)) basicHtml += makeInfoItem('结束日期', d.ExpirationDate);
+    basicHtml += makeInfoItem('存续期', d.Duration);
+    basicHtml += makeInfoItem('封闭期', d.SealingRule);
+    if (isValid(d.LockingRule)) {
+      var lockArr = filterValid(d.LockingRule);
+      if (lockArr.length > 0) {
+        basicHtml += makeInfoItem('锁定期', lockArr.join('；'));
+      }
+    }
+    if (isValid(d.Url)) {
+      basicHtml += '<div class="brochure-info-item">' +
+        '<span class="brochure-info-item__label">公示网址</span>' +
+        '<span class="brochure-info-item__value"><a href="' + escapeHtml(d.Url) + '" target="_blank" style="color:#2c5282;text-decoration:underline;word-break:break-all;">' + escapeHtml(d.Url) + '</a></span>' +
+        '</div>';
+    }
+    if (basicHtml) {
+      document.getElementById('gridBasicInfo').innerHTML = basicHtml;
+      document.getElementById('secBasicInfo').style.display = 'block';
+    }
+
+    // =====================================================
+    // 3. 份额类型（≤1 或 Name 全空则完全隐藏）
+    // =====================================================
+    if (hasMultipleShareClasses) {
+      var scHtml = '';
+      for (var si = 0; si < validShareClasses.length; si++) {
+        var sc = validShareClasses[si];
+        scHtml += '<tr><td>' + escapeHtml(sc.Name) + '</td><td>' + nl2br(sc.Requirement) + '</td></tr>';
+      }
+      if (scHtml) {
+        document.getElementById('tbodyShareClass').innerHTML = scHtml;
+        document.getElementById('secShareClass').style.display = 'block';
+      }
+    }
+
+    // =====================================================
+    // 4. 募集账户
+    // =====================================================
+    var accHtml = '';
+    if (isValid(d.CollectionAccount)) {
+      accHtml += '<div style="background: #f7fafc; padding: 14px 18px; border-radius: 4px; font-size: 13px; line-height: 1.9; white-space: pre-wrap; word-break: break-all; color: #4a5568;">' + nl2br(d.CollectionAccount) + '</div>';
+    }
+    if (accHtml) {
+      document.getElementById('accountContent').innerHTML = accHtml;
+      document.getElementById('secAccount').style.display = 'block';
+    }
+
+    // =====================================================
+    // 5. 开放与申赎规则 (单行网格展示)
+    // =====================================================
+    var openItems = [];
+    openItems.push(renderInlineClassProperty('开放日', d.OpenInfo));
+    
+    if (isValid(d.TemporarilyOpenInfo)) {
+      var tempArr = filterValid(d.TemporarilyOpenInfo);
+      if (tempArr.length > 0) openItems.push(makeInfoItem('临时开放', tempArr.join('；')));
+    }
+    
+    openItems.push(renderInlineClassProperty('认购', d.SubscriptionRule));
+    openItems.push(renderInlineClassProperty('申购', d.PurchasRule));
+    openItems.push(renderInlineClassProperty('赎回费用', d.RedemptionFee));
+    
+    openItems.push(makeInfoItem('冷静期', d.CoolingPeriod));
+    openItems.push(makeInfoItem('回访确认', d.Callback));
+    
+    if (isValid(d.WarningLine)) openItems.push(makeInfoItem('预警线', d.WarningLine));
+    if (isValid(d.StopLine)) openItems.push(makeInfoItem('止损线', d.StopLine));
+    openItems.push(makeInfoItem('巨额赎回', d.HugeRedemption));
+
+    var openHtml = openItems.filter(function(s) { return s; }).join('');
+    if (openHtml) {
+      document.getElementById('openRuleContent').innerHTML = '<div class="brochure-info-grid">' + openHtml + '</div>';
+      document.getElementById('secOpenRule').style.display = 'block';
+    }
+
+    // =====================================================
+    // 6. 费用信息 (单行网格展示)
+    // =====================================================
+    var feeItems = [];
+    feeItems.push(renderInlineClassProperty('管理费', d.ManageFee));
+    
+    if (isValid(d.PerformanceFeeStatement)) {
+      var perfArr = filterValid(d.PerformanceFeeStatement);
+      if (perfArr.length === 1) {
+        feeItems.push(makeInfoItem('业绩报酬', perfArr[0]));
+      } else if (perfArr.length > 1) {
+        var perfHtml = '<div style="margin-bottom:14px; width: 100%; grid-column: 1 / -1;">' +
+          '<div style="font-weight:600;color:#1a365d;font-size:13px;margin-bottom:6px;">业绩报酬说明</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:10px;">';
+        for (var pi = 0; pi < perfArr.length; pi++) {
+           var pName = '';
+           if (hasMultipleShareClasses && pi < validShareClasses.length && isValid(validShareClasses[pi].Name)) {
+             pName = escapeHtml(validShareClasses[pi].Name) + '：';
+           }
+           perfHtml += '<div class="brochure-class-property" style="flex:1;min-width:120px;margin:0;">' +
+             (pName ? '<span class="brochure-class-property__name">' + pName + '</span>' : '') +
+             '<span class="brochure-class-property__value">' + nl2br(perfArr[pi]) + '</span>' +
+             '</div>';
+        }
+        perfHtml += '</div></div>';
+        feeItems.push(perfHtml);
+      }
+    }
+
+    var feeHtml = feeItems.filter(function(s) { return s; }).join('');
+    if (feeHtml) {
+      document.getElementById('feeContent').innerHTML = '<div class="brochure-info-grid">' + feeHtml + '</div>';
+      document.getElementById('secFee').style.display = 'block';
+    }
+
+    // =====================================================
+    // 7. 服务机构
+    // =====================================================
+    var orgHtml = '';
+    orgHtml += makeInfoItem('托管机构', d.TrusteeInfo);
+    orgHtml += makeInfoItem('托管费用', d.TrusteeFee);
+    orgHtml += makeInfoItem('外包机构', d.OutsourcingInfo);
+    orgHtml += makeInfoItem('外包费用', d.OutsourcingFee);
+    if (orgHtml) {
+      document.getElementById('gridOrg').innerHTML = orgHtml;
+      document.getElementById('secOrg').style.display = 'block';
+    }
+
+    // =====================================================
+    // 8 & 9. 投资经理与投资信息 (合并)
+    // =====================================================
+    var investHtml = '';
+    investHtml += makeTextBlock('投资目标', d.InvestmentObjective);
+    investHtml += makeTextBlock('投资范围', d.InvestmentScope);
+    investHtml += makeTextBlock('投资策略', d.InvestmentStrategy);
+    investHtml += makeTextBlock('业绩比较基准', d.PerformanceBenchmark);
+    
+    var mgrHtml = '';
+    if (isValid(d.InvestmentManagers)) {
+      var mgrArr = Array.isArray(d.InvestmentManagers) ? d.InvestmentManagers : [d.InvestmentManagers];
+      for (var mi = 0; mi < mgrArr.length; mi++) {
+        var mgr = mgrArr[mi];
+        if (!mgr) continue;
+        var photoUrl = toImageUrl(mgr.Photo);
+        var photoHtml = '';
+        if (photoUrl) {
+          photoHtml = '<img class="brochure-manager__photo" src="' + photoUrl + '" alt="' + escapeHtml(mgr.Name || '经理') + '" />';
+        }
+        var nameHtml = isValid(mgr.Name) ? '<div class="brochure-manager__name">' + escapeHtml(mgr.Name) + '</div>' : '';
+        var profileHtml = isValid(mgr.Profile) ? '<div class="brochure-manager__profile">' + nl2br(mgr.Profile) + '</div>' : '';
+        if (nameHtml || profileHtml) {
+          mgrHtml += '<div class="brochure-manager">' + photoHtml +
+            '<div class="brochure-manager__info">' + nameHtml + profileHtml + '</div></div>';
+        }
+      }
+    }
+
+    if (investHtml || mgrHtml) {
+      if (mgrHtml) document.getElementById('managerList').innerHTML = mgrHtml;
+      if (investHtml) document.getElementById('investContent').innerHTML = investHtml;
+      document.getElementById('secInvestManager').style.display = 'block';
+    }
+
+    // =====================================================
+    // 10. 社交账号
+    // =====================================================
+    if (isValid(d.ManagerSocialAccounts)) {
+      var socHtml = '';
+      var socArr = Array.isArray(d.ManagerSocialAccounts) ? d.ManagerSocialAccounts : [d.ManagerSocialAccounts];
+      for (var qi = 0; qi < socArr.length; qi++) {
+        var soc = socArr[qi];
+        if (!soc || !isValid(soc.Name)) continue;
+        var qrUrl = toImageUrl(soc.QRCode);
+        var qrHtml = '';
+        if (qrUrl) {
+          qrHtml = '<img class="brochure-social-item__qr" src="' + qrUrl + '" alt="' + escapeHtml(soc.Name) + '" />';
+        }
+        socHtml += '<div class="brochure-social-item">' +
+          '<div class="brochure-social-item__name">' + escapeHtml(soc.Name) + '</div>' +
+          qrHtml +
+          '</div>';
+      }
+      if (socHtml) {
+        document.getElementById('socialList').innerHTML = socHtml;
+        document.getElementById('secSocial').style.display = 'block';
+      }
+    }
+
+  } catch (e) {
+    console.error('[Brochure] Render error:', e);
+    root.innerHTML = '<p class="brochure-error">渲染出错：' + escapeHtml(e.message) + '</p>';
+  }
+})();
+</script>

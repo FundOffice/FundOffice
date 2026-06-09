@@ -535,13 +535,26 @@ internal class DelayLoader
         if (!Directory.Exists(@"files\brochure"))
             Directory.CreateDirectory(@"files\brochure");
 
-        string target = @"files\brochure\.frame";
-        if (!File.Exists(target) && Assembly.GetExecutingAssembly().GetManifestResourceStream("FMO.res.onepage.html") is Stream stream)
         {
-            byte[] buffer = new byte[stream.Length];
-            stream.ReadExactly(buffer, 0, buffer.Length);
-            File.WriteAllBytes(target, buffer);
+            string target = @"files\brochure\.frame";
+            if (!File.Exists(target) && Assembly.GetExecutingAssembly().GetManifestResourceStream("FMO.res.onepage.html") is Stream stream)
+            {
+                byte[] buffer = new byte[stream.Length];
+                stream.ReadExactly(buffer, 0, buffer.Length);
+                File.WriteAllBytes(target, buffer);
+            }
         }
+
+        {
+            var target = @"files\brochure\default.html";
+            if (!File.Exists(target) && Assembly.GetExecutingAssembly().GetManifestResourceStream("FMO.res.defaultBrochure.html") is Stream stream)
+            {
+                byte[] buffer = new byte[stream.Length];
+                stream.ReadExactly(buffer, 0, buffer.Length);
+                File.WriteAllBytes(target, buffer);
+            }
+        }
+
 
 
     }
