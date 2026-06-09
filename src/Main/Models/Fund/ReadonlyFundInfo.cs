@@ -3,142 +3,94 @@
 /// <summary>
 /// 包含全部基金信息的聚合类
 /// </summary>
-public class ReadonlyFundInfo
+public partial class ReadonlyFundInfo
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
+     
+    /// <summary>
+    /// 管理人名称
+    /// </summary>
+    public required string ManagerName { get; init; }
 
-    public string? Name { get; set; }
-
-    public string? ShortName { get; set; }
+   
+    /// <summary>
+    /// 管理人名称
+    /// </summary>
+    public string? ManagerEnglishName { get; init; }
 
     /// <summary>
-    /// 发起日期
+    /// 管理人备案号
     /// </summary>
-    public DateOnly InitiateDate { get; set; }
+    public required string ManagerAmacCode { get; init; }
 
     /// <summary>
-    /// 成立日期
+    /// 管理人简介
     /// </summary>
-    public DateOnly SetupDate { get; set; }
+    public string? ManagerProfile { get; init; }
+
 
     /// <summary>
-    /// 备案日期
+    /// 成立日期 yyyy-MM-dd
     /// </summary>
-    public DateOnly AuditDate { get; set; }
+    public required string SetupDate { get; init; }
+
+    /// <summary>
+    /// 备案日期  yyyy-MM-dd
+    /// </summary>
+    public string? AuditDate { get; init; }
 
     /// <summary>
     /// 备案号
     /// </summary>
-    public string? Code { get; set; }
+    public required string Code { get; init; }
 
-    /// <summary>
-    /// 最新更新日期
-    /// </summary>
-    public DateTime LastUpdate { get; set; }
-
-    /// <summary>
-    /// 清算日期
-    /// </summary>
-    public DateOnly ClearDate { get; set; }
-
-    /// <summary>
-    /// 在协会的id
-    /// </summary>
-    public string? AmacID { get; set; }
 
 
     /// <summary>
     /// 公示网址
     /// </summary>
-    public string? Url { get; set; }
+    public string? Url { get; init; }
+     
+
+    /// <summary>
+    /// 最新更新日期
+    /// </summary>
+    public DateTime LastUpdate { get; init; }
+
+    /// <summary>
+    /// 清算日期
+    /// </summary>
+    public DateOnly ClearDate { get; init; }
+
+    /// <summary>
+    /// 在协会的id
+    /// </summary>
+    public string? AmacID { get; init; }
+     
 
     /// <summary>
     /// 状态
     /// </summary>
-    public FundStatus Status { get; set; }
+    public FundStatus Status { get; init; }
 
     /// <summary>
     /// 是否作为投资顾问
     /// </summary>
-    public bool AsAdvisor { get; set; }
+    public bool AsAdvisor { get; init; }
 
 
     /// <summary>
     /// 公示信息同步时间
     /// </summary>
-    public DateTime PublicDisclosureSynchronizeTime { get; set; }
+    public DateTime PublicDisclosureSynchronizeTime { get; init; }
 
     /// <summary>
     /// 备案系统同步时间
     /// </summary>
-    public DateTime AmbersSynchronizeTime { get; set; }
+    public DateTime AmbersSynchronizeTime { get; init; }
+ 
 
-    /// <summary>
-    /// 结束日期
-    /// </summary>
-    public DateOnly? ExpirationDate { get; set; }
-
-    /// <summary>
-    /// 存续期
-    /// </summary>
-    public string? SurvivalPeriod { get; set; }
-
-
-    /// <summary>
-    /// 是否结构化
-    /// </summary>
-    public bool IsStructured { get; set; }
-
-
-
-
-    /// <summary>
-    /// 基金类型
-    /// </summary>
-    public FundType Type { get; set; }
-
-    /// <summary>
-    /// 管理类型
-    /// </summary>
-    public ManageType ManageType { get; set; }
-
-    // 新增属性（来自 FundElements）
-    public SecurityFundType SecurityFundType { get; set; }
-
-    public DataExtra<FundMode>? FundModeInfo { get; set; }
-    public SealingRule? SealingRule { get; set; }
-    public RiskLevel? RiskLevel { get; set; }
-    public int? DurationInMonths { get; set; }
-    public BankAccount? CollectionAccount { get; set; }
-    public BankAccount? CustodyAccount { get; set; }
-    public ShareClass? ShareClass { get; set; }
-    public decimal? StopLine { get; set; }
-    public decimal? WarningLine { get; set; }
-    public string? OpenDayInfo { get; set; }
-    public OpenRule? FundOpenRule { get; set; }
-    public AgencyInfo? TrusteeInfo { get; set; }
-    public FundFeeInfo? TrusteeFee { get; set; }
-    public AgencyInfo? OutsourcingInfo { get; set; }
-    public FundFeeInfo? OutsourcingFee { get; set; }
-    public FundInvestmentManager[]? InvestmentManagers { get; set; }
-
-
-    public string? InvestmentManager { get; set; }
-    public PerformanceBenchmark? PerformanceBenchmark { get; set; }
-    public string? InvestmentObjective { get; set; }
-    public string? InvestmentScope { get; set; }
-    public string? InvestmentStrategy { get; set; }
-    public TemporarilyOpenInfo? TemporarilyOpenInfo { get; set; }
-    public decimal? HugeRedemptionRatio { get; set; }
-    public CoolingPeriodInfo? CoolingPeriod { get; set; }
-    public CallbackInfo? Callback { get; set; }
-    public SealingRule? LockingRule { get; set; }
-    public FundFeeInfo? ManageFee { get; set; }
-    public FeePayInfo? ManageFeePay { get; set; }
-    public FundPurchaseRule? SubscriptionRule { get; set; }
-    public FundPurchaseRule? PurchasRule { get; set; }
-    public RedemptionFeeInfo? RedemptionFee { get; set; }
-    public string? PerformanceFeeStatement { get; set; }
+ 
 
 
 

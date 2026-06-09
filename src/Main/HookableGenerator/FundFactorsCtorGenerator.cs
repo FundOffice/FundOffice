@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System.Collections.Immutable;
@@ -7,24 +7,6 @@ using System.Text;
 
 namespace SG;
 
-public readonly record struct PropertyMeta(
-    string Name,
-    string GenericArg,
-    bool IsFactorItem,
-    string? FactFieldName)
-{
-    /// <summary>
-    /// FactorFields 中使用的常量名
-    /// </summary>
-    public string FieldKey => FactFieldName ?? Name;
-
-    /// <summary>
-    /// 初始化代码片段
-    /// </summary>
-    public string InitCode => IsFactorItem
-        ? $"{Name} = new(Filter<{GenericArg.Replace("?", "")}>(FactorFields.{FieldKey}, g), _shares, _shareConfigMap);"
-        : $"{Name} = new(Filter<{GenericArg.Replace("?", "")}>(FactorFields.{FieldKey}, g));";
-}
 
 [Generator]
 public class FundFactorsCtorGenerator : IIncrementalGenerator
