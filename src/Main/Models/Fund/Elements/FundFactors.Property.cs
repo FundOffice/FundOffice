@@ -109,12 +109,14 @@ public partial class FundFactors
     /// <summary>
     /// 开放日规则（结构化）
     /// </summary>
+    /// <returns>无数据返回空数组</returns>
     [FactField("OpenRule")]
     public FactorItem<OpenRule[]> FundOpenRule { get; private set; } = null!;
 
     /// <summary>
     /// 临时开放信息
     /// </summary>
+    /// <returns>无数据返回空数组</returns>
     public FactorItem<TemporarilyOpenInfo> TemporarilyOpenInfo { get; private set; } = null!;
 
     /// <summary>
@@ -128,18 +130,21 @@ public partial class FundFactors
     public SingletonFactorItem<CallbackInfo> Callback { get; private set; } = null!;
 
     /// <summary>
-    /// 锁定期（对应合同“基金的申购、赎回与转让”/“募集”章节）
+    /// 锁定期（对应合同"基金的申购、赎回与转让"/"募集"章节）
     /// </summary>
+    /// <returns>无数据返回空数组</returns>
     public FactorItem<SealingRule> LockingRule { get; private set; } = null!;
 
     /// <summary>
-    /// 认购规则（对应合同“基金的募集”章节）
+    /// 认购规则（对应合同"基金的募集"章节）
     /// </summary>
+    /// <returns>无数据返回空数组</returns>
     public FactorItem<FundPurchaseRule> SubscriptionRule { get; private set; } = null!;
 
     /// <summary>
-    /// 申购规则（对应合同“基金的申购、赎回与转让”章节）
+    /// 申购规则（对应合同"基金的申购、赎回与转让"章节）
     /// </summary>
+    /// <returns>无数据返回空数组</returns>
     public FactorItem<FundPurchaseRule> PurchasRule { get; private set; } = null!;
 
     #endregion
@@ -176,18 +181,21 @@ public partial class FundFactors
     public SingletonFactorItem<FeePayInfo> ManageFeePay { get; private set; } = null!;
 
     /// <summary>
-    /// 管理费（按份额）（对应合同“基金的费用与税收”章节）
+    /// 管理费（按份额）（对应合同"基金的费用与税收"章节）
     /// </summary>
+    /// <returns>无数据返回空数组</returns>
     public FactorItem<FundFeeInfo> ManageFee { get; private set; } = null!;
 
     /// <summary>
-    /// 赎回费（对应合同“基金的费用与税收”章节）
+    /// 赎回费（对应合同"基金的费用与税收"章节）
     /// </summary>
+    /// <returns>无数据返回空数组</returns>
     public FactorItem<RedemptionFeeInfo> RedemptionFee { get; private set; } = null!;
 
     /// <summary>
-    /// 业绩报酬说明（对应合同“基金的费用与税收”章节）
+    /// 业绩报酬说明（对应合同"基金的费用与税收"章节）
     /// </summary>
+    /// <returns>无数据返回空数组</returns>
     public FactorItem<string> PerformanceFeeStatement { get; private set; } = null!;
 
     #endregion

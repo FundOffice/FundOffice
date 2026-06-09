@@ -7,6 +7,7 @@
     <Project Path="test/TestAI/TestAI.csproj" Id="cb25d240-dcfa-4c28-9c21-b5963fcf6e30" />
     <Project Path="test/TestAmac/TestAmac.csproj" />
     <Project Path="test/TestDisclosureChannel/TestDisclosureChannel.csproj" />
+    <Project Path="test/TestFactors/TestFactors.csproj" Id="553d8b21-0a2f-4e70-af2d-cda12f9865da" />
     <Project Path="test/TestLitedb/TestLitedb.csproj" />
     <Project Path="test/TestMeishi/TestMeishi.csproj" />
     <Project Path="test/TestOnePage/TestOnePage.csproj" Id="a88ff41d-42aa-41da-beed-ae3a3006ab3d" />
