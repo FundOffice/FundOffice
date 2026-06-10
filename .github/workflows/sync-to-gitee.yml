@@ -164,11 +164,10 @@ jobs:
 
                   Write-Host "  上传: $($asset.name) -> Gitee ..." -ForegroundColor Gray
                   try {
-                      $uploadUrl = "https://gitee.com/api/v5/repos/$giteeOwner/$giteeRepo/releases/$giteeReleaseId/assets"
-                      Write-Host "    URL: $uploadUrl" -ForegroundColor DarkGray
+                      $uploadUrl = "https://gitee.com/api/v5/repos/$giteeOwner/$giteeRepo/releases/$giteeReleaseId/assets?access_token=$env:GITEE_TOKEN"
+                      Write-Host "    URL: https://gitee.com/api/v5/repos/$giteeOwner/$giteeRepo/releases/$giteeReleaseId/assets" -ForegroundColor DarkGray
                       $uploadResult = & curl -s -w "`n%{http_code}" -X POST `
                           $uploadUrl `
-                          -H "Authorization: token $env:GITEE_TOKEN" `
                           -F "file=@$tempFile"
                       $lines = $uploadResult -split "`n"
                       $httpCode = $lines[-1]
