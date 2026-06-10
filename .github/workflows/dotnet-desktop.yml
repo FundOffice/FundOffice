@@ -255,6 +255,37 @@ jobs:
                       Copy-Item $proxiesTxt $publishDir -Force
                       Write-Host "  ✓ 已复制 proxies.txt 到根目录" -ForegroundColor Green
                   }
+                  
+                  # 复制 Avalonia 依赖的 native DLL（SkiaSharp、HarfBuzz）
+                  $nativeDlls = @("libSkiaSharp.dll", "libHarfBuzzSharp.dll")
+                  foreach ($dll in $nativeDlls) {
+                      $sourceDll = Join-Path $launcherTempDir $dll
+                      if (Test-Path $sourceDll) {
+                          Copy-Item $sourceDll $appDir -Force
+                          Write-Host "  ✓ 已复制 $dll 到 app 目录" -ForegroundColor Green
+                      } else {
+                          Write-Host "  ⚠ $dll 未找到，尝试从 NuGet 包复制" -ForegroundColor Yellow
+                          # 从 NuGet 包缓存中查找并复制
+                          $nugetCache = "$env:USERPROFILE\.nuget\packages"
+                          $skiaPackage = Get-ChildItem -Path $nugetCache -Filter "skiasharp.nativeassets.win32" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+                          if ($skiaPackage) {
+                              $skiaDll = Join-Path $skiaPackage.FullName "runtimes\win-x64\native\libSkiaSharp.dll"
+                              if (Test-Path $skiaDll) {
+                                  Copy-Item $skiaDll $appDir -Force
+                                  Write-Host "  ✓ 已从 NuGet 包复制 libSkiaSharp.dll" -ForegroundColor Green
+                              }
+                          }
+                          $harfbuzzPackage = Get-ChildItem -Path $nugetCache -Filter "harfbuzzsharp.nativeassets.win32" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+                          if ($harfbuzzPackage) {
+                              $harfbuzzDll = Join-Path $harfbuzzPackage.FullName "runtimes\win-x64\native\libHarfBuzzSharp.dll"
+                              if (Test-Path $harfbuzzDll) {
+                                  Copy-Item $harfbuzzDll $appDir -Force
+                                  Write-Host "  ✓ 已从 NuGet 包复制 libHarfBuzzSharp.dll" -ForegroundColor Green
+                              }
+                          }
+                      }
+                  }
+                  
                   Remove-Item $launcherTempDir -Recurse -Force -ErrorAction SilentlyContinue
               } else { 
                   Write-Host "  ✗ Launcher 发布失败" -ForegroundColor Red 
