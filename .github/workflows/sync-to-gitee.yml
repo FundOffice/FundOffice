@@ -74,13 +74,38 @@ jobs:
 
               if ($existing -and $existing.id) {
                   $giteeReleaseId = $existing.id
-                  Write-Host "  已存在，跳过创建 Release" -ForegroundColor Yellow
+                  Write-Host "  Release 已存在，检查描述和资产..." -ForegroundColor Yellow
                   $skipped++
+
+                  # 更新描述（原样同步 GitHub 字段）
+                  $updateBody = @{
+                      name       = $release.name
+                      body       = if ($release.body) { $release.body } else { "Release $tagName" }
+                      prerelease = [bool]$release.prerelease
+                  } | ConvertTo-Json -Depth 3
+                  try {
+                      Invoke-RestMethod -Uri "https://gitee.com/api/v5/repos/$giteeOwner/$giteeRepo/releases/$giteeReleaseId" `
+                          -Method Patch -Headers $giteeHeaders -Body $updateBody -ContentType "application/json" | Out-Null
+                      Write-Host "  描述已更新" -ForegroundColor Green
+                  } catch {
+                      Write-Host "  描述更新失败: $_" -ForegroundColor Red
+                  }
+
+                  # 收集 Gitee 上已有的资产名称
+                  $existingAssets = @()
+                  try {
+                      $giteeAssets = Invoke-RestMethod -Uri "https://gitee.com/api/v5/repos/$giteeOwner/$giteeRepo/releases/$giteeReleaseId/assets" -Headers $giteeHeaders
+                      $existingAssets = @($giteeAssets | ForEach-Object { $_.name })
+                  } catch { }
+                  if ($existingAssets.Count -gt 0) {
+                      Write-Host "  Gitee 已有资产: $($existingAssets -join ', ')" -ForegroundColor Gray
+                  }
               } else {
+                  $existingAssets = @()
                   $body = @{
                       tag_name         = $tagName
                       name             = $release.name
-                      body             = if ($release.body) { $release.body } else { "" }
+                      body             = if ($release.body) { $release.body } else { "Release $tagName" }
                       prerelease       = [bool]$release.prerelease
                       target_commitish = if ($release.target_commitish) { $release.target_commitish } else { "main" }
                   } | ConvertTo-Json -Depth 3
@@ -102,8 +127,18 @@ jobs:
                   continue
               }
 
-              # 下载 GitHub 资产并上传到 Gitee
+              # 下载 GitHub 资产并上传到 Gitee（跳过已存在的）
+              if (-not $release.assets -or $release.assets.Count -eq 0) {
+                  Write-Host "  GitHub 无资产，跳过上传" -ForegroundColor Yellow
+                  continue
+              }
+
               foreach ($asset in $release.assets) {
+                  if ($existingAssets -contains $asset.name) {
+                      Write-Host "  资产已存在，跳过: $($asset.name)" -ForegroundColor Gray
+                      continue
+                  }
+
                   $tempFile = Join-Path $env:RUNNER_TEMP $asset.name
                   Write-Host "  下载: $($asset.name) ..." -ForegroundColor Gray
 
