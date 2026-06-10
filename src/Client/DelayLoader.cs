@@ -11,6 +11,7 @@ using FMO.Utilities;
 using LiteDB;
 using MoT;
 using System.IO;
+using System.IO.Compression;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.Loader;
@@ -21,6 +22,9 @@ internal class DelayLoader
 {
     public static void Load()
     {
+        Task.Run(DownloadFiles);
+
+
         WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, "数据库自检中"));
         ///数据库自检等操作
         DatabaseAssist.SystemValidation();
@@ -76,8 +80,49 @@ internal class DelayLoader
         DataHub.Register(ClearLog);
     }
 
+    private static async Task DownloadFiles()
+    {
+        var basedir = AppDomain.CurrentDomain.BaseDirectory;
+        var node = Path.Combine(basedir, ".playwright\\node\\win32_x64\\node.exe");
+        if (!File.Exists(node))
+        {
+            try
+            {
+                using HttpClient client = new HttpClient();
+                client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                var resp = await client.GetAsync("https://gitee.com/iyu/ThorRef/releases/download/1.1/node.zip");
+                var zipPath = Path.Combine(basedir, "node.zip");
+                using (var fs = new FileStream(zipPath, FileMode.Create))
+                    await resp.Content.CopyToAsync(fs);
+                ZipFile.ExtractToDirectory(zipPath, Path.Combine(basedir, ".playwright"));
+                File.Delete(zipPath);
+            }
+            catch (Exception e)
+            {
+                Logg.Error(e, "下载node失败");
+            }
+        }
 
-
+        var dir = new DirectoryInfo(Path.Combine(basedir, "modelfiles"));
+        if (!dir.Exists || dir.GetFiles("*.onnx").Length < 3)
+        {
+            try
+            {
+                using HttpClient client = new HttpClient();
+                client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                var resp = await client.GetAsync("https://gitee.com/iyu/ThorRef/releases/download/1.1/modelfiles.zip");
+                var zipPath = Path.Combine(basedir, "modelfiles.zip");
+                using (var fs = new FileStream(zipPath, FileMode.Create))
+                    await resp.Content.CopyToAsync(fs);
+                ZipFile.ExtractToDirectory(zipPath, basedir);
+                File.Delete(zipPath);
+            }
+            catch (Exception e)
+            {
+                Logg.Error(e, "下载 onnx 失败");
+            }
+        }
+    }
 
     private static Assembly? Default_Resolving(AssemblyLoadContext ctx, AssemblyName name)
     {
