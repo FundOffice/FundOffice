@@ -51,12 +51,18 @@ jobs:
 
           # 获取所有 GitHub Releases（按创建时间升序，从旧到新同步）
           Write-Host "=== 获取 GitHub Releases ===" -ForegroundColor Cyan
-          $releases = @(Invoke-RestMethod -Uri "https://api.github.com/repos/$ghOwner/$ghRepo/releases?per_page=100" -Headers $ghHeaders) |
-              Sort-Object { [datetime]$_.created_at }
-          if ($releases.Count -eq 0) {
+          try {
+              $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/$ghOwner/$ghRepo/releases?per_page=100" -Headers $ghHeaders
+          } catch {
+              Write-Host "获取 GitHub Releases 失败: $_" -ForegroundColor Red
+              exit 1
+          }
+          $releases = @($releases)
+          if ($releases.Count -eq 0 -or $null -eq $releases[0]) {
               Write-Host "无 Release，跳过同步" -ForegroundColor Yellow
               exit 0
           }
+          $releases = $releases | Sort-Object { [datetime]$_.created_at }
           Write-Host "找到 $($releases.Count) 个 Release（从旧到新排序）" -ForegroundColor Green
 
           $created = 0; $skipped = 0; $assetsUploaded = 0
