@@ -78,10 +78,11 @@ jobs:
                   $skipped++
               } else {
                   $body = @{
-                      tag_name   = $tagName
-                      name       = $release.name
-                      body       = if ($release.body) { $release.body } else { "" }
-                      prerelease = [bool]$release.prerelease
+                      tag_name         = $tagName
+                      name             = $release.name
+                      body             = if ($release.body) { $release.body } else { "" }
+                      prerelease       = [bool]$release.prerelease
+                      target_commitish = if ($release.target_commitish) { $release.target_commitish } else { "main" }
                   } | ConvertTo-Json -Depth 3
 
                   try {
