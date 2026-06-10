@@ -1,0 +1,131 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Launcher.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="440" d:DesignHeight="340"
+        x:Class="Launcher.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="440" Height="340"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False"
+        WindowDecorations="None"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+        Title="Thor">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <!-- 外层 Grid：主内容 + 浮动关闭按钮 -->
+    <Grid>
+
+        <!-- 主容器：圆角深色背景（整体可拖拽） -->
+        <Border Background="#1a1a2e" CornerRadius="12" Margin="8"
+                BoxShadow="0 8 32 #80000000"
+                Name="RootBorder">
+            <Grid RowDefinitions="*,Auto">
+
+                <!-- ═══ 主内容区域 ═══ -->
+                <StackPanel Grid.Row="0" VerticalAlignment="Center"
+                            HorizontalAlignment="Center" Spacing="4">
+
+                    <!-- Logo / 标题 -->
+                    <TextBlock Text="Thor" FontStyle="Italic"
+                               FontSize="48" FontWeight="Bold"
+                               Foreground="#e0e0ff"
+                               HorizontalAlignment="Center"
+                               LetterSpacing="12"/>
+                    <TextBlock Text="基金运营平台"
+                               FontSize="36"
+                               Foreground="#e0e0ff"
+                               HorizontalAlignment="Center"
+                               Margin="0,2,0,24"/>
+
+                    <!-- 状态提示 -->
+                    <TextBlock Text="{Binding StatusHint}"
+                               FontSize="11" Foreground="#666688"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- ═══ 底部操作区域 ═══ -->
+                <StackPanel Grid.Row="1" Margin="20,0,20,20" Spacing="10">
+
+                    <!-- 进度条（安装/更新进行中时显示） -->
+                    <StackPanel IsVisible="{Binding IsWorking}" Spacing="4">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{Binding WorkingText}"
+                                       FontSize="11" Foreground="#aaaacc"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding ProgressDetail}"
+                                       FontSize="10" Foreground="#777799"/>
+                        </Grid>
+                        <ProgressBar Value="{Binding Progress}" Minimum="0" Maximum="100"
+                                     Height="4" Foreground="#7c5cbf"/>
+                    </StackPanel>
+
+                    <!-- 缺少运行时 -->
+                    <Border IsVisible="{Binding RuntimeMissing}"
+                            Background="#2a1a1a" CornerRadius="8" Padding="14,10">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <TextBlock Text="⚠" FontSize="16" Foreground="#ff6b6b"
+                                       VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding RuntimeMissingText}"
+                                       Foreground="#ffaaaa" FontSize="12"
+                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="2" Content="安装"
+                                    Command="{Binding InstallRuntimeCommand}"
+                                    Background="#ff6b6b" Foreground="White"
+                                    FontSize="11" Padding="14,6"
+                                    CornerRadius="4"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- 有可用更新 -->
+                    <Border IsVisible="{Binding UpdateAvailable}"
+                            Background="#1a2a1a" CornerRadius="8" Padding="14,10">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <TextBlock Text="↑" FontSize="16" Foreground="#6bff6b"
+                                       VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding UpdateText}"
+                                       Foreground="#aaffaa" FontSize="12"
+                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="2" Content="更新"
+                                    Command="{Binding UpdateCommand}"
+                                    Background="#5cb85c" Foreground="White"
+                                    FontSize="11" Padding="14,6"
+                                    CornerRadius="4"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- 全部就绪时的手动启动按钮 -->
+                    <Button Content="启动 Thor"
+                            Command="{Binding LaunchCommand}"
+                            IsVisible="{Binding AllReady}"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Background="#7c5cbf" Foreground="White"
+                            FontSize="14" FontWeight="SemiBold"
+                            Padding="0,12"
+                            CornerRadius="6"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 浮动关闭按钮（右上角，叠加在主内容之上） -->
+        <Button Name="CloseBtn"
+                Content="✕"
+                Background="Transparent"
+                Foreground="#555577"
+                FontSize="14"
+                Width="32" Height="32"
+                Padding="0"
+                VerticalAlignment="Top" HorizontalContentAlignment="Center"
+                 VerticalContentAlignment="Center"                
+                 HorizontalAlignment="Right"
+                Margin="0,14,14,0"/>
+    </Grid>
+</Window>

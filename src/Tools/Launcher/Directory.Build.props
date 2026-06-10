@@ -1,0 +1,13 @@
+<Project>
+  <!-- 先导入 Tools 层配置（OutputPath 重定向到 Client/bin） -->
+  <Import Project="..\Directory.Build.props" Condition="Exists('..\Directory.Build.props')" />
+  <!-- 导入 src 层配置 -->
+  <Import Project="..\..\Directory.Build.props" Condition="Exists('..\..\Directory.Build.props')" />
+
+  <!-- 覆盖中间输出路径，避免 Tools 层的 obj\$(Configuration)\ 导致双重配置路径 -->
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+    <!-- 禁用 Avalonia 遥测，避免构建问题 -->
+    <AvaloniaXamlTelemetryEnabled>false</AvaloniaXamlTelemetryEnabled>
+  </PropertyGroup>
+</Project>
