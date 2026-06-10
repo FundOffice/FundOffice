@@ -380,7 +380,7 @@ jobs:
           $publishDir = "./Thor"
           $appDir = Join-Path $publishDir "app"
           $targetFolders = @("esign", "mission", "trigger", "trustee")
-          $ckOutputDir = Join-Path $publishDir ".ck"
+          $ckOutputDir = Join-Path $appDir ".ck"
 
           if ([string]::IsNullOrWhiteSpace($env:CERT_PFX_BASE64)) {
               Write-Error "❌ 缺少签名证书 Secret (CERT_PFX_BASE64)，终止流程。"
@@ -441,7 +441,7 @@ jobs:
                   $dlls = Get-ChildItem -Path $folderPath -Filter "*.dll" -File -Recurse
                   foreach ($dll in $dlls) {
                       try {
-                          $relativePath = [System.IO.Path]::GetRelativePath($publishDir, $dll.FullName)
+                          $relativePath = [System.IO.Path]::GetRelativePath($appDir, $dll.FullName)
                           $ckTargetPath = Join-Path $ckOutputDir "$relativePath.ck"
                           $ckTargetDir = Split-Path $ckTargetPath -Parent
                           if (-not (Test-Path $ckTargetDir)) {
