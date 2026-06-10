@@ -162,14 +162,21 @@ jobs:
 
                   Write-Host "  上传: $($asset.name) -> Gitee ..." -ForegroundColor Gray
                   try {
-                      curl -s -X POST `
+                      $uploadResult = & curl -s -w "`n%{http_code}" -X POST `
                           "https://gitee.com/api/v5/repos/$giteeOwner/$giteeRepo/releases/$giteeReleaseId/assets" `
                           -H "Authorization: token $env:GITEE_TOKEN" `
-                          -F "file=@$tempFile" | Out-Null
-                      $assetsUploaded++
-                      Write-Host "    上传成功" -ForegroundColor Green
+                          -F "file=@$tempFile"
+                      $lines = $uploadResult -split "`n"
+                      $httpCode = $lines[-1]
+                      $responseBody = ($lines[0..($lines.Count-2)]) -join "`n"
+                      if ($httpCode -match '^2\d{2}$') {
+                          $assetsUploaded++
+                          Write-Host "    上传成功 (HTTP $httpCode)" -ForegroundColor Green
+                      } else {
+                          Write-Host "    上传失败 (HTTP $httpCode): $responseBody" -ForegroundColor Red
+                      }
                   } catch {
-                      Write-Host "    上传失败: $_" -ForegroundColor Red
+                      Write-Host "    上传异常: $_" -ForegroundColor Red
                   }
 
                   Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
