@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -30,9 +32,16 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // --- 整体状态 ---
     [ObservableProperty] private bool _allReady;
+    [ObservableProperty] private bool _canLaunch;
+    [ObservableProperty] private bool _canUpdate;
     [ObservableProperty] private string _statusHint = "正在检查...";
 
     private string? _requiredVersion;
+    private string? _latestVersion;
+    private bool _isUpdating;
+    private UpdatePlan? _updatePlan;
+
+    private static string CacheDir => Path.Combine(AppContext.BaseDirectory, ".update-cache");
 
     /// <summary>
     /// 设计器用无参构造函数。
@@ -66,11 +75,28 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        // ── 1. 并行检查运行时和更新 ──
-        await Task.WhenAll(CheckRuntimeAsync(), CheckUpdateAsync());
+        // ── 1. 先检查运行时，完成后立即显示启动按钮 ──
+        await CheckRuntimeAsync();
+        CanLaunch = !RuntimeMissing;
 
-        // ── 2. 判断是否可以直接启动 ──
-        if (!RuntimeMissing && !UpdateAvailable)
+        if (RuntimeMissing)
+        {
+            StatusHint = "请安装缺少的运行时后启动";
+            return;
+        }
+
+        // ── 2. 检查更新（5 秒内必须返回，超时则继续启动） ──
+        var updateTask = CheckUpdateAsync();
+        var completed = await Task.WhenAny(updateTask, Task.Delay(TimeSpan.FromSeconds(5)));
+        if (completed == updateTask)
+        {
+            // 更新检查在 5 秒内完成，吞掉异常
+            try { await updateTask; } catch { }
+        }
+        // 否则超时了，CheckUpdateAsync 仍在后台跑，完成后会自动更新 UI
+
+        // ── 3. 根据结果决定行为 ──
+        if (!UpdateAvailable)
         {
             AllReady = true;
             StatusHint = "正在启动 Thor...";
@@ -78,7 +104,9 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         else
         {
-            StatusHint = "请处理下方问题后启动";
+            // 有更新但不强制，用户可以跳过更新直接启动
+            CanUpdate = true;
+            StatusHint = "可选择更新或直接启动";
         }
     }
 
@@ -346,48 +374,491 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     // ═══════════════════════════════════════════════
-    //  更新检查（留给你实现）
+    //  更新检查与下载
     // ═══════════════════════════════════════════════
 
-    /// <summary>
-    /// 检查更新。在此方法中实现你的更新检查逻辑。
-    /// 如果检测到新版本，设置 UpdateAvailable = true 和 UpdateText。
-    /// </summary>
-    private async Task CheckUpdateAsync()
-    {
-        // ╔══════════════════════════════════════════════════╗
-        // ║  TODO: 在此实现你的更新检查逻辑                    ║
-        // ║                                                  ║
-        // ║  示例:                                           ║
-        // ║  var latest = await GetLatestVersion();           ║
-        // ║  if (latest > currentVersion)                    ║
-        // ║  {                                               ║
-        // ║      UpdateAvailable = true;                     ║
-        // ║      UpdateText = $"发现新版本 {latest}";          ║
-        // ║  }                                               ║
-        // ╚══════════════════════════════════════════════════╝
+    private const string GitHubReleasesApi =
+        "https://api.github.com/repos/FundOffice/FundOffice/releases?per_page=100";
 
-        await Task.CompletedTask;
+    /// <summary>内置默认代理列表，当 proxies.txt 不存在时兜底。</summary>
+    private static readonly string[] DefaultProxies =
+    [
+        "https://ghfast.top/",
+        "https://gh-proxy.com/",
+        "https://ghproxy.net/",
+    ];
+
+    /// <summary>当前生效的代理列表（从 proxies.txt 加载或内置默认值）。</summary>
+    private string[] _loadedProxies = DefaultProxies;
+
+    /// <summary>按速度排序的可用代理列表（探测后填充，空 = 直连）。</summary>
+    private List<string> _sortedProxies = [""];
+
+    /// <summary>
+    /// 从 proxies.txt 加载代理列表。文件不存在或解析失败时回退到内置默认列表。
+    /// 只在首次调用时读取文件。
+    /// </summary>
+    private void LoadProxies()
+    {
+        try
+        {
+            var path = Path.Combine(AppContext.BaseDirectory, "proxies.txt");
+            if (!File.Exists(path)) return;
+
+            var proxies = File.ReadAllLines(path)
+                .Select(l => l.Trim())
+                .Where(l => !string.IsNullOrEmpty(l) && !l.StartsWith('#'))
+                .ToArray();
+
+            if (proxies.Length > 0)
+                _loadedProxies = proxies;
+        }
+        catch { /* 读取失败保持默认值 */ }
     }
 
     /// <summary>
-    /// 点击"更新"按钮的处理逻辑。
+    /// 检查 GitHub Release 最新版本，与本地 Thor 版本对比。
+    /// 获取所有 release 以构建增量链，智能选择增量包或全量包。
+    /// </summary>
+    private async Task CheckUpdateAsync()
+    {
+        try
+        {
+            var localVersion = GetLocalThorVersion();
+            var releases = await FetchAllReleasesAsync();
+            if (releases.Count == 0) return;
+
+            // 最新版本排在第一位
+            var latest = releases[0];
+            _latestVersion = latest.Version;
+
+            if (!IsNewerVersion(_latestVersion, localVersion)) return;
+
+            // 构建最优更新计划（增量链 vs 全量包）
+            _updatePlan = await BuildUpdatePlanAsync(localVersion, _latestVersion, releases);
+            _updatePlan ??= new UpdatePlan(false,
+                latest.FullUrl != null ? [latest.FullUrl] : [],
+                latest.FullSize, []);
+
+            if (_updatePlan.Urls.Count == 0) return;
+
+            UpdateAvailable = true;
+
+            if (_updatePlan.UseDeltaChain)
+                UpdateText = $"发现新版本 v{_latestVersion}（当前 {localVersion}，增量更新）";
+            else
+                UpdateText = $"发现新版本 v{_latestVersion}（当前 {localVersion}）";
+        }
+        catch
+        {
+            // 网络错误等不影响主流程，静默跳过更新检查
+        }
+    }
+
+    /// <summary>
+    /// 获取本地 Thor.exe 的 FileVersion。
+    /// </summary>
+    private string GetLocalThorVersion()
+    {
+        var appDir = Path.Combine(AppContext.BaseDirectory, "app");
+        var thorPath = Path.Combine(appDir, "Thor.exe");
+        if (!File.Exists(thorPath))
+            thorPath = Path.Combine(AppContext.BaseDirectory, "Thor.exe");
+        if (!File.Exists(thorPath))
+            thorPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "Thor.exe"));
+
+        if (File.Exists(thorPath))
+        {
+            try
+            {
+                var fvi = FileVersionInfo.GetVersionInfo(thorPath);
+                if (!string.IsNullOrEmpty(fvi.FileVersion))
+                {
+                    // 返回 Major.Minor.Patch 格式（去掉 Revision）
+                    var parts = fvi.FileVersion.Split('.');
+                    return parts.Length >= 3 ? $"{parts[0]}.{parts[1]}.{parts[2]}" : fvi.FileVersion;
+                }
+            }
+            catch { }
+        }
+
+        return "0.0.0";
+    }
+
+    /// <summary>
+    /// 获取 GitHub 所有 release，解析每个版本的增量包和全量包信息。
+    /// 优先直连 GitHub（5秒超时），失败再依次尝试代理。
+    /// </summary>
+    private async Task<List<ReleaseAsset>> FetchAllReleasesAsync()
+    {
+        // 从外部配置文件加载代理列表
+        LoadProxies();
+
+        using var http = new HttpClient();
+        http.Timeout = TimeSpan.FromSeconds(5); // 每个候选最多 5 秒
+        http.DefaultRequestHeaders.Add("User-Agent", "Thor-Launcher");
+
+        // 优先直连，失败再依次尝试代理
+        var candidates = new List<string> { "" }; // 空 = 直连
+        candidates.AddRange(_loadedProxies);
+
+        string? json = null;
+        string usedProxy = "";
+        foreach (var proxy in candidates)
+        {
+            try
+            {
+                json = await http.GetStringAsync(proxy + GitHubReleasesApi, _cts.Token);
+                usedProxy = proxy;
+                break;
+            }
+            catch { /* 尝试下一个 */ }
+        }
+
+        if (json == null)
+            return []; // 全部失败，静默返回空
+
+        // 记录使用的代理，供后续下载参考
+        _sortedProxies = [usedProxy];
+        _sortedProxies.AddRange(candidates.Where(p => p != usedProxy));
+
+        using var doc = JsonDocument.Parse(json);
+        var releases = new List<ReleaseAsset>();
+
+        foreach (var release in doc.RootElement.EnumerateArray())
+        {
+            var tagName = release.GetProperty("tag_name").GetString() ?? "";
+            var version = tagName.TrimStart('v', 'V');
+            if (!Version.TryParse(version, out _)) continue;
+
+            string? deltaUrl = null, fullUrl = null;
+            long deltaSize = 0, fullSize = 0;
+
+            if (release.TryGetProperty("assets", out var assets))
+            {
+                foreach (var asset in assets.EnumerateArray())
+                {
+                    var name = asset.GetProperty("name").GetString() ?? "";
+                    var url = asset.GetProperty("browser_download_url").GetString() ?? "";
+                    var size = asset.TryGetProperty("size", out var s) ? s.GetInt64() : 0;
+
+                    if (name.Contains("Delta", StringComparison.Ordinal))
+                    { deltaUrl = url; deltaSize = size; }
+                    else if (name.Contains("Win-x64", StringComparison.Ordinal))
+                    { fullUrl = url; fullSize = size; }
+                }
+            }
+
+            releases.Add(new ReleaseAsset(version, deltaUrl, fullUrl, deltaSize, fullSize));
+        }
+
+        return releases;
+    }
+
+    /// <summary>
+    /// 获取指定 release 中的资产信息。
+    /// </summary>
+    private static ReleaseAsset? GetReleaseAsset(List<ReleaseAsset> releases, string version)
+        => releases.FirstOrDefault(r => r.Version == version);
+
+    /// <summary>
+    /// 构建最优更新计划：尝试构建从 localVersion 到 latestVersion 的增量链，
+    /// 与全量包比较总大小，选择更优方案。
+    /// 增量包是相邻版本间的差异，跨版本必须依次应用。
+    /// </summary>
+    private Task<UpdatePlan?> BuildUpdatePlanAsync(
+        string localVersion, string latestVersion, List<ReleaseAsset> releases)
+    {
+        // releases 按版本号降序排列（GitHub API 默认按创建时间降序）
+        // 构建版本链：localVersion → ... → latestVersion
+        var versionsInOrder = releases
+            .Select(r => r.Version)
+            .Where(v =>
+            {
+                if (!Version.TryParse(v, out var ver)) return false;
+                if (!Version.TryParse(localVersion, out var local)) return false;
+                if (!Version.TryParse(latestVersion, out var latest)) return false;
+                return ver > local && ver <= latest;
+            })
+            .OrderBy(v => Version.Parse(v))
+            .ToList();
+
+        if (versionsInOrder.Count == 0) return Task.FromResult<UpdatePlan?>(null);
+
+        // 尝试构建增量链：每个中间版本都必须有增量包
+        var deltaUrls = new List<string>();
+        var deltaVersions = new List<string>();
+        long totalDeltaSize = 0;
+        var canUseDeltaChain = true;
+
+        foreach (var ver in versionsInOrder)
+        {
+            var release = GetReleaseAsset(releases, ver);
+            if (release?.DeltaUrl != null)
+            {
+                deltaUrls.Add(release.DeltaUrl);
+                deltaVersions.Add(ver);
+                totalDeltaSize += release.DeltaSize;
+            }
+            else
+            {
+                canUseDeltaChain = false;
+                break;
+            }
+        }
+
+        // 获取全量包信息
+        var latestRelease = GetReleaseAsset(releases, latestVersion);
+        var fullUrl = latestRelease?.FullUrl;
+        var fullSize = latestRelease?.FullSize ?? 0;
+
+        if (fullUrl == null) return Task.FromResult<UpdatePlan?>(null);
+
+        // 决策逻辑：
+        // 1. 增量链必须完整（每个中间版本都有 delta 包）
+        // 2. 增量链总大小 < 全量包大小（delta size = 0 表示未知，视为更小）
+        // 3. 增量链步数不超过 10（避免过多顺序下载）
+        if (canUseDeltaChain && deltaVersions.Count <= 10)
+        {
+            var useDelta = totalDeltaSize == 0       // 大小未知，默认用增量
+                         || totalDeltaSize < fullSize; // 增量链更小
+
+            if (useDelta)
+                return Task.FromResult<UpdatePlan?>(
+                    new UpdatePlan(true, deltaUrls, totalDeltaSize, deltaVersions));
+        }
+
+        // 使用全量包
+        return Task.FromResult<UpdatePlan?>(
+            new UpdatePlan(false, [fullUrl], fullSize, []));
+    }
+
+    /// <summary>
+    /// 比较版本号：remote 是否比 local 更新。
+    /// </summary>
+    private static bool IsNewerVersion(string remote, string local)
+    {
+        if (!Version.TryParse(remote, out var remoteVer)) return false;
+        if (!Version.TryParse(local, out var localVer)) return true;
+        return remoteVer > localVer;
+    }
+
+    /// <summary>
+    /// 点击"更新"按钮：按计划下载更新包并替换本地文件。
     /// </summary>
     [RelayCommand]
     private async Task UpdateAsync()
     {
-        // ╔══════════════════════════════════════════════════╗
-        // ║  TODO: 在此实现你的更新下载/安装逻辑               ║
-        // ║                                                  ║
-        // ║  示例:                                           ║
-        // ║  IsWorking = true;                               ║
-        // ║  WorkingText = "正在下载更新...";                  ║
-        // ║  await DownloadAndApplyUpdate();                  ║
-        // ║  UpdateAvailable = false;                        ║
-        // ║  IsWorking = false;                              ║
-        // ╚══════════════════════════════════════════════════╝
+        if (_isUpdating || _updatePlan == null || _updatePlan.Urls.Count == 0) return;
+        _isUpdating = true;
+        CanUpdate = false;
 
-        await Task.CompletedTask;
+        IsWorking = true;
+        Progress = 0;
+        ProgressDetail = "";
+
+        var tempDirs = new List<string>();
+
+        try
+        {
+            var urls = _updatePlan.Urls;
+            var totalSteps = urls.Count;
+            Directory.CreateDirectory(CacheDir);
+
+            // ── 依次下载所有包 ──
+            for (int i = 0; i < urls.Count; i++)
+            {
+                var prefix = totalSteps > 1 ? $"[{i + 1}/{totalSteps}] " : "";
+                var zipPath = Path.Combine(CacheDir, $"pkg-{i:D3}.zip");
+                await RacingDownloadAsync(urls[i], zipPath, prefix);
+            }
+
+            // ── 依次解压并应用 ──
+            for (int i = 0; i < urls.Count; i++)
+            {
+                Progress = 75 + i * (20 / totalSteps);
+
+                var zipPath = Path.Combine(CacheDir, $"pkg-{i:D3}.zip");
+                var tempExtract = Path.Combine(Path.GetTempPath(), $"thor-extract-{Guid.NewGuid():N}");
+                tempDirs.Add(tempExtract);
+
+                WorkingText = totalSteps > 1
+                    ? $"正在应用更新 [{i + 1}/{totalSteps}]"
+                    : "正在解压";
+                ProgressDetail = "";
+
+                ZipFile.ExtractToDirectory(zipPath, tempExtract);
+                await Task.Yield();
+                ApplyUpdate(tempExtract);
+            }
+
+            Progress = 100;
+            WorkingText = "更新完成";
+            ProgressDetail = "";
+            UpdateAvailable = false;
+
+            // 清理缓存
+            try { Directory.Delete(CacheDir, true); } catch { }
+
+            await Task.Delay(1500);
+
+            AllReady = true;
+            StatusHint = "正在启动 Thor...";
+            await DoLaunchAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            WorkingText = "更新已取消";
+            ProgressDetail = "";
+            await Task.Delay(2000);
+        }
+        catch (Exception ex)
+        {
+            WorkingText = $"更新失败: {ex.Message}";
+            ProgressDetail = "";
+            await Task.Delay(3000);
+        }
+        finally
+        {
+            IsWorking = false;
+            _isUpdating = false;
+            CanUpdate = _updatePlan != null && UpdateAvailable;
+            foreach (var d in tempDirs)
+                try { if (Directory.Exists(d)) Directory.Delete(d, true); } catch { }
+        }
+    }
+
+    /// <summary>
+    /// 下载单个更新 zip 包。
+    /// 按顺序尝试：API 成功的代理优先 → 其余代理 → 直连。失败自动降级。
+    /// </summary>
+    private async Task RacingDownloadAsync(string rawUrl, string destPath, string prefix = "")
+    {
+        WorkingText = $"{prefix}正在下载更新";
+        ProgressDetail = "";
+
+        // 按探测顺序构建候选：API 成功的代理排前面
+        var urls = new List<string>();
+        foreach (var proxy in _sortedProxies)
+            urls.Add(proxy + rawUrl);
+        // 补上没在 _sortedProxies 里的代理
+        foreach (var proxy in _loadedProxies)
+        {
+            var url = proxy + rawUrl;
+            if (!urls.Contains(url)) urls.Add(url);
+        }
+        // 直连兜底
+        if (!urls.Contains(rawUrl)) urls.Insert(0, rawUrl);
+
+        Exception? lastEx = null;
+        foreach (var url in urls)
+        {
+            try
+            {
+                await DownloadFileAsync(url, destPath);
+                return; // 成功
+            }
+            catch (Exception ex)
+            {
+                lastEx = ex;
+                // 清理不完整的文件
+                try { if (File.Exists(destPath)) File.Delete(destPath); } catch { }
+            }
+        }
+
+        throw lastEx ?? new InvalidOperationException("所有下载通道均失败");
+    }
+
+    /// <summary>
+    /// 从单个 URL 下载文件到指定路径。
+    /// </summary>
+    private async Task DownloadFileAsync(string url, string destPath)
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+        http.DefaultRequestHeaders.Add("User-Agent", "Thor-Launcher");
+
+        using var resp = await http.GetAsync(url,
+            HttpCompletionOption.ResponseHeadersRead, _cts.Token);
+        resp.EnsureSuccessStatusCode();
+
+        var total = resp.Content.Headers.ContentLength ?? -1L;
+
+        using var netStream = await resp.Content.ReadAsStreamAsync(_cts.Token);
+        using var fileStream = new FileStream(destPath, FileMode.Create,
+            FileAccess.Write, FileShare.None, 65536);
+
+        var buf = new byte[65536];
+        long read = 0;
+        int n;
+
+        while ((n = await netStream.ReadAsync(buf, _cts.Token)) > 0)
+        {
+            await fileStream.WriteAsync(buf.AsMemory(0, n), _cts.Token);
+            read += n;
+
+            var readMB = read / 1_048_576.0;
+            if (total > 0)
+            {
+                Progress = (int)(read * 70 / total);
+                ProgressDetail = $"{readMB:F1} / {total / 1_048_576.0:F1} MB";
+            }
+            else
+            {
+                ProgressDetail = $"{readMB:F1} MB";
+            }
+        }
+
+        Progress = 70;
+        ProgressDetail = $"{read / 1_048_576.0:F1} MB，下载完成";
+    }
+
+    /// <summary>
+    /// 将解压后的文件覆盖到安装目录。
+    /// 发布结构：Launcher.exe 在根目录，Thor.exe 和其他文件在 app/ 子目录。
+    /// </summary>
+    private void ApplyUpdate(string extractDir)
+    {
+        var rootDir = AppContext.BaseDirectory.TrimEnd('\\', '/');
+        var appDir = Path.Combine(rootDir, "app");
+
+        // 如果 zip 包含 app/ 子目录，按原结构覆盖
+        var hasAppFolder = Directory.Exists(Path.Combine(extractDir, "app"));
+
+        foreach (var file in Directory.GetFiles(extractDir, "*", SearchOption.AllDirectories))
+        {
+            var relativePath = Path.GetRelativePath(extractDir, file);
+            string targetPath;
+
+            if (hasAppFolder)
+            {
+                // zip 内部已有 app/ 结构，直接映射到根目录
+                targetPath = Path.Combine(rootDir, relativePath);
+            }
+            else
+            {
+                // zip 内文件平铺，全部放入 app/ 目录
+                targetPath = Path.Combine(appDir, relativePath);
+            }
+
+            var targetDir = Path.GetDirectoryName(targetPath);
+            if (targetDir != null && !Directory.Exists(targetDir))
+                Directory.CreateDirectory(targetDir);
+
+            // 不覆盖正在运行的 Launcher 自身
+            if (Path.GetFullPath(targetPath).Equals(
+                    Path.GetFullPath(Environment.ProcessPath ?? ""),
+                    StringComparison.Ordinal))
+                continue;
+
+            try
+            {
+                File.Copy(file, targetPath, overwrite: true);
+            }
+            catch
+            {
+                // 单个文件覆盖失败不中断整体更新
+            }
+        }
     }
 
     // ═══════════════════════════════════════════════
@@ -486,4 +957,12 @@ public partial class MainWindowViewModel : ViewModelBase
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             desktop.Shutdown();
     }
+
+    // ═══════════════════════════════════════════════
+    //  内部数据模型
+    // ═══════════════════════════════════════════════
+
+    private sealed record ReleaseAsset(string Version, string? DeltaUrl, string? FullUrl, long DeltaSize, long FullSize);
+
+    private sealed record UpdatePlan(bool UseDeltaChain, List<string> Urls, long TotalSize, List<string> DeltaVersions);
 }

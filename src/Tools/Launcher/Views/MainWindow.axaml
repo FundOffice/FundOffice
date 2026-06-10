@@ -6,7 +6,7 @@
         mc:Ignorable="d" d:DesignWidth="440" d:DesignHeight="340"
         x:Class="Launcher.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Width="440" Height="340"
+        Width="500" Height="340"
         WindowStartupLocation="CenterScreen"
         CanResize="False"
         WindowDecorations="None"
@@ -95,16 +95,17 @@
                                        VerticalAlignment="Center"/>
                             <Button Grid.Column="2" Content="更新"
                                     Command="{Binding UpdateCommand}"
+                                    IsEnabled="{Binding CanUpdate}"
                                     Background="#5cb85c" Foreground="White"
                                     FontSize="11" Padding="14,6"
                                     CornerRadius="4"/>
                         </Grid>
                     </Border>
 
-                    <!-- 全部就绪时的手动启动按钮 -->
+                    <!-- 启动按钮（运行时就绪即可显示，不强制更新） -->
                     <Button Content="启动 Thor"
                             Command="{Binding LaunchCommand}"
-                            IsVisible="{Binding AllReady}"
+                            IsVisible="{Binding CanLaunch}"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
                             Background="#7c5cbf" Foreground="White"

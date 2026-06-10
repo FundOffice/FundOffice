@@ -217,11 +217,16 @@ if (Test-Path $launcherProject) {
     dotnet publish $launcherProject --configuration Release --runtime win-x64 --self-contained --output $launcherTempDir /p:DebugType=None /p:DebugSymbols=false
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  ✓ Launcher 发布成功" -ForegroundColor Green
-        # 只将 Launcher.exe 复制到根目录
+        # 将 Launcher.exe 和 proxies.txt 复制到根目录
         $launcherExe = Join-Path $launcherTempDir "Launcher.exe"
         if (Test-Path $launcherExe) {
             Copy-Item $launcherExe $publishDir -Force
             Write-Host "  ✓ 已复制 Launcher.exe 到根目录" -ForegroundColor Green
+        }
+        $proxiesTxt = Join-Path $launcherTempDir "proxies.txt"
+        if (Test-Path $proxiesTxt) {
+            Copy-Item $proxiesTxt $publishDir -Force
+            Write-Host "  ✓ 已复制 proxies.txt 到根目录" -ForegroundColor Green
         }
         # 清理临时目录
         Remove-Item $launcherTempDir -Recurse -Force -ErrorAction SilentlyContinue
@@ -229,7 +234,7 @@ if (Test-Path $launcherProject) {
         Write-Host "  ✗ Launcher 发布失败" -ForegroundColor Red 
     }
 } else { Write-Host "⚠ 未找到 Launcher 项目: $launcherProject" -ForegroundColor Yellow }
-Write-Host "  ✓ 根目录仅保留 Launcher.exe（自包含运行时已丢弃）" -ForegroundColor Green
+Write-Host "  ✓ 根目录仅保留 Launcher.exe + proxies.txt（自包含运行时已丢弃）" -ForegroundColor Green
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "步骤 3: 清理语言文件夹、pdb、node.exe 和非 x64 运行时" -ForegroundColor Cyan

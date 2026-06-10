@@ -14,6 +14,7 @@
     <PublishAot>true</PublishAot>
 
     <ApplicationIcon>logo.ico</ApplicationIcon>
+    <RunWorkingDirectory>$(MSBuildThisFileDirectory)..\..\Client\bin\$(Configuration)\$(TargetFramework)\</RunWorkingDirectory>
   </PropertyGroup>
 
   <!-- AOT 裁剪 & 体积优化（仅发布时生效，避免影响设计器预览） -->
@@ -49,6 +50,9 @@
 
   <ItemGroup>
     <Content Include="logo.ico" />
+    <None Update="proxies.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
