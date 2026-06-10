@@ -49,14 +49,15 @@ jobs:
               Authorization = "token $env:GITEE_TOKEN"
           }
 
-          # 获取所有 GitHub Releases
+          # 获取所有 GitHub Releases（按创建时间升序，从旧到新同步）
           Write-Host "=== 获取 GitHub Releases ===" -ForegroundColor Cyan
-          $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/$ghOwner/$ghRepo/releases" -Headers $ghHeaders
+          $releases = @(Invoke-RestMethod -Uri "https://api.github.com/repos/$ghOwner/$ghRepo/releases?per_page=100" -Headers $ghHeaders) |
+              Sort-Object { [datetime]$_.created_at }
           if ($releases.Count -eq 0) {
               Write-Host "无 Release，跳过同步" -ForegroundColor Yellow
               exit 0
           }
-          Write-Host "找到 $($releases.Count) 个 Release" -ForegroundColor Green
+          Write-Host "找到 $($releases.Count) 个 Release（从旧到新排序）" -ForegroundColor Green
 
           $created = 0; $skipped = 0; $assetsUploaded = 0
 
@@ -94,8 +95,8 @@ jobs:
                   # 收集 Gitee 上已有的资产名称
                   $existingAssets = @()
                   try {
-                      $giteeAssets = Invoke-RestMethod -Uri "https://gitee.com/api/v5/repos/$giteeOwner/$giteeRepo/releases/$giteeReleaseId/assets" -Headers $giteeHeaders
-                      $existingAssets = @($giteeAssets | ForEach-Object { $_.name })
+                      $giteeAssets = @(Invoke-RestMethod -Uri "https://gitee.com/api/v5/repos/$giteeOwner/$giteeRepo/releases/$giteeReleaseId/assets" -Headers $giteeHeaders)
+                      $existingAssets = @($giteeAssets | Where-Object { $_ -ne $null } | ForEach-Object { $_.name })
                   } catch { }
                   if ($existingAssets.Count -gt 0) {
                       Write-Host "  Gitee 已有资产: $($existingAssets -join ', ')" -ForegroundColor Gray
@@ -128,12 +129,14 @@ jobs:
               }
 
               # 下载 GitHub 资产并上传到 Gitee（跳过已存在的）
-              if (-not $release.assets -or $release.assets.Count -eq 0) {
+              $ghAssets = @($release.assets)
+              if ($ghAssets.Count -eq 0 -or $null -eq $ghAssets[0]) {
                   Write-Host "  GitHub 无资产，跳过上传" -ForegroundColor Yellow
                   continue
               }
+              Write-Host "  GitHub 资产: $(($ghAssets | ForEach-Object { $_.name }) -join ', ')" -ForegroundColor Gray
 
-              foreach ($asset in $release.assets) {
+              foreach ($asset in $ghAssets) {
                   if ($existingAssets -contains $asset.name) {
                       Write-Host "  资产已存在，跳过: $($asset.name)" -ForegroundColor Gray
                       continue
