@@ -1,0 +1,135 @@
+name: 同步到 Gitee
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+
+jobs:
+  sync-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 同步仓库到 Gitee
+        uses: Yikun/hub-mirror-action@master
+        with:
+          src: github/${{ github.repository_owner }}
+          dst: gitee/iyu
+          dst_key: ${{ secrets.GITEE_PRIVATE_KEY }}
+          dst_token: ${{ secrets.GITEE_TOKEN }}
+          static_list: ${{ github.event.repository.name }}
+          mappings: FundOffice=>Gnoly
+          force_update: true
+          debug: true
+
+  sync-releases:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: 同步 Release 到 Gitee
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ghOwner  = "${{ github.repository_owner }}"
+          $ghRepo   = "${{ github.event.repository.name }}"
+          $giteeOwner = "iyu"
+          $giteeRepo  = "Gnoly"
+
+          $ghHeaders = @{
+              Authorization = "token $env:GITHUB_TOKEN"
+              Accept        = "application/vnd.github+json"
+          }
+          $giteeHeaders = @{
+              Authorization = "token $env:GITEE_TOKEN"
+          }
+
+          # 获取所有 GitHub Releases
+          Write-Host "=== 获取 GitHub Releases ===" -ForegroundColor Cyan
+          $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/$ghOwner/$ghRepo/releases" -Headers $ghHeaders
+          if ($releases.Count -eq 0) {
+              Write-Host "无 Release，跳过同步" -ForegroundColor Yellow
+              exit 0
+          }
+          Write-Host "找到 $($releases.Count) 个 Release" -ForegroundColor Green
+
+          $created = 0; $skipped = 0; $assetsUploaded = 0
+
+          foreach ($release in $releases) {
+              $tagName = $release.tag_name
+              Write-Host "`n--- [$tagName] $($release.name) ---" -ForegroundColor Cyan
+
+              # 检查 Gitee 是否已存在
+              $existing = $null
+              try {
+                  $existing = Invoke-RestMethod -Uri "https://gitee.com/api/v5/repos/$giteeOwner/$giteeRepo/releases/tags/$tagName" -Headers $giteeHeaders -ErrorAction SilentlyContinue
+              } catch { }
+
+              $giteeReleaseId = $null
+
+              if ($existing -and $existing.id) {
+                  $giteeReleaseId = $existing.id
+                  Write-Host "  已存在，跳过创建 Release" -ForegroundColor Yellow
+                  $skipped++
+              } else {
+                  $body = @{
+                      tag_name   = $tagName
+                      name       = $release.name
+                      body       = if ($release.body) { $release.body } else { "" }
+                      prerelease = [bool]$release.prerelease
+                  } | ConvertTo-Json -Depth 3
+
+                  try {
+                      $newRelease = Invoke-RestMethod -Uri "https://gitee.com/api/v5/repos/$giteeOwner/$giteeRepo/releases" `
+                          -Method Post -Headers $giteeHeaders -Body $body -ContentType "application/json"
+                      $giteeReleaseId = $newRelease.id
+                      Write-Host "  Release 创建成功" -ForegroundColor Green
+                      $created++
+                  } catch {
+                      Write-Host "  Release 创建失败: $_" -ForegroundColor Red
+                      continue
+                  }
+              }
+
+              if (-not $giteeReleaseId) {
+                  Write-Host "  无 Release ID，跳过资产上传" -ForegroundColor Red
+                  continue
+              }
+
+              # 下载 GitHub 资产并上传到 Gitee
+              foreach ($asset in $release.assets) {
+                  $tempFile = Join-Path $env:RUNNER_TEMP $asset.name
+                  Write-Host "  下载: $($asset.name) ..." -ForegroundColor Gray
+
+                  try {
+                      Invoke-WebRequest -Uri $asset.url `
+                          -Headers @{ Authorization = "token $env:GITHUB_TOKEN"; Accept = "application/octet-stream" } `
+                          -OutFile $tempFile
+                  } catch {
+                      Write-Host "    下载失败: $_" -ForegroundColor Red
+                      continue
+                  }
+
+                  Write-Host "  上传: $($asset.name) -> Gitee ..." -ForegroundColor Gray
+                  try {
+                      curl -s -X POST `
+                          "https://gitee.com/api/v5/repos/$giteeOwner/$giteeRepo/releases/$giteeReleaseId/assets" `
+                          -H "Authorization: token $env:GITEE_TOKEN" `
+                          -F "file=@$tempFile" | Out-Null
+                      $assetsUploaded++
+                      Write-Host "    上传成功" -ForegroundColor Green
+                  } catch {
+                      Write-Host "    上传失败: $_" -ForegroundColor Red
+                  }
+
+                  Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
+              }
+          }
+
+          Write-Host "`n=== 同步完成 ===" -ForegroundColor Cyan
+          Write-Host "新建 Release: $created | 已存在跳过: $skipped | 资产上传: $assetsUploaded" -ForegroundColor Green

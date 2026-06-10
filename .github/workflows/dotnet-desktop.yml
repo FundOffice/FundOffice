@@ -499,14 +499,6 @@ jobs:
           name: FundOffice-Win-x64
           path: ./Thor/
 
-      - name: 打包 ZIP
-        run: Compress-Archive -Path ./Thor/* -DestinationPath ./FundOffice-Win-x64.zip -Force
-        shell: powershell
-
-      - name: 打包 Trustee 文件夹 ZIP
-        run: Compress-Archive -Path ./Thor/app/trustee/* -DestinationPath ./FundOffice-Trustee-Win-x64.zip -Force
-        shell: powershell
-
       - name: 确定版本号
         id: version
         run: |
@@ -518,6 +510,14 @@ jobs:
           echo "VERSION=$version" >> $env:GITHUB_OUTPUT
           echo "TAG=$tag" >> $env:GITHUB_OUTPUT
           echo "ISTAG=$isTag" >> $env:GITHUB_OUTPUT
+        shell: powershell
+
+      - name: 打包 ZIP
+        run: Compress-Archive -Path ./Thor/* -DestinationPath "./Thor.${{ steps.version.outputs.VERSION }}.zip" -Force
+        shell: powershell
+
+      - name: 打包 Trustee 文件夹 ZIP
+        run: Compress-Archive -Path ./Thor/app/trustee/* -DestinationPath ./FundOffice-Trustee-Win-x64.zip -Force
         shell: powershell
 
       - name: 创建增量更新包 (Delta)
@@ -546,7 +546,7 @@ jobs:
           $release = Invoke-RestMethod -Uri $releaseUrl -Headers @{ "Authorization" = "token $env:GITHUB_TOKEN" }
       
           $asset = $release.assets | Where-Object { 
-              $_.name -like "*Win-x64.zip" -and $_.name -notlike "*Trustee*" 
+              $_.name -like "Thor.*.zip" -and $_.name -notlike "*Trustee*" 
           } | Select-Object -First 1
       
           if (-not $asset) {
@@ -633,7 +633,7 @@ jobs:
         with:
           name: FundOffice ${{ steps.version.outputs.VERSION }}
           tag_name: ${{ steps.version.outputs.TAG }}
-          files: ./FundOffice-Win-x64.zip
+          files: ./Thor.${{ steps.version.outputs.VERSION }}.zip
           draft: false
           prerelease: ${{ steps.version.outputs.ISTAG != 'true' }}
         env:
