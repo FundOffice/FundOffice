@@ -16,7 +16,7 @@
 	 
 	  <!-- 手动设置主版本和次版本 -->
 	  <MajorVersion>1</MajorVersion>
-	  <MinorVersion>2</MinorVersion>
+	  <MinorVersion>0</MinorVersion>
 
 
     <AssemblyName>Thor</AssemblyName>

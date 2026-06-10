@@ -1,3 +1,7 @@
 <Solution>
+  <Project Path="../../Amac/Public/Amac.Public.csproj" />
+  <Project Path="../../Utility/Patch/Patch.csproj" />
+  <Project Path="../../Utility/Utilities/Utilities.csproj" />
+  <Project Path="../InitManager/InitManager.csproj" Id="5ec4de7a-427a-41f8-9511-94e28b0846dd" />
   <Project Path="Launcher.csproj" />
 </Solution>

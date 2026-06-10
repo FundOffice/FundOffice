@@ -95,17 +95,148 @@
                                        VerticalAlignment="Center"/>
                             <Button Grid.Column="2" Content="更新"
                                     Command="{Binding UpdateCommand}"
-                                    IsEnabled="{Binding CanUpdate}"
                                     Background="#5cb85c" Foreground="White"
                                     FontSize="11" Padding="14,6"
                                     CornerRadius="4"/>
                         </Grid>
                     </Border>
 
-                    <!-- 启动按钮（运行时就绪即可显示，不强制更新） -->
+                    <!-- 首次运行：选择工作目录 -->
+                    <Border IsVisible="{Binding NeedWorkingFolder}"
+                            Background="#1a1a2e" CornerRadius="8" Padding="14,10"
+                            BorderBrush="#7c5cbf" BorderThickness="1">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <TextBlock Text="📁" FontSize="16"
+                                       VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="请先选择工作目录"
+                                       Foreground="#ccccff" FontSize="12"
+                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="2" Content="选择目录"
+                                    Command="{Binding ChooseFolderCommand}"
+                                    Background="#7c5cbf" Foreground="White"
+                                    FontSize="11" Padding="14,6"
+                                    CornerRadius="4"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- 首次运行：已设置工作目录，允许更换（数据库未损坏时才显示） -->
+                    <Border IsVisible="{Binding CanChangeWorkingFolderVisible}"
+                            Background="#1a1a2e" CornerRadius="8" Padding="14,10"
+                            BorderBrush="#3a3a5e" BorderThickness="1"
+                            Margin="0,8,0,0">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <TextBlock Text="📁" FontSize="16"
+                                       VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="工作目录已设置，可更换"
+                                       Foreground="#8888aa" FontSize="12"
+                                       VerticalAlignment="Center"/>
+                            <Button Grid.Column="2" Content="更换目录"
+                                    Command="{Binding ChooseFolderCommand}"
+                                    Background="#3a3a5e" Foreground="White"
+                                    FontSize="11" Padding="14,6"
+                                    CornerRadius="4"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- 数据库损坏：修复界面（输入管理人名称 + 尝试修复） -->
+                    <Border IsVisible="{Binding DatabaseCorrupted}"
+                            Background="#2a1a1a" CornerRadius="8" Padding="14,10"
+                            BorderBrush="#ff6b6b" BorderThickness="2"
+                            Margin="0,8,0,0">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <TextBlock Text="⚠" FontSize="18" Foreground="#ff6b6b"
+                                           VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="此目录数据库已损坏"
+                                           Foreground="#ff6b6b" FontSize="13" FontWeight="Bold"
+                                           VerticalAlignment="Center"/>
+                                <Button Grid.Column="2" Content="更换目录"
+                                        Command="{Binding ChooseFolderCommand}"
+                                        Background="#ff6b6b" Foreground="White"
+                                        FontSize="11" Padding="14,6"
+                                        CornerRadius="4"/>
+                            </Grid>
+                            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                                <TextBox Grid.Column="0" Text="{Binding RepairManagerName, Mode=TwoWay}"
+                                         Watermark="输入管理人全称尝试修复..."
+                                         FontSize="12"
+                                         Background="#0d0d1a" Foreground="#e0e0ff"
+                                         BorderBrush="#3a3a5e"
+                                         CornerRadius="4"
+                                         Padding="8,6"
+                                         VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="尝试修复"
+                                        Command="{Binding TryRepairCommand}"
+                                        IsEnabled="{Binding !IsWorking}"
+                                        Background="#ff6b6b" Foreground="White"
+                                        FontSize="12" FontWeight="SemiBold"
+                                        Padding="14,6"
+                                        CornerRadius="4"
+                                        VerticalAlignment="Center"
+                                        Margin="8,0,0,0"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 首次运行：输入管理人名称（只有目录可用时才显示） -->
+                    <Border IsVisible="{Binding IsDirectoryAvailable}"
+                            Background="#1a1a2e" CornerRadius="8" Padding="14,10"
+                            BorderBrush="#7c5cbf" BorderThickness="1">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <TextBlock Text="🏢" FontSize="14"
+                                           VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <TextBlock Grid.Column="1"
+                                           Text="首次运行，请输入管理人名称"
+                                           Foreground="#ccccff" FontSize="12"
+                                           VerticalAlignment="Center"/>
+                            </Grid>
+                            <TextBox Name="ManagerNameBox" Text="{Binding ManagerName, Mode=TwoWay, Delay=500}"
+                                     Watermark="输入管理人全称进行搜索..."
+                                     FontSize="12"
+                                     Background="#0d0d1a" Foreground="#e0e0ff"
+                                     BorderBrush="#3a3a5e"
+                                     CornerRadius="4"
+                                     Padding="8,6"/>
+                            <!-- 搜索结果弹出列表 -->
+                            <Popup IsOpen="{Binding ManagerOptions, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                   PlacementTarget="{Binding #ManagerNameBox}"
+                                   Placement="Bottom"
+                                   HorizontalOffset="0" VerticalOffset="2"
+                                   Width="{Binding #ManagerNameBox.Bounds.Width}">
+                                <Border Background="#1a1a2e" BorderBrush="#7c5cbf" BorderThickness="1"
+                                        CornerRadius="4" Padding="4" MaxHeight="200">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl ItemsSource="{Binding ManagerOptions}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:MainWindowViewModel+ManagerInfo">
+                                                    <Button Content="{Binding Name}"
+                                                            Command="{Binding $parent[Window].DataContext.ConfirmManagerSelectionCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            Background="Transparent" Foreground="#aaaadd"
+                                                            FontSize="11" Padding="8,6"
+                                                            HorizontalAlignment="Stretch"
+                                                            HorizontalContentAlignment="Left"
+                                                            Cursor="Hand"
+                                                            CornerRadius="2"
+                                                            Margin="2"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 启动按钮 -->
                     <Button Content="启动 Thor"
                             Command="{Binding LaunchCommand}"
                             IsVisible="{Binding CanLaunch}"
+                            IsEnabled="{Binding ReadyToLaunch}"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Center"
                             Background="#7c5cbf" Foreground="White"

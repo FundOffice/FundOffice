@@ -17,11 +17,10 @@ namespace Launcher
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                var vm = new MainWindowViewModel(Program.AutoInstall);
-                desktop.MainWindow = new MainWindow
-                {
-                    DataContext = vm,
-                };
+                var window = new MainWindow();
+                var vm = new MainWindowViewModel(Program.AutoInstall, window);
+                window.DataContext = vm;
+                desktop.MainWindow = window;
                 desktop.ShutdownRequested += (_, _) => vm.CancelIfRunning();
             }
 
