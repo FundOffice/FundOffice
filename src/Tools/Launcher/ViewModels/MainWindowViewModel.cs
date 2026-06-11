@@ -1055,9 +1055,8 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <summary>内置默认代理列表，当 proxies.txt 不存在时兜底。</summary>
     private static readonly string[] DefaultProxies =
     [
-        "https://ghfast.top/",
         "https://gh-proxy.com/",
-        "https://ghproxy.net/",
+        "https://ghproxy.cxkpro.top/",
     ];
 
     /// <summary>当前生效的代理列表（从 proxies.txt 加载或内置默认值）。</summary>
@@ -1159,33 +1158,40 @@ public partial class MainWindowViewModel : ViewModelBase
 
     /// <summary>
     /// 获取 GitHub 所有 release，解析每个版本的增量包和全量包信息。
-    /// 优先直连 GitHub（5秒超时），失败再依次尝试代理。
+    /// 并行竞速：同时向直连和所有代理发起请求，首个成功的立即返回并取消其余。
     /// </summary>
     private async Task<List<ReleaseAsset>> FetchAllReleasesAsync()
     {
         // 从外部配置文件加载代理列表
         LoadProxies();
 
-        using var http = new HttpClient();
-        http.Timeout = TimeSpan.FromSeconds(5); // 每个候选最多 5 秒
-        http.DefaultRequestHeaders.Add("User-Agent", "Thor-Launcher");
-
-        // 优先直连，失败再依次尝试代理
+        // 构建候选列表：直连 + 所有代理
         var candidates = new List<string> { "" }; // 空 = 直连
         candidates.AddRange(_loadedProxies);
 
+        using var raceCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+        raceCts.CancelAfter(TimeSpan.FromSeconds(15)); // 总超时 15 秒
+
         string? json = null;
         string usedProxy = "";
-        foreach (var proxy in candidates)
+
+        // 并行竞速：所有候选同时发起请求，首个成功即胜出
+        var tasks = candidates.Select(async proxy =>
         {
             try
             {
-                json = await http.GetStringAsync(proxy + GitHubReleasesApi, _cts.Token);
-                usedProxy = proxy;
-                break;
+                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                http.DefaultRequestHeaders.Add("User-Agent", "Thor-Launcher");
+                var result = await http.GetStringAsync(proxy + GitHubReleasesApi, raceCts.Token);
+                // 首个成功：记录结果并取消其余请求
+                Interlocked.CompareExchange(ref json, result, null);
+                Interlocked.CompareExchange(ref usedProxy, proxy, null);
+                raceCts.Cancel();
             }
-            catch { /* 尝试下一个 */ }
-        }
+            catch { /* 失败不处理，等其他候选或总超时 */ }
+        }).ToArray();
+
+        try { await Task.WhenAll(tasks); } catch { /* 取消导致的异常忽略 */ }
 
         if (json == null)
             return []; // 全部失败，静默返回空
@@ -1401,87 +1407,138 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// 下载单个更新 zip 包。
-    /// 按顺序尝试：API 成功的代理优先 → 其余代理 → 直连。失败自动降级。
+    /// 并行竞速下载：同时对直连和所有代理发起下载，各写入独立临时文件，
+    /// 首个完成的直接 move 到目标路径，其余取消并清理。
     /// </summary>
     private async Task RacingDownloadAsync(string rawUrl, string destPath, string prefix = "")
     {
         WorkingText = $"{prefix}正在下载更新";
         ProgressDetail = "";
 
-        // 按探测顺序构建候选：API 成功的代理排前面
-        var urls = new List<string>();
+        // 构建所有候选 URL（去重）
+        var urls = new HashSet<string> { rawUrl }; // 直连
         foreach (var proxy in _sortedProxies)
             urls.Add(proxy + rawUrl);
-        // 补上没在 _sortedProxies 里的代理
         foreach (var proxy in _loadedProxies)
-        {
-            var url = proxy + rawUrl;
-            if (!urls.Contains(url)) urls.Add(url);
-        }
-        // 直连兜底
-        if (!urls.Contains(rawUrl)) urls.Insert(0, rawUrl);
+            urls.Add(proxy + rawUrl);
 
-        Exception? lastEx = null;
-        foreach (var url in urls)
+        var urlList = urls.ToList();
+        var tempFiles = new string[urlList.Count];
+        for (int i = 0; i < urlList.Count; i++)
+            tempFiles[i] = destPath + $".dl{i}";
+
+        using var raceCts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+        var winnerIndex = -1;
+        long maxBytes = 0;
+        long contentLength = -1;
+
+        var tasks = urlList.Select(async (url, idx) =>
         {
             try
             {
-                await DownloadFileAsync(url, destPath);
-                return; // 成功
+                await RacingDownloadOneAsync(url, tempFiles[idx], raceCts,
+                    (bytes, total) =>
+                    {
+                        // 原子更新最大已下载字节数（多个竞速者中取最大的）
+                        long prev;
+                        do
+                        {
+                            prev = Volatile.Read(ref maxBytes);
+                            if (bytes <= prev) return;
+                        } while (Interlocked.CompareExchange(ref maxBytes, bytes, prev) != prev);
+
+                        // 记录 content-length（取第一个有效值）
+                        if (total > 0)
+                            Interlocked.CompareExchange(ref contentLength, total, -1);
+                    });
+
+                // 下载成功 → 竞争胜出
+                if (Interlocked.CompareExchange(ref winnerIndex, idx, -1) == -1)
+                {
+                    raceCts.Cancel(); // 取消其余竞速者
+                }
             }
-            catch (Exception ex)
+            catch
             {
-                lastEx = ex;
-                // 清理不完整的文件
-                try { if (File.Exists(destPath)) File.Delete(destPath); } catch { }
+                // 该通道失败，清理临时文件
+                try { if (File.Exists(tempFiles[idx])) File.Delete(tempFiles[idx]); } catch { }
             }
+        }).ToArray();
+
+        // 进度刷新：在下载期间定期更新 UI 进度
+        var progressTask = Task.Run(async () =>
+        {
+            while (!raceCts.IsCancellationRequested)
+            {
+                try { await Task.Delay(300, raceCts.Token); } catch { break; }
+                var bytes = Volatile.Read(ref maxBytes);
+                var total = Volatile.Read(ref contentLength);
+                var mb = bytes / 1_048_576.0;
+                if (total > 0)
+                {
+                    Progress = (int)(bytes * 70 / total);
+                    ProgressDetail = $"{mb:F1} / {total / 1_048_576.0:F1} MB";
+                }
+                else
+                {
+                    ProgressDetail = $"{mb:F1} MB";
+                }
+            }
+        });
+
+        try { await Task.WhenAll(tasks); } catch { /* 取消异常忽略 */ }
+        raceCts.Cancel(); // 确保进度刷新循环也退出
+        try { await progressTask; } catch { }
+
+        var winner = Volatile.Read(ref winnerIndex);
+        if (winner < 0)
+            throw new InvalidOperationException("所有下载通道均失败");
+
+        // 将胜出者的临时文件移动到目标路径
+        try { if (File.Exists(destPath)) File.Delete(destPath); } catch { }
+        File.Move(tempFiles[winner], destPath);
+
+        // 清理其余临时文件
+        for (int i = 0; i < tempFiles.Length; i++)
+        {
+            if (i == winner) continue;
+            try { if (File.Exists(tempFiles[i])) File.Delete(tempFiles[i]); } catch { }
         }
 
-        throw lastEx ?? new InvalidOperationException("所有下载通道均失败");
+        Progress = 70;
+        ProgressDetail = $"{new FileInfo(destPath).Length / 1_048_576.0:F1} MB，下载完成";
     }
 
     /// <summary>
-    /// 从单个 URL 下载文件到指定路径。
+    /// 单个竞速通道的下载实现。支持取消。
     /// </summary>
-    private async Task DownloadFileAsync(string url, string destPath)
+    private static async Task RacingDownloadOneAsync(
+        string url, string tempPath, CancellationTokenSource raceCts,
+        Action<long, long> reportBytes)
     {
         using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
         http.DefaultRequestHeaders.Add("User-Agent", "Thor-Launcher");
 
         using var resp = await http.GetAsync(url,
-            HttpCompletionOption.ResponseHeadersRead, _cts.Token);
+            HttpCompletionOption.ResponseHeadersRead, raceCts.Token);
         resp.EnsureSuccessStatusCode();
 
         var total = resp.Content.Headers.ContentLength ?? -1L;
 
-        using var netStream = await resp.Content.ReadAsStreamAsync(_cts.Token);
-        using var fileStream = new FileStream(destPath, FileMode.Create,
+        using var netStream = await resp.Content.ReadAsStreamAsync(raceCts.Token);
+        using var fileStream = new FileStream(tempPath, FileMode.Create,
             FileAccess.Write, FileShare.None, 65536);
 
         var buf = new byte[65536];
         long read = 0;
         int n;
 
-        while ((n = await netStream.ReadAsync(buf, _cts.Token)) > 0)
+        while ((n = await netStream.ReadAsync(buf, raceCts.Token)) > 0)
         {
-            await fileStream.WriteAsync(buf.AsMemory(0, n), _cts.Token);
+            await fileStream.WriteAsync(buf.AsMemory(0, n), raceCts.Token);
             read += n;
-
-            var readMB = read / 1_048_576.0;
-            if (total > 0)
-            {
-                Progress = (int)(read * 70 / total);
-                ProgressDetail = $"{readMB:F1} / {total / 1_048_576.0:F1} MB";
-            }
-            else
-            {
-                ProgressDetail = $"{readMB:F1} MB";
-            }
+            reportBytes(read, total);
         }
-
-        Progress = 70;
-        ProgressDetail = $"{read / 1_048_576.0:F1} MB，下载完成";
     }
 
     /// <summary>
