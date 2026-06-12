@@ -6,13 +6,13 @@ using System.Text.Json;
 namespace FMO.AI;
 
 /// <summary>
-/// 百川智能 - 支持文件上传
+/// 通义千问（阿里云）- 支持文件上传
 /// </summary>
-public class BaichuanTokenProvider : TokenProvider
+public class QwenTokenProvider : TokenProvider
 {
-    public override string Company => "Baichuan";
+    public override string Company => "Qwen";
     public override TokenProviderStyle Style { get; set; } = TokenProviderStyle.OpenAI;
-    public override string Url { get; set; } = "https://api.baichuan-ai.com/v1/chat/completions";
+    public override string Url { get; set; } = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 
     protected override bool SupportsDocxFileUpload => true;
 
@@ -24,17 +24,17 @@ public class BaichuanTokenProvider : TokenProvider
         var content = new MultipartFormDataContent();
         var fileStream = File.OpenRead(filePath);
         content.Add(new StreamContent(fileStream), "file", Path.GetFileName(filePath));
-        content.Add(new StringContent("extract"), "purpose");
+        content.Add(new StringContent("file-extract"), "purpose");
 
-        var response = await client.PostAsync("https://api.baichuan-ai.com/v1/files", content);
+        var response = await client.PostAsync("https://dashscope.aliyuncs.com/api/v1/files", content);
         var responseText = await response.Content.ReadAsStringAsync();
         fileStream.Dispose();
 
-        var result = JsonSerializer.Deserialize<BaichuanFileResponse>(responseText);
-        if (result?.data?.file is null)
+        var result = JsonSerializer.Deserialize<QwenFileResponse>(responseText);
+        if (result?.data?.file_id is null)
             throw new Exception($"文件上传失败: {responseText}");
 
-        return result.data!.file!.id!;
+        return result.data.file_id;
     }
 
     protected override async Task<string> AskWithFileIdAsync(HttpClient client, string model, string prompt, string fileId)
@@ -54,12 +54,12 @@ public class BaichuanTokenProvider : TokenProvider
                     role = "user",
                     content = new object[]
                     {
-                        new { type = "file", file_id = fileId },
+                        new { type = "file", file = new { file_id = fileId } },
                         new { type = "text", text = "请从上面的文档中提取基金信息" }
                     }
                 }
             },
-            max_tokens = 8192,
+            max_tokens = 16384,
             temperature = 0.1,
             stream = false
         };
@@ -72,25 +72,20 @@ public class BaichuanTokenProvider : TokenProvider
         return result?.choices?[0]?.message?.content ?? "无有效返回";
     }
 
-    private class BaichuanFileResponse
+    private class QwenFileResponse
     {
-        public BaichuanFileData? data { get; set; }
+        public QwenFileData? data { get; set; }
     }
 
-    private class BaichuanFileData
+    private class QwenFileData
     {
-        public BaichuanFileInfo? file { get; set; }
-    }
-
-    private class BaichuanFileInfo
-    {
-        public string? id { get; set; }
+        public string? file_id { get; set; }
     }
 }
 
-public partial class BaichuanTokenProviderViewModel : TokenProviderViewModel, IViewModel<BaichuanTokenProvider, BaichuanTokenProviderViewModel>
+public partial class QwenTokenProviderViewModel : TokenProviderViewModel, IViewModel<QwenTokenProvider, QwenTokenProviderViewModel>
 {
     public override TokenProviderStyle[] SupportedStyles { get; } = [TokenProviderStyle.OpenAI];
     public override string ModelsUrl => BuildApiUrl(Url, 2, "/models");
-    public static string[] Models { get; } = ["Baichuan4", "Baichuan3-Turbo"];
+    public static string[] Models { get; } = ["qwen-max", "qwen-plus", "qwen-turbo", "qwen-long"];
 }

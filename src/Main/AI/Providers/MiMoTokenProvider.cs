@@ -5,8 +5,12 @@ namespace FMO.AI;
 public class MiMoTokenProvider : TokenProvider
 {
     public override string Company => "XiaoMi";
+    
     public override TokenProviderStyle Style { get; set; } = TokenProviderStyle.OpenAI;
+    
     public override string Url { get; set; } = "https://api.xiaomimimo.com/v1/chat/completions";
+
+    //protected override bool SupportsDocxBase64Inline => true;
 }
 
 public partial class MiMoTokenProviderViewModel : TokenProviderViewModel, IViewModel<MiMoTokenProvider, MiMoTokenProviderViewModel>
