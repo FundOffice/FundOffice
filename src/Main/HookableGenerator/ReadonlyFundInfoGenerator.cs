@@ -208,7 +208,7 @@ public class ReadonlyFundInfoGenerator : IIncrementalGenerator
                     : $"{p.GenericArg}?";
                 if (p.IsFactorItem)
                     sb.AppendLine($"    /// <summary>{p.Name}（无数据返回空数组）</summary>");
-                sb.AppendLine($"    public {typeName} {p.Name} {{ get; private set; }}");
+                sb.AppendLine($"    public {typeName} {p.Name} {{ get; set; }}");
             }
 
             sb.AppendLine();
