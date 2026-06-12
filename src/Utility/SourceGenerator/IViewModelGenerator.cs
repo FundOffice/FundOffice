@@ -586,6 +586,7 @@ internal static class SourceCodeBuilder
         {
             sb.AppendLine($"public bool Equals({model.NullableParamTypeString} other)");
             sb.AppendLine("{");
+            sb.AppendLine("    if (ReferenceEquals(this, other)) return true;");
             if (model.CanBeNull)
             {
                 if (model.IsWrapperType) sb.AppendLine($"    if (other is null) return global::System.Collections.Generic.EqualityComparer<{model.ComparerTypeString}>.Default.Equals(Value, default);");
