@@ -372,3 +372,4 @@ FodyWeavers.xsd
 /.qoder/specs
 /.qoder/repowiki/knowledge/zh
 /test/TestAI/docx
+/test/TestAI/facts/XiaoMi
