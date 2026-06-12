@@ -369,3 +369,5 @@ FodyWeavers.xsd
 /src/Tools/GenerateDemonstration/GenerateDemonstration.csproj
 /src/Tools/TemplateBuilder/
 /src/Tools/TemplateBuilder/Program.cs
+/.qoder/specs
+/.qoder/repowiki/knowledge/zh
