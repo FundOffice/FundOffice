@@ -371,3 +371,4 @@ FodyWeavers.xsd
 /src/Tools/TemplateBuilder/Program.cs
 /.qoder/specs
 /.qoder/repowiki/knowledge/zh
+/test/TestAI/docx
