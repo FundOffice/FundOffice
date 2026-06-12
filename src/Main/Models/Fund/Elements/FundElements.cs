@@ -991,19 +991,7 @@ public partial class FundElements
                 target.SetValue(ff.Data!, f.FlowId);
             }
         }
-        if (FactorGroups.TryGetValue(FactorFields.TrusteeFee, out var g_TrusteeFee))
-        {
-            var target = elements.TrusteeFee;
-            target.Changes.Clear();
-            foreach (var f in g_TrusteeFee)
-            {
-                if (f is not FundFactor<global::FMO.Models.FundFeeInfo> ff)
-                    throw new InvalidOperationException($"Factor type mismatch for FactorId 'FactorFields.TrusteeFee': expected FundFactor<global::FMO.Models.FundFeeInfo>, but got '{f.GetType().Name}'. FundId: {f.FundId}, FlowId: {f.FlowId}");
-                if (ff.Data == null)
-                    throw new InvalidOperationException($"Factor data is null for FactorId 'FactorFields.TrusteeFee'. FundId: {f.FundId}, FlowId: {f.FlowId}");
-                target.SetValue(ff.Data!, f.FlowId);
-            }
-        }
+        
         if (FactorGroups.TryGetValue(FactorFields.OutsourcingInfo, out var g_OutsourcingInfo))
         {
             var target = elements.OutsourcingInfo;
@@ -1017,19 +1005,7 @@ public partial class FundElements
                 target.SetValue(ff.Data!, f.FlowId);
             }
         }
-        if (FactorGroups.TryGetValue(FactorFields.OutsourcingFee, out var g_OutsourcingFee))
-        {
-            var target = elements.OutsourcingFee;
-            target.Changes.Clear();
-            foreach (var f in g_OutsourcingFee)
-            {
-                if (f is not FundFactor<global::FMO.Models.FundFeeInfo> ff)
-                    throw new InvalidOperationException($"Factor type mismatch for FactorId 'FactorFields.OutsourcingFee': expected FundFactor<global::FMO.Models.FundFeeInfo>, but got '{f.GetType().Name}'. FundId: {f.FundId}, FlowId: {f.FlowId}");
-                if (ff.Data == null)
-                    throw new InvalidOperationException($"Factor data is null for FactorId 'FactorFields.OutsourcingFee'. FundId: {f.FundId}, FlowId: {f.FlowId}");
-                target.SetValue(ff.Data!, f.FlowId);
-            }
-        }
+       
         if (FactorGroups.TryGetValue(FactorFields.InvestmentManagers, out var g_InvestmentManagers))
         {
             var target = elements.InvestmentManagers;

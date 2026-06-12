@@ -165,15 +165,6 @@ public partial class FundFactors
 
     #region 费用信息（单份额）
 
-    /// <summary>
-    /// 托管费
-    /// </summary>
-    public SingletonFactorItem<FundFeeInfo> TrusteeFee { get; private set; } = null!;
-
-    /// <summary>
-    /// 外包费
-    /// </summary>
-    public SingletonFactorItem<FundFeeInfo> OutsourcingFee { get; private set; } = null!;
 
     /// <summary>
     /// 管理费支付方式

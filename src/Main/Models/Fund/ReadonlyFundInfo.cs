@@ -32,17 +32,17 @@ public partial class ReadonlyFundInfo
     /// <summary>
     /// 成立日期 yyyy-MM-dd
     /// </summary>
-    //public required string SetupDate { get; set; }
+    public DateOnly SetupDate { get; set; }
 
     /// <summary>
     /// 备案日期  yyyy-MM-dd
     /// </summary>
-    public string? AuditDate { get; set; }
+    public DateOnly AuditDate { get; set; }
 
     /// <summary>
     /// 备案号
     /// </summary>
-    //public required string Code { get; set; }
+    public string? Code { get; set; }
 
 
 
