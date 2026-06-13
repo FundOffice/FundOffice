@@ -1,4 +1,4 @@
-using FMO.Models;
+﻿﻿using FMO.Models;
 
 namespace FMO.AI;
 
@@ -121,6 +121,7 @@ internal static class AiParsedFundInfoConverter
         AddPortionFactors(factors, dto.PurchasRule?.Value, FactorFields.PurchasRule, shareClasses);
         AddPortionFactors(factors, dto.RedemptionFee?.Value, FactorFields.RedemptionFee, shareClasses);
         AddPortionStringFactors(factors, dto.PerformanceFeeStatement?.Value, FactorFields.PerformanceFeeStatement, shareClasses);
+        AddPortionFactors(factors, dto.PerformanceFeeRule?.Value, FactorFields.PerformanceFeeRule, shareClasses);
 
         return factors.ToArray();
     }

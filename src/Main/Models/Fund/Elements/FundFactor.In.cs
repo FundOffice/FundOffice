@@ -1,11 +1,10 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 
 namespace FMO.Models;
 
 public class FundFeeInfo : IEquatable<FundFeeInfo>
 {
     public FundFeeType Type { get; set; }
-
 
     public bool HasFee { get; set; }
 
@@ -17,7 +16,6 @@ public class FundFeeInfo : IEquatable<FundFeeInfo>
     /// 保底费用/年
     /// </summary>
     public decimal GuaranteedFee { get; set; }
-
 
     /// <summary>
     /// 特殊类型
@@ -34,7 +32,6 @@ public class FundFeeInfo : IEquatable<FundFeeInfo>
     public override string ToString() => !HasFee ? "-" : Type switch { FundFeeType.Fix => $"固定费用：{Fee}元 / 年", FundFeeType.Ratio => $"{Fee}% / 年", FundFeeType.Other => Other, _ => $"未设置" } + (GuaranteedFee > 0 ? $" 有保底：{GuaranteedFee} / 年" : "");
 }
 
-
 public class PartRedemptionFee
 {
     public int? Month { get; set; }
@@ -44,11 +41,9 @@ public class PartRedemptionFee
     public decimal? Fee { get; set; }
 }
 
-
 public class RedemptionFeeInfo
 {
     public FundFeeType Type { get; set; }
-
 
     public bool HasFee { get; set; }
 
@@ -60,7 +55,6 @@ public class RedemptionFeeInfo
     public string? Other { get; set; }
 
     public List<PartRedemptionFee>? Parts { get; set; }
-
 
     public override string? ToString()
     {
@@ -106,7 +100,6 @@ public class HugeRedemptionRule
     /// </summary>
     public bool HasRuleForInvestor { get; set; }
 
-
     public decimal RatioPerInvestor { get; set; }
 
     public override string ToString() => Has switch
@@ -115,7 +108,6 @@ public class HugeRedemptionRule
         _ => "未设置"
     };
 }
-
 
 /// <summary>
 /// 证券投资基金类型
@@ -156,7 +148,6 @@ public enum SecurityFundType
     //FundOfFunds = 5
 }
 
-
 [TypeConverter(nameof(EnumDescriptionTypeConverter))]
 public enum FundMode
 {
@@ -166,8 +157,6 @@ public enum FundMode
 
     [Description("其它")] Other,
 }
-
-
 
 /// <summary>
 /// 类型：开放 封闭
@@ -180,7 +169,6 @@ public class FundModeInfo
 
     public override string ToString() => Mode switch { FundMode.Open => "开放式", FundMode.Close => "封闭式", FundMode.Other => Other ?? "未设置", _ => "未设置" };
 }
-
 
 #region 封闭、锁定
 
@@ -221,8 +209,6 @@ public class SealingRule
 
 #endregion
 
-
-
 [TypeConverter(typeof(EnumDescriptionTypeConverter))]
 public enum RiskLevel
 {
@@ -234,8 +220,6 @@ public enum RiskEvaluation
 {
     [Description("未选择")] Unk, C1, C2, C3, C4, C5
 }
-
-
 
 public class FundPurchaseRule
 {
@@ -269,7 +253,6 @@ public class FundPurchaseRule
     /// </summary>
     public FundFeeType Type { get; set; }
 
-
     public decimal Fee { get; set; }
 
     public bool HasGuaranteedFee { get; set; }
@@ -278,7 +261,6 @@ public class FundPurchaseRule
     /// 保底费用/年
     /// </summary>
     public decimal GuaranteedFee { get; set; }
-
 
     /// <summary>
     /// 特殊类型
@@ -308,9 +290,7 @@ public class FundDuration
     /// </summary>
     public bool Infinity { get; set; }
 
-
     public int Month { get; set; }
-
 
     public override string ToString()
     {
@@ -318,8 +298,6 @@ public class FundDuration
     }
 
 }
-
-
 
 #region OpenRule
 
@@ -391,7 +369,6 @@ public class OpenRule : ICloneable
     /// </summary>
     public bool CrossWeek { get; set; }
 
-
     private string WeekStr()
     {
         var days = Dates?.Where(x => x < 5);
@@ -412,7 +389,6 @@ public class OpenRule : ICloneable
                 return $"倒数第{string.Join('、', days!.Select(x => x))}个自然日";
         }
     }
-
 
     private string MonthStr()
     {
@@ -439,7 +415,6 @@ public class OpenRule : ICloneable
     public override string ToString()
     {
         var pos = AllowBuy && AllowSell ? "" : AllowBuy ? "开放申购" : "开放赎回";
-
 
         switch (Type)
         {
@@ -546,7 +521,6 @@ public class OpenRule : ICloneable
         ////////////////////////////////////////////////////////
         ///
 
-
         // 周
         if (Type switch { FundOpenType.Yearly or FundOpenType.Quarterly or FundOpenType.Monthly => true, _ => false })
         {
@@ -635,7 +609,6 @@ public class OpenRule : ICloneable
                                 }
                             }
                         }
-
 
                     }
                     else if (Dates?.Length > 0) //月的第n个交易日
@@ -757,7 +730,6 @@ public class OpenRule : ICloneable
                             }
                         }
 
-
                     }
                     else if (Dates?.Length > 0) //月的第n个交易日
                     {
@@ -871,7 +843,6 @@ public class OpenRule : ICloneable
 
                         }
 
-
                     }
                     else if (Dates?.Length > 0) //月的第n个交易日
                     {
@@ -975,14 +946,12 @@ public class OpenRule : ICloneable
                         if (Array.BinarySearch(Dates, dw.Key) < 0) // 星期几不符合
                             continue;
 
-
                         foreach (var w in dw) //第N周N
                         {
                             w.Type = OpenType.Fixed;
                         }
 
                     }
-
 
                     // 非交易日及顺延
                     var chk = result.Where(x => !x.Flag.HasFlag(DayFlag.Trade) && x.Type == OpenType.Fixed).ToArray();
@@ -1009,7 +978,6 @@ public class OpenRule : ICloneable
         }
         return result.ToArray();
     }
-
 
     public static DateOpenInfo[] ApplyMany(int year, params OpenRule[]? rules)
     {
@@ -1140,12 +1108,10 @@ public enum OpenType
     Postpone
 }
 
-
 public interface IDate
 {
     public DateOnly Date { get; }
 }
-
 
 [Flags]
 public enum OpenTradeType
@@ -1206,10 +1172,6 @@ public class FundOpenDay : IDate
 
 #endregion
 
-
-
-
-
 /// <summary>
 /// 临时开放
 /// </summary>
@@ -1226,13 +1188,8 @@ public class TemporarilyOpenInfo
 
     public bool AllowRedemption { get; set; }
 
-
     public override string ToString() => !IsAllowed ? "不允许临开" : (IsLimited ? "仅合同变更、法规变更时，" : "") + $"允许{(AllowPurchase ? "申购" : "")}{(AllowRedemption ? "赎回" : "")}";
 }
-
-
-
-
 
 [TypeConverter(typeof(EnumDescriptionTypeConverter))]
 public enum CoolingPeriodType
@@ -1242,13 +1199,11 @@ public enum CoolingPeriodType
     [Description("其它")] Other
 }
 
-
 public class CoolingPeriodInfo
 {
     public CoolingPeriodType Type { get; set; }
 
     public string? Other { get; set; }
-
 
     public override string ToString()
     {
@@ -1261,7 +1216,6 @@ public class CoolingPeriodInfo
     }
 }
 
-
 public class CallbackInfo
 {
     public bool IsRequired { get; set; }
@@ -1272,7 +1226,6 @@ public class CallbackInfo
     }
 }
 
-
 /// <summary>
 /// 托管、外包、投顾
 /// </summary>
@@ -1282,12 +1235,9 @@ public class AgencyInfo
 
     public string? Name { get; set; }
 
-
     public bool HasFee { get; set; }
 
-
     public FundFeeType FeeType { get; set; }
-
 
     public decimal Fee { get; set; }
 
@@ -1298,17 +1248,14 @@ public class AgencyInfo
     /// </summary>
     public decimal GuaranteedFee { get; set; }
 
-
     /// <summary>
     /// 特殊类型
     /// </summary>
     public string? Other { get; set; }
 
-
     public override string ToString()
     {
         if (!HasAgency || string.IsNullOrWhiteSpace(Name)) return "未设置";
-
 
         return $"{Name}，费用：{FeeInfo()}";
     }
@@ -1317,7 +1264,6 @@ public class AgencyInfo
 
 }
 
-
 /// <summary>
 /// 结构化基金
 /// </summary>
@@ -1325,15 +1271,11 @@ public class StructureInfo
 {
     public bool IsStructured { get; set; }
 
-
 }
-
-
 
 public class FundInvestmentManager
 {
     public int Id { get; set; }
-
 
     /// <summary>
     /// ParticipantId
@@ -1352,77 +1294,227 @@ public class FundInvestmentManager
     /// </summary>
     public string? Profile { get; set; }
 
-
     public DateOnly Start { get; set; }
 
     public DateOnly End { get; set; }
 }
 
+#region 业绩报酬
+/// <summary>
+/// 收益率计算方式（分级计提中 R 的含义）
+/// </summary>
+[TypeConverter(nameof(EnumDescriptionTypeConverter))]
+public enum PerformanceFeeReturnType
+{
+    /// <summary>
+    /// 实际收益率：不考虑持有期限
+    /// </summary>
+    [Description("实际收益率")]
+    Actual,
 
-
-
-
-
-
-
-
-
-
-
+    /// <summary>
+    /// 年化收益率：按持有天数折算为年化
+    /// </summary>
+    [Description("年化收益率")]
+    Annualized,
+}
 
 /// <summary>
-/// 已在其它地方定义
+/// 高水位类型（基金净值追踪维度）
 /// </summary>
-//public class BankAccount
-//{
-//    public int Id { get; set; }
+[TypeConverter(nameof(EnumDescriptionTypeConverter))]
+public enum HighWaterMarkType
+{
+    [Description("无")] None,
+    [Description("整体高水位")] Aggregate,
+    [Description("整体高水位+赎回补提")] AggregateWithSupplementary,
+    [Description("单人高水位")] PerInvestor,
+}
+
+/// <summary>
+/// 业绩报酬计提方式（扣净值/扣份额）
+/// </summary>
+[TypeConverter(nameof(EnumDescriptionTypeConverter))]
+public enum PerformanceFeeDeductionType
+{
+    [Description("扣净值")] NavDeduction,
+    [Description("扣份额")] ShareDeduction,
+}
+
+/// <summary>
+/// 业绩报酬计提触发时点
+/// </summary>
+[Flags]
+public enum PerformanceFeeTrigger
+{
+    None = 0,
+    Redemption = 1,
+    Distribution = 2,
+    Liquidation = 4,
+    OpenDay = 8,
+}
+
+/// <summary>
+/// 业绩报酬分级计提档位
+/// 每项的 LowerBound 从前一项的 UpperBound 推导；第一项从 0 开始
+/// </summary>
+public class PerformanceFeeTier
+{
+    /// <summary>
+    /// 收益率上限（%）；null 表示无上限（最后一项）
+    /// </summary>
+    public decimal? UpperBound { get; set; }
+
+    /// <summary>
+    /// 上限是否包含（true: ≤, false: &lt;）
+    /// </summary>
+    public bool Include { get; set; }
+
+    /// <summary>
+    /// 该档计提比例（%）
+    /// </summary>
+    public decimal Rate { get; set; }
+}
+
+/// <summary>
+/// 业绩报酬规则
+/// </summary>
+public class PerformanceFeeRule
+{
+    /// <summary>
+    /// 是否收取业绩报酬
+    /// </summary>
+    public bool Has { get; set; }
+
+    /// <summary>
+    /// 高水位类型（与 Benchmark 独立，可自由组合）
+    /// </summary>
+    public HighWaterMarkType HighWaterMark { get; set; }
+
+    /// <summary>
+    /// 收益率计算方式（分级计提中 R 的含义：实际收益率/年化收益率）
+    /// </summary>
+    public PerformanceFeeReturnType ReturnType { get; set; }
+
+    /// <summary>
+    /// 计提方式（扣净值/扣份额）
+    /// </summary>
+    public PerformanceFeeDeductionType DeductionType { get; set; }
+
+    /// <summary>
+    /// 计提触发时点
+    /// </summary>
+    public PerformanceFeeTrigger Triggers { get; set; }
+
+    /// <summary>
+    /// 业绩基准描述（与 HighWaterMark 独立，可自由组合）
+    /// 如："8%" 表示固定门槛收益率，"沪深300" 表示业绩比较基准指数
+    /// 为空时表示无比较基准
+    /// </summary>
+    public string? Benchmark { get; set; }
+
+    /// <summary>
+    /// 计提档位（Has=true 时必填）。单档时为单一比例，多档时为分级计提
+    /// </summary>
+    public List<PerformanceFeeTier>? Tiers { get; set; }
+
+    /// <summary>
+    /// 特殊计提方式描述（HighWaterMark=None 且 Benchmark 为空时的兜底描述）
+    /// </summary>
+    public string? SpecialMethod { get; set; }
+
+    /// <summary>
+    /// 补充说明
+    /// </summary>
+    public string? Remark { get; set; }
+
+    public override string ToString()
+    {
+        if (!Has) return "不收取业绩报酬";
+
+        var method = HighWaterMark switch
+        {
+            HighWaterMarkType.Aggregate => "整体高水位法",
+            HighWaterMarkType.AggregateWithSupplementary => "整体高水位法（赎回补提）",
+            HighWaterMarkType.PerInvestor => "单人高水位法",
+            _ => "",
+        };
+
+        var rPrefix = ReturnType == PerformanceFeeReturnType.Annualized ? "年化收益" : "";
+        var benchmarkPart = string.IsNullOrWhiteSpace(Benchmark)
+            ? ""
+            : Benchmark.Contains('%')
+                ? $"{(string.IsNullOrEmpty(rPrefix) ? "" : rPrefix)}高于{Benchmark}的部分"
+                : $"业绩比较基准P：{Benchmark}";
+
+        if (string.IsNullOrEmpty(method) && string.IsNullOrEmpty(benchmarkPart))
+            method = SpecialMethod ?? "其它";
+
+        var hasIndexBenchmark = !string.IsNullOrWhiteSpace(Benchmark) && !Benchmark.Contains('%');
+        var rateText = FormatTiers(hasIndexBenchmark);
+
+        // 指数基准（非%）+ 单档 → "年化超额部分计提：X%" / "超额部分计提：X%"
+        if (!string.IsNullOrWhiteSpace(Benchmark) && !Benchmark.Contains('%') && Tiers is { Count: 1 } && !Tiers[0].UpperBound.HasValue)
+            rateText = $"{(rPrefix.Length > 0 ? "年化" : "")}超额部分计提：{Tiers[0].Rate}%";
+
+        var deduction = DeductionType == PerformanceFeeDeductionType.ShareDeduction ? "扣份额" : "";
+        var triggers = GetTriggerText();
+
+        var parts = new List<string>();
+        if (!string.IsNullOrEmpty(method)) parts.Add(method);
+        if (!string.IsNullOrEmpty(benchmarkPart)) parts.Add(benchmarkPart);
+        parts.Add(rateText);
+        if (!string.IsNullOrEmpty(deduction)) parts.Add(deduction);
+        if (!string.IsNullOrEmpty(triggers)) parts.Add(triggers);
+        if (!string.IsNullOrWhiteSpace(Remark)) parts.Add(Remark);
+
+        return string.Join("，", parts);
+    }
+
+    private string FormatTiers(bool hasIndexBenchmark)
+    {
+        if (Tiers is not { Count: > 0 }) return "计提：0%";
+
+        // 单档且无上限：简化为"计提：X%"
+        if (Tiers.Count == 1 && !Tiers[0].UpperBound.HasValue)
+            return $"计提：{Tiers[0].Rate}%";
 
 
-//    // public int OwnerId { get; set; }
+        var rType = ReturnType == PerformanceFeeReturnType.Annualized ? "年化" : "实际";
+        var parts = new List<string>();
+        decimal? lowerBound = 0m;
+        var isFirst = true;
+
+        for (int i = 0; i < Tiers.Count; i++)
+        {
+            var tier = Tiers[i];
+            var op = tier.Include ? "≤" : "<";
+            var lb = (isFirst && hasIndexBenchmark) ? "P" : $"{lowerBound}%";
+
+            if (tier.UpperBound.HasValue)
+                parts.Add($"{lb}≤R{op}{tier.UpperBound}%：{tier.Rate}%");
+            else
+                parts.Add($"R≥{lb}：{tier.Rate}%");
+
+            lowerBound = tier.UpperBound;
+            isFirst = false;
+        }
+
+        var prefix = hasIndexBenchmark ? "超额部分分级计提" : "分级计提";
+        return $"{prefix}（{rType}收益率R）：" + string.Join("；", parts);
+    }
+
+    private string GetTriggerText()
+    {
+        if (Triggers == PerformanceFeeTrigger.None) return "";
+        var parts = new List<string>(4);
+        if (Triggers.HasFlag(PerformanceFeeTrigger.Redemption)) parts.Add("赎回");
+        if (Triggers.HasFlag(PerformanceFeeTrigger.Distribution)) parts.Add("分红");
+        if (Triggers.HasFlag(PerformanceFeeTrigger.Liquidation)) parts.Add("清算");
+        if (Triggers.HasFlag(PerformanceFeeTrigger.OpenDay)) parts.Add("开放日");
+        return parts.Count > 0 ? string.Join('/', parts) + "时提取" : "";
+    }
+}
 
 
-
-//    /// <summary>
-//    /// 户名
-//    /// </summary>
-//    public string? Name { get; set; }
-
-//    /// <summary>
-//    /// 账号
-//    /// </summary>
-//    public string? Number { get; set; }
-
-//    /// <summary>
-//    /// 银行
-//    /// </summary>
-//    public string? Bank { get; set; }
-
-//    /// <summary>
-//    /// 银行-支行
-//    /// </summary>
-//    public string? Branch { get; set; }
-
-//    /// <summary>
-//    /// 开户行
-//    /// </summary>
-//    public string? BankOfDeposit { get => Bank + Branch; set => SetDeposit(value); }
-
-
-//    public string? LargePayNo { get; set; }
-
-//    /// <summary>
-//    /// swift
-//    /// </summary>
-//    public string? SwiftCode { get; set; }
-
-//    /// <summary>
-//    /// 银行地址
-//    /// </summary>
-//    public string? BankAddress { get; set; }
-
-//    /// <summary>
-//    /// 注销
-//    /// </summary>
-//    public bool IsClosed { get; set; }
-//}
-
+#endregion

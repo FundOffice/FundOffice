@@ -232,18 +232,12 @@ public partial class FundInfoPageViewModel : ObservableRecipient, IRecipient<Fun
         {
             missingList.Add("托管机构");
         }
-        if (!ele.TrusteeFee.HasValue)
-        {
-            missingList.Add("托管费");
-        }
+
         if (!ele.OutsourcingInfo.HasValue)
         {
             missingList.Add("外包机构");
         }
-        if (!ele.OutsourcingFee.HasValue)
-        {
-            missingList.Add("外包费");
-        }
+
         //if (!ele.InvestmentManagers.HasValue)
         //{
         //    missingList.Add("投资管理人");

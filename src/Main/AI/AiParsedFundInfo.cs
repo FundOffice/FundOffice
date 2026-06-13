@@ -1,4 +1,4 @@
-using FMO.Models;
+﻿﻿using FMO.Models;
 
 namespace FMO.AI;
 
@@ -122,6 +122,9 @@ internal class AiParsedFundInfo
 
     /// <summary>业绩报酬说明（按份额）</summary>
     public ConfidenceWrapper<string[]>? PerformanceFeeStatement { get; set; }
+
+    /// <summary>业绩报酬规则（按份额）</summary>
+    public ConfidenceWrapper<PerformanceFeeRule[]>? PerformanceFeeRule { get; set; }
 }
 
 /// <summary>

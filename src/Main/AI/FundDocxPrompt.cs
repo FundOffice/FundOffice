@@ -18,7 +18,7 @@ internal static class FundDocxPrompt
 4. 日期格式统一为 yyyy-MM-dd
 5. 金额单位统一为元（如“100万”转为 1000000）
 6. 枚举类型直接填名称字符串（如 “Ratio”、“Open”、“R3”）
-7. **份额相关字段按份额拆分**：ManageFee、SubscriptionRule、PurchasRule、RedemptionFee、LockingRule、PerformanceFeeStatement 等数组长度必须与 ShareClasses 一致。当合同中按份额类别分列信息时，必须拆分为独立元素：
+7. **份额相关字段按份额拆分**：ManageFee、SubscriptionRule、PurchasRule、RedemptionFee、LockingRule、PerformanceFeeStatement、PerformanceFeeRule 等数组长度必须与 ShareClasses 一致。当合同中按份额类别分列信息时，必须拆分为独立元素：
    - 表格形式：如“份额类别 | 业绩报酬计提比例” → 按行拆分
    - 文字形式：如“A类份额……B类份额……”或“A类……B类……” → 按类别拆分
    即使其他部分共用，只要某个属性按份额不同，就要拆分。所有份额值完全相同时可只填一个元素
@@ -38,7 +38,7 @@ internal static class FundDocxPrompt
 | 八、当事人及权利义务 | TrusteeInfo、OutsourcingInfo、ManagerProfile、InvestmentManagers |
 | 十一、基金的投资 | InvestmentObjective、InvestmentScope、InvestmentStrategy、PerformanceBenchmark、StopLine、WarningLine |
 | 十二、基金的财产 | CustodyAccount |
-| 十七、基金的费用与税收 | ManageFee、ManageFeePay、PerformanceFeeStatement |
+| 十七、基金的费用与税收 | ManageFee、ManageFeePay、PerformanceFeeStatement、PerformanceFeeRule |
 | 二十、风险揭示 | RiskLevel、StopLine、WarningLine |
 
 ## 输出 JSON 格式
@@ -58,7 +58,7 @@ internal static class FundDocxPrompt
   "ShortName": { "Value": "基金简称", "Confidence": 0.95 },
   "SecurityFundType": { "Value": "FixedIncome", "Confidence": 0.9 },
   "FundModeInfo": {
-    "Value": { "Mode": "Open", "Other": null },
+    "Value": { "Mode": "Open", "Remark": null },
     "Confidence": 0.9
   },
   "SealingRule": {
@@ -104,15 +104,15 @@ internal static class FundDocxPrompt
     "Confidence": 0.9
   },
   "TrusteeInfo": {
-    "Value": { "HasAgency": true, "Name": "招商证券", "HasFee": true, "FeeType": "Ratio", "Fee": 0.02, "HasGuaranteedFee": false, "GuaranteedFee": 0, "Other": null },
+    "Value": { "HasAgency": true, "Name": "招商证券", "HasFee": true, "FeeType": "Ratio", "Fee": 0.02, "HasGuaranteedFee": false, "GuaranteedFee": 0, "Remark": null },
     "Confidence": 0.9
   },
   "OutsourcingInfo": {
-    "Value": { "HasAgency": true, "Name": "招商证券", "HasFee": true, "FeeType": "Ratio", "Fee": 0.005, "HasGuaranteedFee": false, "GuaranteedFee": 0, "Other": null },
+    "Value": { "HasAgency": true, "Name": "招商证券", "HasFee": true, "FeeType": "Ratio", "Fee": 0.005, "HasGuaranteedFee": false, "GuaranteedFee": 0, "Remark": null },
     "Confidence": 0.9
   },
   "ManageFeePay": {
-    "Value": { "Type": "Month", "Other": null },
+    "Value": { "Type": "Month", "Remark": null },
     "Confidence": 0.9
   },
   "InvestmentManagers": {
@@ -130,7 +130,7 @@ internal static class FundDocxPrompt
   "InvestmentScope": { "Value": "投资范围描述", "Confidence": 0.9 },
   "InvestmentStrategy": { "Value": "投资策略描述", "Confidence": 0.9 },
   "CoolingPeriod": {
-    "Value": { "Type": "OneDay", "Other": null },
+    "Value": { "Type": "OneDay", "Remark": null },
     "Confidence": 0.95
   },
   "Callback": {
@@ -144,7 +144,7 @@ internal static class FundDocxPrompt
     "Confidence": 0.85
   },
   "ManageFee": {
-    "Value": [{ "Type": "Ratio", "HasFee": true, "Fee": 1.5, "HasGuaranteedFee": false, "GuaranteedFee": 0, "Other": null }],
+    "Value": [{ "Type": "Ratio", "HasFee": true, "Fee": 1.5, "HasGuaranteedFee": false, "GuaranteedFee": 0, "Remark": null }],
     "Confidence": 0.9
   },
   "SubscriptionRule": {
@@ -161,6 +161,13 @@ internal static class FundDocxPrompt
   },
   "PerformanceFeeStatement": {
     "Value": ["A类份额业绩报酬：采用高水位法，赎回/分红/终止时提取，计提比例30%。收益率R=(A-C)/D×100%，当R>0%时，E=F×(A-C)×30%", "B类份额业绩报酬：采用高水位法，赎回/分红/终止时提取，计提比例20%。收益率R=(A-C)/D×100%，当R>0%时，E=F×(A-C)×20%"],
+    "Confidence": 0.85
+  },
+  "PerformanceFeeRule": {
+    "Value": [
+      { "Has": true, "HighWaterMark": "Aggregate", "ReturnType": "Actual", "DeductionType": "NavDeduction", "Triggers": "Redemption,Distribution,Liquidation", "Benchmark": null, "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 30 }], "SpecialMethod": null, "Remark": null },
+      { "Has": true, "HighWaterMark": "Aggregate", "ReturnType": "Actual", "DeductionType": "NavDeduction", "Triggers": "Redemption,Distribution,Liquidation", "Benchmark": null, "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 20 }], "SpecialMethod": null, "Remark": null }
+    ],
     "Confidence": 0.85
   }
 }
@@ -212,7 +219,7 @@ internal static class FundDocxPrompt
 | Other | 其它 | Fee=0，具体说明填 Other 字段 |
 
 **示例：** "管理费 1.5%/年，保底 50 万"
-→ `{ "Type": "Ratio", "HasFee": true, "Fee": 1.5, "HasGuaranteedFee": true, "GuaranteedFee": 500000, "Other": null }`
+→ `{ "Type": "Ratio", "HasFee": true, "Fee": 1.5, "HasGuaranteedFee": true, "GuaranteedFee": 500000, "Remark": null }`
 
 ---
 
@@ -232,7 +239,7 @@ internal static class FundDocxPrompt
 ```
 
 **示例：** "托管人：招商证券，托管费率 0.02%/年"
-→ `{ "HasAgency": true, "Name": "招商证券", "HasFee": true, "FeeType": "Ratio", "Fee": 0.02, "HasGuaranteedFee": false, "GuaranteedFee": 0, "Other": null }`
+→ `{ "HasAgency": true, "Name": "招商证券", "HasFee": true, "FeeType": "Ratio", "Fee": 0.02, "HasGuaranteedFee": false, "GuaranteedFee": 0, "Remark": null }`
 
 ---
 
@@ -402,6 +409,81 @@ internal static class FundDocxPrompt
 
 ---
 
+### PerformanceFeeRule（业绩报酬规则）
+数组类型，与 PerformanceFeeStatement 一一对应。从合同中解析出结构化业绩报酬规则。
+```
+{
+  "Has": bool,                           // 是否收取业绩报酬
+  "HighWaterMark": string,               // 高水位类型枚举 HighWaterMarkType
+  "ReturnType": string,                  // 收益率计算方式枚举 PerformanceFeeReturnType（影响门槛/指数基准/分级计提的输出格式）
+  "DeductionType": string,               // 计提方式枚举 PerformanceFeeDeductionType
+  "Triggers": string,                    // 计提触发时点枚举 PerformanceFeeTrigger（逗号分隔，如 "Redemption,Distribution"）
+  "Benchmark": string?,                  // 业绩基准描述（如 "8%" 表示门槛，"沪深300" 表示指数基准），null=无基准
+  "Tiers": PerformanceFeeTier[]?,        // 计提档位（Has=true 时必填）。单档=单一比例，多档=分级计提
+  "SpecialMethod": string?,              // 特殊计提方式描述（HighWaterMark=None 且 Benchmark 为空时的兜底描述）
+  "Remark": string?                      // 补充说明（如业绩报酬计算公式）
+}
+```
+**HighWaterMarkType 枚举（高水位类型）：**
+| 值 | 含义 |
+|----|------|
+| None | 无高水位 |
+| Aggregate | 整体高水位（基金层面统一计算） |
+| AggregateWithSupplementary | 整体高水位 + 赎回时补充计提 |
+| PerInvestor | 单人高水位（每个投资者单独计算） |
+
+**PerformanceFeeReturnType 枚举（收益率计算方式）：**
+| 值 | 含义 | 输出格式影响 |
+|----|------|--------------|
+| Actual | 实际收益率 | 门槛：`高于X%的部分`；指数基准单档：`超额部分计提`；分级：`分级计提（实际收益率R）` |
+| Annualized | 年化收益率 | 门槛：`年化收益高于X%的部分`；指数基准单档：`年化超额部分计提`；分级：`超额部分分级计提（年化收益率R）` |
+
+**PerformanceFeeDeductionType 枚举（计提方式）：**
+| 值 | 含义 |
+|----|------|
+| NavDeduction | 扣净值（从份额净值中扣减） |
+| ShareDeduction | 扣份额（从投资者份额中扣减） |
+
+**PerformanceFeeTrigger 枚举（计提触发时点，可组合）：**
+| 值 | 含义 |
+|----|------|
+| Redemption | 赎回时提取 |
+| Distribution | 分红时提取 |
+| Liquidation | 清算/终止时提取 |
+| OpenDay | 开放日提取 |
+
+---
+
+### PerformanceFeeTier（分级计提档位）
+数组类型。每项的 LowerBound 从前一项的 UpperBound 推导；第一项从 0 开始。
+```
+{
+  "UpperBound": decimal?,    // 收益率上限（%）；null 表示无上限（最后一项）
+  "Include": bool,           // 上限是否包含（true: ≤, false: <）
+  "Rate": decimal            // 该档计提比例（%）
+}
+```
+
+**示例：** "采用高水位法，年化收益率R在0%-10%之间计提20%，10%-20%之间计提25%，超过20%计提30%"
+→ `{ "Has": true, "HighWaterMark": "Aggregate", "ReturnType": "Annualized", "DeductionType": "NavDeduction", "Triggers": "Redemption,Distribution", "Benchmark": null, "Tiers": [{ "UpperBound": 10, "Include": false, "Rate": 20 }, { "UpperBound": 20, "Include": false, "Rate": 25 }, { "UpperBound": null, "Include": false, "Rate": 30 }], "SpecialMethod": null, "Remark": null }`
+
+**示例：** "采用单人高水位法，高于8%的部分计提30%，赎回时提取"
+→ `{ "Has": true, "HighWaterMark": "PerInvestor", "ReturnType": "Actual", "DeductionType": "NavDeduction", "Triggers": "Redemption", "Benchmark": "8%", "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 30 }], "SpecialMethod": null, "Remark": null }`
+
+**示例：** "不收取业绩报酬"
+→ `{ "Has": false, "HighWaterMark": "None", "ReturnType": "Actual", "DeductionType": "NavDeduction", "Triggers": "None", "Benchmark": null, "Tiers": null, "SpecialMethod": null, "Remark": null }`
+
+**示例：** "年化收益高于8%的部分计提30%，赎回时提取"
+-> `{ "Has": true, "HighWaterMark": "None", "ReturnType": "Annualized", "DeductionType": "NavDeduction", "Triggers": "Redemption", "Benchmark": "8%", "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 30 }], "SpecialMethod": null, "Remark": null }`
+
+**示例：** "业绩比较基准为中证500，年化超额收益部分计提20%，赎回时提取"
+-> `{ "Has": true, "HighWaterMark": "None", "ReturnType": "Annualized", "DeductionType": "NavDeduction", "Triggers": "Redemption", "Benchmark": "中证500", "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 20 }], "SpecialMethod": null, "Remark": null }`
+
+**示例：** "采用单人高水位法，业绩比较基准为沪深300，超额部分按年化收益率分级计提：0%-10%计提20%，10%-20%计提25%，超过20%计提30%，赎回时提取"
+-> `{ "Has": true, "HighWaterMark": "PerInvestor", "ReturnType": "Annualized", "DeductionType": "NavDeduction", "Triggers": "Redemption", "Benchmark": "沪深300", "Tiers": [{ "UpperBound": 10, "Include": false, "Rate": 20 }, { "UpperBound": 20, "Include": false, "Rate": 25 }, { "UpperBound": null, "Include": false, "Rate": 30 }], "SpecialMethod": null, "Remark": null }`
+
+---
+
 ### ShareClass（份额类别）
 数组类型。从“四、基金的基本情况 → （八）基金份额的分类”提取。
 
@@ -440,7 +522,7 @@ internal static class FundDocxPrompt
 }
 ```
 **FundFeePayType 枚举（收费方式）：**
-| 值 | 含义 | 说明 |
+| 值 | 含义 | 输出格式影响 |
 |----|------|------|
 | Extra | 额外收取 | 费用在申购金额之外额外支付 |
 | Out | 价外法 | 费用从申购金额中扣除（内扣） |
