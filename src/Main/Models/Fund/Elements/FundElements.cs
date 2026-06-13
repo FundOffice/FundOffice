@@ -7,6 +7,9 @@ public class FactField(string name) : Attribute
 }
 
 
+/// <summary>
+/// 此类已弃用，保留兼容性，新增的要素请直接添加到 FundFactors 中
+/// </summary>
 public partial class FundElements
 {
     public const string SingleShareKey = "单一份额";

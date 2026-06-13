@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 
@@ -173,6 +173,10 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
 
     [ObservableProperty]
     public partial ShareFactorViewModel<RedemptionFeeInfo?, RedemptionFeeInfoViewMdoel>? RedemptionFee { get; set; } = null!;
+
+    [ObservableProperty]
+    public partial ShareFactorViewModel<PerformanceFeeRule?, PerformanceFeeRuleViewModel>? PerformanceFeeRule { get; set; } = null!;
+
 
     [ObservableProperty]
     public partial ShareFactorViewModel<OpenRule[]?, FundOpenRuleViewModel>? FundOpenRule { get; set; } = null!;

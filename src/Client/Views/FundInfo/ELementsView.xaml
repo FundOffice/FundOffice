@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="FMO.ElementsView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -429,6 +429,10 @@
                                 EditTemplate="{StaticResource DT.LongText}"
                                 Header="业绩报酬"
                                 Modifier="{Binding PerformanceFeeStatement}" />
+
+                            <shared:FactorModifiableControl
+                                Header="业绩报酬规则"
+                                Modifier="{Binding PerformanceFeeRule}" />
 
 
                             <Separator />

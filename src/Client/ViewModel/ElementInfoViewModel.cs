@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FMO.Models;
 using FMO.Shared;
@@ -543,5 +543,144 @@ public partial class FundOpenRuleViewModel : ObservableObject, IViewModel<OpenRu
             
             OnPropertyChanged(nameof(Rules));
         }
+    }
+}
+
+public partial class PerformanceFeeTierViewModel : ObservableObject, IViewModel<PerformanceFeeTier, PerformanceFeeTierViewModel>
+{
+    [ObservableProperty]
+    public partial decimal? UpperBound { get; set; }
+
+    [ObservableProperty]
+    public partial bool Include { get; set; }
+
+    [ObservableProperty]
+    public partial decimal Rate { get; set; }
+
+    public static PerformanceFeeTier Trans(PerformanceFeeTierViewModel vm)
+    {
+        return new PerformanceFeeTier { UpperBound = vm.UpperBound, Include = vm.Include, Rate = vm.Rate };
+    }
+
+    public static PerformanceFeeTierViewModel Trans(PerformanceFeeTier? model)
+    {
+        return new PerformanceFeeTierViewModel { UpperBound = model?.UpperBound, Include = model?.Include ?? false, Rate = model?.Rate ?? 0m };
+    }
+
+    public bool Equals(PerformanceFeeTier? other)
+    {
+        if (other is null) return false;
+        return UpperBound == other.UpperBound && Include == other.Include && Rate == other.Rate;
+    }
+}
+
+
+public partial class PerformanceFeeRuleViewModel : ObservableObject, IViewModel<PerformanceFeeRule?, PerformanceFeeRuleViewModel>
+{
+    [ObservableProperty]
+    public partial bool Has { get; set; }
+
+    [ObservableProperty]
+    public partial HighWaterMarkType HighWaterMark { get; set; }
+
+    [ObservableProperty]
+    public partial PerformanceFeeReturnType ReturnType { get; set; }
+
+    [ObservableProperty]
+    public partial PerformanceFeeDeductionType DeductionType { get; set; }
+
+    [ObservableProperty]
+    public partial bool TriggerRedemption { get; set; }
+
+    [ObservableProperty]
+    public partial bool TriggerDistribution { get; set; }
+
+    [ObservableProperty]
+    public partial bool TriggerLiquidation { get; set; }
+
+    [ObservableProperty]
+    public partial bool TriggerOpenDay { get; set; }
+
+    [ObservableProperty]
+    public partial string? Benchmark { get; set; }
+
+    [ObservableProperty]
+    public partial ObservableCollection<PerformanceFeeTierViewModel> Tiers { get; set; } = [];
+
+    [ObservableProperty]
+    public partial string? SpecialMethod { get; set; }
+
+    [ObservableProperty]
+    public partial string? Remark { get; set; }
+
+    public static HighWaterMarkType[] HighWaterMarkTypes { get; } = Enum.GetValues<HighWaterMarkType>();
+    public static PerformanceFeeReturnType[] ReturnTypes { get; } = Enum.GetValues<PerformanceFeeReturnType>();
+    public static PerformanceFeeDeductionType[] DeductionTypes { get; } = Enum.GetValues<PerformanceFeeDeductionType>();
+
+    public static PerformanceFeeRule? Trans(PerformanceFeeRuleViewModel vm)
+    {
+        if (vm is null) return null;
+        var triggers = PerformanceFeeTrigger.None;
+        if (vm.TriggerRedemption) triggers |= PerformanceFeeTrigger.Redemption;
+        if (vm.TriggerDistribution) triggers |= PerformanceFeeTrigger.Distribution;
+        if (vm.TriggerLiquidation) triggers |= PerformanceFeeTrigger.Liquidation;
+        if (vm.TriggerOpenDay) triggers |= PerformanceFeeTrigger.OpenDay;
+
+        return new PerformanceFeeRule
+        {
+            Has = vm.Has,
+            HighWaterMark = vm.HighWaterMark,
+            ReturnType = vm.ReturnType,
+            DeductionType = vm.DeductionType,
+            Triggers = triggers,
+            Benchmark = vm.Benchmark,
+            Tiers = vm.Tiers.Count == 0 ? null : [.. vm.Tiers.Select(t => new PerformanceFeeTier { UpperBound = t.UpperBound, Include = t.Include, Rate = t.Rate })],
+            SpecialMethod = vm.SpecialMethod,
+            Remark = vm.Remark,
+        };
+    }
+
+    public static PerformanceFeeRuleViewModel Trans(PerformanceFeeRule? model)
+    {
+        if (model is null) return new PerformanceFeeRuleViewModel();
+        return new PerformanceFeeRuleViewModel
+        {
+            Has = model.Has,
+            HighWaterMark = model.HighWaterMark,
+            ReturnType = model.ReturnType,
+            DeductionType = model.DeductionType,
+            TriggerRedemption = model.Triggers.HasFlag(PerformanceFeeTrigger.Redemption),
+            TriggerDistribution = model.Triggers.HasFlag(PerformanceFeeTrigger.Distribution),
+            TriggerLiquidation = model.Triggers.HasFlag(PerformanceFeeTrigger.Liquidation),
+            TriggerOpenDay = model.Triggers.HasFlag(PerformanceFeeTrigger.OpenDay),
+            Benchmark = model.Benchmark,
+            Tiers = model.Tiers is null ? [] : new(model.Tiers.Select(t => new PerformanceFeeTierViewModel { UpperBound = t.UpperBound, Include = t.Include, Rate = t.Rate })),
+            SpecialMethod = model.SpecialMethod,
+            Remark = model.Remark,
+        };
+    }
+
+    public bool Equals(PerformanceFeeRule? other)
+    {
+        if (other is null) return !Has;
+        var t = Trans(this);
+        return t?.ToString() == other.ToString();
+    }
+
+    public override string ToString()
+    {
+        return Trans(this)?.ToString() ?? "不收取业绩报酬";
+    }
+
+    [RelayCommand]
+    public void AddTier()
+    {
+        Tiers.Add(new PerformanceFeeTierViewModel());
+    }
+
+    [RelayCommand]
+    public void RemoveTier(PerformanceFeeTierViewModel tier)
+    {
+        Tiers.Remove(tier);
     }
 }
