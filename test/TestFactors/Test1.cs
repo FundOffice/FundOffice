@@ -50,8 +50,8 @@ public sealed class Test1
                 Assert.AreEqual(ff.Callback.Current, ri.Callback, "Callback");
                 Assert.AreEqual(ff.TrusteeInfo.Current, ri.TrusteeInfo, "TrusteeInfo");
                 Assert.AreEqual(ff.OutsourcingInfo.Current, ri.OutsourcingInfo, "OutsourcingInfo");
-                Assert.AreEqual(ff.TrusteeFee.Current, ri.TrusteeFee, "TrusteeFee");
-                Assert.AreEqual(ff.OutsourcingFee.Current, ri.OutsourcingFee, "OutsourcingFee");
+                //Assert.AreEqual(ff.TrusteeFee.Current, ri.TrusteeFee, "TrusteeFee");
+                //Assert.AreEqual(ff.OutsourcingFee.Current, ri.OutsourcingFee, "OutsourcingFee");
                 Assert.AreEqual(ff.ManageFeePay.Current, ri.ManageFeePay, "ManageFeePay");
                 Assert.AreEqual(ff.InvestmentManagers.Current, ri.InvestmentManagers, "InvestmentManagers");
                 Assert.AreEqual(ff.InvestmentManager.Current, ri.InvestmentManager, "InvestmentManager");

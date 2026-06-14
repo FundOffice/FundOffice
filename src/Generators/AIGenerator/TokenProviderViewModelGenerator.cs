@@ -56,18 +56,117 @@ public class TokenProviderViewModelGenerator : IIncrementalGenerator
                     {
                         var fqnFormat = SymbolDisplayFormat.FullyQualifiedFormat;
                         string companyName = ExtractCompanyName(modelType);
+                        string[] models = ExtractModels(classSymbol);
+                        string[] supportedStyles = ExtractSupportedStyles(classSymbol);
 
                         return new ViewModelInfo(
                             ModelType: modelType.ToDisplayString(fqnFormat),
                             ViewModelType: vmType.ToDisplayString(fqnFormat),
                             TokenProviderType: tokenProviderSymbol.ToDisplayString(fqnFormat),
-                            CompanyName: companyName);
+                            CompanyName: companyName,
+                            Models: models,
+                            SupportedStyles: supportedStyles);
                     }
                 }
             }
         }
         catch { /* 忽略单个类的解析错误，不影响其他类 */ }
 
+        return null;
+    }
+
+    /// <summary>
+    /// 从 ViewModel 类中提取 static string[] Models 的值
+    /// </summary>
+    private static string[] ExtractModels(INamedTypeSymbol vmSymbol)
+    {
+        try
+        {
+            var modelsProperty = vmSymbol.GetMembers("Models").OfType<IPropertySymbol>().FirstOrDefault();
+            if (modelsProperty == null) return [];
+
+            foreach (var syntaxRef in modelsProperty.DeclaringSyntaxReferences)
+            {
+                if (syntaxRef.GetSyntax() is PropertyDeclarationSyntax propSyntax)
+                {
+                    // 匹配: public static string[] Models { get; } = ["model1", "model2"];
+                    if (propSyntax.Initializer?.Value is CollectionExpressionSyntax collection)
+                    {
+                        return collection.Elements
+                            .OfType<ExpressionElementSyntax>()
+                            .Where(e => e.Expression is LiteralExpressionSyntax)
+                            .Select(e => ((LiteralExpressionSyntax)e.Expression).Token.ValueText)
+                            .ToArray();
+                    }
+
+                    // 匹配旧式数组初始化: = new[] { "model1", "model2" };
+                    if (propSyntax.Initializer?.Value is InitializerExpressionSyntax initializer)
+                    {
+                        return initializer.Expressions
+                            .OfType<LiteralExpressionSyntax>()
+                            .Select(e => e.Token.ValueText)
+                            .ToArray();
+                    }
+                }
+            }
+        }
+        catch { }
+
+        return [];
+    }
+
+    /// <summary>
+    /// 从 ViewModel 类中提取 static TokenProviderStyle[] SupportedStyles 的值
+    /// </summary>
+    private static string[] ExtractSupportedStyles(INamedTypeSymbol vmSymbol)
+    {
+        try
+        {
+            var stylesProperty = vmSymbol.GetMembers("SupportedStyles").OfType<IPropertySymbol>().FirstOrDefault();
+            if (stylesProperty == null) return [];
+
+            foreach (var syntaxRef in stylesProperty.DeclaringSyntaxReferences)
+            {
+                if (syntaxRef.GetSyntax() is PropertyDeclarationSyntax propSyntax)
+                {
+                    // 匹配: public static TokenProviderStyle[] SupportedStyles { get; } = [TokenProviderStyle.OpenAI, ...];
+                    if (propSyntax.Initializer?.Value is CollectionExpressionSyntax collection)
+                    {
+                        return collection.Elements
+                            .OfType<ExpressionElementSyntax>()
+                            .Select(e => ExtractEnumMemberName(e.Expression))
+                            .Where(s => s != null)
+                            .Select(s => s!)
+                            .ToArray();
+                    }
+
+                    // 匹配旧式数组初始化: = new[] { TokenProviderStyle.OpenAI, ... };
+                    if (propSyntax.Initializer?.Value is InitializerExpressionSyntax initializer)
+                    {
+                        return initializer.Expressions
+                            .Select(e => ExtractEnumMemberName(e))
+                            .Where(s => s != null)
+                            .Select(s => s!)
+                            .ToArray();
+                    }
+                }
+            }
+        }
+        catch { }
+
+        return [];
+    }
+
+    /// <summary>
+    /// 从 TokenProviderStyle.OpenAI 这样的表达式中提取 "OpenAI"
+    /// </summary>
+    private static string? ExtractEnumMemberName(ExpressionSyntax expression)
+    {
+        // TokenProviderStyle.OpenAI -> MemberAccessExpression
+        if (expression is MemberAccessExpressionSyntax memberAccess)
+        {
+            return memberAccess.Name.Identifier.ValueText;
+        }
         return null;
     }
 
@@ -201,7 +300,23 @@ public class TokenProviderViewModelGenerator : IIncrementalGenerator
             sb.AppendLine($$"""
                         ];
 
-                        public static TokenProviderViewModel Create({{tokenProviderFqn}} model)
+                        public static System.Collections.Generic.Dictionary<string, string[]> DefaultModels { get; } = new()
+                        {
+                """);
+
+            foreach (var vm in validViewModels)
+            {
+                if (vm.Models.Length > 0)
+                {
+                    var modelsStr = string.Join(", ", vm.Models.Select(m => $"\"{m}\""));
+                    sb.AppendLine($"            [\"{vm.CompanyName}\"] = [{modelsStr}],");
+                }
+            }
+
+            sb.AppendLine($$"""
+                        };
+
+                        public static TokenProviderViewModel? Create({{tokenProviderFqn}} model)
                         {
                             return model switch
                             {
@@ -213,11 +328,11 @@ public class TokenProviderViewModelGenerator : IIncrementalGenerator
             }
 
             sb.AppendLine($$"""
-                            _ => throw new ArgumentException("Unsupported TokenProvider type.", nameof(model))
+                            _ => null
                         };
                     }
 
-                        public static TokenProviderViewModel Create(string company)
+                        public static TokenProviderViewModel? Create(string company)
                         {
                             return company switch
                             {
@@ -229,7 +344,23 @@ public class TokenProviderViewModelGenerator : IIncrementalGenerator
             }
 
             sb.AppendLine($$"""
-                            _ => throw new ArgumentException($"Unknown provider company: {company}", nameof(company))
+                            _ => null
+                        };
+                    }
+
+                        public static {{tokenProviderFqn}}? CreateProvider(string company)
+                        {
+                            return company switch
+                            {
+                """);
+
+            foreach (var vm in validViewModels)
+            {
+                sb.AppendLine($"            \"{vm.CompanyName}\" => new {vm.ModelType}(),");
+            }
+
+            sb.AppendLine($$"""
+                            _ => null
                         };
                     }
                 }
@@ -257,4 +388,4 @@ public class TokenProviderViewModelGenerator : IIncrementalGenerator
     }
 }
 
-internal sealed record ViewModelInfo(string ModelType, string ViewModelType, string TokenProviderType, string CompanyName);
+internal sealed record ViewModelInfo(string ModelType, string ViewModelType, string TokenProviderType, string CompanyName, string[] Models, string[] SupportedStyles);

@@ -6,9 +6,11 @@
     xmlns:mo="clr-namespace:FMO.Models;assembly=Models"
     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
+    <local:ObjectDisplayConverter x:Key="ObjectDisplayConverter" />
+
     <!--  🔹 默认只读态显示模板（TextBlock）  -->
     <DataTemplate x:Key="DefaultReadOnlyTemplate">
-        <local:CopyableTextBlock VerticalAlignment="Center" Text="{Binding}" />
+        <local:CopyableTextBlock VerticalAlignment="Center" Text="{Binding ., Converter={StaticResource ObjectDisplayConverter}}" />
     </DataTemplate>
 
     <DataTemplate x:Key="DefaultDateReadOnlyTemplate">

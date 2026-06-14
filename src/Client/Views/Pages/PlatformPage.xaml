@@ -398,28 +398,11 @@
                 Foreground="RoyalBlue"
                 Text="AI" />
 
-            <ToggleButton
+            <Button
                 hc:IconElement.Geometry="{StaticResource f.circle-plus}"
-                IsChecked="{Binding ShowAICompanyList}"
-                Style="{StaticResource ToggleButtonIconTransparent.Small}" />
-
-            <ListBox
-                VerticalAlignment="Center"
-                BorderThickness="0"
-                ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
-                ItemsSource="{Binding AICompany}"
-                Style="{StaticResource ListBoxCustom}"
-                Visibility="{Binding ShowAICompanyList, Converter={StaticResource Boolean2VisibilityConverter}}">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Button
-                            Command="{Binding DataContext.AddTokenProviderCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                            CommandParameter="{Binding}"
-                            Content="{Binding}"
-                            Style="{StaticResource ButtonDefault.Small}" />
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+                Command="{Binding AddTokenProviderCommand}"
+                Style="{StaticResource ButtonIcon.Small}"
+                ToolTip="添加 AI 提供商" />
 
             <ListBox
                 BorderThickness="0"
@@ -429,32 +412,61 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <Border
+                            x:Name="ItemBorder"
                             BorderBrush="Gray"
                             BorderThickness="1"
                             CornerRadius="8">
-                            <DockPanel MinHeight="32" Background="Transparent">
-                                <shared:ModifiableControl
-                                    BorderThickness="0"
-                                    IsReadOnly="{Binding ElementName=edit, Path=IsChecked}"
-                                    Modifier="{Binding}">
-                                    <shared:ModifiableControl.ContentTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding ., TargetNullValue=未设置}" />
-                                        </DataTemplate>
-                                    </shared:ModifiableControl.ContentTemplate>
-                                    <shared:ModifiableControl.EditTemplate>
-                                        <DataTemplate>
-                                            <ContentPresenter Content="{Binding NewValue}" />
-                                        </DataTemplate>
-                                    </shared:ModifiableControl.EditTemplate>
-                                </shared:ModifiableControl>
+                            <DockPanel
+                                MinHeight="32"
+                                Margin="8,0"
+                                Background="Transparent">
+                                <!--  删除按钮：hover时显示  -->
                                 <ToggleButton
-                                    x:Name="edit"
-                                    Margin="5,0"
-                                    IsChecked="True"
-                                    Style="{StaticResource EditSwitch.Small}" />
+                                    x:Name="DeleteBtn"
+                                    hc:IconElement.Geometry="{StaticResource f.trash}"
+                                    BorderThickness="0"
+                                    DockPanel.Dock="Right"
+                                    Style="{StaticResource ToggleButtonIcon.Small}"
+                                    Visibility="Collapsed" />
+
+                                <!--  确认/取消按钮：待删除时显示  -->
+                                <Button
+                                    x:Name="ConfirmBtn"
+                                    Margin="2,0,0,0"
+                                    Command="{Binding DataContext.ConfirmDeleteTokenProviderCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                    CommandParameter="{Binding}"
+                                    Content="确认"
+                                    DockPanel.Dock="Right"
+                                    Style="{StaticResource ButtonDanger.Small}"
+                                    Visibility="Collapsed" />
+                                <ToggleButton
+                                    x:Name="CancelBtn"
+                                    Margin="2,0,0,0"
+                                    Content="取消"
+                                    DockPanel.Dock="Right"
+                                    IsChecked="{Binding ElementName=DeleteBtn, Path=IsChecked, Converter={StaticResource Boolean2BooleanReConverter}}"
+                                    Style="{StaticResource ToggleButtonDefault.Small}"
+                                    Visibility="Collapsed" />
+
+                                <TextBlock
+                                    x:Name="CompanyText"
+                                    Margin="0,0,10,0"
+                                    VerticalAlignment="Center"
+                                    Text="{Binding Company, TargetNullValue=未设置}" />
                             </DockPanel>
                         </Border>
+                        <DataTemplate.Triggers>
+                            <!--  hover 时显示删除按钮  -->
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="DeleteBtn" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <!--  待删除状态：显示确认/取消，隐藏删除按钮和文字  -->
+                            <DataTrigger Binding="{Binding ElementName=DeleteBtn, Path=IsChecked}" Value="True">
+                                <Setter TargetName="ConfirmBtn" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="CancelBtn" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="DeleteBtn" Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>

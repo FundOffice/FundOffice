@@ -165,15 +165,6 @@ public partial class FundFactors
 
     #region 费用信息（单份额）
 
-    /// <summary>
-    /// 托管费
-    /// </summary>
-    public SingletonFactorItem<FundFeeInfo> TrusteeFee { get; private set; } = null!;
-
-    /// <summary>
-    /// 外包费
-    /// </summary>
-    public SingletonFactorItem<FundFeeInfo> OutsourcingFee { get; private set; } = null!;
 
     /// <summary>
     /// 管理费支付方式
@@ -197,6 +188,19 @@ public partial class FundFactors
     /// </summary>
     /// <returns>无数据返回空数组</returns>
     public FactorItem<string> PerformanceFeeStatement { get; private set; } = null!;
+
+    /// <summary>
+    /// 业绩报酬规则（对应合同"基金的费用与税收"章节）
+    /// </summary>
+    /// <returns>无数据返回空数组</returns>
+    public SingletonFactorItem<PerformanceFeeRule> PerformanceFeeRule { get; private set; } = null!;
+
+    /// <summary>
+    /// 业绩报酬标准（对应合同"基金的费用与税收"章节）
+    /// </summary>
+    /// <returns>无数据返回空数组</returns>
+    public FactorItem<PerformanceFeeStandard> PerformanceFeeStandard { get; private set; } = null!;
+
 
     #endregion
 
