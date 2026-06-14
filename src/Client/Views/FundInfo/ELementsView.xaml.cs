@@ -1,12 +1,12 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
 using MoT;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -175,7 +175,10 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
     public partial ShareFactorViewModel<RedemptionFeeInfo?, RedemptionFeeInfoViewMdoel>? RedemptionFee { get; set; } = null!;
 
     [ObservableProperty]
-    public partial ShareFactorViewModel<PerformanceFeeRule?, PerformanceFeeRuleViewModel>? PerformanceFeeRule { get; set; } = null!;
+    public partial FactorModifiableViewModel<PerformanceFeeRule?, PerformanceFeeRuleViewModel> PerformanceFeeRule { get; set; } = null!;
+
+    [ObservableProperty]
+    public partial ShareFactorViewModel<PerformanceFeeStandard?, PerformanceFeeStandardViewModel> PerformanceFeeStandard { get; set; } = null!;
 
 
     [ObservableProperty]
@@ -218,6 +221,67 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
     public string? FundCode { get; private set; }
 
 
+
+    /// <summary>
+    /// 是否有任何份额收取业绩报酬
+    /// </summary>
+    public bool HasPerformanceFeeStandard => PerformanceFeeStandard?.Data.Any(d => d.NewValue?.Has == true) ?? false;
+
+    partial void OnPerformanceFeeStandardChanged(ShareFactorViewModel<PerformanceFeeStandard?, PerformanceFeeStandardViewModel> value)
+    {
+        if (value?.Data is not null)
+        {
+            value.Data.CollectionChanged += (s, e) =>
+            {
+                OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                if (e.NewItems is not null)
+                    foreach (FactorModifiableViewModel<PerformanceFeeStandard?, PerformanceFeeStandardViewModel> d in e.NewItems)
+                    {
+                        // 1. 订阅 NewValue 内部属性变化（Has）
+                        if (d.NewValue is INotifyPropertyChanged npc)
+                            npc.PropertyChanged += (s, e) =>
+                            {
+                                OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                            };
+                        // 2. 订阅 NewValue 本身被替换的情况（如 Reset）
+                        d.PropertyChanged += (s, e) =>
+                        {
+                            if (e.PropertyName == nameof(d.NewValue))
+                            {
+                                OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                                // NewValue 被替换，重新订阅新实例
+                                if (d.NewValue is INotifyPropertyChanged newNpc)
+                                    newNpc.PropertyChanged += (s, e) =>
+                                    {
+                                        OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                                    };
+                            }
+                        };
+                    }
+            };
+            foreach (var d in value.Data)
+            {
+                if (d.NewValue is INotifyPropertyChanged npc)
+                    npc.PropertyChanged += (s, e) =>
+                    {
+                        OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                    };
+                d.PropertyChanged += (s, e) =>
+                {
+                    if (e.PropertyName == nameof(d.NewValue))
+                    {
+                        OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                        // NewValue 被替换，重新订阅新实例
+                        if (d.NewValue is INotifyPropertyChanged newNpc)
+                            newNpc.PropertyChanged += (s, e) =>
+                            {
+                                OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                            };
+                    }
+                };
+            }
+        }
+    }
     #endregion
 
     //private void FillBy(FundFactors factors, int flowId)

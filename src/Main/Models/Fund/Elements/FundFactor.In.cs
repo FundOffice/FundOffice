@@ -1337,21 +1337,22 @@ public enum HighWaterMarkType
 [TypeConverter(nameof(EnumDescriptionTypeConverter))]
 public enum PerformanceFeeDeductionType
 {
-    [Description("扣净值")] NavDeduction,
-    [Description("扣份额")] ShareDeduction,
+    [Description("扣除净值")] NavDeduction,
+    [Description("扣除份额")] ShareDeduction,
 }
 
 /// <summary>
 /// 业绩报酬计提触发时点
 /// </summary>
 [Flags]
+[TypeConverter(nameof(EnumDescriptionTypeConverter))]
 public enum PerformanceFeeTrigger
 {
     None = 0,
-    Redemption = 1,
-    Distribution = 2,
-    Liquidation = 4,
-    OpenDay = 8,
+    [Description("赎回")] Redemption = 1,
+    [Description("分红")] Distribution = 2,
+    [Description("清算")] Liquidation = 4,
+    [Description("开放日")] OpenDay = 8,
 }
 
 /// <summary>
@@ -1379,47 +1380,50 @@ public class PerformanceFeeTier
 /// <summary>
 /// 业绩报酬规则
 /// </summary>
+/// <summary>
+/// 业绩报酬计提方法
+/// </summary>
+public enum PerformanceFeeMethod
+{
+    /// <summary>基于历史峰值的"奖惩对称"模式，仅对超过基金历史最高净值的部分计提报酬</summary>
+    [Description("单客户高水位法")] HighWaterMarkPerInvestor,
+
+
+    /// <summary>基于历史峰值的"奖惩对称"模式，仅对超过基金历史最高净值的部分计提报酬</summary>
+    [Description("整体高水位法")] HighWaterMark,
+
+
+    /// <summary>股权、创投类私募基金通常采用，在项目退出/基金清算/分红分配时统一计提</summary>
+    [Description("整体收益法")] OverallReturn,
+
+    /// <summary>特殊计提方式</summary>
+    [Description("特殊计提法")] Special,
+}
+
+
+
+
+
 public class PerformanceFeeRule
 {
-    /// <summary>
-    /// 是否收取业绩报酬
-    /// </summary>
-    public bool Has { get; set; }
 
     /// <summary>
-    /// 高水位类型（与 Benchmark 独立，可自由组合）
+    /// 计提方法
     /// </summary>
-    public HighWaterMarkType HighWaterMark { get; set; }
+    public PerformanceFeeMethod Method { get; set; }
 
     /// <summary>
-    /// 收益率计算方式（分级计提中 R 的含义：实际收益率/年化收益率）
-    /// </summary>
-    public PerformanceFeeReturnType ReturnType { get; set; }
-
-    /// <summary>
-    /// 计提方式（扣净值/扣份额）
+    /// 扣减方式（扣净值/扣份额）
     /// </summary>
     public PerformanceFeeDeductionType DeductionType { get; set; }
 
     /// <summary>
-    /// 计提触发时点
+    /// 计提触发时点（可多选）
     /// </summary>
-    public PerformanceFeeTrigger Triggers { get; set; }
+    public PerformanceFeeTrigger Trigger { get; set; } = PerformanceFeeTrigger.Redemption | PerformanceFeeTrigger.Distribution | PerformanceFeeTrigger.Liquidation;
 
     /// <summary>
-    /// 业绩基准描述（与 HighWaterMark 独立，可自由组合）
-    /// 如："8%" 表示固定门槛收益率，"沪深300" 表示业绩比较基准指数
-    /// 为空时表示无比较基准
-    /// </summary>
-    public string? Benchmark { get; set; }
-
-    /// <summary>
-    /// 计提档位（Has=true 时必填）。单档时为单一比例，多档时为分级计提
-    /// </summary>
-    public List<PerformanceFeeTier>? Tiers { get; set; }
-
-    /// <summary>
-    /// 特殊计提方式描述（HighWaterMark=None 且 Benchmark 为空时的兜底描述）
+    /// 特殊计提方式描述
     /// </summary>
     public string? SpecialMethod { get; set; }
 
@@ -1428,68 +1432,84 @@ public class PerformanceFeeRule
     /// </summary>
     public string? Remark { get; set; }
 
+
     public override string ToString()
     {
-        if (!Has) return "不收取业绩报酬";
-
-        var method = HighWaterMark switch
-        {
-            HighWaterMarkType.Aggregate => "整体高水位法",
-            HighWaterMarkType.AggregateWithSupplementary => "整体高水位法（赎回补提）",
-            HighWaterMarkType.PerInvestor => "单人高水位法",
-            _ => "",
-        };
-
-        var rPrefix = ReturnType == PerformanceFeeReturnType.Annualized ? "年化收益" : "";
-        var benchmarkPart = string.IsNullOrWhiteSpace(Benchmark)
-            ? ""
-            : Benchmark.Contains('%')
-                ? $"{(string.IsNullOrEmpty(rPrefix) ? "" : rPrefix)}高于{Benchmark}的部分"
-                : $"业绩比较基准P：{Benchmark}";
-
-        if (string.IsNullOrEmpty(method) && string.IsNullOrEmpty(benchmarkPart))
-            method = SpecialMethod ?? "其它";
-
-        var hasIndexBenchmark = !string.IsNullOrWhiteSpace(Benchmark) && !Benchmark.Contains('%');
-        var rateText = FormatTiers(hasIndexBenchmark);
-
-        // 指数基准（非%）+ 单档 → "年化超额部分计提：X%" / "超额部分计提：X%"
-        if (!string.IsNullOrWhiteSpace(Benchmark) && !Benchmark.Contains('%') && Tiers is { Count: 1 } && !Tiers[0].UpperBound.HasValue)
-            rateText = $"{(rPrefix.Length > 0 ? "年化" : "")}超额部分计提：{Tiers[0].Rate}%";
-
-        var deduction = DeductionType == PerformanceFeeDeductionType.ShareDeduction ? "扣份额" : "";
-        var triggers = GetTriggerText();
-
         var parts = new List<string>();
-        if (!string.IsNullOrEmpty(method)) parts.Add(method);
-        if (!string.IsNullOrEmpty(benchmarkPart)) parts.Add(benchmarkPart);
-        parts.Add(rateText);
-        if (!string.IsNullOrEmpty(deduction)) parts.Add(deduction);
-        if (!string.IsNullOrEmpty(triggers)) parts.Add(triggers);
+
+        switch (Method)
+        {
+            case PerformanceFeeMethod.HighWaterMarkPerInvestor:
+                parts.Add("单人高水位法");
+                break;
+            case PerformanceFeeMethod.HighWaterMark:
+                parts.Add("整体高水位法");
+                break;
+            case PerformanceFeeMethod.OverallReturn:
+                parts.Add("整体收益法");
+                break;
+            case PerformanceFeeMethod.Special:
+                parts.Add("特殊计提法");
+                if (!string.IsNullOrWhiteSpace(SpecialMethod)) parts.Add(SpecialMethod);
+                break;
+        }
+
+        // 计提时点
+        var triggers = new List<string>();
+        if (Trigger.HasFlag(PerformanceFeeTrigger.Redemption)) triggers.Add("赎回");
+        if (Trigger.HasFlag(PerformanceFeeTrigger.Distribution)) triggers.Add("分红");
+        if (Trigger.HasFlag(PerformanceFeeTrigger.Liquidation)) triggers.Add("清盘");
+        if (Trigger.HasFlag(PerformanceFeeTrigger.OpenDay)) triggers.Add("开放日");
+        if (triggers.Count > 0) parts.Add(string.Join("/", triggers) + "时提取");
+
+        // 扣减方式：仅扣份额时显示
+        if (DeductionType == PerformanceFeeDeductionType.ShareDeduction) parts.Add("扣份额");
+
         if (!string.IsNullOrWhiteSpace(Remark)) parts.Add(Remark);
 
         return string.Join("，", parts);
     }
+}
 
-    private string FormatTiers(bool hasIndexBenchmark)
+/// <summary>
+/// 业绩报酬计费标准（份额相关：收益率类型 + 分级计提档位）
+/// </summary>
+public class PerformanceFeeStandard
+{
+    /// <summary>
+    /// 是否收取业绩报酬
+    /// </summary>
+    public bool Has { get; set; }
+
+
+    /// <summary>
+    /// 收益率计算方式（分级计提中 R 的含义：实际收益率/年化收益率）
+    /// </summary>
+    public PerformanceFeeReturnType ReturnType { get; set; }
+
+    /// <summary>
+    /// 计提档位。单档时为单一比例，多档时为分级计提
+    /// </summary>
+    public List<PerformanceFeeTier>? Tiers { get; set; }
+
+    public override string ToString()
     {
-        if (Tiers is not { Count: > 0 }) return "计提：0%";
+        if (!Has) return "不计提";
 
-        // 单档且无上限：简化为"计提：X%"
+        if (Tiers is not { Count: > 0 }) return "费用异常";
+
         if (Tiers.Count == 1 && !Tiers[0].UpperBound.HasValue)
             return $"计提：{Tiers[0].Rate}%";
-
 
         var rType = ReturnType == PerformanceFeeReturnType.Annualized ? "年化" : "实际";
         var parts = new List<string>();
         decimal? lowerBound = 0m;
-        var isFirst = true;
 
         for (int i = 0; i < Tiers.Count; i++)
         {
             var tier = Tiers[i];
             var op = tier.Include ? "≤" : "<";
-            var lb = (isFirst && hasIndexBenchmark) ? "P" : $"{lowerBound}%";
+            var lb = $"{lowerBound}%";
 
             if (tier.UpperBound.HasValue)
                 parts.Add($"{lb}≤R{op}{tier.UpperBound}%：{tier.Rate}%");
@@ -1497,22 +1517,9 @@ public class PerformanceFeeRule
                 parts.Add($"R≥{lb}：{tier.Rate}%");
 
             lowerBound = tier.UpperBound;
-            isFirst = false;
         }
 
-        var prefix = hasIndexBenchmark ? "超额部分分级计提" : "分级计提";
-        return $"{prefix}（{rType}收益率R）：" + string.Join("；", parts);
-    }
-
-    private string GetTriggerText()
-    {
-        if (Triggers == PerformanceFeeTrigger.None) return "";
-        var parts = new List<string>(4);
-        if (Triggers.HasFlag(PerformanceFeeTrigger.Redemption)) parts.Add("赎回");
-        if (Triggers.HasFlag(PerformanceFeeTrigger.Distribution)) parts.Add("分红");
-        if (Triggers.HasFlag(PerformanceFeeTrigger.Liquidation)) parts.Add("清算");
-        if (Triggers.HasFlag(PerformanceFeeTrigger.OpenDay)) parts.Add("开放日");
-        return parts.Count > 0 ? string.Join('/', parts) + "时提取" : "";
+        return $"分级计提（{rType}收益率R）：" + string.Join("；", parts);
     }
 }
 
