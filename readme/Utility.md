@@ -48,7 +48,7 @@ Utility 目录包含系统的各类基础工具和通用库，为上层业务模
 - **Excel/TemplateFileHandler** - 模板文件处理器
 - **Excel/TemplateMeta** - 模板元数据
 - **Excel/InputInfo** - 输入信息
-- **Excel/ScriptGlobal** - 脚本全局变量
+- **Excel/ScriptGlobal** - 脚本全局变量（Elements 属性类型为 FundFactors[]）
 
 ---
 

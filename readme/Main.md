@@ -43,6 +43,8 @@ Main 是系统的核心业务层，包含领域模型定义、数据中心、AI 
 
 基金的每个属性（名称、费用、规则等）建模为 **Factor（要素）**，由四元组唯一标识：
 
+> **注意**：`FundElements` 已弃用，保留仅用于 Patch 迁移和 test 兼容。新增要素请添加到 `FundFactors` 中。
+
 ```
 FundId . FlowId . ShareId . FactorId
 ```

@@ -19,8 +19,8 @@ Trigger 模块实现了基于数据变化的规则触发机制。当 DataHub 中
 | FundClearDateMissingRule | 基金清算日期缺失检查 |
 | FundClearNotFinishedRule | 基金清算未完成检查 |
 | FundDailyMissingRule | 基金每日数据缺失检查 |
-| FundNearLiquidationAlertRule | 基金临近清算预警 |
-| FundOverdueRule | 基金逾期检查 |
+| FundNearLiquidationAlertRule | 基金临近清算预警（监听 IFundFactor 到期日变化） |
+| FundOverdueRule | 基金逾期检查（监听 IFundFactor 到期日变化） |
 | FundScaleWarnRule | 基金规模预警 |
 | FundSettlementMonitor | 基金清算监控 |
 | FundSharePairRule | 基金份额配对规则 |

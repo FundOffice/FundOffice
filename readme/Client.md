@@ -73,6 +73,26 @@ App.xaml.cs 中的启动逻辑：
 | UnitViewModel | 单元视图模型 |
 | FileViewModel | 文件视图模型 |
 
+#### Factor 要素 UI 层
+
+基金要素的编辑 UI 由以下组件组成：
+
+| 组件 | 文件 | 说明 |
+|------|------|------|
+| ModifiableControl | SharedUI | 绑定 FactorModifiableViewModel，单要素编辑（确认/回退/清空按钮） |
+| FactorModifiableControl | SharedUI | 绑定 ShareFactorViewModel，多份额要素编辑（拆分/合并按钮） |
+| FactorDataTemplates.xaml | Themes/ | 各 ViewModel 类型的 DataTemplate 定义 |
+| ElementsView.xaml | Views/FundInfo/ | 基金要素页面，绑定 ElementsViewModel |
+
+**新增要素完整步骤**：
+
+1. **Model**：在 FundFactors.Property.cs 添加属性（选择合适的 FactorItem 类型）
+2. **数据结构**：如需复杂类型，在 Models/Fund/Elements/ 下创建 Model 类
+3. **ViewModel**：创建 ViewModel 类，实现 `IViewModel<TValue, TViewModel>`，提供 `Trans()` 双向转换
+4. **生成器**：ElementsViewModelGenerator 自动生成属性和 FillBy（手写属性需确保类型匹配）
+5. **DataTemplate**：在 FactorDataTemplates.xaml 中添加编辑 UI 模板
+6. **View 绑定**：在 ELementsView.xaml 中用 ModifiableControl 或 FactorModifiableControl 绑定
+
 ### Controls/
 
 自定义 WPF 控件：
