@@ -1,4 +1,4 @@
-using FMO.Models;
+﻿using FMO.Models;
 
 namespace TestFactors;
 
@@ -8,43 +8,79 @@ public sealed class TestPerformanceRule
     [TestMethod]
     public void TestPerformanceFeeRuleToString()
     {
-        // 1. 不收取业绩报酬
-        var noFee = new PerformanceFeeRule { Has = false };
-        Console.WriteLine(noFee.ToString());
-        Assert.AreEqual("不收取业绩报酬", noFee.ToString());
-
-        // 2. 整体高水位法（无基准）
-        var aggregate = new PerformanceFeeRule
+        // 1. 整体高水位法
+        var hwm = new PerformanceFeeRule
         {
-            Has = true,
-            HighWaterMark = HighWaterMarkType.Aggregate,
-            Tiers = [new() { UpperBound = null, Rate = 20 }],
-            Triggers = PerformanceFeeTrigger.Redemption | PerformanceFeeTrigger.Distribution,
+            Method = PerformanceFeeMethod.HighWaterMark,
+            DeductionType = PerformanceFeeDeductionType.NavDeduction,
+            Trigger = PerformanceFeeTrigger.Redemption | PerformanceFeeTrigger.Distribution | PerformanceFeeTrigger.Liquidation,
         };
-        Console.WriteLine(aggregate.ToString());
-        Assert.AreEqual("整体高水位法，计提：20%，赎回/分红时提取", aggregate.ToString());
+        Console.WriteLine(hwm.ToString());
+        Assert.AreEqual("整体高水位法，赎回/分红/清盘时提取", hwm.ToString());
 
-        // 3. 整体高水位法 + 高于8%计提 - 扣份额
-        var aggregateWithHurdle = new PerformanceFeeRule
+        // 2. 单人高水位法 - 扣份额
+        var perInvestor = new PerformanceFeeRule
         {
-            Has = true,
-            HighWaterMark = HighWaterMarkType.Aggregate,
-            Tiers = [new() { UpperBound = null, Rate = 25 }],
+            Method = PerformanceFeeMethod.HighWaterMarkPerInvestor,
             DeductionType = PerformanceFeeDeductionType.ShareDeduction,
-            Benchmark = "8%",
-            Triggers = PerformanceFeeTrigger.Redemption | PerformanceFeeTrigger.Distribution,
+            Trigger = PerformanceFeeTrigger.Redemption,
         };
-        Console.WriteLine(aggregateWithHurdle.ToString());
-        Assert.AreEqual("整体高水位法，高于8%的部分，计提：25%，扣份额，赎回/分红时提取", aggregateWithHurdle.ToString());
+        Console.WriteLine(perInvestor.ToString());
+        Assert.AreEqual("单人高水位法，赎回时提取，扣份额", perInvestor.ToString());
 
-        // 4. 单人高水位法 + 业绩比较基准P：沪深300 - 超额部分分级计提（年化收益率R）
-        var perInvestorWithBenchmark = new PerformanceFeeRule
+        // 3. 整体收益法
+        var overallReturn = new PerformanceFeeRule
+        {
+            Method = PerformanceFeeMethod.OverallReturn,
+            Trigger = PerformanceFeeTrigger.Liquidation,
+        };
+        Console.WriteLine(overallReturn.ToString());
+        Assert.AreEqual("整体收益法，清盘时提取", overallReturn.ToString());
+
+        // 4. 特殊计提法
+        var special = new PerformanceFeeRule
+        {
+            Method = PerformanceFeeMethod.Special,
+            Trigger = PerformanceFeeTrigger.Redemption | PerformanceFeeTrigger.Distribution,
+            SpecialMethod = "按合同约定的特殊方式计提",
+            Remark = "补充说明",
+        };
+        Console.WriteLine(special.ToString());
+        Assert.AreEqual("特殊计提法，按合同约定的特殊方式计提，赎回/分红时提取，补充说明", special.ToString());
+
+        // 5. 开放日提取
+        var openDay = new PerformanceFeeRule
+        {
+            Method = PerformanceFeeMethod.HighWaterMark,
+            Trigger = PerformanceFeeTrigger.OpenDay | PerformanceFeeTrigger.Redemption,
+        };
+        Console.WriteLine(openDay.ToString());
+        Assert.AreEqual("整体高水位法，赎回/开放日时提取", openDay.ToString());
+    }
+
+    [TestMethod]
+    public void TestPerformanceFeeStandardToString()
+    {
+        // 1. 不计提
+        var noFee = new PerformanceFeeStandard { Has = false };
+        Console.WriteLine(noFee.ToString());
+        Assert.AreEqual("不计提", noFee.ToString());
+
+        // 2. 单一比例计提（实际收益率）
+        var singleRate = new PerformanceFeeStandard
         {
             Has = true,
-            HighWaterMark = HighWaterMarkType.PerInvestor,
+            ReturnType = PerformanceFeeReturnType.Actual,
+            Tiers = [new() { UpperBound = null, Rate = 20 }],
+        };
+        Console.WriteLine(singleRate.ToString());
+        Assert.AreEqual("计提：20%", singleRate.ToString());
+
+        // 3. 分级计提（年化收益率R）
+        var tieredAnnualized = new PerformanceFeeStandard
+        {
+            Has = true,
             ReturnType = PerformanceFeeReturnType.Annualized,
-            Benchmark = "沪深300",
-            Triggers = PerformanceFeeTrigger.Redemption,
             Tiers =
             [
                 new() { UpperBound = 10, Include = false, Rate = 20 },
@@ -52,61 +88,13 @@ public sealed class TestPerformanceRule
                 new() { UpperBound = null, Rate = 30 },
             ],
         };
-        Console.WriteLine(perInvestorWithBenchmark.ToString());
-        Assert.AreEqual("单人高水位法，业绩比较基准P：沪深300，超额部分分级计提（年化收益率R）：P≤R<10%：20%；10%≤R<20%：25%；R≥20%：30%，赎回时提取", perInvestorWithBenchmark.ToString());
+        Console.WriteLine(tieredAnnualized.ToString());
+        Assert.AreEqual("分级计提（年化收益率R）：0%≤R<10%：20%；10%≤R<20%：25%；R≥20%：30%", tieredAnnualized.ToString());
 
-        // 5. 仅高于6%计提（无高水位）
-        var hurdleOnly = new PerformanceFeeRule
+        // 4. 分级计提（实际收益率R）+ Include=true
+        var tieredInclude = new PerformanceFeeStandard
         {
             Has = true,
-            HighWaterMark = HighWaterMarkType.None,
-            Tiers = [new() { UpperBound = null, Rate = 30 }],
-            Benchmark = "6%",
-            Triggers = PerformanceFeeTrigger.Redemption | PerformanceFeeTrigger.Distribution,
-        };
-        Console.WriteLine(hurdleOnly.ToString());
-        Assert.AreEqual("高于6%的部分，计提：30%，赎回/分红时提取", hurdleOnly.ToString());
-
-        // 6. 仅业绩比较基准P（无高水位）
-        var benchmarkOnly = new PerformanceFeeRule
-        {
-            Has = true,
-            HighWaterMark = HighWaterMarkType.None,
-            Tiers = [new() { UpperBound = null, Rate = 20 }],
-            Benchmark = "中证500",
-            Triggers = PerformanceFeeTrigger.Redemption,
-        };
-        Console.WriteLine(benchmarkOnly.ToString());
-        Assert.AreEqual("业绩比较基准P：中证500，超额部分计提：20%，赎回时提取", benchmarkOnly.ToString());
-
-        // 7. 整体高水位法（赎回补提）
-        var supplementary = new PerformanceFeeRule
-        {
-            Has = true,
-            HighWaterMark = HighWaterMarkType.AggregateWithSupplementary,
-            Tiers = [new() { UpperBound = null, Rate = 20 }],
-            Triggers = PerformanceFeeTrigger.Redemption,
-        };
-        Console.WriteLine(supplementary.ToString());
-        Assert.AreEqual("整体高水位法（赎回补提），计提：20%，赎回时提取", supplementary.ToString());
-
-        // 8. 兜底：无高水位 + 无基准 - 使用 SpecialMethod
-        var special = new PerformanceFeeRule
-        {
-            Has = true,
-            HighWaterMark = HighWaterMarkType.None,
-            Tiers = [new() { UpperBound = null, Rate = 15 }],
-            SpecialMethod = "按合同约定的特殊方式计提",
-            Remark = "补充说明",
-        };
-        Console.WriteLine(special.ToString());
-        Assert.AreEqual("按合同约定的特殊方式计提，计提：15%，补充说明", special.ToString());
-
-        // 9. 分级计提（实际收益率R）+ Include=true（上限包含）
-        var includeTier = new PerformanceFeeRule
-        {
-            Has = true,
-            HighWaterMark = HighWaterMarkType.Aggregate,
             ReturnType = PerformanceFeeReturnType.Actual,
             Tiers =
             [
@@ -115,105 +103,21 @@ public sealed class TestPerformanceRule
                 new() { UpperBound = null, Rate = 20 },
             ],
         };
-        Console.WriteLine(includeTier.ToString());
-        Assert.AreEqual("整体高水位法，分级计提（实际收益率R）：0%≤R≤5%：10%；5%≤R≤10%：15%；R≥10%：20%", includeTier.ToString());
-        // 10. 门槛收益 + 年化收益率
-        var hurdleAnnualized = new PerformanceFeeRule
-        {
-            Has = true,
-            HighWaterMark = HighWaterMarkType.None,
-            ReturnType = PerformanceFeeReturnType.Annualized,
-            Tiers = [new() { UpperBound = null, Rate = 30 }],
-            Benchmark = "8%",
-            Triggers = PerformanceFeeTrigger.Redemption,
-        };
-        Console.WriteLine(hurdleAnnualized.ToString());
-        Assert.AreEqual("年化收益高于8%的部分，计提：30%，赎回时提取", hurdleAnnualized.ToString());
+        Console.WriteLine(tieredInclude.ToString());
+        Assert.AreEqual("分级计提（实际收益率R）：0%≤R≤5%：10%；5%≤R≤10%：15%；R≥10%：20%", tieredInclude.ToString());
 
-        // 11. 指数基准 + 单档 + 年化超额部分计提
-        var indexAnnualized = new PerformanceFeeRule
+        // 5. 两档分级计提
+        var twoTier = new PerformanceFeeStandard
         {
             Has = true,
-            HighWaterMark = HighWaterMarkType.None,
             ReturnType = PerformanceFeeReturnType.Annualized,
-            Tiers = [new() { UpperBound = null, Rate = 20 }],
-            Benchmark = "中证500",
-            Triggers = PerformanceFeeTrigger.Redemption,
-        };
-        Console.WriteLine(indexAnnualized.ToString());
-        Assert.AreEqual("业绩比较基准P：中证500，年化超额部分计提：20%，赎回时提取", indexAnnualized.ToString());
-
-        // 12. 指数基准 + 分级 + 年化
-        var indexTierAnnualized = new PerformanceFeeRule
-        {
-            Has = true,
-            HighWaterMark = HighWaterMarkType.Aggregate,
-            ReturnType = PerformanceFeeReturnType.Annualized,
-            Benchmark = "沪深300",
-            Triggers = PerformanceFeeTrigger.Redemption,
             Tiers =
             [
-                new() { UpperBound = 5, Include = false, Rate = 10 },
-                new() { UpperBound = null, Rate = 20 },
+                new() { UpperBound = 8, Include = false, Rate = 15 },
+                new() { UpperBound = null, Rate = 25 },
             ],
         };
-        Console.WriteLine(indexTierAnnualized.ToString());
-        Assert.AreEqual("整体高水位法，业绩比较基准P：沪深300，超额部分分级计提（年化收益率R）：P≤R<5%：10%；R≥5%：20%，赎回时提取", indexTierAnnualized.ToString());
-
-        // 13. 门槛 + 整体高水位 + 年化
-        var hurdleAggregateAnnualized = new PerformanceFeeRule
-        {
-            Has = true,
-            HighWaterMark = HighWaterMarkType.Aggregate,
-            ReturnType = PerformanceFeeReturnType.Annualized,
-            Tiers = [new() { UpperBound = null, Rate = 25 }],
-            Benchmark = "6%",
-            Triggers = PerformanceFeeTrigger.Redemption | PerformanceFeeTrigger.Distribution,
-        };
-        Console.WriteLine(hurdleAggregateAnnualized.ToString());
-        Assert.AreEqual("整体高水位法，年化收益高于6%的部分，计提：25%，赎回/分红时提取", hurdleAggregateAnnualized.ToString());
-
-        // 14. 指数基准 + 分级 + 实际收益率
-        var indexTierActual = new PerformanceFeeRule
-        {
-            Has = true,
-            HighWaterMark = HighWaterMarkType.PerInvestor,
-            ReturnType = PerformanceFeeReturnType.Actual,
-            Benchmark = "中证1000",
-            Triggers = PerformanceFeeTrigger.Redemption | PerformanceFeeTrigger.Liquidation,
-            Tiers =
-            [
-                new() { UpperBound = null, Rate = 20 },
-            ],
-        };
-        Console.WriteLine(indexTierActual.ToString());
-        Assert.AreEqual("单人高水位法，业绩比较基准P：中证1000，超额部分计提：20%，赎回/清算时提取", indexTierActual.ToString());
-
-        // 15. 门槛收益 + 实际收益率（无高水位）
-        var hurdleActual = new PerformanceFeeRule
-        {
-            Has = true,
-            HighWaterMark = HighWaterMarkType.None,
-            ReturnType = PerformanceFeeReturnType.Actual,
-            Tiers = [new() { UpperBound = null, Rate = 30 }],
-            Benchmark = "8%",
-            Triggers = PerformanceFeeTrigger.Redemption,
-        };
-        Console.WriteLine(hurdleActual.ToString());
-        Assert.AreEqual("高于8%的部分，计提：30%，赎回时提取", hurdleActual.ToString());
-
-        // 16. 门槛 + 整体高水位 + 实际收益率
-        var hurdleAggregateActual = new PerformanceFeeRule
-        {
-            Has = true,
-            HighWaterMark = HighWaterMarkType.Aggregate,
-            ReturnType = PerformanceFeeReturnType.Actual,
-            Tiers = [new() { UpperBound = null, Rate = 25 }],
-            Benchmark = "6%",
-            Triggers = PerformanceFeeTrigger.Redemption | PerformanceFeeTrigger.Distribution,
-        };
-        Console.WriteLine(hurdleAggregateActual.ToString());
-        Assert.AreEqual("整体高水位法，高于6%的部分，计提：25%，赎回/分红时提取", hurdleAggregateActual.ToString());
+        Console.WriteLine(twoTier.ToString());
+        Assert.AreEqual("分级计提（年化收益率R）：0%≤R<8%：15%；R≥8%：25%", twoTier.ToString());
     }
 }
-

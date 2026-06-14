@@ -1,4 +1,4 @@
-﻿﻿using FMO.Models;
+﻿using FMO.Models;
 
 namespace FMO.AI;
 
@@ -114,6 +114,9 @@ internal static class AiParsedFundInfoConverter
         if (dto.FundOpenRule?.Value is { } or2)
             factors.Add(MakeSingleton<OpenRule>(FactorFields.FundOpenRule, or2));
 
+        if (dto.PerformanceFeeRule?.Value is { } pfr)
+            factors.Add(MakeSingleton<PerformanceFeeRule>(FactorFields.PerformanceFeeRule, pfr));
+
         // ===== 份额相关（数组，压缩逻辑）=====
         AddPortionFactors(factors, dto.LockingRule?.Value, FactorFields.LockingRule, shareClasses);
         AddPortionFactors(factors, dto.ManageFee?.Value, FactorFields.ManageFee, shareClasses);
@@ -121,7 +124,7 @@ internal static class AiParsedFundInfoConverter
         AddPortionFactors(factors, dto.PurchasRule?.Value, FactorFields.PurchasRule, shareClasses);
         AddPortionFactors(factors, dto.RedemptionFee?.Value, FactorFields.RedemptionFee, shareClasses);
         AddPortionStringFactors(factors, dto.PerformanceFeeStatement?.Value, FactorFields.PerformanceFeeStatement, shareClasses);
-        AddPortionFactors(factors, dto.PerformanceFeeRule?.Value, FactorFields.PerformanceFeeRule, shareClasses);
+        AddPortionFactors(factors, dto.PerformanceFeeStandard?.Value, FactorFields.PerformanceFeeStandard, shareClasses);
 
         return factors.ToArray();
     }

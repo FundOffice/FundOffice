@@ -1,4 +1,4 @@
-﻿﻿using FMO.Models;
+﻿using FMO.Models;
 
 namespace FMO.AI;
 
@@ -100,6 +100,9 @@ internal class AiParsedFundInfo
     /// <summary>回访</summary>
     public ConfidenceWrapper<CallbackInfo>? Callback { get; set; }
 
+    /// <summary>业绩报酬规则（全局）</summary>
+    public ConfidenceWrapper<PerformanceFeeRule>? PerformanceFeeRule { get; set; }
+
     // ===== 份额相关（数组，压缩逻辑）=====
 
     /// <summary>份额类别</summary>
@@ -123,8 +126,8 @@ internal class AiParsedFundInfo
     /// <summary>业绩报酬说明（按份额）</summary>
     public ConfidenceWrapper<string[]>? PerformanceFeeStatement { get; set; }
 
-    /// <summary>业绩报酬规则（按份额）</summary>
-    public ConfidenceWrapper<PerformanceFeeRule[]>? PerformanceFeeRule { get; set; }
+    /// <summary>业绩报酬标准（按份额）</summary>
+    public ConfidenceWrapper<PerformanceFeeStandard[]>? PerformanceFeeStandard { get; set; }
 }
 
 /// <summary>

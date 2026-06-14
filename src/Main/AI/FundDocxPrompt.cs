@@ -18,7 +18,7 @@ internal static class FundDocxPrompt
 4. 日期格式统一为 yyyy-MM-dd
 5. 金额单位统一为元（如“100万”转为 1000000）
 6. 枚举类型直接填名称字符串（如 “Ratio”、“Open”、“R3”）
-7. **份额相关字段按份额拆分**：ManageFee、SubscriptionRule、PurchasRule、RedemptionFee、LockingRule、PerformanceFeeStatement、PerformanceFeeRule 等数组长度必须与 ShareClasses 一致。当合同中按份额类别分列信息时，必须拆分为独立元素：
+7. **份额相关字段按份额拆分**：ManageFee、SubscriptionRule、PurchasRule、RedemptionFee、LockingRule、PerformanceFeeStatement、PerformanceFeeStandard 等数组长度必须与 ShareClasses 一致。当合同中按份额类别分列信息时，必须拆分为独立元素：
    - 表格形式：如“份额类别 | 业绩报酬计提比例” → 按行拆分
    - 文字形式：如“A类份额……B类份额……”或“A类……B类……” → 按类别拆分
    即使其他部分共用，只要某个属性按份额不同，就要拆分。所有份额值完全相同时可只填一个元素
@@ -38,7 +38,7 @@ internal static class FundDocxPrompt
 | 八、当事人及权利义务 | TrusteeInfo、OutsourcingInfo、ManagerProfile、InvestmentManagers |
 | 十一、基金的投资 | InvestmentObjective、InvestmentScope、InvestmentStrategy、PerformanceBenchmark、StopLine、WarningLine |
 | 十二、基金的财产 | CustodyAccount |
-| 十七、基金的费用与税收 | ManageFee、ManageFeePay、PerformanceFeeStatement、PerformanceFeeRule |
+| 十七、基金的费用与税收 | ManageFee、ManageFeePay、PerformanceFeeStatement、PerformanceFeeRule、PerformanceFeeStandard |
 | 二十、风险揭示 | RiskLevel、StopLine、WarningLine |
 
 ## 输出 JSON 格式
@@ -138,6 +138,10 @@ internal static class FundDocxPrompt
     "Confidence": 0.95
   },
 
+  "PerformanceFeeRule": {
+    "Value": { "Method": "HighWaterMark", "DeductionType": "NavDeduction", "Trigger": "Redemption,Distribution,Liquidation", "SpecialMethod": null, "Remark": null },
+    "Confidence": 0.85
+  },
   // ===== 份额相关（数组长度与 ShareClasses 一致）=====
   "LockingRule": {
     "Value": [{ "Type": "Has", "Month": 6, "Extra": null }],
@@ -163,10 +167,10 @@ internal static class FundDocxPrompt
     "Value": ["A类份额业绩报酬：采用高水位法，赎回/分红/终止时提取，计提比例30%。收益率R=(A-C)/D×100%，当R>0%时，E=F×(A-C)×30%", "B类份额业绩报酬：采用高水位法，赎回/分红/终止时提取，计提比例20%。收益率R=(A-C)/D×100%，当R>0%时，E=F×(A-C)×20%"],
     "Confidence": 0.85
   },
-  "PerformanceFeeRule": {
+  "PerformanceFeeStandard": {
     "Value": [
-      { "Has": true, "HighWaterMark": "Aggregate", "ReturnType": "Actual", "DeductionType": "NavDeduction", "Triggers": "Redemption,Distribution,Liquidation", "Benchmark": null, "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 30 }], "SpecialMethod": null, "Remark": null },
-      { "Has": true, "HighWaterMark": "Aggregate", "ReturnType": "Actual", "DeductionType": "NavDeduction", "Triggers": "Redemption,Distribution,Liquidation", "Benchmark": null, "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 20 }], "SpecialMethod": null, "Remark": null }
+      { "Has": true, "ReturnType": "Actual", "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 30 }] },
+      { "Has": true, "ReturnType": "Actual", "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 20 }] }
     ],
     "Confidence": 0.85
   }
@@ -410,35 +414,25 @@ internal static class FundDocxPrompt
 ---
 
 ### PerformanceFeeRule（业绩报酬规则）
-数组类型，与 PerformanceFeeStatement 一一对应。从合同中解析出结构化业绩报酬规则。
+全局单值类型。从合同中解析出业绩报酬计提方法和触发规则。
 ```
 {
-  "Has": bool,                           // 是否收取业绩报酬
-  "HighWaterMark": string,               // 高水位类型枚举 HighWaterMarkType
-  "ReturnType": string,                  // 收益率计算方式枚举 PerformanceFeeReturnType（影响门槛/指数基准/分级计提的输出格式）
-  "DeductionType": string,               // 计提方式枚举 PerformanceFeeDeductionType
-  "Triggers": string,                    // 计提触发时点枚举 PerformanceFeeTrigger（逗号分隔，如 "Redemption,Distribution"）
-  "Benchmark": string?,                  // 业绩基准描述（如 "8%" 表示门槛，"沪深300" 表示指数基准），null=无基准
-  "Tiers": PerformanceFeeTier[]?,        // 计提档位（Has=true 时必填）。单档=单一比例，多档=分级计提
-  "SpecialMethod": string?,              // 特殊计提方式描述（HighWaterMark=None 且 Benchmark 为空时的兜底描述）
-  "Remark": string?                      // 补充说明（如业绩报酬计算公式）
+  "Method": string,             // 计提方法枚举 PerformanceFeeMethod
+  "DeductionType": string,      // 扣减方式枚举 PerformanceFeeDeductionType
+  "Trigger": string,            // 计提触发时点枚举 PerformanceFeeTrigger（逗号分隔，如 "Redemption,Distribution,Liquidation"）
+  "SpecialMethod": string?,     // 特殊计提方式描述（Method=Special 时填写）
+  "Remark": string?             // 补充说明
 }
 ```
-**HighWaterMarkType 枚举（高水位类型）：**
+**PerformanceFeeMethod 枚举（计提方法）：**
 | 值 | 含义 |
 |----|------|
-| None | 无高水位 |
-| Aggregate | 整体高水位（基金层面统一计算） |
-| AggregateWithSupplementary | 整体高水位 + 赎回时补充计提 |
-| PerInvestor | 单人高水位（每个投资者单独计算） |
+| HighWaterMarkPerInvestor | 单客户高水位法（每个投资者单独计算） |
+| HighWaterMark | 整体高水位法（基金层面统一计算） |
+| OverallReturn | 整体收益法（股权/创投类常用） |
+| Special | 特殊计提法 |
 
-**PerformanceFeeReturnType 枚举（收益率计算方式）：**
-| 值 | 含义 | 输出格式影响 |
-|----|------|--------------|
-| Actual | 实际收益率 | 门槛：`高于X%的部分`；指数基准单档：`超额部分计提`；分级：`分级计提（实际收益率R）` |
-| Annualized | 年化收益率 | 门槛：`年化收益高于X%的部分`；指数基准单档：`年化超额部分计提`；分级：`超额部分分级计提（年化收益率R）` |
-
-**PerformanceFeeDeductionType 枚举（计提方式）：**
+**PerformanceFeeDeductionType 枚举（扣减方式）：**
 | 值 | 含义 |
 |----|------|
 | NavDeduction | 扣净值（从份额净值中扣减） |
@@ -454,6 +448,23 @@ internal static class FundDocxPrompt
 
 ---
 
+### PerformanceFeeStandard（业绩报酬标准）
+数组类型，按份额分类。从合同中解析出各份额的业绩报酬计费标准。
+```
+{
+  "Has": bool,                          // 是否收取业绩报酬
+  "ReturnType": string,                 // 收益率计算方式枚举 PerformanceFeeReturnType
+  "Tiers": PerformanceFeeTier[]?        // 计提档位（Has=true 时必填）。单档=单一比例，多档=分级计提
+}
+```
+**PerformanceFeeReturnType 枚举（收益率计算方式）：**
+| 值 | 含义 |
+|----|------|
+| Actual | 实际收益率 |
+| Annualized | 年化收益率 |
+
+---
+
 ### PerformanceFeeTier（分级计提档位）
 数组类型。每项的 LowerBound 从前一项的 UpperBound 推导；第一项从 0 开始。
 ```
@@ -464,23 +475,22 @@ internal static class FundDocxPrompt
 }
 ```
 
-**示例：** "采用高水位法，年化收益率R在0%-10%之间计提20%，10%-20%之间计提25%，超过20%计提30%"
-→ `{ "Has": true, "HighWaterMark": "Aggregate", "ReturnType": "Annualized", "DeductionType": "NavDeduction", "Triggers": "Redemption,Distribution", "Benchmark": null, "Tiers": [{ "UpperBound": 10, "Include": false, "Rate": 20 }, { "UpperBound": 20, "Include": false, "Rate": 25 }, { "UpperBound": null, "Include": false, "Rate": 30 }], "SpecialMethod": null, "Remark": null }`
+**示例：** "采用整体高水位法，赎回/分红/终止时提取，扣净值，年化收益率分级计提：0%-10%计提20%，10%-20%计提25%，超过20%计提30%"
+→ Rule: `{ "Method": "HighWaterMark", "DeductionType": "NavDeduction", "Trigger": "Redemption,Distribution,Liquidation", "SpecialMethod": null, "Remark": null }`
+→ Standard: `{ "Has": true, "ReturnType": "Annualized", "Tiers": [{ "UpperBound": 10, "Include": false, "Rate": 20 }, { "UpperBound": 20, "Include": false, "Rate": 25 }, { "UpperBound": null, "Include": false, "Rate": 30 }] }`
 
-**示例：** "采用单人高水位法，高于8%的部分计提30%，赎回时提取"
-→ `{ "Has": true, "HighWaterMark": "PerInvestor", "ReturnType": "Actual", "DeductionType": "NavDeduction", "Triggers": "Redemption", "Benchmark": "8%", "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 30 }], "SpecialMethod": null, "Remark": null }`
+**示例：** "采用单人高水位法，赎回时提取，计提比例30%"
+→ Rule: `{ "Method": "HighWaterMarkPerInvestor", "DeductionType": "NavDeduction", "Trigger": "Redemption", "SpecialMethod": null, "Remark": null }`
+→ Standard: `{ "Has": true, "ReturnType": "Actual", "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 30 }] }`
 
 **示例：** "不收取业绩报酬"
-→ `{ "Has": false, "HighWaterMark": "None", "ReturnType": "Actual", "DeductionType": "NavDeduction", "Triggers": "None", "Benchmark": null, "Tiers": null, "SpecialMethod": null, "Remark": null }`
+→ Rule: null（不输出）
+→ Standard: `{ "Has": false, "ReturnType": "Actual", "Tiers": null }`
 
-**示例：** "年化收益高于8%的部分计提30%，赎回时提取"
--> `{ "Has": true, "HighWaterMark": "None", "ReturnType": "Annualized", "DeductionType": "NavDeduction", "Triggers": "Redemption", "Benchmark": "8%", "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 30 }], "SpecialMethod": null, "Remark": null }`
+**示例：** "采用特殊计提方式，按项目收益的15%计提，清算时提取"
+→ Rule: `{ "Method": "Special", "DeductionType": "NavDeduction", "Trigger": "Liquidation", "SpecialMethod": "按项目收益的15%计提", "Remark": null }`
+→ Standard: `{ "Has": true, "ReturnType": "Actual", "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 15 }] }`
 
-**示例：** "业绩比较基准为中证500，年化超额收益部分计提20%，赎回时提取"
--> `{ "Has": true, "HighWaterMark": "None", "ReturnType": "Annualized", "DeductionType": "NavDeduction", "Triggers": "Redemption", "Benchmark": "中证500", "Tiers": [{ "UpperBound": null, "Include": false, "Rate": 20 }], "SpecialMethod": null, "Remark": null }`
-
-**示例：** "采用单人高水位法，业绩比较基准为沪深300，超额部分按年化收益率分级计提：0%-10%计提20%，10%-20%计提25%，超过20%计提30%，赎回时提取"
--> `{ "Has": true, "HighWaterMark": "PerInvestor", "ReturnType": "Annualized", "DeductionType": "NavDeduction", "Triggers": "Redemption", "Benchmark": "沪深300", "Tiers": [{ "UpperBound": 10, "Include": false, "Rate": 20 }, { "UpperBound": 20, "Include": false, "Rate": 25 }, { "UpperBound": null, "Include": false, "Rate": 30 }], "SpecialMethod": null, "Remark": null }`
 
 ---
 
