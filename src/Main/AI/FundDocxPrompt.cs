@@ -18,7 +18,7 @@ internal static class FundDocxPrompt
 4. 日期格式统一为 yyyy-MM-dd
 5. 金额单位统一为元（如“100万”转为 1000000）
 6. 枚举类型直接填名称字符串（如 “Ratio”、“Open”、“R3”）
-7. **份额相关字段按份额拆分**：ManageFee、SubscriptionRule、PurchasRule、RedemptionFee、LockingRule、PerformanceFeeStatement、PerformanceFeeStandard 等数组长度必须与 ShareClasses 一致。当合同中按份额类别分列信息时，必须拆分为独立元素：
+7. **份额相关字段按份额拆分**：ManageFee、SubscriptionRule、PurchasRule、RedemptionFee、LockingRule、PerformanceFeeStatement、PerformanceFeeStandard、FundOpenRule、TemporarilyOpenInfo 等数组长度必须与 ShareClasses 一致。当合同中按份额类别分列信息时，必须拆分为独立元素：
    - 表格形式：如“份额类别 | 业绩报酬计提比例” → 按行拆分
    - 文字形式：如“A类份额……B类份额……”或“A类……B类……” → 按类别拆分
    即使其他部分共用，只要某个属性按份额不同，就要拆分。所有份额值完全相同时可只填一个元素
@@ -73,27 +73,6 @@ internal static class FundDocxPrompt
   "ExpirationDate": { "Value": null, "Confidence": 0.5 },
   "StopLine": { "Value": 0.7, "Confidence": 0.95 },
   "WarningLine": { "Value": 0.8, "Confidence": 0.95 },
-  "FundOpenRule": {
-    "Value": {
-      "AllowBuy": true,
-      "AllowSell": true,
-      "Type": "Monthly",
-      "Quarters": null,
-      "Months": null,
-      "Weeks": null,
-      "WeekOrder": "Ascend",
-      "Dates": [1, 15],
-      "DayOrder": "Ascend",
-      "TradeOrNatural": true,
-      "Postpone": true,
-      "CrossWeek": false
-    },
-    "Confidence": 0.8
-  },
-  "TemporarilyOpenInfo": {
-    "Value": { "IsAllowed": true, "IsLimited": false, "AllowPurchase": true, "AllowRedemption": true },
-    "Confidence": 0.85
-  },
   "HugeRedemptionRatio": { "Value": 0.1, "Confidence": 0.9 },
   "CollectionAccount": {
     "Value": { "Name": "xxx私募基金管理有限公司", "Number": "123456789", "Bank": "招商银行", "Branch": "上海分行", "BankOfDeposit": "招商银行上海分行" },
@@ -143,6 +122,27 @@ internal static class FundDocxPrompt
     "Confidence": 0.85
   },
   // ===== 份额相关（数组长度与 ShareClasses 一致）=====
+  "FundOpenRule": {
+    "Value": [[{
+      "AllowBuy": true,
+      "AllowSell": true,
+      "Type": "Monthly",
+      "Quarters": null,
+      "Months": null,
+      "Weeks": null,
+      "WeekOrder": "Ascend",
+      "Dates": [1, 15],
+      "DayOrder": "Ascend",
+      "TradeOrNatural": true,
+      "Postpone": true,
+      "CrossWeek": false
+    }]],
+    "Confidence": 0.8
+  },
+  "TemporarilyOpenInfo": {
+    "Value": [{ "IsAllowed": true, "IsLimited": false, "AllowPurchase": true, "AllowRedemption": true }],
+    "Confidence": 0.85
+  },
   "LockingRule": {
     "Value": [{ "Type": "Has", "Month": 6, "Extra": null }],
     "Confidence": 0.85
@@ -316,7 +316,7 @@ internal static class FundDocxPrompt
 ---
 
 ### OpenRule（开放日规则）
-字段名 FundOpenRule
+字段名 FundOpenRule，**份额相关数组**（外层对应份额，内层是该份额的开放日规则数组）
 ```
 {
   "AllowBuy": bool,            // 是否允许申购
@@ -355,6 +355,7 @@ internal static class FundDocxPrompt
 ---
 
 ### TemporarilyOpenInfo（临时开放）
+**份额相关数组**，数组长度与 ShareClasses 一致
 ```
 {
   "IsAllowed": bool,          // 是否允许临时开放

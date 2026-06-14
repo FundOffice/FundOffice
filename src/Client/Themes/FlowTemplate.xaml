@@ -221,7 +221,33 @@
                 <StackPanel MinWidth="500" VerticalAlignment="Center">
                     <!--<ContentControl Content="{Binding Contract}" Style="{StaticResource SingleFileStyle}" />-->
 
-                    <shared:FileView Content="{Binding Contract}" Header="基金合同" />
+                    <WrapPanel>
+                        <shared:FileView Content="{Binding Contract}" Header="基金合同" />
+
+                        <hc:SimplePanel>
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.brain}"
+                                Command="{Binding ParseContractElementsCommand}"
+                                Foreground="Goldenrod"
+                                Style="{StaticResource ButtonIcon.Small}"
+                                ToolTip="AI 解析合同要素"
+                                Visibility="{Binding Contract.Meta, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                            <hc:LoadingCircle
+                                Width="18"
+                                Height="18"
+                                Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                        </hc:SimplePanel>
+
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="11"
+                            Foreground="Gray"
+                            Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}">
+                            <Run Text="{Binding ParsedTokenCount, Mode=OneWay}" />
+                            <Run Text=" tokens" />
+                        </TextBlock>
+                    </WrapPanel>
 
                     <shared:FileView Content="{Binding RiskDisclosureDocument}" Header="风险揭示书" />
 
@@ -435,7 +461,28 @@
                         Style="{StaticResource MultiFileStyle}"
                         Visibility="{Binding ModifyBySupplementary, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
-                    <shared:FileView Content="{Binding Contract}" Header="基金合同" />
+                    <WrapPanel>
+                        <shared:FileView Content="{Binding Contract}" Header="基金合同" />
+                        <Button
+                            hc:IconElement.Geometry="{StaticResource f.brain}"
+                            Command="{Binding ParseContractElementsCommand}"
+                            Foreground="RoyalBlue"
+                            Style="{StaticResource ButtonIcon.Small}"
+                            ToolTip="AI 解析合同要素"
+                            Visibility="{Binding Contract.Meta, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                        <hc:LoadingCircle
+                            Width="18"
+                            Height="18"
+                            Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="11"
+                            Foreground="Gray"
+                            Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}">
+                            <Run Text="{Binding ParsedTokenCount, Mode=OneWay}" />
+                            <Run Text=" tokens" />
+                        </TextBlock>
+                    </WrapPanel>
                     <shared:FileView Content="{Binding RiskDisclosureDocument}" Header="风险揭示书" />
                     <shared:FileView
                         Content="{Binding StructureGraph}"

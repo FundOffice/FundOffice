@@ -5,7 +5,7 @@ namespace FMO.AI;
 /// <summary>
 /// 置信度包装器
 /// </summary>
-internal class ConfidenceWrapper<T>
+public class ConfidenceWrapper<T>
 {
     public T? Value { get; set; }
     public double Confidence { get; set; }
@@ -14,7 +14,7 @@ internal class ConfidenceWrapper<T>
 /// <summary>
 /// AI 解析中间层（internal），所有字段与 FundElements 同构 + 置信度
 /// </summary>
-internal class AiParsedFundInfo
+public class AiParsedFundInfo
 {
     // ===== ReadonlyFundInfo 自有字段 =====
     public ConfidenceWrapper<string>? ManagerProfile { get; set; }
@@ -52,11 +52,11 @@ internal class AiParsedFundInfo
     /// <summary>预警线</summary>
     public ConfidenceWrapper<decimal>? WarningLine { get; set; }
 
-    /// <summary>开放日规则</summary>
-    public ConfidenceWrapper<OpenRule>? FundOpenRule { get; set; }
+    /// <summary>开放日规则（按份额，每份额一个 OpenRule[]）</summary>
+    public ConfidenceWrapper<OpenRule[][]>? FundOpenRule { get; set; }
 
-    /// <summary>临时开放</summary>
-    public ConfidenceWrapper<TemporarilyOpenInfo>? TemporarilyOpenInfo { get; set; }
+    /// <summary>临时开放（按份额）</summary>
+    public ConfidenceWrapper<TemporarilyOpenInfo[]>? TemporarilyOpenInfo { get; set; }
 
     /// <summary>巨额赎回比例（小数）</summary>
     public ConfidenceWrapper<decimal>? HugeRedemptionRatio { get; set; }
@@ -133,7 +133,7 @@ internal class AiParsedFundInfo
 /// <summary>
 /// AI 返回的份额类别（不含 Id 等内部字段）
 /// </summary>
-internal class AiShareClass
+public class AiShareClass
 {
     public string Name { get; set; } = "";
     public string? Requirement { get; set; }
@@ -142,7 +142,7 @@ internal class AiShareClass
 /// <summary>
 /// AI 返回的基金经理（日期为可空字符串）
 /// </summary>
-internal class AiInvestmentManager
+public class AiInvestmentManager
 {
     public int PersonId { get; set; }
     public int FundId { get; set; }

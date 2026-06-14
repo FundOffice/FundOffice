@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 
+using FMO.AI;
 using FMO.Models;
 using FMO.PDF;
 using FMO.Shared;
@@ -9,6 +10,9 @@ using FMO.Utilities;
 using MoT;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Net.Http;
+using System.Text.Json;
+using Utilities;
 
 namespace FMO;
 
@@ -52,6 +56,19 @@ public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IEle
     /// </summary>
     [ObservableProperty]
     public partial bool ModifyShareClass { get; set; }
+
+
+    /// <summary>
+    /// 正在 AI 解析合同要素
+    /// </summary>
+    [ObservableProperty]
+    public partial bool IsParsingContract { get; set; }
+
+    /// <summary>
+    /// AI 解析已接收的 token 数
+    /// </summary>
+    [ObservableProperty]
+    public partial int ParsedTokenCount { get; set; }
 
 
     /// <summary>
@@ -125,6 +142,149 @@ public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IEle
     }
 
 
+
+
+    [RelayCommand]
+    public async Task ParseContractElements()
+    {
+        var meta = Contract.Meta;
+        if (meta is null)
+        {
+            Toast.Warning("合同文件不存在");
+            return;
+        }
+
+        // 1. 加载可用的 AI 提供商（从数据库中筛选配置完整的）
+        TokenProvider? provider;
+        using (var db = DbHelper.Base())
+        {
+            provider = db.GetCollection<TokenProvider>().Query().ToEnumerable()
+                .Where(x => !string.IsNullOrWhiteSpace(x.Company)
+                    && !string.IsNullOrWhiteSpace(x.Url)
+                    && !string.IsNullOrWhiteSpace(x.Key)
+                    && !string.IsNullOrWhiteSpace(x.Model))
+                .OrderBy(_ => Random.Shared.Next())
+                .FirstOrDefault();
+
+            if (provider is null)
+            {
+                Toast.Warning("没有可用的 AI 提供商，请在平台设置中配置完整的提供商（地址、密钥、模型）");
+                return;
+            }
+        }
+
+        Toast.Info($"正在 AI [{provider.Company}] 解析合同要素...");
+        IsParsingContract = true;
+        ParsedTokenCount = 0;
+
+        // 2. 并行启动：查找上一个 contract flow 的解析记录（与 AI 解析同时进行）
+        var prevInfoTask = Task.Run(() => LoadPreviousContractInfo());
+        var progress = new Progress<int>(count => ParsedTokenCount = count);
+
+        try
+        {
+            // 3. 强制重新解析（流式接收，实时报告 token 进度）
+            var parser = new FundDocxAiParser(provider, provider.Model);
+            var result = await parser.ParseAsync(meta.GetFullPath(), progress);
+            if (result is null)
+            {
+                Toast.Error("AI 返回结果为空，请检查合同文件格式是否正确");
+                return;
+            }
+
+            // 4. 填充 ReadonlyFundInfo
+            var fundInfo = new ReadonlyFundInfo();
+            fundInfo.FillBy(result.Factors);
+
+            // 5. 保存到 DB
+            var json = JsonSerializer.Serialize(fundInfo, FundDocxAiParser.JsonOptions);
+            var record = new ContractParseRecord
+            {
+                Id = meta.Hash,
+                ParsedAt = DateTime.Now,
+                FundInfoJson = json
+            };
+            using (var db = DbHelper.Base())
+            {
+                db.GetCollection<ContractParseRecord>().Upsert(record);
+            }
+
+            // 6. 等待上一个合同解析记录（AI 解析期间已并行查询）
+            var oldInfo = await prevInfoTask;
+
+            // 7. 打开对比窗口
+            var vm = new ContractElementsCompareViewModel(fundInfo, oldInfo);
+            var window = new ContractElementsCompareWindow
+            {
+                DataContext = vm,
+                Owner = App.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+        catch (HttpRequestException ex)
+        {
+            Logg.Error($"AI 解析合同要素网络错误: {ex}");
+            Toast.Error($"网络请求失败：{ex.Message}，请检查网络连接或 AI 服务地址");
+        }
+        catch (TaskCanceledException)
+        {
+            Logg.Error("AI 解析合同要素超时");
+            Toast.Error("AI 请求超时（5分钟），请检查网络连接或稍后重试");
+        }
+        catch (System.IO.InvalidDataException ex)
+        {
+            Logg.Error(ex, $"AI 配置错误");
+            Toast.Error($"AI 配置错误：{ex.Message}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            Logg.Error(ex, $"AI 解析返回错误");
+            Toast.Error(ex.Message);
+        }
+        catch (JsonException ex)
+        {
+            Logg.Error(ex, $"AI 返回 JSON 解析失败");
+            Toast.Error($"AI 返回内容解析失败，原始响应已保存到 temp 文件夹");
+        }
+        catch (Exception ex)
+        {
+            Logg.Error(ex, $"AI 解析合同要素失败");
+            Toast.Error($"AI 解析失败: {ex.Message}");
+        }
+        finally
+        {
+            IsParsingContract = false;
+        }
+    }
+
+    /// <summary>
+    /// 查找上一个 contract flow 的合同解析记录
+    /// </summary>
+    private ReadonlyFundInfo? LoadPreviousContractInfo()
+    {
+        try
+        {
+            using var db = DbHelper.Base();
+            var prevContractFlow = db.GetCollection<FundFlow>()
+                .Find(x => x.FundId == FundId && x.Id < FlowId)
+                .OfType<ContractFlow>()
+                .Where(cf => cf.ContractFile?.File?.Hash is not null)
+                .OrderByDescending(cf => cf.Id)
+                .FirstOrDefault();
+
+            if (prevContractFlow?.ContractFile?.File?.Hash is string prevHash)
+            {
+                var prevRecord = db.GetCollection<ContractParseRecord>().FindById(prevHash);
+                if (prevRecord is not null)
+                    return prevRecord.ToFundInfo();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logg.Error($"查找上一个合同解析记录失败: {ex}");
+        }
+        return null;
+    }
 
 
     [RelayCommand]

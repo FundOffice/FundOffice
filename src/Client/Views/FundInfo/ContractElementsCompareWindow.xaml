@@ -1,0 +1,63 @@
+<Window
+    x:Class="FMO.ContractElementsCompareWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="AI 合同要素解析结果"
+    Width="800"
+    Height="700"
+    d:DataContext="{d:DesignInstance Type=local:ContractElementsCompareViewModel}"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+    <DockPanel Margin="12">
+        <TextBlock
+            Margin="0,0,0,8"
+            DockPanel.Dock="Top"
+            FontSize="14"
+            FontWeight="Bold"
+            Text="合同要素对比（变化的要素以红色标注）" />
+
+        <ListBox ItemsSource="{Binding Items}">
+            <ListBox.ItemContainerStyle>
+                <Style BasedOn="{StaticResource ListBoxItemBaseStyle}" TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="4,6" />
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type local:FactorCompareItem}">
+                    <DockPanel>
+                        <TextBlock
+                            Width="120"
+                            VerticalAlignment="Center"
+                            FontWeight="SemiBold"
+                            Text="{Binding Name}"
+                            TextTrimming="CharacterEllipsis"
+                            ToolTip="{Binding Name}" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Text="{Binding DisplayValue}"
+                            TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasChanged}" Value="True">
+                                            <Setter Property="Foreground" Value="Tomato" />
+                                            <Setter Property="FontWeight" Value="SemiBold" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                            <Setter Property="Foreground" Value="Gray" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </DockPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </DockPanel>
+</Window>

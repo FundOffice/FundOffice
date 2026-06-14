@@ -73,7 +73,7 @@ public class TokenProvider
     /// <summary>
     /// 使用已上传文件的 file_id 进行问答
     /// </summary>
-    protected virtual async Task<string> AskWithFileIdAsync(HttpClient client, string model, string prompt, string fileId)
+    protected virtual async Task<string> AskWithFileIdAsync(HttpClient client, string model, string prompt, string fileId, IProgress<int>? progress = null)
         => throw new NotSupportedException($"{Company} 不支持 file_id 问答");
 
     public override string ToString()
@@ -83,12 +83,14 @@ public class TokenProvider
 
     // ===== 纯文本问答 =====
 
-    public string Ask(HttpClient client, string model, string prompt, string message)
+    public async Task<string> AskAsync(HttpClient client, string model, string prompt, string message, IProgress<int>? progress = null)
     {
         if (string.IsNullOrWhiteSpace(Key))
             throw new InvalidDataException("错误：API密钥未配置");
         if (string.IsNullOrWhiteSpace(Url))
             throw new InvalidDataException("错误：请求地址未配置");
+
+        var useStream = progress is not null;
 
         try
         {
@@ -115,17 +117,24 @@ public class TokenProvider
                         max_completion_tokens = 16384,
                         temperature = 0.1,
                         top_p = 0.95,
-                        stream = false,
+                        stream = useStream,
                         stop = (string?)null,
                         frequency_penalty = 0,
                         presence_penalty = 0
                     };
                     requestBody = JsonSerializer.Serialize(openAiRequest);
-                    var openAiResponse = client.PostAsync(url, new StringContent(requestBody, Encoding.UTF8, "application/json")).Result;
-                    responseContent = openAiResponse.Content.ReadAsStringAsync().Result;
 
-                    var openAiResult = JsonSerializer.Deserialize<OpenAIResponse>(responseContent);
-                    return openAiResult?.choices?[0]?.message?.content ?? "无有效返回";
+                    if (useStream)
+                    {
+                        return await StreamOpenAiResponse(client, url, requestBody, progress!);
+                    }
+                    else
+                    {
+                        var openAiResponse = await client.PostAsync(url, new StringContent(requestBody, Encoding.UTF8, "application/json"));
+                        responseContent = await openAiResponse.Content.ReadAsStringAsync();
+                        var openAiResult = JsonSerializer.Deserialize<OpenAIResponse>(responseContent);
+                        return openAiResult?.choices?[0]?.message?.content ?? "无有效返回";
+                    }
 
                 case TokenProviderStyle.Anthropic:
                     client.DefaultRequestHeaders.Add("x-api-key", Key);
@@ -141,16 +150,23 @@ public class TokenProvider
                             new { role = "user", content = new[] { new { type = "text", text = message } } }
                         },
                         top_p = 0.95,
-                        stream = false,
+                        stream = useStream,
                         temperature = 0.1,
                         stop_sequences = (string?)null
                     };
                     requestBody = JsonSerializer.Serialize(anthropicRequest);
-                    var anthropicResponse = client.PostAsync(url, new StringContent(requestBody, Encoding.UTF8, "application/json")).Result;
-                    responseContent = anthropicResponse.Content.ReadAsStringAsync().Result;
 
-                    var anthropicResult = JsonSerializer.Deserialize<AnthropicResponse>(responseContent);
-                    return anthropicResult?.content?[0]?.text ?? "无有效返回";
+                    if (useStream)
+                    {
+                        return await StreamAnthropicResponse(client, url, requestBody, progress!);
+                    }
+                    else
+                    {
+                        var anthropicResponse = await client.PostAsync(url, new StringContent(requestBody, Encoding.UTF8, "application/json"));
+                        responseContent = await anthropicResponse.Content.ReadAsStringAsync();
+                        var anthropicResult = JsonSerializer.Deserialize<AnthropicResponse>(responseContent);
+                        return anthropicResult?.content?[0]?.text ?? "无有效返回";
+                    }
 
                 case TokenProviderStyle.Google:
                     url = url.Replace("{model}", model) + "?key=" + Key;
@@ -175,11 +191,13 @@ public class TokenProvider
                         }
                     };
                     requestBody = JsonSerializer.Serialize(googleRequest);
-                    var googleResponse = client.PostAsync(url, new StringContent(requestBody, Encoding.UTF8, "application/json")).Result;
-                    responseContent = googleResponse.Content.ReadAsStringAsync().Result;
+                    var googleResponse = await client.PostAsync(url, new StringContent(requestBody, Encoding.UTF8, "application/json"));
+                    responseContent = await googleResponse.Content.ReadAsStringAsync();
 
                     var googleResult = JsonSerializer.Deserialize<GoogleResponse>(responseContent);
-                    return googleResult?.candidates?[0]?.content?.parts?[0]?.text ?? "无有效返回";
+                    var text = googleResult?.candidates?[0]?.content?.parts?[0]?.text ?? "无有效返回";
+                    if (text.Length > 0) progress?.Report(text.Length / 4);
+                    return text;
 
                 default:
                     return "错误：不支持的API风格";
@@ -191,6 +209,116 @@ public class TokenProvider
         }
     }
 
+    // ===== SSE 流式响应解析 =====
+
+    private const int MaxOutputTokens = 16384;
+
+    /// <summary>
+    /// 流式读取 OpenAI 兼容 SSE 响应，实时报告 token 数
+    /// </summary>
+    protected static async Task<string> StreamOpenAiResponse(HttpClient client, string url, string requestBody, IProgress<int> progress)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(requestBody, Encoding.UTF8, "application/json")
+        };
+        using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            return $"调用异常：HTTP {(int)response.StatusCode} - {error}";
+        }
+
+        using var stream = await response.Content.ReadAsStreamAsync();
+        using var reader = new StreamReader(stream);
+
+        var sb = new StringBuilder();
+        var tokenCount = 0;
+        string? line;
+
+        while ((line = await reader.ReadLineAsync()) != null)
+        {
+            if (!line.StartsWith("data: ") || line == "data: [DONE]")
+                continue;
+
+            var data = line[6..];
+            try
+            {
+                using var doc = JsonDocument.Parse(data);
+                var delta = doc.RootElement
+                    .GetProperty("choices")[0]
+                    .GetProperty("delta");
+
+                if (delta.TryGetProperty("content", out var content))
+                {
+                    var text = content.GetString();
+                    if (text != null)
+                    {
+                        sb.Append(text);
+                        tokenCount++;
+                        progress.Report(tokenCount);
+                    }
+                }
+            }
+            catch { /* 跳过格式异常的 chunk */ }
+        }
+
+        return sb.Length > 0 ? sb.ToString() : "无有效返回";
+    }
+
+    /// <summary>
+    /// 流式读取 Anthropic SSE 响应，实时报告 token 数
+    /// </summary>
+    protected static async Task<string> StreamAnthropicResponse(HttpClient client, string url, string requestBody, IProgress<int> progress)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(requestBody, Encoding.UTF8, "application/json")
+        };
+        using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            return $"调用异常：HTTP {(int)response.StatusCode} - {error}";
+        }
+
+        using var stream = await response.Content.ReadAsStreamAsync();
+        using var reader = new StreamReader(stream);
+
+        var sb = new StringBuilder();
+        var tokenCount = 0;
+        string? line;
+
+        while ((line = await reader.ReadLineAsync()) != null)
+        {
+            if (!line.StartsWith("data: "))
+                continue;
+
+            var data = line[6..];
+            try
+            {
+                using var doc = JsonDocument.Parse(data);
+                var root = doc.RootElement;
+
+                if (root.TryGetProperty("type", out var type) && type.GetString() == "content_block_delta")
+                {
+                    var text = root.GetProperty("delta").GetProperty("text").GetString();
+                    if (text != null)
+                    {
+                        sb.Append(text);
+                        tokenCount++;
+                        progress.Report(tokenCount);
+                    }
+                }
+            }
+            catch { /* 跳过非 delta 事件 */ }
+        }
+
+        return sb.Length > 0 ? sb.ToString() : "无有效返回";
+    }
+
     // ===== 携带文件的问答（三层降级）=====
 
     /// <summary>
@@ -199,36 +327,38 @@ public class TokenProvider
     /// </summary>
     public async Task<string> AskWithFileAsync(
         HttpClient client, string model, string prompt,
-        string docxPath, string? textContent = null)
+        string docxPath, string? textContent = null, IProgress<int>? progress = null)
     {
         // Tier 1: 独立文件上传
         if (SupportsDocxFileUpload)
         {
             var result = await UploadFileAsync(client, docxPath);
-            return await AskWithFileIdAsync(client, model, prompt, result);
+            return await AskWithFileIdAsync(client, model, prompt, result, progress);
         }
 
         // Tier 2: base64 inline
         if (SupportsDocxBase64Inline)
         {
             var base64 = Convert.ToBase64String(await File.ReadAllBytesAsync(docxPath));
-            return AskWithBase64(client, model, prompt, base64);
+            return await AskWithBase64Async(client, model, prompt, base64, progress);
         }
 
         // Tier 3: 文本提取
         var text = textContent ?? ExtractTextFromDocx(docxPath);
         if (string.IsNullOrWhiteSpace(text))
             throw new InvalidOperationException($"无法从文档中提取文本: {Path.GetFileName(docxPath)}");
-        return Ask(client, model, prompt, text);
+        return await AskAsync(client, model, prompt, text, progress);
     }
 
     /// <summary>
     /// base64 inline 方式调用（Tier 2）
     /// </summary>
-    protected string AskWithBase64(HttpClient client, string model, string prompt, string base64)
+    protected async Task<string> AskWithBase64Async(HttpClient client, string model, string prompt, string base64, IProgress<int>? progress = null)
     {
         if (string.IsNullOrWhiteSpace(Key))
             throw new InvalidDataException("错误：API密钥未配置");
+
+        var useStream = progress is not null;
 
         client.DefaultRequestHeaders.Clear();
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -266,11 +396,13 @@ public class TokenProvider
                     },
                     max_completion_tokens = 16384,
                     temperature = 0.1,
-                    stream = false
+                    stream = useStream
                 };
                 requestBody = JsonSerializer.Serialize(openAiRequest);
-                var openAiResponse = client.PostAsync(Url, new StringContent(requestBody, Encoding.UTF8, "application/json")).Result;
-                responseContent = openAiResponse.Content.ReadAsStringAsync().Result;
+                if (useStream)
+                    return await StreamOpenAiResponse(client, Url!, requestBody, progress!);
+                var openAiResp = await client.PostAsync(Url, new StringContent(requestBody, Encoding.UTF8, "application/json"));
+                responseContent = await openAiResp.Content.ReadAsStringAsync();
                 var openAiResult = JsonSerializer.Deserialize<OpenAIResponse>(responseContent);
                 return openAiResult?.choices?[0]?.message?.content ?? "无有效返回";
 
@@ -304,16 +436,18 @@ public class TokenProvider
                         }
                     },
                     temperature = 0.1,
-                    stream = false
+                    stream = useStream
                 };
                 requestBody = JsonSerializer.Serialize(anthropicRequest);
-                var anthropicResponse = client.PostAsync(Url, new StringContent(requestBody, Encoding.UTF8, "application/json")).Result;
-                responseContent = anthropicResponse.Content.ReadAsStringAsync().Result;
+                if (useStream)
+                    return await StreamAnthropicResponse(client, Url!, requestBody, progress!);
+                var anthropicResp = await client.PostAsync(Url, new StringContent(requestBody, Encoding.UTF8, "application/json"));
+                responseContent = await anthropicResp.Content.ReadAsStringAsync();
                 var anthropicResult = JsonSerializer.Deserialize<AnthropicResponse>(responseContent);
                 return anthropicResult?.content?[0]?.text ?? "无有效返回";
 
             case TokenProviderStyle.Google:
-                var url = Url.Replace("{model}", model) + "?key=" + Key;
+                var url = Url!.Replace("{model}", model) + "?key=" + Key;
                 var googleRequest = new
                 {
                     contents = new object[]
@@ -338,10 +472,12 @@ public class TokenProvider
                     generationConfig = new { temperature = 0.1, maxOutputTokens = 16384 }
                 };
                 requestBody = JsonSerializer.Serialize(googleRequest);
-                var googleResponse = client.PostAsync(url, new StringContent(requestBody, Encoding.UTF8, "application/json")).Result;
-                responseContent = googleResponse.Content.ReadAsStringAsync().Result;
+                var googleResp = await client.PostAsync(url, new StringContent(requestBody, Encoding.UTF8, "application/json"));
+                responseContent = await googleResp.Content.ReadAsStringAsync();
                 var googleResult = JsonSerializer.Deserialize<GoogleResponse>(responseContent);
-                return googleResult?.candidates?[0]?.content?.parts?[0]?.text ?? "无有效返回";
+                var text = googleResult?.candidates?[0]?.content?.parts?[0]?.text ?? "无有效返回";
+                if (text.Length > 0) progress?.Report(text.Length / 4);
+                return text;
 
             default:
                 return "错误：不支持的API风格";

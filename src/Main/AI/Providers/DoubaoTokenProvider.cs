@@ -38,8 +38,10 @@ public class DoubaoTokenProvider : TokenProvider
         return result.id;
     }
 
-    protected override async Task<string> AskWithFileIdAsync(HttpClient client, string model, string prompt, string fileId)
+    protected override async Task<string> AskWithFileIdAsync(HttpClient client, string model, string prompt, string fileId, IProgress<int>? progress = null)
     {
+        var useStream = progress is not null;
+
         client.DefaultRequestHeaders.Clear();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Key);
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -62,10 +64,13 @@ public class DoubaoTokenProvider : TokenProvider
             },
             max_tokens = 16384,
             temperature = 0.1,
-            stream = false
+            stream = useStream
         };
 
         var requestBody = JsonSerializer.Serialize(request);
+        if (useStream)
+            return await StreamOpenAiResponse(client, Url!, requestBody, progress!);
+
         var response = await client.PostAsync(Url, new StringContent(requestBody, Encoding.UTF8, "application/json"));
         var responseText = await response.Content.ReadAsStringAsync();
 
