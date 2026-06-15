@@ -553,16 +553,24 @@
                                     Style="{StaticResource TextBlockDefaultBold}"
                                     Text="{Binding Company}" />
 
-                                <ToggleButton
-                                    x:Name="close"
-                                    Margin="5,0"
-                                    HorizontalAlignment="Right"
-                                    Command="{Binding CloseCommand}"
-                                    Content="注销"
-                                    DockPanel.Dock="Right"
-                                    IsChecked="{Binding IsClosed}"
-                                    Style="{StaticResource ToggleButtonDanger.Small}"
-                                    Visibility="Collapsed" />
+                                <DockPanel HorizontalAlignment="Right">
+                                    <ToggleButton
+                                        x:Name="close"
+                                        Margin="5,0"
+                                        Command="{Binding CloseCommand}"
+                                        Content="注销"
+                                        IsChecked="{Binding IsClosed}"
+                                        Style="{StaticResource ToggleButtonDanger.Small}"
+                                        Visibility="Collapsed" />
+
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.trash}"
+                                        Command="{Binding DataContext.DeleteStockCommand, RelativeSource={RelativeSource AncestorType=local:FundAccountsView}}"
+                                        CommandParameter="{Binding}"
+                                        Foreground="Red"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="{Binding IsClosed, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                </DockPanel>
 
                             </hc:SimplePanel>
                         </Border>
@@ -885,17 +893,24 @@
                                     Style="{StaticResource TextBlockDefaultBold}"
                                     Text="{Binding Company}" />
 
-                                <ToggleButton
-                                    x:Name="close"
-                                    Margin="5,0"
-                                    HorizontalAlignment="Right"
-                                    Command="{Binding CloseCommand}"
-                                    Content="注销"
-                                    DockPanel.Dock="Right"
-                                    IsChecked="{Binding IsClosed}"
-                                    Style="{StaticResource ToggleButtonDanger.Small}"
-                                    Visibility="Collapsed" />
+                                <DockPanel HorizontalAlignment="Right">
+                                    <ToggleButton
+                                        x:Name="close"
+                                        Margin="5,0"
+                                        Command="{Binding CloseCommand}"
+                                        Content="注销"
+                                        IsChecked="{Binding IsClosed}"
+                                        Style="{StaticResource ToggleButtonDanger.Small}"
+                                        Visibility="Collapsed" />
 
+                                    <Button
+                                        hc:IconElement.Geometry="{StaticResource f.trash}"
+                                        Command="{Binding DataContext.DeleteFutureCommand, RelativeSource={RelativeSource AncestorType=local:FundAccountsView}}"
+                                        CommandParameter="{Binding}"
+                                        Foreground="Red"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        Visibility="{Binding IsClosed, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                </DockPanel>
                             </hc:SimplePanel>
                         </Border>
 

@@ -203,10 +203,10 @@ public partial class StockAccountViewModel : ObservableObject
     public void Close()
     {
         using var db = DbHelper.Base();
-        if (db.GetCollection<StockAccount>().FindById(Id) is StockAccount a)
+        if (db.GetCollection<TradingAccoutOfFund>().FindById(Id) is StockAccount a)
         {
             a.IsClosed = IsClosed;
-            db.GetCollection<StockAccount>().Update(a);
+            db.GetCollection<TradingAccoutOfFund>().Update(a);
         }
     }
 }

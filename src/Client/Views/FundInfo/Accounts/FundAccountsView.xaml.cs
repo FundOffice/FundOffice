@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 
 using FMO.Models;
 using FMO.PDF;
-using FMO.Shared;
 using FMO.Utilities;
 using Microsoft.Win32;
 using MoT;
@@ -96,7 +95,7 @@ public partial class FundAccountsViewModel : ObservableObject
 
 
 
-        var accoutOfFunds = db.GetCollection<TradingAccoutOfFund>().Find(x => x.FundId == fundId).ToArray();
+        var accoutOfFunds = db.GetCollection<TradingAccoutOfFund>().Find(x => x.FundId == fundId).Where(x => !x.IsDeleted).ToArray();
         if (accoutOfFunds.OfType<StockAccount>() is IEnumerable<StockAccount> sa)
             StockAccounts = new(sa.Select(x => new StockAccountViewModel(x)));
 
@@ -186,7 +185,7 @@ public partial class FundAccountsViewModel : ObservableObject
 
     public int FundId { get; }
     public string Code { get; }
-   
+
 
     public ObservableCollection<SecurityCardViewModel> SecurityCards { get; }
 
@@ -393,9 +392,9 @@ public partial class FundAccountsViewModel : ObservableObject
                         if (fund is null) Logg.Error($"股卡 {sa.CardNo} 的基金 {sa.Name} 不在库中");
                     }
                     ++cnt;
-                     
+
                     if (sa.FundId == FundId)
-                        list.Add(sa); 
+                        list.Add(sa);
                 }
 
             }
@@ -464,7 +463,7 @@ public partial class FundAccountsViewModel : ObservableObject
             return;
 
         using var db = DbHelper.Base();
-        db.GetCollection<StockAccount>().Delete(v.Id);
+        db.GetCollection<TradingAccoutOfFund>().UpdateMany("{ IsDeleted : true }", $"_id={v.Id}");
         StockAccounts?.Remove(v);
     }
 
@@ -541,7 +540,8 @@ public partial class FundAccountsViewModel : ObservableObject
     public void DeleteFuture(FutureAccountViewModel v)
     {
         using var db = DbHelper.Base();
-        db.GetCollection<FutureAccount>().Delete(v.Id);
+        db.GetCollection<TradingAccoutOfFund>().UpdateMany("{ IsDeleted : true }", $"_id={v.Id}");
+
         FutureAccounts?.Remove(v);
     }
 
@@ -555,7 +555,7 @@ public partial class FundAccountsViewModel : ObservableObject
             var obj = new FutureAccount
             {
                 FundId = FundId,
-                Company = selectedFutureCompany, 
+                Company = selectedFutureCompany,
             };
 
             using var db = DbHelper.Base();

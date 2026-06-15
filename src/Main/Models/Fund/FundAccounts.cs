@@ -87,6 +87,8 @@ public abstract class TradingAccoutOfFund
     /// </summary>
     public bool IsClosed { get; set; }
 
+    public bool IsDeleted { get; set; }
+
     public string? Company { get; set; }
 
 }
