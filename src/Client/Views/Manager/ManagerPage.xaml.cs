@@ -41,7 +41,7 @@ public partial class ManagerPage : UserControl
 
 
 [EntityModifiable(typeof(Manager))]
-public partial class ManagerPageViewModel :ObservableObject, IRecipient<ParticipantChangedMessage>
+public partial class ManagerPageViewModel : ObservableObject, IRecipient<ParticipantChangedMessage>
 {
     // private int FilesId;
 
@@ -447,7 +447,11 @@ public partial class ManagerPageViewModel :ObservableObject, IRecipient<Particip
         obj.ShareAmount = value.Share;
         wnd.DataContext = obj;
         wnd.Owner = App.Current.MainWindow;
-        wnd.ShowDialog();
+        if (wnd.ShowDialog() is true)
+        {
+            value.Share = obj.ShareAmount ?? 0;
+            value.Ratio = value.Share / manager.RegisterCapital;
+        }
 
     }
 
@@ -784,7 +788,8 @@ public partial class ManagerPageViewModel :ObservableObject, IRecipient<Particip
         /// <summary>
         /// 持有人
         /// </summary>
-        public IEntity? Holder { get; set; }
+        [ObservableProperty]
+        public partial IEntity? Holder { get; set; }
 
         /// <summary>
         /// 持股的机构、公司
@@ -793,11 +798,14 @@ public partial class ManagerPageViewModel :ObservableObject, IRecipient<Particip
         public required Institution Institution { get; set; }
 
 
-        public string? InstitutionName { get; set; }
+        [ObservableProperty]
+        public partial string? InstitutionName { get; set; }
 
-        public decimal Share { get; set; }
+        [ObservableProperty]
+        public partial decimal Share { get; set; }
 
-        public decimal Ratio { get; set; }
+        [ObservableProperty]
+        public partial decimal Ratio { get; set; }
 
 
         public ObservableCollection<RelationViewModel>? Children { get; set; }
@@ -1052,5 +1060,5 @@ public partial class ManagerFlowViewModel : ObservableObject
     }
 
 
-     
+
 }
