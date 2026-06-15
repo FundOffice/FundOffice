@@ -539,6 +539,9 @@ public partial class FundAccountsViewModel : ObservableObject
     [RelayCommand]
     public void DeleteFuture(FutureAccountViewModel v)
     {
+        if (HandyControl.Controls.MessageBox.Ask($"确认删除{v.Company}吗") == MessageBoxResult.Cancel)
+            return;
+
         using var db = DbHelper.Base();
         db.GetCollection<TradingAccoutOfFund>().UpdateMany("{ IsDeleted : true }", $"_id={v.Id}");
 

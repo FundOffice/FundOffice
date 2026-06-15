@@ -190,13 +190,13 @@ public partial class StockAccountViewModel : ObservableObject
         Events.Add(new AccountCredentialEventViewModel(ev));
         using var db = DbHelper.Base();
         db.GetCollection<AccountEvent>().Insert(ev);
-        var sa = db.GetCollection<StockAccount>().FindById(Id);
+        var sa = db.GetCollection<TradingAccoutOfFund>().FindById(Id) as StockAccount;
 
 
-        if (sa.Events is null)
+        if (sa!.Events is null)
             sa.Events = [ev];
         else sa.Events.Add(ev);
-        db.GetCollection<StockAccount>().Update(sa);
+        db.GetCollection<TradingAccoutOfFund>().Update(sa);
     }
 
     [RelayCommand]
@@ -234,6 +234,10 @@ public abstract partial class AccountEventViewModel : ObservableObject//, IViewM
 
     [ObservableProperty]
     public partial bool IsReadOnly { get; set; } = true;
+
+
+    [ObservableProperty]
+    public partial bool IsExpanded { get; set; }
 
     [ObservableProperty]
     public partial string? Name { get; set; }
@@ -281,6 +285,11 @@ public abstract partial class AccountEventViewModel : ObservableObject//, IViewM
         try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = folder, UseShellExecute = true }); } catch { }
     }
 
+
+    partial void OnIsExpandedChanged(bool value)
+    {
+        if (!value) IsReadOnly = true;
+    }
 
 }
 
