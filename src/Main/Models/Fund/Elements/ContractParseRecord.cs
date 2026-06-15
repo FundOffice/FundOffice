@@ -1,6 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace FMO.Models;
 
 /// <summary>
@@ -10,23 +7,10 @@ public class ContractParseRecord
 {
     /// <summary>文件 MD5 hash（来自 FileMeta.Hash），作为主键</summary>
     public string Id { get; set; } = "";
+
     /// <summary>解析时间</summary>
     public DateTime ParsedAt { get; set; }
-    /// <summary>ReadonlyFundInfo 序列化 JSON</summary>
+
+    /// <summary>AI 原始返回 JSON（未经过提取/序列化处理的原始响应字符串）</summary>
     public string FundInfoJson { get; set; } = "";
-
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        AllowTrailingCommas = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = { new JsonStringEnumConverter() },
-    };
-
-    /// <summary>
-    /// 将缓存的 JSON 反序列化为 ReadonlyFundInfo
-    /// </summary>
-    public ReadonlyFundInfo? ToFundInfo() =>
-        JsonSerializer.Deserialize<ReadonlyFundInfo>(FundInfoJson, _jsonOptions);
 }

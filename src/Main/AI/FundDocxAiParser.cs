@@ -9,6 +9,8 @@ namespace FMO.AI;
 /// </summary>
 public class AiParseResult
 {
+    public required string Json { get; set; }
+
     /// <summary>
     /// AI 返回的原始 DTO（含置信度）
     /// </summary>
@@ -99,6 +101,7 @@ public class FundDocxAiParser
             SaveToTemp("", response);
             return new AiParseResult
             {
+                Json = "",
                 ParsedInfo = new AiParsedFundInfo(),
                 Factors = [],
                 Warnings = ["AI 返回为空"]
@@ -110,6 +113,7 @@ public class FundDocxAiParser
             SaveToTemp("", response);
             return new AiParseResult
             {
+                Json = "",
                 ParsedInfo = new AiParsedFundInfo(),
                 Factors = [],
                 Warnings = [response]
@@ -145,6 +149,7 @@ public class FundDocxAiParser
             SaveToTemp(json, response);
             return new AiParseResult
             {
+                Json = json,
                 ParsedInfo = new AiParsedFundInfo(),
                 Factors = [],
                 Warnings = warnings.Count > 0 ? warnings : ["JSON 反序列化结果为空"]
@@ -156,6 +161,7 @@ public class FundDocxAiParser
 
         return new AiParseResult
         {
+            Json = json,
             ParsedInfo = dto,
             Factors = factors,
             Warnings = warnings

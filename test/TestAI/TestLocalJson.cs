@@ -17,12 +17,12 @@ public sealed class TestLocalJson
     [TestMethod]
     public void ParseLocalJsonFiles()
     {
-        var tempDir = "temp";
+        var tempDir = Path.Combine(AppContext.BaseDirectory, @"..\..\..\facts");
 
         Console.WriteLine($"查找目录: {tempDir}");
         Assert.IsTrue(Directory.Exists(tempDir), $"temp 目录不存在: {tempDir}");
 
-        var jsonFiles = Directory.GetFiles(tempDir, "*.json");
+        var jsonFiles = Directory.GetFiles(tempDir, "*.json", SearchOption.AllDirectories);
         Assert.IsNotEmpty(jsonFiles, $"temp 目录下没有 JSON 文件: {tempDir}");
 
         Console.WriteLine($"找到 {jsonFiles.Length} 个 JSON 文件\n");

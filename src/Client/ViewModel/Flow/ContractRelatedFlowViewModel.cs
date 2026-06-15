@@ -207,12 +207,11 @@ public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IEle
             // 5. 保存到 DB（有有效数据时才保存）
             if (result.Factors.Length > 0)
             {
-                var json = JsonSerializer.Serialize(fundInfo, FundDocxAiParser.JsonOptions);
                 var record = new ContractParseRecord
                 {
                     Id = meta.Hash,
                     ParsedAt = DateTime.Now,
-                    FundInfoJson = json
+                    FundInfoJson = result.Json
                 };
                 using (var db = DbHelper.Base())
                 {
@@ -277,7 +276,7 @@ public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IEle
                 return;
             }
 
-            var fundInfo = record.ToFundInfo();
+            var fundInfo = TokenProvider.ToFundInfo(record.FundInfoJson);
             if (fundInfo is null)
             {
                 Toast.Warning("JSON 反序列化失败");
@@ -320,7 +319,7 @@ public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IEle
             {
                 var prevRecord = db.GetCollection<ContractParseRecord>().FindById(prevHash);
                 if (prevRecord is not null)
-                    return prevRecord.ToFundInfo();
+                    return TokenProvider.ToFundInfo(prevRecord.FundInfoJson);
             }
         }
         catch (Exception ex)

@@ -5,6 +5,7 @@
 /// <summary>
 /// SingletonFactorItem SingletonValueFactorItem  与份额无关
 /// FactorItem 与份额相关 
+/// ⚠️ 任何修改需同步修改 ReadonlyFundInfo.cs（属性与 FillBy 方法）
 /// </summary>
 public partial class FundFactors
 {

@@ -732,6 +732,33 @@ public class TokenProvider
     }
 
     /// <summary>
+    /// 将缓存的原始 AI JSON 转换为 ReadonlyFundInfo
+    /// </summary>
+    public static ReadonlyFundInfo? ToFundInfo(string fundInfoJson)
+    {
+        if (string.IsNullOrWhiteSpace(fundInfoJson)) return null;
+
+        try
+        { 
+            // 2. 反序列化为 AiParsedFundInfo
+            var dto = JsonSerializer.Deserialize<AiParsedFundInfo>(fundInfoJson, FundDocxAiParser.JsonOptions);
+            if (dto is null) return null;
+
+            // 3. 转换为 FundFactor[]
+            var factors = AiParsedFundInfoConverter.ToFactors(dto);
+
+            // 4. 填充 ReadonlyFundInfo
+            var info = new ReadonlyFundInfo();
+            info.FillBy(factors);
+            return info;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// 从 AI 返回文本中提取 JSON 部分
     /// </summary>
     public static string ExtractJson(string response)
