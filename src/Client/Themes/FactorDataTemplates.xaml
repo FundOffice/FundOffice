@@ -1009,7 +1009,7 @@
     </DataTemplate>
 
 
-    <DataTemplate DataType="{x:Type local:FundOpenRuleViewModel}"> 
+    <DataTemplate DataType="{x:Type local:FundOpenRuleViewModel}">
         <DockPanel>
             <Button
                 hc:IconElement.Geometry="{StaticResource f.circle-plus}"
@@ -1086,6 +1086,235 @@
             BorderThickness="0"
             ItemsSource="{Binding}"
             Style="{StaticResource ListBoxCustom}" />
+    </DataTemplate>
+
+
+
+
+
+
+    <!--  业绩报酬计提方法（份额无关）  -->
+    <DataTemplate DataType="{x:Type local:PerformanceFeeRuleViewModel}">
+        <StackPanel>
+            <DockPanel>
+                <!--  计提方法  -->
+                <DockPanel Margin="0,3">
+                    <TextBlock
+                        Width="64"
+                        VerticalAlignment="Center"
+                        Text="计提方法" />
+                    <ComboBox
+                        Width="160"
+                        ItemsSource="{Binding Methods}"
+                        SelectedItem="{Binding Method}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </DockPanel>
+
+                <!--  扣减方式  -->
+                <DockPanel x:Name="deductionRow" Margin="10,3">
+                    <TextBlock
+                        Width="64"
+                        VerticalAlignment="Center"
+                        Text="扣减方式" />
+                    <ComboBox
+                        Width="120"
+                        ItemsSource="{Binding DeductionTypes}"
+                        SelectedItem="{Binding DeductionType}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </DockPanel>
+            </DockPanel>
+            <!--  特殊方式: 仅特殊计提法  -->
+            <DockPanel
+                x:Name="specialRow"
+                Margin="0,3"
+                Visibility="Collapsed">
+                <TextBlock
+                    Width="64"
+                    VerticalAlignment="Center"
+                    Text="特殊方式" />
+                <TextBox Text="{Binding SpecialMethod, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+            </DockPanel>
+
+
+            <!--  计提触发时点  -->
+            <DockPanel x:Name="triggerRow" Margin="0,3">
+                <TextBlock
+                    Width="64"
+                    VerticalAlignment="Center"
+                    Text="计提时点" />
+                <hc:UniformSpacingPanel Spacing="12">
+                    <CheckBox Content="赎回" IsChecked="{Binding TriggerRedemption}" />
+                    <CheckBox Content="分红" IsChecked="{Binding TriggerDistribution}" />
+                    <CheckBox Content="清算" IsChecked="{Binding TriggerLiquidation}" />
+                    <CheckBox Content="开放日" IsChecked="{Binding TriggerOpenDay}" />
+                </hc:UniformSpacingPanel>
+            </DockPanel>
+
+            <!--  说明  -->
+            <DockPanel Margin="0,3">
+                <TextBlock
+                    Width="64"
+                    VerticalAlignment="Center"
+                    Text="说明" />
+                <TextBox Text="{Binding Remark, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+            </DockPanel>
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Method}" Value="{x:Static mod:PerformanceFeeMethod.Special}">
+                <Setter TargetName="specialRow" Property="Visibility" Value="Visible" />
+                <Setter TargetName="deductionRow" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!--  业绩报酬计费标准（份额相关）  -->
+    <!--  业绩报酬计费标准（份额相关）  -->
+    <DataTemplate DataType="{x:Type local:PerformanceFeeStandardViewModel}">
+        <DockPanel>
+            <StackPanel
+                x:Name="topHeader"
+                Margin="0,0,0,4"
+                DockPanel.Dock="Top"
+                Orientation="Horizontal"
+                Visibility="Collapsed">
+                <CheckBox
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Center"
+                    Content="收取"
+                    IsChecked="{Binding Has}" />
+                <TextBlock
+                    Margin="0,0,4,0"
+                    VerticalAlignment="Center"
+                    Text="收益率R:" />
+                <ComboBox
+                    Width="120"
+                    Margin="0,0,8,0"
+                    ItemsSource="{Binding ReturnTypes}"
+                    SelectedItem="{Binding ReturnType}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ., Converter={StaticResource EnumDescriptionConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <TextBlock
+                    Width="64"
+                    VerticalAlignment="Center"
+                    Text="计提档位" />
+                <Button
+                    HorizontalAlignment="Left"
+                    hc:IconElement.Geometry="{StaticResource f.plus}"
+                    Command="{Binding AddTierCommand}"
+                    Style="{StaticResource ButtonIcon.Small}" />
+            </StackPanel>
+            <CheckBox
+                x:Name="singleCheck"
+                Margin="0,0,8,0"
+                VerticalAlignment="Center"
+                Content="收取"
+                DockPanel.Dock="Left"
+                IsChecked="{Binding Has}" />
+            <ItemsControl
+                x:Name="tiersControl"
+                Margin="0,3"
+                ItemsSource="{Binding Tiers}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border
+                            BorderBrush="Gray"
+                            BorderThickness="1,0"
+                            CornerRadius="4">
+                            <DockPanel Margin="0,2">
+                                <DockPanel.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                </DockPanel.Resources>
+                                <StackPanel x:Name="boundPanel" Orientation="Horizontal">
+                                    <ToggleButton
+                                        Name="inc"
+                                        BorderBrush="Transparent"
+                                        Content="R≤"
+                                        IsChecked="{Binding Include}"
+                                        Style="{StaticResource ToggleButtonDefault.Small}" />
+                                    <TextBox
+                                        MinWidth="40"
+                                        Padding="10,0"
+                                        Text="{Binding UpperBound, TargetNullValue='', UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                                    <TextBlock Text="%" />
+                                    <TextBlock Margin="4,0" Text="比例:" />
+                                </StackPanel>
+                                <TextBox
+                                    MinWidth="30"
+                                    Padding="10,0"
+                                    Text="{Binding Rate, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
+                                <TextBlock Text="%" />
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.plus}"
+                                    Command="{Binding DataContext.AddTierCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                    CommandParameter="{Binding .}"
+                                    Style="{StaticResource ButtonIcon.Small}" />
+                                <Button
+                                    hc:IconElement.Geometry="{StaticResource f.trash}"
+                                    Command="{Binding DataContext.RemoveTierCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                    CommandParameter="{Binding .}"
+                                    Foreground="Red"
+                                    Style="{StaticResource ButtonIcon.Small}" />
+                            </DockPanel>
+                        </Border>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding Include}" Value="False">
+                                <Setter TargetName="inc" Property="Content" Value="R&lt;" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DataContext.IsSingleTier, RelativeSource={RelativeSource AncestorType=ItemsControl}}" Value="True">
+                                <Setter TargetName="boundPanel" Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsLast}" Value="True">
+                                <Setter TargetName="boundPanel" Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </DockPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsSingleTier}" Value="True">
+                <Setter TargetName="topHeader" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding IsSingleTier}" Value="False">
+                <Setter TargetName="topHeader" Property="Visibility" Value="Visible" />
+                <Setter TargetName="singleCheck" Property="Visibility" Value="Collapsed" />
+            </DataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Has}" Value="False" />
+                    <Condition Binding="{Binding IsSingleTier}" Value="True" />
+                </MultiDataTrigger.Conditions>
+                <Setter TargetName="tiersControl" Property="Visibility" Value="Collapsed" />
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Has}" Value="False" />
+                    <Condition Binding="{Binding IsSingleTier}" Value="False" />
+                </MultiDataTrigger.Conditions>
+                <Setter TargetName="tiersControl" Property="Visibility" Value="Collapsed" />
+            </MultiDataTrigger>
+        </DataTemplate.Triggers>
     </DataTemplate>
 
 </ResourceDictionary>

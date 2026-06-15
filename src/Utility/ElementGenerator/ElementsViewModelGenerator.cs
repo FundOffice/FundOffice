@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -139,7 +139,7 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
 
             // [修改点 1] 增加对 Value 类型因子的查找
             var singletonBase = FindTypeGlobally(compilation, "SingletonFactorItem");
-            var singletonValueBase = FindTypeGlobally(compilation, "SingletonValueFactorItem");
+            var singletonValueBase = FindTypeGlobally(compilation, "SingletonValueFactorItem") ?? compilation.GetTypeByMetadataName("FMO.Models.SingletonValueFactorItem`1");
             var factorBase = FindTypeGlobally(compilation, "FactorItem");
             var valueFactorBase = FindTypeGlobally(compilation, "ValueFactorItem");
 

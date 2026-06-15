@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
@@ -196,7 +196,7 @@ internal static class ViewModelAnalyzer
         else
         {
             // 🔽 传入 existingInHierarchy
-            properties = AnalyzeProperties(sourceType, compilation, vmMembers, existingInHierarchy, forceNullProps, logs);
+            properties = AnalyzeProperties(sourceType, compilation, vmMembers, existingInHierarchy, forceNullProps, logs, targetClass);
         }
 
         if (properties.Count == 0) return null;
@@ -251,7 +251,8 @@ internal static class ViewModelAnalyzer
            Dictionary<string, VmMemberInfo> vmMembers,
            HashSet<string> existingInHierarchy,
            HashSet<string> forceNullProps,
-           List<string> logs)
+           List<string> logs,
+           INamedTypeSymbol? targetClass = null)
     {
         var properties = new List<PropertyMapping>();
         var currentType = sourceType;
@@ -314,7 +315,7 @@ internal static class ViewModelAnalyzer
                                 vmCollectionElementTypeString = vmElementType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                                 if (vmElementType is not IArrayTypeSymbol && vmElementType.TypeKind != TypeKind.TypeParameter)
                                 {
-                                    var nestedVmType = FindNestedVmType(vmElementType, compilation);
+                                    var nestedVmType = sourceElementType != null ? FindNestedVmType(sourceElementType, compilation, targetClass) : null;
                                     if (nestedVmType != null) { isNestedCollection = true; vmCollectionElementTypeString = nestedVmType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat); }
                                 }
                             }
@@ -323,14 +324,14 @@ internal static class ViewModelAnalyzer
                         {
                             if (sourceElementType != null && sourceElementType is not IArrayTypeSymbol && sourceElementType.TypeKind != TypeKind.TypeParameter)
                             {
-                                var nestedVmType = FindNestedVmType(sourceElementType, compilation);
+                                var nestedVmType = FindNestedVmType(sourceElementType, compilation, targetClass);
                                 if (nestedVmType != null) { isNestedCollection = true; vmCollectionElementTypeString = nestedVmType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat); }
                             }
                         }
                     }
                     else if (propType is not IArrayTypeSymbol && propType.TypeKind != TypeKind.TypeParameter)
                     {
-                        var nestedVmType = FindNestedVmType(propType, compilation);
+                        var nestedVmType = FindNestedVmType(propType, compilation, targetClass);
                         if (nestedVmType != null)
                         {
                             isNested = true;
@@ -405,7 +406,7 @@ internal static class ViewModelAnalyzer
                     return enumerableNamed.TypeArguments[0];
         return null;
     }
-    private static INamedTypeSymbol? FindNestedVmType(ITypeSymbol sourcePropType, Compilation compilation)
+    private static INamedTypeSymbol? FindNestedVmType(ITypeSymbol sourcePropType, Compilation compilation, INamedTypeSymbol? targetClass = null)
     {
         if (sourcePropType.Name == null) return null;
         var vmTypeName = sourcePropType.Name + "ViewModel";
@@ -413,6 +414,16 @@ internal static class ViewModelAnalyzer
         INamedTypeSymbol? nestedVmType = null;
         if (!ns.IsGlobalNamespace) nestedVmType = compilation.GetTypeByMetadataName($"{ns.ToDisplayString()}.{vmTypeName}");
         if (nestedVmType == null) nestedVmType = compilation.GetTypeByMetadataName(vmTypeName);
+        if (nestedVmType == null && targetClass != null)
+        {
+            var targetNs = targetClass.ContainingNamespace;
+            while (targetNs != null && !targetNs.IsGlobalNamespace)
+            {
+                nestedVmType = compilation.GetTypeByMetadataName($"{targetNs.ToDisplayString()}.{vmTypeName}");
+                if (nestedVmType != null) break;
+                targetNs = targetNs.ContainingNamespace;
+            }
+        }
         if (nestedVmType != null)
         {
             var iface = nestedVmType.AllInterfaces.FirstOrDefault(i => i.Name == "IViewModel" && i.TypeArguments.Length == 2);
@@ -586,6 +597,7 @@ internal static class SourceCodeBuilder
         {
             sb.AppendLine($"public bool Equals({model.NullableParamTypeString} other)");
             sb.AppendLine("{");
+            sb.AppendLine("    if (ReferenceEquals(this, other)) return true;");
             if (model.CanBeNull)
             {
                 if (model.IsWrapperType) sb.AppendLine($"    if (other is null) return global::System.Collections.Generic.EqualityComparer<{model.ComparerTypeString}>.Default.Equals(Value, default);");
@@ -914,7 +926,7 @@ internal class PropertyMapping
         // 🔽 修复：集合类型 GetHashCode - 使用 VM 端元素类型
         if (IsCollection)
         {
-            string elemType = VmCollectionElementTypeString ?? SourceCollectionElementTypeString ?? "object";
+            string elemType = IsNestedCollection ? (SourceCollectionElementTypeString ?? VmCollectionElementTypeString ?? "object") : (VmCollectionElementTypeString ?? SourceCollectionElementTypeString ?? "object");
 
             if (IsNestedCollection)
             {

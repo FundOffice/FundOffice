@@ -158,6 +158,7 @@
 
   <ItemGroup>
     <Folder Include="Controls\Ownership\" />
+    <Folder Include="md\" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
