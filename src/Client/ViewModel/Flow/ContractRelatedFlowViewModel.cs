@@ -16,7 +16,7 @@ using Utilities;
 
 namespace FMO;
 
- 
+
 
 public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IElementChangable//, IFileSetter
 {
@@ -63,6 +63,12 @@ public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IEle
     /// </summary>
     [ObservableProperty]
     public partial bool IsParsingContract { get; set; }
+
+    /// <summary>
+    /// AI 解析进度状态文字
+    /// </summary>
+    [ObservableProperty]
+    public partial string ParseStatus { get; set; } = "";
 
     /// <summary>
     /// AI 解析已接收的 token 数
@@ -176,44 +182,49 @@ public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IEle
         Toast.Info($"正在 AI [{provider.Company}] 解析合同要素...");
         IsParsingContract = true;
         ParsedTokenCount = 0;
+        ParseStatus = "发送中...";
 
         // 2. 并行启动：查找上一个 contract flow 的解析记录（与 AI 解析同时进行）
         var prevInfoTask = Task.Run(() => LoadPreviousContractInfo());
-        var progress = new Progress<int>(count => ParsedTokenCount = count);
+        var progress = new Progress<int>(count =>
+        {
+            ParsedTokenCount = count;
+            ParseStatus = $"接收中... {count} tokens";
+        });
 
         try
         {
             // 3. 强制重新解析（流式接收，实时报告 token 进度）
             var parser = new FundDocxAiParser(provider, provider.Model);
+            ParseStatus = "等待响应...";
             var result = await parser.ParseAsync(meta.GetFullPath(), progress);
-            if (result is null)
-            {
-                Toast.Error("AI 返回结果为空，请检查合同文件格式是否正确");
-                return;
-            }
+            ParseStatus = "解析完成";
 
             // 4. 填充 ReadonlyFundInfo
             var fundInfo = new ReadonlyFundInfo();
-            fundInfo.FillBy(result.Factors);
+            fundInfo.FillBy(result!.Factors);
 
-            // 5. 保存到 DB
-            var json = JsonSerializer.Serialize(fundInfo, FundDocxAiParser.JsonOptions);
-            var record = new ContractParseRecord
+            // 5. 保存到 DB（有有效数据时才保存）
+            if (result.Factors.Length > 0)
             {
-                Id = meta.Hash,
-                ParsedAt = DateTime.Now,
-                FundInfoJson = json
-            };
-            using (var db = DbHelper.Base())
-            {
-                db.GetCollection<ContractParseRecord>().Upsert(record);
+                var json = JsonSerializer.Serialize(fundInfo, FundDocxAiParser.JsonOptions);
+                var record = new ContractParseRecord
+                {
+                    Id = meta.Hash,
+                    ParsedAt = DateTime.Now,
+                    FundInfoJson = json
+                };
+                using (var db = DbHelper.Base())
+                {
+                    db.GetCollection<ContractParseRecord>().Upsert(record);
+                }
             }
 
             // 6. 等待上一个合同解析记录（AI 解析期间已并行查询）
             var oldInfo = await prevInfoTask;
 
-            // 7. 打开对比窗口
-            var vm = new ContractElementsCompareViewModel(fundInfo, oldInfo);
+            // 7. 打开对比窗口（警告信息在窗口内展示）
+            var vm = new ContractElementsCompareViewModel(fundInfo, oldInfo, result.Warnings);
             var window = new ContractElementsCompareWindow
             {
                 DataContext = vm,
@@ -236,16 +247,6 @@ public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IEle
             Logg.Error(ex, $"AI 配置错误");
             Toast.Error($"AI 配置错误：{ex.Message}");
         }
-        catch (InvalidOperationException ex)
-        {
-            Logg.Error(ex, $"AI 解析返回错误");
-            Toast.Error(ex.Message);
-        }
-        catch (JsonException ex)
-        {
-            Logg.Error(ex, $"AI 返回 JSON 解析失败");
-            Toast.Error($"AI 返回内容解析失败，原始响应已保存到 temp 文件夹");
-        }
         catch (Exception ex)
         {
             Logg.Error(ex, $"AI 解析合同要素失败");
@@ -254,8 +255,51 @@ public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IEle
         finally
         {
             IsParsingContract = false;
+            ParseStatus = "";
         }
     }
+
+#if DEBUG
+    /// <summary>
+    /// 从 DB 加载最新的解析记录并显示对比窗口（仅调试用）
+    /// </summary>
+    [RelayCommand]
+    private void LoadParsedJsonFromTemp()
+    {
+        try
+        {
+            using var db = DbHelper.Base();
+            var record = db.GetCollection<ContractParseRecord>().Query().OrderByDescending(r => r.ParsedAt).FirstOrDefault();
+
+            if (record is null)
+            {
+                Toast.Warning("DB 中没有解析记录");
+                return;
+            }
+
+            var fundInfo = record.ToFundInfo();
+            if (fundInfo is null)
+            {
+                Toast.Warning("JSON 反序列化失败");
+                return;
+            }
+
+            var warnings = new List<string> { $"从 DB 加载: {record.ParsedAt:yyyy-MM-dd HH:mm:ss}" };
+            var vm = new ContractElementsCompareViewModel(fundInfo, null, warnings);
+            var window = new ContractElementsCompareWindow
+            {
+                DataContext = vm,
+                Owner = App.Current.MainWindow
+            };
+            window.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            Logg.Error(ex, "LoadParsedJsonFromTemp 失败");
+            Toast.Error($"加载失败: {ex.Message}");
+        }
+    }
+#endif
 
     /// <summary>
     /// 查找上一个 contract flow 的合同解析记录

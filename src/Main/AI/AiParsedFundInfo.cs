@@ -1,4 +1,6 @@
 ﻿using FMO.Models;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FMO.AI;
 
@@ -12,13 +14,65 @@ public class ConfidenceWrapper<T>
 }
 
 /// <summary>
+/// ConfidenceWrapper 的 JSON 转换工厂，正确处理值类型的 null
+/// </summary>
+public class ConfidenceWrapperConverterFactory : JsonConverterFactory
+{
+    public override bool CanConvert(Type typeToConvert) =>
+        typeToConvert.IsGenericType && typeToConvert.GetGenericTypeDefinition() == typeof(ConfidenceWrapper<>);
+
+    public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+    {
+        var innerType = typeToConvert.GetGenericArguments()[0];
+        return (JsonConverter)Activator.CreateInstance(typeof(ConfidenceWrapperConverter<>).MakeGenericType(innerType))!;
+    }
+}
+
+/// <summary>
+/// ConfidenceWrapper 的 JSON 转换器
+/// </summary>
+public class ConfidenceWrapperConverter<T> : JsonConverter<ConfidenceWrapper<T>>
+{
+    public override ConfidenceWrapper<T>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Null)
+            return null;
+
+        var result = new ConfidenceWrapper<T>();
+
+        using var doc = JsonDocument.ParseValue(ref reader);
+        var root = doc.RootElement;
+
+        if (root.TryGetProperty("Value", out var valueElement) && valueElement.ValueKind != JsonValueKind.Null)
+        {
+            result.Value = JsonSerializer.Deserialize<T>(valueElement.GetRawText(), options);
+        }
+
+        if (root.TryGetProperty("Confidence", out var confElement))
+        {
+            result.Confidence = confElement.GetDouble();
+        }
+
+        return result;
+    }
+
+    public override void Write(Utf8JsonWriter writer, ConfidenceWrapper<T> value, JsonSerializerOptions options)
+    {
+        writer.WriteStartObject();
+        writer.WritePropertyName("Value");
+        JsonSerializer.Serialize(writer, value.Value, options);
+        writer.WriteNumber("Confidence", value.Confidence);
+        writer.WriteEndObject();
+    }
+}
+
+/// <summary>
 /// AI 解析中间层（internal），所有字段与 FundElements 同构 + 置信度
 /// </summary>
 public class AiParsedFundInfo
 {
     // ===== ReadonlyFundInfo 自有字段 =====
     public ConfidenceWrapper<string>? ManagerProfile { get; set; }
-    public ConfidenceWrapper<string>? AuditDate { get; set; }
 
     // ===== 全局属性（非份额相关）=====
 
@@ -63,9 +117,6 @@ public class AiParsedFundInfo
 
     /// <summary>主募集账户</summary>
     public ConfidenceWrapper<BankAccount>? CollectionAccount { get; set; }
-
-    /// <summary>主托管账户</summary>
-    public ConfidenceWrapper<BankAccount>? CustodyAccount { get; set; }
 
     /// <summary>托管机构（含费用信息）</summary>
     public ConfidenceWrapper<AgencyInfo>? TrusteeInfo { get; set; }

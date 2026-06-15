@@ -20,6 +20,28 @@
             FontWeight="Bold"
             Text="合同要素对比（变化的要素以红色标注）" />
 
+        <!-- 解析警告区域 -->
+        <Expander
+            Margin="0,0,0,8"
+            DockPanel.Dock="Top"
+            Foreground="DarkOrange"
+            Header="{Binding Warnings.Count, StringFormat='解析警告 ({0} 条)'}"
+            IsExpanded="{Binding HasWarnings, Mode=OneWay}"
+            Visibility="{Binding HasWarnings, Converter={StaticResource Boolean2VisibilityConverter}}">
+            <ItemsControl
+                Margin="8,4,0,0"
+                ItemsSource="{Binding Warnings}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock
+                            Foreground="DarkOrange"
+                            Text="{Binding}"
+                            TextWrapping="Wrap" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Expander>
+
         <ListBox ItemsSource="{Binding Items}">
             <ListBox.ItemContainerStyle>
                 <Style BasedOn="{StaticResource ListBoxItemBaseStyle}" TargetType="ListBoxItem">

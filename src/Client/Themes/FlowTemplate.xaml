@@ -239,14 +239,19 @@
 
                         </hc:SimplePanel>
 
+                        <Button
+                            hc:IconElement.Geometry="{StaticResource f.bug}"
+                            Command="{Binding LoadParsedJsonFromTempCommand}"
+                            Foreground="Gray"
+                            Style="{StaticResource ButtonIcon.Small}"
+                            ToolTip="[DEBUG] 从 temp 加载解析结果" />
+
                         <TextBlock
                             VerticalAlignment="Center"
                             FontSize="11"
                             Foreground="Gray"
-                            Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}">
-                            <Run Text="{Binding ParsedTokenCount, Mode=OneWay}" />
-                            <Run Text=" tokens" />
-                        </TextBlock>
+                            Text="{Binding ParseStatus}"
+                            Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}" />
                     </WrapPanel>
 
                     <shared:FileView Content="{Binding RiskDisclosureDocument}" Header="风险揭示书" />
@@ -463,25 +468,35 @@
 
                     <WrapPanel>
                         <shared:FileView Content="{Binding Contract}" Header="基金合同" />
+                        <hc:SimplePanel>
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.brain}"
+                                Command="{Binding ParseContractElementsCommand}"
+                                Foreground="Goldenrod"
+                                Style="{StaticResource ButtonIcon.Small}"
+                                ToolTip="AI 解析合同要素"
+                                Visibility="{Binding Contract.Meta, Converter={StaticResource FileExistsToVisibilityConverter}}" />
+                            <hc:LoadingCircle
+                                Width="18"
+                                Height="18"
+                                Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                        </hc:SimplePanel>
+
                         <Button
-                            hc:IconElement.Geometry="{StaticResource f.brain}"
-                            Command="{Binding ParseContractElementsCommand}"
-                            Foreground="RoyalBlue"
+                            hc:IconElement.Geometry="{StaticResource f.bug}"
+                            Command="{Binding LoadParsedJsonFromTempCommand}"
+                            Foreground="Gray"
                             Style="{StaticResource ButtonIcon.Small}"
-                            ToolTip="AI 解析合同要素"
-                            Visibility="{Binding Contract.Meta, Converter={StaticResource FileExistsToVisibilityConverter}}" />
-                        <hc:LoadingCircle
-                            Width="18"
-                            Height="18"
-                            Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                            ToolTip="[DEBUG] 从 temp 加载解析结果" />
+
+
                         <TextBlock
                             VerticalAlignment="Center"
                             FontSize="11"
                             Foreground="Gray"
-                            Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}">
-                            <Run Text="{Binding ParsedTokenCount, Mode=OneWay}" />
-                            <Run Text=" tokens" />
-                        </TextBlock>
+                            Text="{Binding ParseStatus}"
+                            Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}" />
                     </WrapPanel>
                     <shared:FileView Content="{Binding RiskDisclosureDocument}" Header="风险揭示书" />
                     <shared:FileView

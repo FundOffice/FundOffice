@@ -37,7 +37,6 @@ internal static class FundDocxPrompt
 | 七、基金的申购、赎回与转让 | FundOpenRule、TemporarilyOpenInfo、PurchasRule、RedemptionFee、LockingRule、HugeRedemptionRatio |
 | 八、当事人及权利义务 | TrusteeInfo、OutsourcingInfo、ManagerProfile、InvestmentManagers |
 | 十一、基金的投资 | InvestmentObjective、InvestmentScope、InvestmentStrategy、PerformanceBenchmark、StopLine、WarningLine |
-| 十二、基金的财产 | CustodyAccount |
 | 十七、基金的费用与税收 | ManageFee、ManageFeePay、PerformanceFeeStatement、PerformanceFeeRule、PerformanceFeeStandard |
 | 二十、风险揭示 | RiskLevel、StopLine、WarningLine |
 
@@ -53,7 +52,6 @@ internal static class FundDocxPrompt
 
   // ===== 基础信息 =====
   "ManagerProfile": { "Value": "管理人简介", "Confidence": 0.95 },
-  "AuditDate": { "Value": "2024-01-15", "Confidence": 0.95 },
   "FullName": { "Value": "基金全称", "Confidence": 0.99 },
   "ShortName": { "Value": "基金简称", "Confidence": 0.95 },
   "SecurityFundType": { "Value": "FixedIncome", "Confidence": 0.9 },
@@ -76,10 +74,6 @@ internal static class FundDocxPrompt
   "HugeRedemptionRatio": { "Value": 0.1, "Confidence": 0.9 },
   "CollectionAccount": {
     "Value": { "Name": "xxx私募基金管理有限公司", "Number": "123456789", "Bank": "招商银行", "Branch": "上海分行", "BankOfDeposit": "招商银行上海分行" },
-    "Confidence": 0.9
-  },
-  "CustodyAccount": {
-    "Value": { "Name": "xxx", "Number": "xxx", "Bank": "xxx", "Branch": null, "BankOfDeposit": "xxx" },
     "Confidence": 0.9
   },
   "TrusteeInfo": {
@@ -248,7 +242,7 @@ internal static class FundDocxPrompt
 ---
 
 ### BankAccount（银行账户）
-用于：募集账户 CollectionAccount、托管账户 CustodyAccount
+用于：募集账户 CollectionAccount
 ```
 {
   "Name": string?,          // 户名（账户持有人名称）

@@ -1,4 +1,5 @@
 ﻿using FMO.Models;
+using MoT;
 using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Text;
@@ -235,6 +236,7 @@ public class TokenProvider
 
         var sb = new StringBuilder();
         var tokenCount = 0;
+        var parseErrors = new StringBuilder();
         string? line;
 
         while ((line = await reader.ReadLineAsync()) != null)
@@ -246,11 +248,12 @@ public class TokenProvider
             try
             {
                 using var doc = JsonDocument.Parse(data);
-                var delta = doc.RootElement
-                    .GetProperty("choices")[0]
-                    .GetProperty("delta");
+                var root = doc.RootElement;
 
-                if (delta.TryGetProperty("content", out var content))
+                if (root.TryGetProperty("choices", out var choices)
+                    && choices.GetArrayLength() > 0
+                    && choices[0].TryGetProperty("delta", out var delta)
+                    && delta.TryGetProperty("content", out var content))
                 {
                     var text = content.GetString();
                     if (text != null)
@@ -261,8 +264,14 @@ public class TokenProvider
                     }
                 }
             }
-            catch { /* 跳过格式异常的 chunk */ }
+            catch (Exception ex)
+            {
+                parseErrors.AppendLine($"{ex.Message} | {data.AsSpan(0, Math.Min(data.Length, 100))}");
+            }
         }
+
+        if (parseErrors.Length > 0)
+            Logg.Warning($"OpenAI 流式响应解析异常:\n{parseErrors}");
 
         return sb.Length > 0 ? sb.ToString() : "无有效返回";
     }
@@ -289,6 +298,7 @@ public class TokenProvider
 
         var sb = new StringBuilder();
         var tokenCount = 0;
+        var parseErrors = new StringBuilder();
         string? line;
 
         while ((line = await reader.ReadLineAsync()) != null)
@@ -302,9 +312,12 @@ public class TokenProvider
                 using var doc = JsonDocument.Parse(data);
                 var root = doc.RootElement;
 
-                if (root.TryGetProperty("type", out var type) && type.GetString() == "content_block_delta")
+                if (root.TryGetProperty("type", out var type)
+                    && type.GetString() == "content_block_delta"
+                    && root.TryGetProperty("delta", out var delta)
+                    && delta.TryGetProperty("text", out var textElement))
                 {
-                    var text = root.GetProperty("delta").GetProperty("text").GetString();
+                    var text = textElement.GetString();
                     if (text != null)
                     {
                         sb.Append(text);
@@ -313,8 +326,14 @@ public class TokenProvider
                     }
                 }
             }
-            catch { /* 跳过非 delta 事件 */ }
+            catch (Exception ex)
+            {
+                parseErrors.AppendLine($"{ex.Message} | {data.AsSpan(0, Math.Min(data.Length, 100))}");
+            }
         }
+
+        if (parseErrors.Length > 0)
+            Logg.Warning($"Anthropic 流式响应解析异常:\n{parseErrors}");
 
         return sb.Length > 0 ? sb.ToString() : "无有效返回";
     }
@@ -715,7 +734,7 @@ public class TokenProvider
     /// <summary>
     /// 从 AI 返回文本中提取 JSON 部分
     /// </summary>
-    internal static string ExtractJson(string response)
+    public static string ExtractJson(string response)
     {
         // 去除 ```json ... ``` 包裹
         var match = Regex.Match(response, @"```(?:json)?\s*([\s\S]*?)```");

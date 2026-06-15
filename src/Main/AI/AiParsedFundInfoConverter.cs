@@ -58,9 +58,6 @@ public static class AiParsedFundInfoConverter
         if (dto.CollectionAccount?.Value is { } ca)
             factors.Add(MakeSingleton<BankAccount>(FactorFields.CollectionAccount, ca));
 
-        if (dto.CustodyAccount?.Value is { } cu)
-            factors.Add(MakeSingleton<BankAccount>(FactorFields.CustodyAccount, cu));
-
         // ===== 机构（AgencyInfo 已含费用信息）=====
         if (dto.TrusteeInfo?.Value is { } ti)
             factors.Add(MakeSingleton<AgencyInfo>(FactorFields.TrusteeInfo, ti));

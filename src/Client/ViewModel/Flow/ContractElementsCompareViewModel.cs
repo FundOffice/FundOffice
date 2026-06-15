@@ -13,9 +13,20 @@ public partial class ContractElementsCompareViewModel : ObservableObject
 {
     public ObservableCollection<FactorCompareItem> Items { get; }
 
-    public ContractElementsCompareViewModel(ReadonlyFundInfo newInfo, ReadonlyFundInfo? oldInfo)
+    /// <summary>
+    /// 解析警告信息
+    /// </summary>
+    public ObservableCollection<string> Warnings { get; }
+
+    /// <summary>
+    /// 是否有警告
+    /// </summary>
+    public bool HasWarnings => Warnings.Count > 0;
+
+    public ContractElementsCompareViewModel(ReadonlyFundInfo newInfo, ReadonlyFundInfo? oldInfo, IReadOnlyList<string>? warnings = null)
     {
         Items = BuildCompareItems(newInfo, oldInfo);
+        Warnings = new ObservableCollection<string>(warnings ?? []);
     }
 
     private static ObservableCollection<FactorCompareItem> BuildCompareItems(ReadonlyFundInfo newInfo, ReadonlyFundInfo? oldInfo)
