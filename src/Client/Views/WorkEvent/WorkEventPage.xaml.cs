@@ -47,7 +47,7 @@ public partial class WorkEventPageViewModel : ObservableObject
         var accounts = db.GetCollection<TradingAccoutOfFund>().Query().ToList();
         foreach (var account in accounts)
         {
-            var display = $"[{account.GetType().Name}] {account.Company}";
+            var display = $"[{GetAccountTypeName(account)}] {account.Company}";
             var selectable = new SelectableAccount(account.Id, account.FundId, display);
             selectable.PropertyChanged += OnAccountSelectionChanged;
             AllAccounts.Add(selectable);
@@ -103,6 +103,36 @@ public partial class WorkEventPageViewModel : ObservableObject
 
     [ObservableProperty]
     public partial string? FundFilterText { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsFundPopupOpen { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsAccountPopupOpen { get; set; }
+
+    public string FundButtonText => $"基金({SelectedEvent?.LinkedFundIds.Count ?? 0})";
+
+    public string FundButtonTooltip
+    {
+        get
+        {
+            if (SelectedEvent?.LinkedFundIds.Count == 0) return "未选择基金";
+            var selected = AllFunds.Where(f => SelectedEvent!.LinkedFundIds.Contains(f.Id)).Select(f => f.Display);
+            return string.Join("\n", selected);
+        }
+    }
+
+    public string AccountButtonText => $"账户({SelectedEvent?.LinkedAccountIds.Count ?? 0})";
+
+    public string AccountButtonTooltip
+    {
+        get
+        {
+            if (SelectedEvent?.LinkedAccountIds.Count == 0) return "未选择账户";
+            var selected = FilteredAccounts.Where(a => SelectedEvent!.LinkedAccountIds.Contains(a.Id)).Select(a => a.Display);
+            return string.Join("\n", selected);
+        }
+    }
 
     public StatusOption[] StatusOptions { get; } =
     [
@@ -183,6 +213,8 @@ public partial class WorkEventPageViewModel : ObservableObject
         foreach (var account in AllAccounts)
             account.IsSelected = SelectedEvent?.LinkedAccountIds.Contains(account.Id) == true;
 
+        OnPropertyChanged(nameof(FundButtonText));
+        OnPropertyChanged(nameof(FundButtonTooltip));
         RefreshFilteredAccounts();
     }
 
@@ -196,6 +228,8 @@ public partial class WorkEventPageViewModel : ObservableObject
         else if (!fund.IsSelected && SelectedEvent.LinkedFundIds.Contains(fund.Id))
             SelectedEvent.LinkedFundIds.Remove(fund.Id);
 
+        OnPropertyChanged(nameof(FundButtonText));
+        OnPropertyChanged(nameof(FundButtonTooltip));
         RefreshFilteredAccounts();
     }
 
@@ -208,6 +242,19 @@ public partial class WorkEventPageViewModel : ObservableObject
             SelectedEvent.LinkedAccountIds.Add(account.Id);
         else if (!account.IsSelected && SelectedEvent.LinkedAccountIds.Contains(account.Id))
             SelectedEvent.LinkedAccountIds.Remove(account.Id);
+
+        OnPropertyChanged(nameof(AccountButtonText));
+        OnPropertyChanged(nameof(AccountButtonTooltip));
+    }
+
+    private static string GetAccountTypeName(TradingAccoutOfFund account)
+    {
+        return account switch
+        {
+            StockAccount => "股票户",
+            FutureAccount => "期货户",
+            _ => account.GetType().Name,
+        };
     }
 
     [ObservableProperty]
@@ -219,6 +266,9 @@ public partial class WorkEventPageViewModel : ObservableObject
         if (SelectedEvent is null) return;
         foreach (var account in value)
             account.IsSelected = SelectedEvent.LinkedAccountIds.Contains(account.Id);
+
+        OnPropertyChanged(nameof(AccountButtonText));
+        OnPropertyChanged(nameof(AccountButtonTooltip));
     }
 
     private void RefreshFilteredAccounts()
@@ -302,7 +352,7 @@ public partial class WorkEventPageViewModel : ObservableObject
         AllAccounts.Clear();
         foreach (var account in accounts)
         {
-            var display = $"[{account.GetType().Name}] {account.Company}";
+            var display = $"[{GetAccountTypeName(account)}] {account.Company}";
             var selectable = new SelectableAccount(account.Id, account.FundId, display);
             selectable.PropertyChanged += OnAccountSelectionChanged;
             AllAccounts.Add(selectable);
@@ -359,6 +409,12 @@ public partial class WorkEventPageViewModel : ObservableObject
 
         SelectedEvent = newVm;
     }
+
+    [RelayCommand]
+    public void OpenFundPopup() => IsFundPopupOpen = true;
+
+    [RelayCommand]
+    public void OpenAccountPopup() => IsAccountPopupOpen = true;
 
     private static WorkEventViewModel CreateWithType(WorkEventViewModel source, WorkEventType type)
     {
