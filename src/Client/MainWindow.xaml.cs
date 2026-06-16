@@ -132,7 +132,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
         Version = Assembly.GetExecutingAssembly().GetName().Version;
 
         MenuItems = [new MainMenu { IsEnabled = true, Title = "管理人", IconBrush = Brushes.BlueViolet, Command = OpenPageCommand, Parameter = "ManagerPage", Icon = GetGeometry("f.house") },
-                     new MainMenu { IsEnabled = true, Title = "事项", IconBrush = Brushes.Teal, Command = OpenPageCommand, Parameter = "WorkEvent", Icon = GetGeometry("f.clipboard")},
+                     new MainMenu { IsEnabled = true, Title = "事务", IconBrush = Brushes.Teal, Command = OpenPageCommand, Parameter = "WorkEvent", Icon = GetGeometry("f.clipboard")},
                      new MainMenu { IsEnabled = true, Title = "基金", IconBrush = Brushes.Violet, Command = OpenPageCommand, Parameter = "FundsPage", Icon = GetGeometry("f.fire")},
                      new MainMenu { IsEnabled = true, Title = "客户", IconBrush = Brushes.ForestGreen, Command = OpenPageCommand, Parameter = "Customer", Icon = GetGeometry("f.user")},
                      new MainMenu { IsEnabled = true, Title = "TA", IconBrush = Brushes.Orange, Command = OpenPageCommand, Parameter = "TA", Icon = GetGeometry("f.calendar-days")},
@@ -366,7 +366,7 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
                     var page = Pages.FirstOrDefault(x => x.Content is WorkEventPage);
                     if (page is null)
                     {
-                        page = new TabItemInfo { Header = "工作", Background = Brushes.Teal, HeaderBrush = Brushes.White, Content = new WorkEventPage() };
+                        page = new TabItemInfo { Header = "事务", Background = Brushes.Teal, HeaderBrush = Brushes.White, Content = new WorkEventPage() };
                         Pages.Add(page);
                     }
 

@@ -317,7 +317,7 @@
                     hc:InfoElement.TitlePlacement="Left"
                     SelectedDate="{Binding EndTime}" />
 
-                <ComboBox
+                <hc:ComboBox
                     Width="100"
                     hc:InfoElement.Placeholder="全部标签"
                     hc:InfoElement.Title="标签"
@@ -326,7 +326,7 @@
                     ItemsSource="{Binding AllTags}"
                     SelectedItem="{Binding SelectedTag}" />
 
-                <ComboBox
+                <hc:ComboBox
                     Width="140"
                     hc:InfoElement.Placeholder="全部关联"
                     hc:InfoElement.Title="关联"
@@ -335,8 +335,7 @@
                     ItemsSource="{Binding AllLinks}"
                     SelectedItem="{Binding SelectedLink}" />
 
-                <ComboBox
-                    Width="90"
+                <hc:ComboBox
                     hc:InfoElement.Placeholder="全部状态"
                     hc:InfoElement.Title="状态"
                     hc:InfoElement.TitlePlacement="Left"
@@ -344,8 +343,8 @@
                     ItemsSource="{Binding StatusOptions}"
                     SelectedItem="{Binding SelectedStatus}" />
 
-                <TextBox
-                    Width="140"
+                <hc:TextBox
+                    Width="220"
                     hc:InfoElement.Placeholder="搜索标题、描述、关联"
                     hc:InfoElement.Title="关键词"
                     hc:InfoElement.TitlePlacement="Left"
@@ -361,10 +360,30 @@
                     Content="刷新"
                     Style="{StaticResource ButtonDefault}" />
 
-                <Button
-                    Command="{Binding AddEventCommand}"
-                    Content="新增"  
-                    Style="{StaticResource ButtonPrimary}" />
+                <Border
+                    BorderBrush="Gray"
+                    BorderThickness="1"
+                    CornerRadius="5">
+                    <hc:UniformSpacingPanel Spacing="5">
+                        <Button Content="开户" />
+                        <Button Content="变更" />
+                        <Button Content="销户" />
+                    </hc:UniformSpacingPanel>
+                </Border>
+
+
+                <Button Content="尽调" />
+
+
+                <Button Content="自查" />
+
+
+                <Button Content="管理人变更" />
+
+
+
+
+                <Button Command="{Binding AddEventCommand}" Content="其它" />
             </hc:UniformSpacingPanel>
         </Border>
 
@@ -406,72 +425,45 @@
             Visibility="{Binding SelectedEvent, Converter={StaticResource Object2VisibilityConverter}}">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <hc:Divider Content="基本信息" />
 
-                    <DockPanel Margin="0,4" LastChildFill="True">
-                        <TextBlock VerticalAlignment="Center" Text="类型" />
-                        <Button
-                            Command="{Binding SelectedEvent.SaveCommand}"
-                            Content="保存"
-                            DockPanel.Dock="Right"
-                            Style="{StaticResource ButtonPrimary}" />
-                        <Button
-                            Width="60"
-                            Command="{Binding SwitchTypeCommand}"
-                            Content="切换"
-                            DockPanel.Dock="Right"
-                            Style="{StaticResource ButtonDefault}"
-                            Visibility="{Binding IsDetailEnabled, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-                        <hc:ComboBox
-                            Margin="6,0"
-                            hc:InfoElement.Placeholder="请选择事项类型"
-                            hc:InfoElement.TitlePlacement="Top"
-                            DisplayMemberPath="Value"
-                            ItemsSource="{Binding SelectedEvent.Type, Converter={StaticResource EnumToComboBoxItemsConverter}}"
-                            SelectedValue="{Binding SelectedEventType}"
-                            SelectedValuePath="Key" />
-                    </DockPanel>
+                    <hc:Divider Margin="0" Content="基本信息" />
+                    <hc:SimplePanel Margin="0,4" />
 
                     <StackPanel IsEnabled="{Binding IsDetailEnabled}">
-                        <hc:TextBox
-                            Margin="0,4"
-                            hc:InfoElement.Placeholder="输入工作事项标题"
-                            hc:InfoElement.Title="标题"
-                            hc:InfoElement.TitlePlacement="Top"
-                            Text="{Binding SelectedEvent.Title}" />
+                        <DockPanel>
+
+                            <Button
+                                Margin="5,0,0,0"
+                                VerticalAlignment="Stretch"
+                                Command="{Binding SelectedEvent.SaveCommand}"
+                                Content="保存"
+                                DockPanel.Dock="Right"
+                                Style="{StaticResource ButtonPrimary}" />
+
+                            <hc:TextBox
+                                Margin="0,4"
+                                hc:InfoElement.Placeholder="输入工作事项标题"
+                                hc:InfoElement.Title="标题"
+                                hc:InfoElement.TitlePlacement="Left"
+                                Text="{Binding SelectedEvent.Title}" />
+                        </DockPanel>
 
                         <hc:ComboBox
                             Margin="0,4"
                             hc:InfoElement.Placeholder="请选择当前处理状态"
-                            hc:InfoElement.Title="处理状态"
-                            hc:InfoElement.TitlePlacement="Top"
+                            hc:InfoElement.Title="状态"
+                            hc:InfoElement.TitlePlacement="Left"
                             DisplayMemberPath="Value"
                             ItemsSource="{Binding SelectedEvent.Status, Converter={StaticResource EnumToComboBoxItemsConverter}}"
                             SelectedValue="{Binding SelectedEvent.Status}"
                             SelectedValuePath="Key" />
-
-                        <DatePicker
-                            Margin="0,4"
-                            hc:InfoElement.Placeholder="请选择截止时间（可选）"
-                            hc:InfoElement.Title="截止时间"
-                            hc:InfoElement.TitlePlacement="Top"
-                            SelectedDate="{Binding SelectedEvent.DueTime}" />
-
-                        <hc:TextBox
-                            MinHeight="80"
-                            Margin="0,4"
-                            hc:InfoElement.Placeholder="填写事项详细描述"
-                            hc:InfoElement.Title="详细描述"
-                            hc:InfoElement.TitlePlacement="Top"
-                            Text="{Binding SelectedEvent.Description}"
-                            TextWrapping="Wrap" />
 
                         <hc:TextBox
                             x:Name="TagInput"
                             Margin="0,4"
                             hc:InfoElement.Placeholder="输入标签后回车添加"
                             hc:InfoElement.Title="标签"
-                            hc:InfoElement.TitlePlacement="Top"
+                            hc:InfoElement.TitlePlacement="Left"
                             PreviewKeyDown="TagInput_PreviewKeyDown"
                             Text="{Binding SelectedEvent.NewTagInput, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -496,6 +488,28 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+
+
+                        <hc:DatePicker
+                            Margin="0,4"
+                            hc:InfoElement.Placeholder="请选择截止时间（可选）"
+                            hc:InfoElement.Title="截止时间"
+                            hc:InfoElement.TitlePlacement="Left"
+                            SelectedDate="{Binding SelectedEvent.DueTime}" />
+
+
+                        <hc:TextBox
+                            MinHeight="80"
+                            Margin="0,4"
+                            hc:InfoElement.Placeholder="填写事项详细描述"
+                            hc:InfoElement.Title="详细描述"
+                            hc:InfoElement.TitlePlacement="Top"
+                            AcceptsReturn="True"
+                            Text="{Binding SelectedEvent.Description}"
+                            TextWrapping="Wrap" />
+
+
+
 
                         <hc:Divider Margin="0,10" Content="关联对象" />
 
@@ -606,14 +620,14 @@
 
                         <hc:Divider Margin="0,10" Content="附件" />
 
-                        <hc:UniformSpacingPanel
-                            Margin="0,4"
-                            HorizontalSpacing="10"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center">
+                        <UniformGrid
+                            Margin="4"
+                            VerticalAlignment="Center"
+                            Rows="1">
                             <Border
                                 x:Name="OriginalDropZone"
                                 MinWidth="130"
+                                Margin="5,0"
                                 Padding="12,6"
                                 AllowDrop="True"
                                 Background="#F0F8FF"
@@ -632,6 +646,7 @@
                             <Border
                                 x:Name="SealDropZone"
                                 MinWidth="130"
+                                Margin="5,0"
                                 Padding="12,6"
                                 AllowDrop="True"
                                 Background="#FFF8F0"
@@ -646,7 +661,7 @@
                                     Content="📁 用印文件"
                                     Cursor="Hand" />
                             </Border>
-                        </hc:UniformSpacingPanel>
+                        </UniformGrid>
 
                         <TextBlock
                             Margin="0,2,0,0"
