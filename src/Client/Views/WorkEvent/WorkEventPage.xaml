@@ -7,7 +7,7 @@
     xmlns:local="clr-namespace:FMO"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
-    d:DesignHeight="450"
+    d:DesignHeight="850"
     d:DesignWidth="1200"
     mc:Ignorable="d">
     <UserControl.DataContext>
@@ -401,12 +401,12 @@
 
                     <DockPanel Margin="0,4" LastChildFill="True">
                         <Button
-                            Margin="8,0,0,0"
-                            VerticalAlignment="Top"
+                            Margin="2.0"
+                            VerticalAlignment="Bottom"
                             Command="{Binding SelectedEvent.SaveCommand}"
                             Content="保存"
                             DockPanel.Dock="Right"
-                            Style="{StaticResource ButtonPrimary.Small}" />
+                            Style="{StaticResource ButtonPrimary}" />
                         <Button
                             Width="60"
                             Margin="2.0"
@@ -462,7 +462,7 @@
 
                         <hc:TextBox
                             Margin="0,4"
-                            hc:InfoElement.Placeholder="多个标签可用逗号、分号分隔"
+                            hc:InfoElement.Placeholder="输入后回车添加"
                             hc:InfoElement.Title="标签"
                             hc:InfoElement.TitlePlacement="Top"
                             Text="{Binding SelectedEvent.TagsText, UpdateSourceTrigger=PropertyChanged}" />
