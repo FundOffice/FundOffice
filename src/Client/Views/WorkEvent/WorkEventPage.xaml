@@ -382,7 +382,11 @@
                             Style="{StaticResource ButtonDanger}" />
 
 
-                        <Button Content="其它" />
+                        <Button
+                            Command="{Binding AddAccountOtherEventCommand}"
+                            Content="其它"
+                            Foreground="White"
+                            Style="{StaticResource ButtonDefault}" />
                     </hc:UniformSpacingPanel>
                 </Border>
 

@@ -27,6 +27,9 @@ public enum WorkEventType
 
     [Description("账户资料变更")]
     AccountInfoChange,
+
+    [Description("账户其它")]
+    AccountOther,
 }
 
 /// <summary>

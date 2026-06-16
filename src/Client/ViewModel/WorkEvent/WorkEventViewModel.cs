@@ -126,6 +126,7 @@ public abstract partial class WorkEventViewModel : ObservableObject
         WorkEventType.SelfInspection => "自查",
         WorkEventType.ManagerAffairs => "管理人事务",
         WorkEventType.AccountInfoChange => "账户资料变更",
+        WorkEventType.AccountOther => "账户其它",
         WorkEventType.Custom => "自定义",
         _ => Type.ToString(),
     };
@@ -203,6 +204,7 @@ public abstract partial class WorkEventViewModel : ObservableObject
             SelfInspectionWorkEvent e => new SelfInspectionWorkEventViewModel(e),
             ManagerAffairsWorkEvent e => new ManagerAffairsWorkEventViewModel(e),
             AccountInfoChangeWorkEvent e => new AccountInfoChangeWorkEventViewModel(e),
+            AccountOtherWorkEvent e => new AccountOtherWorkEventViewModel(e),
             CustomWorkEvent e => new CustomWorkEventViewModel(e),
             _ => throw new NotSupportedException($"未知的工作事项类型: {workEvent.GetType().Name}"),
         };

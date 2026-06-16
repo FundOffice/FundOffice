@@ -452,6 +452,9 @@ public partial class WorkEventPageViewModel : ObservableObject
     [RelayCommand]
     public void AddAccountInfoChangeEvent() => AddTypedEvent(WorkEventType.AccountInfoChange);
 
+    [RelayCommand]
+    public void AddAccountOtherEvent() => AddTypedEvent(WorkEventType.AccountOther);
+
     private void AddTypedEvent(WorkEventType type)
     {
         WorkEvent workEvent = type switch
@@ -462,6 +465,7 @@ public partial class WorkEventPageViewModel : ObservableObject
             WorkEventType.SelfInspection => new SelfInspectionWorkEvent(),
             WorkEventType.ManagerAffairs => new ManagerAffairsWorkEvent(),
             WorkEventType.AccountInfoChange => new AccountInfoChangeWorkEvent(),
+            WorkEventType.AccountOther => new AccountOtherWorkEvent(),
             _ => new CustomWorkEvent(),
         };
         workEvent.Title = type switch
@@ -472,6 +476,7 @@ public partial class WorkEventPageViewModel : ObservableObject
             WorkEventType.SelfInspection => "新建自查",
             WorkEventType.ManagerAffairs => "新建管理人变更",
             WorkEventType.AccountInfoChange => "新建账户变更",
+            WorkEventType.AccountOther => "新建账户其它",
             _ => "新建工作事项",
         };
         workEvent.CreateTime = DateTime.Now;
@@ -480,9 +485,11 @@ public partial class WorkEventPageViewModel : ObservableObject
         // 账户相关类型默认勾选关联基金；变更/销户再加勾关联账户
         workEvent.IsFundLinked = type is WorkEventType.AccountOpening
             or WorkEventType.AccountInfoChange
-            or WorkEventType.AccountCancellation;
+            or WorkEventType.AccountCancellation
+            or WorkEventType.AccountOther;
         workEvent.IsAccountLinked = type is WorkEventType.AccountInfoChange
-            or WorkEventType.AccountCancellation;
+            or WorkEventType.AccountCancellation
+            or WorkEventType.AccountOther;
 
         var vm = WorkEventViewModel.Create(workEvent);
         Events.Insert(0, vm);
