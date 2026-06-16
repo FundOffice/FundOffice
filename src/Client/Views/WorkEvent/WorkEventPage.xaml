@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:local="clr-namespace:FMO"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
@@ -459,15 +460,14 @@
                         Text="{Binding SelectedEvent.Description}"
                         TextWrapping="Wrap" />
 
-                    <hc:ComboBox
+                    <TextBox
                         x:Name="TagInput"
                         Margin="0,4"
-                        hc:InfoElement.Placeholder="输入标签后回车，多个用逗号/分号分隔"
+                        hc:InfoElement.Placeholder="输入标签后回车添加，多个用逗号/分号分隔"
                         hc:InfoElement.Title="标签"
                         hc:InfoElement.TitlePlacement="Top"
-                        IsEditable="True"
-                        ItemsSource="{Binding AllTags}"
-                        Text="{Binding SelectedEvent.TagsText, UpdateSourceTrigger=PropertyChanged}" />
+                        PreviewKeyDown="TagInput_PreviewKeyDown"
+                        Text="{Binding SelectedEvent.NewTagInput, UpdateSourceTrigger=PropertyChanged}" />
 
                     <ItemsControl Margin="0,4" ItemsSource="{Binding SelectedEvent.Tags}">
                         <ItemsControl.ItemsPanel>
@@ -477,7 +477,15 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <hc:Tag Margin="2" Content="{Binding}" ShowCloseButton="False" />
+                                <hc:Tag Margin="2" Content="{Binding}" ShowCloseButton="True">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="Closed">
+                                            <i:InvokeCommandAction
+                                                Command="{Binding DataContext.SelectedEvent.RemoveTagCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}" />
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </hc:Tag>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

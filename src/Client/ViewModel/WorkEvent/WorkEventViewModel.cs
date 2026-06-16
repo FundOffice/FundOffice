@@ -64,18 +64,38 @@ public abstract partial class WorkEventViewModel : ObservableObject
 
     public string TagDisplay => Tags is null || Tags.Count == 0 ? string.Empty : string.Join(", ", Tags);
 
-    public string TagsText
+    [ObservableProperty]
+    public partial string NewTagInput { get; set; } = string.Empty;
+
+    [RelayCommand]
+    public void AddTag(string? text)
     {
-        get => TagDisplay;
-        set
+        if (Tags is null) return;
+        var input = text ?? NewTagInput;
+        if (string.IsNullOrWhiteSpace(input)) return;
+
+        var parts = input.Split([',', '，', ';'], StringSplitOptions.RemoveEmptyEntries)
+                         .Select(x => x.Trim())
+                         .Where(x => !string.IsNullOrWhiteSpace(x));
+        bool changed = false;
+        foreach (var t in parts)
         {
-            Tags = string.IsNullOrWhiteSpace(value)
-                ? []
-                : new ObservableCollection<string>(value.Split([',', '，', ';'], StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)));
-            OnPropertyChanged(nameof(TagsText));
-            OnPropertyChanged(nameof(Tags));
-            OnPropertyChanged(nameof(TagDisplay));
+            if (!Tags.Contains(t, StringComparer.OrdinalIgnoreCase))
+            {
+                Tags.Add(t);
+                changed = true;
+            }
         }
+        if (changed) OnPropertyChanged(nameof(TagDisplay));
+        NewTagInput = string.Empty;
+    }
+
+    [RelayCommand]
+    public void RemoveTag(string? tag)
+    {
+        if (Tags is null || string.IsNullOrWhiteSpace(tag)) return;
+        if (Tags.Remove(tag))
+            OnPropertyChanged(nameof(TagDisplay));
     }
 
     public string StatusDisplay => Status switch

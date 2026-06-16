@@ -6,6 +6,7 @@ using LiteDB;
 using System.Collections.ObjectModel;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 
 namespace FMO;
 
@@ -17,6 +18,18 @@ public partial class WorkEventPage : UserControl
     public WorkEventPage()
     {
         InitializeComponent();
+    }
+
+    private void TagInput_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        if (sender is not TextBox tb) return;
+        if (DataContext is not WorkEventPageViewModel vm) return;
+        if (vm.SelectedEvent is null) return;
+
+        vm.SelectedEvent.AddTagCommand.Execute(tb.Text);
+        tb.Clear();
+        e.Handled = true;
     }
 }
 
