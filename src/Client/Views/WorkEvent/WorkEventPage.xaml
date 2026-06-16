@@ -399,9 +399,9 @@
 
 
                 <Button
-                    Command="{Binding AddManagerAffairsEventCommand}"
                     Background="MediumSlateBlue"
                     BorderBrush="MediumSlateBlue"
+                    Command="{Binding AddManagerAffairsEventCommand}"
                     Content="管理人变更"
                     Foreground="White" />
 
@@ -571,7 +571,7 @@
                                         BorderThickness="1"
                                         CornerRadius="3">
                                         <StackPanel>
-                                            <TextBox
+                                            <hc:TextBox
                                                 Margin="0,0,0,4"
                                                 hc:InfoElement.Placeholder="输入基金代码或名称快速筛选"
                                                 hc:InfoElement.ShowClearButton="True"
@@ -580,10 +580,14 @@
                                                 MaxHeight="240"
                                                 BorderThickness="0"
                                                 ItemsSource="{Binding FundSource.View}"
-                                                ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                Style="{StaticResource ListBoxCustom}">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate DataType="local:SelectableFund">
-                                                        <CheckBox Content="{Binding Display}" IsChecked="{Binding IsSelected}" />
+                                                        <CheckBox
+                                                            Margin="0,3"
+                                                            Content="{Binding Display}"
+                                                            IsChecked="{Binding IsSelected}" />
                                                     </DataTemplate>
                                                 </ListBox.ItemTemplate>
                                             </ListBox>
@@ -595,7 +599,7 @@
                             <StackPanel
                                 VerticalAlignment="Center"
                                 Orientation="Horizontal"
-                                Visibility="{Binding SelectedEvent.IsFundLinked, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                Visibility="{Binding SelectedEvent.LinkedFundIds.Count, Converter={StaticResource ListIsNotEmpty2VisibilityConverter}}">
                                 <CheckBox Content="账户" IsChecked="{Binding SelectedEvent.IsAccountLinked}" />
                                 <Button
                                     x:Name="AccountSelectorBtn"
@@ -630,7 +634,8 @@
                                                 MaxHeight="240"
                                                 BorderThickness="0"
                                                 ItemsSource="{Binding FilteredAccounts}"
-                                                ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                Style="{StaticResource ListBoxCustom}">
                                                 <ListBox.ItemTemplate>
                                                     <DataTemplate DataType="local:SelectableAccount">
                                                         <CheckBox Content="{Binding Display}" IsChecked="{Binding IsSelected}" />
