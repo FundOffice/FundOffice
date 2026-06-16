@@ -15,6 +15,14 @@
         <local:WorkEventPageViewModel />
     </UserControl.DataContext>
     <UserControl.Resources>
+
+        <Style
+            x:Key="status"
+            BasedOn="{StaticResource ListBoxItem.AllaysFocus}"
+            TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+
         <DataTemplate x:Key="WorkEventItemTemplate" DataType="local:WorkEventViewModel">
             <Border
                 x:Name="RootBorder"
@@ -385,7 +393,6 @@
                         <Button
                             Command="{Binding AddAccountOtherEventCommand}"
                             Content="其它"
-                            Foreground="White"
                             Style="{StaticResource ButtonDefault}" />
                     </hc:UniformSpacingPanel>
                 </Border>
@@ -488,7 +495,7 @@
                             <ListBox
                                 Margin="0,4"
                                 DisplayMemberPath="Value"
-                                ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
+                                ItemContainerStyle="{StaticResource status}"
                                 ItemsPanel="{StaticResource UniformHorizontalItemsPanelTemplate}"
                                 ItemsSource="{Binding SelectedEvent.Status, Converter={StaticResource EnumToComboBoxItemsConverter}}"
                                 SelectedValue="{Binding SelectedEvent.Status}"
@@ -546,6 +553,7 @@
                             TextWrapping="Wrap" />
 
 
+                        <ContentControl Margin="0,10" Content="{Binding SelectedEvent}" />
 
 
                         <hc:Divider Margin="0,10" Content="关联对象" />
@@ -711,7 +719,6 @@
                             Foreground="Gray"
                             Text="提示：点击按钮打开文件夹；或将文件拖拽到对应区域保存，同名文件自动重命名。" />
 
-                        <ContentControl Margin="0,10" Content="{Binding SelectedEvent}" />
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
