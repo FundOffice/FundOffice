@@ -39,12 +39,14 @@ App.xaml.cs 中的启动逻辑：
 | LogView | 日志查看 |
 | TrusteeWorkerSettingView | 托管Worker配置 |
 | TransferRequestPage | 转让申请页 |
+| WorkEvent/ | 工作事项（工作事项列表与详情页） |
 
 ### ViewModel/
 
 | 目录/文件 | 说明 |
 |-----------|------|
 | Elements/ | 基金要素 ViewModel（ElementItemViewModel等） |
+| WorkEvent/ | 工作事项 ViewModel（WorkEventViewModel及子类） |
 
 #### Factor 要素 UI 层
 
@@ -104,6 +106,44 @@ App.xaml.cs 中的启动逻辑：
 - OpenRuleEditor - 开放日规则编辑器
 - ValidationItemView - 校验项视图
 - WatermarkService - 水印服务
+
+## 工作事项 (WorkEvent)
+
+工作事项模块用于记录和管理日常事务（开户、账户变更、销户、尽调、自查、管理人事务等）。
+
+### 文件位置
+
+- **视图**：`src/Client/Views/WorkEvent/WorkEventPage.xaml`
+- **视图模型**：`src/Client/ViewModel/WorkEvent/`
+- **领域模型**：`src/Main/Models/WorkEvent/`
+
+### 支持的工作事项类型
+
+| 类型枚举 | 显示名称 | 默认关联 |
+|----------|----------|----------|
+| `Custom` | 自定义 | 无 |
+| `AccountOpening` | 开户 | 基金 |
+| `AccountInfoChange` | 账户资料变更 | 基金 + 账户 |
+| `AccountCancellation` | 销户 | 基金 + 账户 |
+| `AccountOther` | 账户其它 | 基金 + 账户 |
+| `DueDiligence` | 尽调 | 无 |
+| `SelfInspection` | 自查 | 无 |
+| `ManagerAffairs` | 管理人事务 | 无 |
+
+### 主要功能
+
+1. **快捷创建**：顶部工具栏提供开户、变更、销户、其它、尽调、自查、管理人变更、其它等按钮，按钮使用不同颜色区分。
+2. **列表与详情**：左侧卡片列表展示状态、类型、标题、标签；右侧详情面板可编辑标题、状态、截止时间、描述、标签。
+3. **标签管理**：详情面板使用 HandyControl `Tag` 控件展示标签，支持回车添加、逗号/分号批量添加、去重、点击关闭删除。
+4. **关联对象**：
+   - 可勾选关联管理人、基金、账户。
+   - 选择基金后，账户列表仅显示所选基金下的交易账户。
+   - 账户 checkbox 只在已选至少一只基金时显示。
+5. **文件与文件夹**：
+   - 详情页右侧提供"原始文件夹"和"用印文件夹"按钮。
+   - 点击打开 `files\events\{id}\原始文件` / `用印文件`。
+   - 支持拖拽文件到按钮区域保存，重名时自动重命名。
+6. **状态与类型显示**：状态/类型变更后左侧卡片实时刷新。
 
 ## 业务流程 (Flow)
 
