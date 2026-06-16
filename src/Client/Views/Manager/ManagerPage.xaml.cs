@@ -986,6 +986,7 @@ public partial class ManagerFlowViewModel : ObservableObject
 
     public bool IsFinished { get; set; }
 
+
     public ManagerFlowViewModel(ManagerFlow flow)
     {
         Id = flow.Id;

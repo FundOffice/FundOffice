@@ -65,6 +65,13 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
             current = current.BaseType;
         }
 
+        bool hasIsReadOnly = declaredPropertiesMap.ContainsKey("IsReadOnly");
+        bool supportsInpc = targetClass.AllInterfaces.Any(i =>
+            i.Name == "INotifyPropertyChanged" &&
+            i.ContainingNamespace?.ToDisplayString() == "System.ComponentModel");
+        bool derivesObservableObject = DerivesFromObservableObject(targetClass);
+        logs.Add($"  ℹ️ IsReadOnly: has={hasIsReadOnly}, generate={!hasIsReadOnly}, inpc={supportsInpc}, observableObject={derivesObservableObject}");
+
         var properties = new List<PropertyInfo>();
 
         foreach (var entityType in entityTypes)
@@ -131,7 +138,7 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
         logs.Add($"[End] Total properties: {properties.Count}");
         if (properties.Count == 0) return null;
 
-        return new GenerationModel(className, ns, entityTypes, properties, logs);
+        return new GenerationModel(className, ns, entityTypes, properties, logs, !hasIsReadOnly, supportsInpc, derivesObservableObject);
     }
 
     private static bool IsNullableType(ITypeSymbol type)
@@ -151,6 +158,19 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
         type.OriginalDefinition.Name == "ModifiableViewModel" &&
         type.ContainingNamespace?.ToDisplayString() == "FMO.Shared";
 
+    private static bool DerivesFromObservableObject(INamedTypeSymbol type)
+    {
+        INamedTypeSymbol? current = type.BaseType;
+        while (current != null && current.SpecialType != SpecialType.System_Object)
+        {
+            if (current.Name == "ObservableObject" &&
+                current.ContainingNamespace?.ToDisplayString() == "CommunityToolkit.Mvvm.ComponentModel")
+                return true;
+            current = current.BaseType;
+        }
+        return false;
+    }
+
     private static string GenerateSource(GenerationModel model)
     {
         var debugHeader = string.Join("\n",
@@ -160,6 +180,36 @@ public class EntityModifiableIncrementalGenerator : IIncrementalGenerator
 
         var namespaceOpen = !string.IsNullOrEmpty(model.Namespace) ? $"namespace {model.Namespace}\n{{" : "";
         var namespaceClose = !string.IsNullOrEmpty(model.Namespace) ? "}" : "";
+
+        var isReadOnlyDeclaration = model.GenerateIsReadOnly
+            ? (model.DerivesFromObservableObject
+                ? """
+
+        public bool IsReadOnly { get => field; set => SetProperty(ref field, value); } = true;
+"""
+                : model.SupportsINotifyPropertyChanged
+                    ? """
+
+        private bool _isReadOnly = true;
+
+        public bool IsReadOnly
+        {
+            get => _isReadOnly;
+            set
+            {
+                if (_isReadOnly != value)
+                {
+                    _isReadOnly = value;
+                    PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(IsReadOnly)));
+                }
+            }
+        }
+"""
+                    : """
+
+        public bool IsReadOnly { get; set; } = true;
+""")
+            : string.Empty;
 
         var propertyDeclarations = string.Join("\n\n", model.Properties.Where(p => !p.IsUserDeclared).Select(prop =>
         {
@@ -272,6 +322,7 @@ using FMO.Shared;
     public partial class {{model.ClassName}}
     {
         private readonly Throttle _throttle = new(TimeSpan.FromMilliseconds(200));
+{{isReadOnlyDeclaration}}
 
 {{propertyDeclarations}}
 
@@ -297,15 +348,21 @@ using FMO.Shared;
         public List<INamedTypeSymbol> EntityTypes { get; }
         public List<PropertyInfo> Properties { get; }
         public List<string> DebugLogs { get; }
+        public bool GenerateIsReadOnly { get; }
+        public bool SupportsINotifyPropertyChanged { get; }
+        public bool DerivesFromObservableObject { get; }
 
         public GenerationModel(string className, string @namespace, List<INamedTypeSymbol> entityTypes,
-            List<PropertyInfo> properties, List<string> logs)
+            List<PropertyInfo> properties, List<string> logs, bool generateIsReadOnly, bool supportsINotifyPropertyChanged, bool derivesFromObservableObject)
         {
             ClassName = className;
             Namespace = @namespace;
             EntityTypes = entityTypes;
             Properties = properties;
             DebugLogs = logs;
+            GenerateIsReadOnly = generateIsReadOnly;
+            SupportsINotifyPropertyChanged = supportsINotifyPropertyChanged;
+            DerivesFromObservableObject = derivesFromObservableObject;
         }
     }
 

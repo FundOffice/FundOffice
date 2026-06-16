@@ -1,0 +1,270 @@
+<UserControl
+    x:Class="FMO.WorkEventPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:FMO"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shared="clr-namespace:FMO.Shared;assembly=SharedUI"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <UserControl.DataContext>
+        <local:WorkEventPageViewModel />
+    </UserControl.DataContext>
+    <UserControl.Resources>
+        <DataTemplate x:Key="WorkEventItemTemplate" DataType="local:WorkEventViewModel">
+            <Border
+                Width="280"
+                Margin="4"
+                Background="White"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="5">
+                <hc:SimplePanel>
+                    <StackPanel Margin="10">
+                        <DockPanel>
+                            <TextBlock
+                                FontSize="15"
+                                FontWeight="Bold"
+                                Text="{Binding Title}"
+                                TextTrimming="CharacterEllipsis" />
+                        </DockPanel>
+
+                        <DockPanel Margin="0,4,0,0">
+                            <Border
+                                x:Name="StatusBorder"
+                                Padding="4,1"
+                                CornerRadius="3"
+                                DockPanel.Dock="Left">
+                                <TextBlock
+                                    FontSize="11"
+                                    Foreground="White"
+                                    Text="{Binding StatusDisplay}" />
+                            </Border>
+                            <TextBlock
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                FontSize="12"
+                                Foreground="Gray"
+                                Text="{Binding TypeDisplay}" />
+                            <TextBlock
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                FontSize="11"
+                                Foreground="Gray"
+                                Text="{Binding CreateTime, StringFormat=yyyy/MM/dd HH:mm}" />
+                        </DockPanel>
+
+                        <TextBlock
+                            Margin="0,6,0,0"
+                            FontSize="12"
+                            Foreground="DimGray"
+                            Text="{Binding Description}"
+                            TextTrimming="CharacterEllipsis"
+                            Visibility="{Binding Description, Converter={StaticResource ValueIsEffectToVisibilityConverter}}" />
+
+                        <DockPanel Margin="0,6,0,0" Visibility="{Binding TagDisplay, Converter={StaticResource ValueIsEffectToVisibilityConverter}}">
+                            <TextBlock FontSize="11" Foreground="Gray" Text="标签：" />
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="RoyalBlue"
+                                Text="{Binding TagDisplay}" />
+                        </DockPanel>
+
+                        <DockPanel Margin="0,2,0,0" Visibility="{Binding LinkName, Converter={StaticResource ValueIsEffectToVisibilityConverter}}">
+                            <TextBlock FontSize="11" Foreground="Gray" Text="关联：" />
+                            <TextBlock FontSize="11" Text="{Binding LinkName}" />
+                        </DockPanel>
+
+                        <TextBlock
+                            Margin="0,2,0,0"
+                            FontSize="11"
+                            Foreground="OrangeRed"
+                            Text="{Binding DueTime, StringFormat=截止：{0:yyyy/MM/dd HH:mm}}"
+                            Visibility="{Binding DueTime, Converter={StaticResource ValueIsEffectToVisibilityConverter}}" />
+                    </StackPanel>
+
+                    <DockPanel
+                        x:Name="DeletePanel"
+                        Margin="4"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        LastChildFill="False"
+                        Visibility="Collapsed">
+                        <ToggleButton
+                            x:Name="ConfirmToggle"
+                            Content="删除"
+                            Style="{StaticResource ToggleButtonDanger.Small}"
+                            Visibility="{Binding IsChecked, RelativeSource={RelativeSource Self}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+                        <DockPanel Visibility="{Binding ElementName=ConfirmToggle, Path=IsChecked, Converter={StaticResource Boolean2VisibilityConverter}}">
+                            <Button
+                                Width="18"
+                                Margin="0"
+                                Padding="0"
+                                hc:IconElement.Geometry="{StaticResource f.check}"
+                                Command="{Binding DataContext.DeleteEventCommand, RelativeSource={RelativeSource AncestorType=local:WorkEventPage}}"
+                                CommandParameter="{Binding .}"
+                                Foreground="Red"
+                                Style="{StaticResource ButtonIcon.Small}" />
+                            <ToggleButton
+                                x:Name="CancelToggle"
+                                hc:IconElement.Geometry="{StaticResource f.x}"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Style="{StaticResource ToggleButtonIcon.Small}" />
+                        </DockPanel>
+                    </DockPanel>
+                </hc:SimplePanel>
+
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="BorderBrush" Value="RoyalBlue" />
+                                <Setter Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect
+                                            BlurRadius="6"
+                                            Opacity="0.3"
+                                            ShadowDepth="2" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+            </Border>
+            <DataTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter TargetName="DeletePanel" Property="Visibility" Value="Visible" />
+                </Trigger>
+                <Trigger SourceName="CancelToggle" Property="IsChecked" Value="True">
+                    <Setter TargetName="ConfirmToggle" Property="IsChecked" Value="False" />
+                    <Setter TargetName="CancelToggle" Property="IsChecked" Value="False" />
+                </Trigger>
+                <DataTrigger Binding="{Binding Status}" Value="Pending">
+                    <Setter TargetName="StatusBorder" Property="Background" Value="Gray" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="InProgress">
+                    <Setter TargetName="StatusBorder" Property="Background" Value="RoyalBlue" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Completed">
+                    <Setter TargetName="StatusBorder" Property="Background" Value="Green" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Cancelled">
+                    <Setter TargetName="StatusBorder" Property="Background" Value="DarkGray" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <Style x:Key="WorkEventListBoxItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <DockPanel>
+        <Border
+            Margin="0,8"
+            Padding="8"
+            Background="WhiteSmoke"
+            CornerRadius="5"
+            DockPanel.Dock="Top">
+            <hc:UniformSpacingPanel HorizontalSpacing="10" Orientation="Horizontal" VerticalAlignment="Center">
+                <DatePicker
+                    Width="140"
+                    hc:InfoElement.Placeholder="开始时间"
+                    hc:InfoElement.Title="开始时间"
+                    hc:InfoElement.TitlePlacement="Left"
+                    SelectedDate="{Binding StartTime}" />
+
+                <DatePicker
+                    Width="140"
+                    hc:InfoElement.Placeholder="结束时间"
+                    hc:InfoElement.Title="结束时间"
+                    hc:InfoElement.TitlePlacement="Left"
+                    SelectedDate="{Binding EndTime}" />
+
+                <ComboBox
+                    Width="120"
+                    hc:InfoElement.Placeholder="全部标签"
+                    hc:InfoElement.Title="标签"
+                    hc:InfoElement.TitlePlacement="Left"
+                    DisplayMemberPath="."
+                    ItemsSource="{Binding AllTags}"
+                    SelectedItem="{Binding SelectedTag}" />
+
+                <ComboBox
+                    Width="180"
+                    hc:InfoElement.Placeholder="全部关联"
+                    hc:InfoElement.Title="关联项"
+                    hc:InfoElement.TitlePlacement="Left"
+                    DisplayMemberPath="Name"
+                    ItemsSource="{Binding AllLinks}"
+                    SelectedItem="{Binding SelectedLink}" />
+
+                <ComboBox
+                    Width="100"
+                    hc:InfoElement.Placeholder="全部状态"
+                    hc:InfoElement.Title="状态"
+                    hc:InfoElement.TitlePlacement="Left"
+                    DisplayMemberPath="Display"
+                    ItemsSource="{Binding StatusOptions}"
+                    SelectedItem="{Binding SelectedStatus}" />
+
+                <TextBox
+                    Width="180"
+                    hc:InfoElement.Placeholder="搜索标题、描述、关联"
+                    Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                <Button
+                    Command="{Binding ClearFilterCommand}"
+                    Content="清空"
+                    Style="{StaticResource ButtonDefault.Small}" />
+
+                <Button
+                    Command="{Binding RefreshCommand}"
+                    Content="刷新"
+                    Style="{StaticResource ButtonDefault.Small}" />
+
+                <Button
+                    Command="{Binding AddEventCommand}"
+                    Content="新增"
+                    Style="{StaticResource ButtonPrimary.Small}" />
+            </hc:UniformSpacingPanel>
+        </Border>
+
+        <ScrollViewer>
+            <hc:UniformSpacingPanel
+                Margin="8"
+                ChildWrapping="Wrap"
+                HorizontalSpacing="10"
+                Orientation="Horizontal"
+                VerticalSpacing="10">
+                <ListBox
+                    BorderThickness="0"
+                    ItemContainerStyle="{StaticResource WorkEventListBoxItemStyle}"
+                    ItemTemplate="{StaticResource WorkEventItemTemplate}"
+                    ItemsSource="{Binding EventSource.View}"
+                    Style="{StaticResource ListBoxCustom}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <hc:UniformSpacingPanel
+                                ChildWrapping="Wrap"
+                                HorizontalSpacing="10"
+                                IsItemsHost="True"
+                                VerticalSpacing="10" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                </ListBox>
+            </hc:UniformSpacingPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>
