@@ -370,3 +370,5 @@ FodyWeavers.xsd
 /src/Tools/TemplateBuilder/
 /src/Tools/TemplateBuilder/Program.cs
 /.qoder
+/test/TestAI
+/video
