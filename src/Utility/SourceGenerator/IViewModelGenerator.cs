@@ -457,9 +457,9 @@ internal static class SourceCodeBuilder
     public static string Generate(GenerationModel model)
     {
 #if DEBUG
-        var debugHeader = string.Join("\n", new[] { "// 🔍 ===== AutoViewModel Debug Info =====" }
+        var debugHeader = string.Join("\r\n", new[] { "// 🔍 ===== AutoViewModel Debug Info =====" }
             .Concat(model.DebugLogs.Select(l => $"// {l}"))
-            .Concat(new[] { "// =====================================\n" }));
+            .Concat(new[] { "// =====================================", "" }));
 #else
         var debugHeader = "";
 #endif
@@ -474,7 +474,6 @@ internal static class SourceCodeBuilder
         sb.AppendLine("using System.Collections.ObjectModel;");
         sb.AppendLine();
 
-        // 🔽 使用 C# 10 文件范围命名空间，去掉大括号，解决缩进对齐问题
         if (!string.IsNullOrEmpty(model.Namespace))
         {
             sb.AppendLine($"namespace {model.Namespace};");
@@ -485,23 +484,39 @@ internal static class SourceCodeBuilder
         sb.AppendLine($"public partial class {model.ClassName}{inpcInheritance}");
         sb.AppendLine("{");
 
-        if (model.NeedsINPC) sb.AppendLine(GenerateInpcBlock());
+        var classBody = new StringBuilder();
+        if (model.NeedsINPC) classBody.AppendLine(GenerateInpcBlock());
 
-        sb.AppendLine(GenerateProperties(model));
-        sb.AppendLine();
-        sb.AppendLine(GenerateConstructors(model));
-        sb.AppendLine();
-        sb.AppendLine(GenerateTransMethods(model));
-        sb.AppendLine();
-        sb.AppendLine(GenerateEqualityMethods(model));
-        sb.AppendLine();
-        sb.AppendLine(GenerateFillMethod(model));
-        sb.AppendLine();
-        sb.AppendLine(GenerateBuildMethod(model));
+        var properties = GenerateProperties(model);
+        if (!string.IsNullOrWhiteSpace(properties)) classBody.AppendLine(properties);
+
+        var constructors = GenerateConstructors(model);
+        if (!string.IsNullOrWhiteSpace(constructors)) classBody.AppendLine(constructors);
+
+        var transMethods = GenerateTransMethods(model);
+        if (!string.IsNullOrWhiteSpace(transMethods)) classBody.AppendLine(transMethods);
+
+        var equalityMethods = GenerateEqualityMethods(model);
+        if (!string.IsNullOrWhiteSpace(equalityMethods)) classBody.AppendLine(equalityMethods);
+
+        var fillMethod = GenerateFillMethod(model);
+        if (!string.IsNullOrWhiteSpace(fillMethod)) classBody.AppendLine(fillMethod);
+
+        var buildMethod = GenerateBuildMethod(model);
+        if (!string.IsNullOrWhiteSpace(buildMethod)) classBody.AppendLine(buildMethod);
+
+        sb.AppendLine(Indent(classBody.ToString().TrimEnd(), 1));
 
         sb.AppendLine("}");
-        // 🔽 移除了原有的命名空间闭合大括号 }
         return sb.ToString();
+    }
+
+    private static string Indent(string text, int level)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        var indent = new string(' ', level * 4);
+        var lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+        return string.Join("\r\n", lines.Select(line => string.IsNullOrEmpty(line) ? line : indent + line));
     }
 
     private static string GenerateInpcBlock() => """
@@ -522,16 +537,25 @@ internal static class SourceCodeBuilder
     private static string GenerateConstructors(GenerationModel model)
     {
         var sb = new StringBuilder();
-        if (!model.HasManualDefaultCtor) { sb.AppendLine($"public {model.ClassName}() {{ }}"); sb.AppendLine(); }
+        if (!model.HasManualDefaultCtor)
+        {
+            sb.AppendLine($"public {model.ClassName}()");
+            sb.AppendLine("{");
+            sb.AppendLine("}");
+            sb.AppendLine();
+        }
         if (!model.HasManualParamCtor)
         {
             sb.AppendLine($"public {model.ClassName}({model.NullableParamTypeString} val)");
             sb.AppendLine("{");
             if (model.CanBeNull)
             {
-                sb.AppendLine("    if (val is null) {");
+                sb.AppendLine("    if (val is null)");
+                sb.AppendLine("    {");
                 foreach (var prop in model.Properties) if (prop.VmIsWritable) sb.AppendLine($"        {prop.GetResetExpr()}");
-                sb.AppendLine("    } else {");
+                sb.AppendLine("    }");
+                sb.AppendLine("    else");
+                sb.AppendLine("    {");
                 foreach (var prop in model.Properties) if (prop.VmIsWritable) sb.AppendLine($"        {prop.GetAssignFromSourceExpr("val")}");
                 sb.AppendLine("    }");
             }
@@ -541,17 +565,26 @@ internal static class SourceCodeBuilder
             }
             sb.AppendLine("}");
         }
-        return sb.ToString();
+        return sb.ToString().TrimEnd();
     }
+
     private static string GenerateTransMethods(GenerationModel model)
     {
         if (model.HasManualTrans) return string.Empty;
         var sb = new StringBuilder();
-        sb.AppendLine($@"public static {model.NullableParamTypeString} Trans({model.ClassName} vm) {{ if (vm is null) return default!; return vm.Build(); }}");
+        sb.AppendLine($"public static {model.NullableParamTypeString} Trans({model.ClassName} vm)");
+        sb.AppendLine("{");
+        sb.AppendLine("    if (vm is null) return default!;");
+        sb.AppendLine("    return vm.Build();");
+        sb.AppendLine("}");
         sb.AppendLine();
-        sb.AppendLine($@"public static {model.ClassName} Trans({model.NullableParamTypeString} vm) {{ return new {model.ClassName}(vm); }}");
-        return sb.ToString();
+        sb.AppendLine($"public static {model.ClassName} Trans({model.NullableParamTypeString} vm)");
+        sb.AppendLine("{");
+        sb.AppendLine($"    return new {model.ClassName}(vm);");
+        sb.AppendLine("}");
+        return sb.ToString().TrimEnd();
     }
+
     private static string GenerateFillMethod(GenerationModel model)
     {
         if (model.HasManualFillBy) return string.Empty;
@@ -560,24 +593,36 @@ internal static class SourceCodeBuilder
         sb.AppendLine("{");
         if (model.CanBeNull)
         {
-            sb.AppendLine("    if (obj is null) {");
+            sb.AppendLine("    if (obj is null)");
+            sb.AppendLine("    {");
             foreach (var prop in model.Properties) if (prop.VmIsWritable) sb.AppendLine($"        {prop.GetResetExpr()}");
-            sb.AppendLine("        return this; }");
+            sb.AppendLine("        return this;");
+            sb.AppendLine("    }");
         }
         foreach (var prop in model.Properties) if (prop.VmIsWritable) sb.AppendLine($"    {prop.GetAssignFromSourceExpr("obj")}");
-        sb.AppendLine("    return this; }");
-        return sb.ToString();
+        sb.AppendLine("    return this;");
+        sb.AppendLine("}");
+        return sb.ToString().TrimEnd();
     }
+
     private static string GenerateBuildMethod(GenerationModel model)
     {
         if (model.HasManualBuild) return string.Empty;
         var sb = new StringBuilder();
         string overnew = model.HasAutoBase ? "new " : "";
-        if (model.IsWrapperType) { sb.AppendLine($"public {overnew}{model.SourceTypeName} Build() {{ return Value; }}"); }
+        if (model.IsWrapperType)
+        {
+            sb.AppendLine($"public {overnew}{model.SourceTypeName} Build()");
+            sb.AppendLine("{");
+            sb.AppendLine("    return Value;");
+            sb.AppendLine("}");
+        }
         else
         {
             sb.AppendLine($"public {overnew}{model.SourceTypeName} Build()");
-            sb.AppendLine("{ var result = new " + model.SourceTypeName + " {");
+            sb.AppendLine("{");
+            sb.AppendLine("    var result = new " + model.SourceTypeName);
+            sb.AppendLine("    {");
             foreach (var prop in model.Properties)
             {
                 if (prop.SourceIsWritable)
@@ -586,10 +631,13 @@ internal static class SourceCodeBuilder
                     if (!string.IsNullOrWhiteSpace(expr)) sb.AppendLine($"        {expr}");
                 }
             }
-            sb.AppendLine("    }; return result; }");
+            sb.AppendLine("    };");
+            sb.AppendLine("    return result;");
+            sb.AppendLine("}");
         }
-        return sb.ToString();
+        return sb.ToString().TrimEnd();
     }
+
     private static string GenerateEqualityMethods(GenerationModel model)
     {
         var sb = new StringBuilder();
@@ -600,35 +648,74 @@ internal static class SourceCodeBuilder
             sb.AppendLine("    if (ReferenceEquals(this, other)) return true;");
             if (model.CanBeNull)
             {
-                if (model.IsWrapperType) sb.AppendLine($"    if (other is null) return global::System.Collections.Generic.EqualityComparer<{model.ComparerTypeString}>.Default.Equals(Value, default);");
+                if (model.IsWrapperType)
+                {
+                    sb.AppendLine($"    if (other is null) return global::System.Collections.Generic.EqualityComparer<{model.ComparerTypeString}>.Default.Equals(Value, default);");
+                }
                 else
                 {
-                    sb.AppendLine("    if (other is null) {");
-                    if (model.Properties.Count == 0) sb.AppendLine("        return true;");
-                    else { var checks = model.Properties.Select(p => p.GetNullCheckExpr()); sb.AppendLine($"        return {string.Join(" &&\n               ", checks)};"); }
+                    sb.AppendLine("    if (other is null)");
+                    sb.AppendLine("    {");
+                    if (model.Properties.Count == 0)
+                    {
+                        sb.AppendLine("        return true;");
+                    }
+                    else
+                    {
+                        sb.AppendLine("        return");
+                        var checks = model.Properties.Select(p => p.GetNullCheckExpr()).ToArray();
+                        for (int i = 0; i < checks.Length; i++)
+                        {
+                            var suffix = i < checks.Length - 1 ? " &&" : ";";
+                            sb.AppendLine($"            {checks[i]}{suffix}");
+                        }
+                    }
                     sb.AppendLine("    }");
                 }
             }
-            if (model.IsWrapperType) sb.AppendLine($"    if (!global::System.Collections.Generic.EqualityComparer<{model.ComparerTypeString}>.Default.Equals(Value, other)) return false;");
-            else foreach (var prop in model.Properties) sb.AppendLine($"    {prop.GetEqualsExpr("other")}");
-            sb.AppendLine("    return true; }"); sb.AppendLine();
+            if (model.IsWrapperType)
+            {
+                sb.AppendLine($"    if (!global::System.Collections.Generic.EqualityComparer<{model.ComparerTypeString}>.Default.Equals(Value, other)) return false;");
+            }
+            else
+            {
+                foreach (var prop in model.Properties) sb.AppendLine($"    {prop.GetEqualsExpr("other")}");
+            }
+            sb.AppendLine("    return true;");
+            sb.AppendLine("}");
+            sb.AppendLine();
         }
         if (!model.HasManualEquals && !model.HasManualObjectEquals)
         {
-            sb.AppendLine($@"public override bool Equals(object? obj) {{ return obj is {model.NonNullableTypeString} other && Equals(other); }}");
+            sb.AppendLine("public override bool Equals(object? obj)");
+            sb.AppendLine("{");
+            sb.AppendLine($"    return obj is {model.NonNullableTypeString} other && Equals(other);");
+            sb.AppendLine("}");
             sb.AppendLine();
         }
         if (!model.HasManualGetHashCode)
         {
-            if (model.Properties.Count == 1 && model.IsWrapperType) sb.AppendLine($@"public override int GetHashCode() {{ return global::System.Collections.Generic.EqualityComparer<{model.ComparerTypeString}>.Default.GetHashCode(Value!); }}");
+            if (model.Properties.Count == 1 && model.IsWrapperType)
+            {
+                sb.AppendLine("public override int GetHashCode()");
+                sb.AppendLine("{");
+                sb.AppendLine($"    return global::System.Collections.Generic.EqualityComparer<{model.ComparerTypeString}>.Default.GetHashCode(Value!);");
+                sb.AppendLine("}");
+            }
             else
             {
-                sb.AppendLine("public override int GetHashCode() { unchecked { int hash = 17;");
+                sb.AppendLine("public override int GetHashCode()");
+                sb.AppendLine("{");
+                sb.AppendLine("    unchecked");
+                sb.AppendLine("    {");
+                sb.AppendLine("        int hash = 17;");
                 foreach (var prop in model.Properties) sb.AppendLine($"        {prop.GetHashCodeExpr()}");
-                sb.AppendLine("        return hash; } }");
+                sb.AppendLine("        return hash;");
+                sb.AppendLine("    }");
+                sb.AppendLine("}");
             }
         }
-        return sb.ToString();
+        return sb.ToString().TrimEnd();
     }
 
     // 🔽 核心：只在生成属性代码时，过滤掉 IsGenerated == false 的属性
@@ -637,14 +724,14 @@ internal static class SourceCodeBuilder
         var sb = new StringBuilder();
         foreach (var prop in model.Properties.Where(p => p.IsGenerated))
         {
-            sb.AppendLine($@"public {prop.VmTypeString} {prop.Name} 
-{{ 
-    get => field; 
-    set => SetProperty(ref field, value); 
-}}");
+            sb.AppendLine($"public {prop.VmTypeString} {prop.Name}");
+            sb.AppendLine("{");
+            sb.AppendLine("    get => field;");
+            sb.AppendLine("    set => SetProperty(ref field, value);");
+            sb.AppendLine("}");
             sb.AppendLine();
         }
-        return sb.ToString();
+        return sb.ToString().TrimEnd();
     }
 }
 #endregion
