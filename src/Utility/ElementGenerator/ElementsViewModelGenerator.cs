@@ -390,6 +390,26 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
             }
             fillBySb.AppendLine("   }");
 
+            var applySb = new StringBuilder();
+            applySb.AppendLine("");
+            applySb.AppendLine("    public void ApplyParsedFactors(global::FMO.Models.IFundFactor[] factors)");
+            applySb.AppendLine("    {");
+            applySb.AppendLine("        var map = factors.ToLookup(x => x.FactorId);");
+            applySb.AppendLine("");
+
+            foreach (var p in propsForFillBy)
+            {
+                if (p.IsSingleton)
+                {
+                    applySb.AppendLine($"        ApplyToSingleton({p.Name}, map[{factorFieldsFullName}.{p.Name}].FirstOrDefault());");
+                }
+                else
+                {
+                    applySb.AppendLine($"        ApplyShareFactors({p.Name}, map[{factorFieldsFullName}.{p.Name}]);");
+                }
+            }
+            applySb.AppendLine("    }");
+
             var inpcInheritance = debug.NeedsINPC ? " : global::System.ComponentModel.INotifyPropertyChanged" : "";
             var inpcBlock = debug.NeedsINPC ? """
 
@@ -440,6 +460,7 @@ public partial class ElementsViewModel{{inpcInheritance}}
 {{inpcBlock}}
 {{sb.ToString()}}
 {{fillBySb.ToString()}}
+{{applySb.ToString()}}
 }
 """ : $$"""
 {{debugComments.ToString()}}
@@ -452,6 +473,7 @@ public partial class ElementsViewModel{{inpcInheritance}}
 {{inpcBlock}}
 {{sb.ToString()}}
 {{fillBySb.ToString()}}
+{{applySb.ToString()}}
 }
 """;
 

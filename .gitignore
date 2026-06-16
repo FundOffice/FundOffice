@@ -372,3 +372,7 @@ FodyWeavers.xsd
 /.qoder
 /test/TestAI
 /video
+/temp
+/video
+/test/TestAI/docx
+/test/TestAI/facts/XiaoMi

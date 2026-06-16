@@ -118,6 +118,15 @@ ViewModel/Flow/ 中定义了基金全生命周期的业务流程 ViewModel：
 - **LiquidationFlowModel** - 清算流程
 - **ModifyByAnnounceFlowViewModel** - 公告变更流程
 
+### 合同 AI 要素解析与对比
+
+`ContractRelatedFlowViewModel`（合同定稿/合同变更的基类）提供 `ParseContractElementsCommand`，调用 AI 解析合同文件中的基金要素：
+
+1. 使用 `FundDocxAiParser` 解析合同 docx，得到 `ReadonlyFundInfo`
+2. 解析结果以 `ContractParseRecord`（Id = 文件 MD5）缓存到数据库
+3. 自动查找上一个合同流程的解析记录，打开 `ContractElementsCompareWindow` 对比展示
+4. 变化的要素以红色标注，显示 "旧值 → 新值"
+
 ## 关键 NuGet 包
 
 - CommunityToolkit.Mvvm 8.4.2

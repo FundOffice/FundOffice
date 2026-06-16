@@ -131,6 +131,8 @@ AI 文档解析模块，利用大语言模型解析基金合同等文档。
 
 通过 AIGenerator 自动生成 ViewModel，支持 UI 端配置各提供商的 API Key。
 
+**合同要素缓存**: `ContractParseRecord`（`Models/Fund/Elements/`）以文件 MD5 为主键缓存 `ReadonlyFundInfo` 的 JSON 序列化结果，供 UI 端对比展示使用。
+
 ---
 
 ### HookableGenerator (src/Main/HookableGenerator/)

@@ -42,10 +42,10 @@ public class MoonshotTokenProvider : TokenProvider
         return fileContent;
     }
 
-    protected override async Task<string> AskWithFileIdAsync(HttpClient client, string model, string prompt, string fileContent)
+    protected override async Task<string> AskWithFileIdAsync(HttpClient client, string model, string prompt, string fileContent, IProgress<int>? progress = null)
     {
         // Moonshot 文件上传后获取的是文本内容，直接作为 message 发送
-        return Ask(client, model, prompt, fileContent);
+        return await AskAsync(client, model, prompt, fileContent, progress);
     }
 
     private class MoonshotFileResponse

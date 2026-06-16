@@ -53,6 +53,8 @@ public class ReadonlyFundInfoGenerator : IIncrementalGenerator
                 .Where(p => !existingNames.Contains(p.Name))
                 .ToImmutableArray();
 
+            if (fundFactorsProps.IsEmpty) return;
+
             GenerateCode(spc, missingProps);
         });
     }

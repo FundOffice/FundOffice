@@ -6,7 +6,7 @@ namespace FMO.AI;
 /// 将 AiParsedFundInfo（DTO）转换为 FundFactor[]
 /// AI 直接返回正确类型，无需字符串解析
 /// </summary>
-internal static class AiParsedFundInfoConverter
+public static class AiParsedFundInfoConverter
 {
     private const int DefaultFundId = 0;
     private const int DefaultFlowId = 1;
@@ -52,14 +52,11 @@ internal static class AiParsedFundInfoConverter
             factors.Add(MakeSingleton<decimal>(FactorFields.WarningLine, wl));
 
         if (dto.HugeRedemptionRatio?.Value is { } hr)
-            factors.Add(MakeSingleton<decimal>(FactorFields.HugeRedemption, hr));
+            factors.Add(MakeSingleton<HugeRedemptionRule>(FactorFields.HugeRedemption, new HugeRedemptionRule { Has = true, Ratio = hr }));
 
         // ===== 银行账户 =====
         if (dto.CollectionAccount?.Value is { } ca)
             factors.Add(MakeSingleton<BankAccount>(FactorFields.CollectionAccount, ca));
-
-        if (dto.CustodyAccount?.Value is { } cu)
-            factors.Add(MakeSingleton<BankAccount>(FactorFields.CustodyAccount, cu));
 
         // ===== 机构（AgencyInfo 已含费用信息）=====
         if (dto.TrusteeInfo?.Value is { } ti)
@@ -103,7 +100,7 @@ internal static class AiParsedFundInfoConverter
             AddIfNotNull(factors, ist, FactorFields.InvestmentStrategy);
 
         if (dto.TemporarilyOpenInfo?.Value is { } toi)
-            factors.Add(MakeSingleton<TemporarilyOpenInfo>(FactorFields.TemporarilyOpenInfo, toi));
+            AddPortionFactors(factors, toi, FactorFields.TemporarilyOpenInfo, shareClasses);
 
         if (dto.CoolingPeriod?.Value is { } cp)
             factors.Add(MakeSingleton<CoolingPeriodInfo>(FactorFields.CoolingPeriod, cp));
@@ -112,7 +109,7 @@ internal static class AiParsedFundInfoConverter
             factors.Add(MakeSingleton<CallbackInfo>(FactorFields.Callback, cb));
 
         if (dto.FundOpenRule?.Value is { } or2)
-            factors.Add(MakeSingleton<OpenRule>(FactorFields.FundOpenRule, or2));
+            AddPortionFactors(factors, or2, FactorFields.FundOpenRule, shareClasses);
 
         if (dto.PerformanceFeeRule?.Value is { } pfr)
             factors.Add(MakeSingleton<PerformanceFeeRule>(FactorFields.PerformanceFeeRule, pfr));
