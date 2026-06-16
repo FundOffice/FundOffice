@@ -110,7 +110,9 @@ public abstract partial class WorkEventViewModel : ObservableObject
     public string TypeDisplay => Type switch
     {
         WorkEventType.AccountOpening => "开户",
+        WorkEventType.AccountCancellation => "销户",
         WorkEventType.DueDiligence => "尽调",
+        WorkEventType.SelfInspection => "自查",
         WorkEventType.ManagerAffairs => "管理人事务",
         WorkEventType.AccountInfoChange => "账户资料变更",
         WorkEventType.Custom => "自定义",
@@ -183,7 +185,9 @@ public abstract partial class WorkEventViewModel : ObservableObject
         return workEvent switch
         {
             AccountOpeningWorkEvent e => new AccountOpeningWorkEventViewModel(e),
+            AccountCancellationWorkEvent e => new AccountCancellationWorkEventViewModel(e),
             DueDiligenceWorkEvent e => new DueDiligenceWorkEventViewModel(e),
+            SelfInspectionWorkEvent e => new SelfInspectionWorkEventViewModel(e),
             ManagerAffairsWorkEvent e => new ManagerAffairsWorkEventViewModel(e),
             AccountInfoChangeWorkEvent e => new AccountInfoChangeWorkEventViewModel(e),
             CustomWorkEvent e => new CustomWorkEventViewModel(e),

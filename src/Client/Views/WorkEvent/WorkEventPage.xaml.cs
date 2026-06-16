@@ -431,13 +431,55 @@ public partial class WorkEventPageViewModel : ObservableObject
     [RelayCommand]
     public void AddEvent()
     {
-        var vm = new CustomWorkEventViewModel
+        AddTypedEvent(WorkEventType.Custom);
+    }
+
+    [RelayCommand]
+    public void AddAccountOpeningEvent() => AddTypedEvent(WorkEventType.AccountOpening);
+
+    [RelayCommand]
+    public void AddAccountCancellationEvent() => AddTypedEvent(WorkEventType.AccountCancellation);
+
+    [RelayCommand]
+    public void AddDueDiligenceEvent() => AddTypedEvent(WorkEventType.DueDiligence);
+
+    [RelayCommand]
+    public void AddSelfInspectionEvent() => AddTypedEvent(WorkEventType.SelfInspection);
+
+    [RelayCommand]
+    public void AddManagerAffairsEvent() => AddTypedEvent(WorkEventType.ManagerAffairs);
+
+    [RelayCommand]
+    public void AddAccountInfoChangeEvent() => AddTypedEvent(WorkEventType.AccountInfoChange);
+
+    private void AddTypedEvent(WorkEventType type)
+    {
+        WorkEvent workEvent = type switch
         {
-            Title = "新建工作事项",
-            CreateTime = DateTime.Now,
-            Status = WorkEventStatus.Pending,
+            WorkEventType.AccountOpening => new AccountOpeningWorkEvent(),
+            WorkEventType.AccountCancellation => new AccountCancellationWorkEvent(),
+            WorkEventType.DueDiligence => new DueDiligenceWorkEvent(),
+            WorkEventType.SelfInspection => new SelfInspectionWorkEvent(),
+            WorkEventType.ManagerAffairs => new ManagerAffairsWorkEvent(),
+            WorkEventType.AccountInfoChange => new AccountInfoChangeWorkEvent(),
+            _ => new CustomWorkEvent(),
         };
+        workEvent.Title = type switch
+        {
+            WorkEventType.AccountOpening => "新建开户",
+            WorkEventType.AccountCancellation => "新建销户",
+            WorkEventType.DueDiligence => "新建尽调",
+            WorkEventType.SelfInspection => "新建自查",
+            WorkEventType.ManagerAffairs => "新建管理人变更",
+            WorkEventType.AccountInfoChange => "新建账户变更",
+            _ => "新建工作事项",
+        };
+        workEvent.CreateTime = DateTime.Now;
+        workEvent.Status = WorkEventStatus.Pending;
+
+        var vm = WorkEventViewModel.Create(workEvent);
         Events.Insert(0, vm);
+        SelectedEvent = vm;
     }
 
     [RelayCommand]
@@ -530,7 +572,9 @@ public partial class WorkEventPageViewModel : ObservableObject
         WorkEvent target = type switch
         {
             WorkEventType.AccountOpening => new AccountOpeningWorkEvent(),
+            WorkEventType.AccountCancellation => new AccountCancellationWorkEvent(),
             WorkEventType.DueDiligence => new DueDiligenceWorkEvent(),
+            WorkEventType.SelfInspection => new SelfInspectionWorkEvent(),
             WorkEventType.ManagerAffairs => new ManagerAffairsWorkEvent(),
             WorkEventType.AccountInfoChange => new AccountInfoChangeWorkEvent(),
             _ => new CustomWorkEvent(),

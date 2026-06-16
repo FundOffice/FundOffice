@@ -13,8 +13,14 @@ public enum WorkEventType
     [Description("开户")]
     AccountOpening,
 
+    [Description("销户")]
+    AccountCancellation,
+
     [Description("尽调")]
     DueDiligence,
+
+    [Description("自查")]
+    SelfInspection,
 
     [Description("管理人事务")]
     ManagerAffairs,
