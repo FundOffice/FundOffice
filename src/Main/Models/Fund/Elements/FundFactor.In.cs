@@ -221,7 +221,7 @@ public class FundModeInfo : IEquatable<FundModeInfo>
 [TypeConverter(nameof(EnumDescriptionTypeConverter))]
 public enum SealingType
 {
-    None,
+    [Description("无")] None,
     [Description("无")] No = None,
 
     [Description("有")] Has,
@@ -1411,18 +1411,39 @@ public class CoolingPeriodInfo : IEquatable<CoolingPeriodInfo>
     }
 }
 
+
+/// <summary>
+/// 无条件回访：IsRequired=true OnlyAfterMandatory=false
+/// 在强制要求前不回访：IsRequired=true OnlyAfterMandatory=true
+/// 不回访：IsRequired=false
+/// </summary>
 public class CallbackInfo : IEquatable<CallbackInfo>
 {
+    /// <summary>
+    /// 需要回访
+    /// </summary>
     public bool IsRequired { get; set; }
 
-    public bool Equals(CallbackInfo? other) => other is not null && IsRequired == other.IsRequired;
+    /// <summary>
+    /// 在强制要求前不回访
+    /// </summary>
+    public bool OnlyAfterMandatory { get; set; }
 
-    public override int GetHashCode() => IsRequired.GetHashCode();
-
-    public override string ToString()
+    public bool Equals(CallbackInfo? other)
     {
-        return IsRequired ? "需要回访" : "不适用";
+        if (other is null) return false;
+        if (IsRequired != other.IsRequired) return false;
+        if (!IsRequired) return true; // 不回访时 OnlyAfterMandatory 无意义
+        return OnlyAfterMandatory == other.OnlyAfterMandatory;
     }
+
+    public override int GetHashCode()
+    {
+        if (!IsRequired) return HashCode.Combine(IsRequired);
+        return HashCode.Combine(IsRequired, OnlyAfterMandatory);
+    }
+
+    public override string ToString() => IsRequired && !OnlyAfterMandatory ? "需要回访" : IsRequired ? "在强制要求前不回访" : "不适用";
 }
 
 /// <summary>

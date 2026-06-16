@@ -445,10 +445,22 @@ public partial class CoolingPeriodInfoViewModel : IViewModel<CoolingPeriodInfo?,
 
 public partial class CallbackInfoViewModel : IViewModel<CallbackInfo?, CallbackInfoViewModel>
 {
-    public override string? ToString()
+
+    public bool Equals(CallbackInfo? other)
     {
-        return IsRequired ? "需要" : "不适用";
+        if (other is null) return false;
+        if (IsRequired != other.IsRequired) return false;
+        if (!IsRequired) return true; // 不回访时 OnlyAfterMandatory 无意义
+        return OnlyAfterMandatory == other.OnlyAfterMandatory;
     }
+
+    public override int GetHashCode()
+    {
+        if (!IsRequired) return HashCode.Combine(IsRequired);
+        return HashCode.Combine(IsRequired, OnlyAfterMandatory);
+    }
+
+    public override string ToString() => IsRequired && !OnlyAfterMandatory ? "需要回访" : IsRequired ? "在强制要求前不回访" : "不适用";
 }
 
 

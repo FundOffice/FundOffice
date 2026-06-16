@@ -893,6 +893,12 @@
     <DataTemplate DataType="{x:Type local:CallbackInfoViewModel}">
         <DockPanel>
             <CheckBox HorizontalContentAlignment="Center" IsChecked="{Binding IsRequired}" />
+            <CheckBox
+                Margin="15,0,0,0"
+                HorizontalContentAlignment="Center"
+                Content="在法规强制要求前不回访"
+                IsChecked="{Binding OnlyAfterMandatory}"
+                Visibility="{Binding IsRequired, Converter={StaticResource Boolean2VisibilityConverter}}" />
         </DockPanel>
     </DataTemplate>
 

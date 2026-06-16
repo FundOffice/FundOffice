@@ -6,6 +6,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace FMO;
 
@@ -404,6 +405,35 @@ public class IsTodayConverter : IValueConverter
     {
         var today = DateTime.Today;
         return value switch { DateTime d => d.Date == today, DateOnly d => d == DateOnly.FromDateTime(today), _ => false };
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class ConfidenceToBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        double? d = value switch
+        {
+            double dv => dv,
+            float fv => fv,
+            decimal m => (double)m,
+            _ => null
+        };
+
+        if (!d.HasValue) return Brushes.Gray;
+
+        return d.Value switch
+        {
+            >= 0.90 => Brushes.Green,
+            >= 0.70 => Brushes.Goldenrod,
+            >= 0.40 => Brushes.Orange,
+            _ => Brushes.Red
+        };
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

@@ -107,7 +107,7 @@ internal static class FundDocxPrompt
     "Confidence": 0.95
   },
   "Callback": {
-    "Value": { "IsRequired": true },
+    "Value": { "IsRequired": true, "OnlyAfterMandatory": false },
     "Confidence": 0.95
   },
 
@@ -318,9 +318,12 @@ internal static class FundDocxPrompt
   "Type": string,              // 开放频率枚举 FundOpenType
   "Quarters": int[]?,          // 季度选择（Type=Yearly 时有效，1-4 代表 Q1-Q4）
   "Months": int[]?,            // 月份选择（Yearly 时 1-12，Quarterly 时 1-3）
-  "Weeks": int[]?,             // 星期选择（1=周一...5=周五）
+  "Weeks": int[]?,             // 第几周（Type=Monthly/Quarterly/Yearly 时用于"第N周"）
   "WeekOrder": string,         // 星期排序枚举 SequenceOrder
-  "Dates": int[]?,             // 日期选择（1-31）
+  "Dates": int[]?,             // 日期/星期选择，具体含义由 Type 决定：
+                               //   Weekly: 1=周一, 2=周二, 3=周三, 4=周四, 5=周五
+                               //   Monthly/Quarterly/Yearly: 1-31 代表自然月的日期
+                               //   Yearly: 也可配合 Months 使用，表示指定月份的日期
   "DayOrder": string,          // 日期排序枚举 SequenceOrder
   "TradeOrNatural": bool,      // true=交易日, false=自然日
   "Postpone": bool,            // 遇到非交易日是否顺延
@@ -334,7 +337,7 @@ internal static class FundDocxPrompt
 | Yearly | 每年开放 | Quarters, Months, Dates |
 | Quarterly | 每季度开放 | Months, Dates |
 | Monthly | 每月开放 | Dates |
-| Weekly | 每周开放 | Weeks |
+| Weekly | 每周开放 | Dates（1-5，1=周一） |
 | Daily | 每日开放 | 无额外字段 |
 
 **SequenceOrder 枚举（排序方式）：**
@@ -343,8 +346,22 @@ internal static class FundDocxPrompt
 | Ascend | 升序（从前往后，如 Dates=[1,15] 表示每月1号和15号） |
 | Descend | 降序（从后往前，如 Dates=[28,15] 表示每月倒数第28天和倒数第15天） |
 
-**示例：** "每月1日和15日开放申购赎回，遇非交易日顺延"
-→ `{ "AllowBuy": true, "AllowSell": true, "Type": "Monthly", "Quarters": null, "Months": null, "Weeks": null, "WeekOrder": "Ascend", "Dates": [1, 15], "DayOrder": "Ascend", "TradeOrNatural": true, "Postpone": true, "CrossWeek": false }`
+**Dates 在不同 Type 下的含义：**
+| Type | Dates 含义 | 示例 |
+|------|------------|------|
+| Weekly | 星期几（1=周一...5=周五） | "每周一、三开放" → `[1,3]` |
+| Monthly | 自然月日期（1-31） | "每月15日开放" → `[15]` |
+| Quarterly | 自然月日期（1-31） | "每季度首月15日开放" → Months=[1], Dates=[15] |
+| Yearly | 自然月日期（1-31） | "每年3月15日开放" → Months=[3], Dates=[15] |
+
+**示例：**
+- "每月1日和15日开放申购赎回，遇非交易日顺延" → `{ "AllowBuy": true, "AllowSell": true, "Type": "Monthly", "Quarters": null, "Months": null, "Weeks": null, "WeekOrder": "Ascend", "Dates": [1, 15], "DayOrder": "Ascend", "TradeOrNatural": true, "Postpone": true, "CrossWeek": false }`
+- "每周一、三开放申购赎回" → `{ "AllowBuy": true, "AllowSell": true, "Type": "Weekly", "Quarters": null, "Months": null, "Weeks": null, "WeekOrder": "Ascend", "Dates": [1, 3], "DayOrder": "Ascend", "TradeOrNatural": false, "Postpone": false, "CrossWeek": false }`
+- "每周第1、3个交易日开放申购赎回" → `{ "AllowBuy": true, "AllowSell": true, "Type": "Weekly", "Quarters": null, "Months": null, "Weeks": null, "WeekOrder": "Ascend", "Dates": [1, 3], "DayOrder": "Ascend", "TradeOrNatural": true, "Postpone": false, "CrossWeek": false }`
+- "每周最后一个自然日开放申购赎回" → `{ "AllowBuy": true, "AllowSell": true, "Type": "Weekly", "Quarters": null, "Months": null, "Weeks": null, "WeekOrder": "Ascend", "Dates": [5], "DayOrder": "Descend", "TradeOrNatural": false, "Postpone": false, "CrossWeek": false }`
+- "每月最后一个交易日开放申购赎回" → `{ "AllowBuy": true, "AllowSell": true, "Type": "Monthly", "Quarters": null, "Months": null, "Weeks": null, "WeekOrder": "Ascend", "Dates": [1], "DayOrder": "Descend", "TradeOrNatural": true, "Postpone": false, "CrossWeek": false }`
+- "每月第1周的周三开放申购赎回" → `{ "AllowBuy": true, "AllowSell": true, "Type": "Monthly", "Quarters": null, "Months": null, "Weeks": [1], "WeekOrder": "Ascend", "Dates": [3], "DayOrder": "Ascend", "TradeOrNatural": false, "Postpone": false, "CrossWeek": false }`
+- "每年3月15日和9月15日开放申购赎回" → `{ "AllowBuy": true, "AllowSell": true, "Type": "Yearly", "Quarters": null, "Months": [3, 9], "Weeks": null, "WeekOrder": "Ascend", "Dates": [15], "DayOrder": "Ascend", "TradeOrNatural": false, "Postpone": false, "CrossWeek": false }`
 
 ---
 
@@ -388,13 +405,20 @@ internal static class FundDocxPrompt
 ### CallbackInfo（回访确认）
 ```
 {
-  "IsRequired": bool    // 是否需要回访确认
+  "IsRequired": bool,            // 是否需要回访确认
+  "OnlyAfterMandatory": bool     // 是否在监管强制要求之后才需要回访
 }
 ```
-| 文档描述 | IsRequired |
-|----------|------------|
-| "需要进行回访确认" | true |
-| "不适用"/"无需回访" | false |
+| 状态 | IsRequired | OnlyAfterMandatory | 典型文档表述 |
+|------|------------|--------------------|--------------|
+| 无条件回访 | true | false | "需要进行回访确认" |
+| 在强制要求前不回访 | true | true | "在中国基金业协会正式要求私募基金的募集机构实施《私募投资基金募集行为管理办法》规定的回访制度之前，本基金直销机构暂不实施该回访制度，代销机构可自行决定是否实施该回访制度。" |
+| 不回访 | false | false | "不适用"/"无需回访"/"本基金不设置回访确认" |
+
+**示例：**
+- "在中国基金业协会正式要求私募基金的募集机构实施《私募投资基金募集行为管理办法》规定的回访制度之前，本基金直销机构暂不实施该回访制度，代销机构可自行决定是否实施该回访制度。" → `{ "IsRequired": true, "OnlyAfterMandatory": true }`
+- "投资者购买本基金需要经过回访确认" → `{ "IsRequired": true, "OnlyAfterMandatory": false }`
+- "本基金不设置回访确认" → `{ "IsRequired": false, "OnlyAfterMandatory": false }`
 
 ---
 

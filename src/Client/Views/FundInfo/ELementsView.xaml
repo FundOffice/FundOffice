@@ -784,11 +784,89 @@
                 Style="{StaticResource RainbowGlowIconButton}"
                 Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
+            <Border
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="5">
+                <DockPanel>
+                    <ComboBox
+                        Width="160"
+                        Margin="10,0"
+                        VerticalAlignment="Center"
+                        BorderThickness="0"
+                        ItemsSource="{Binding ParseHistories}"
+                        SelectedItem="{Binding SelectedParseHistory}"
+                        Visibility="{Binding CanShowParseHistories, Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center" Text="{Binding Provider}" />
+                                    <TextBlock
+                                        Margin="5,0"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding ParsedAt, StringFormat={}{0:MM-dd HH:mm}}" />
+                                    <Button
+                                        Margin="8,0,0,0"
+                                        hc:IconElement.Geometry="{StaticResource f.eye}"
+                                        Command="{Binding DataContext.ViewParseJsonCommand, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                        CommandParameter="{Binding}"
+                                        Foreground="Gray"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        ToolTip="查看解析 JSON" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <Button
+                        hc:IconElement.Geometry="{StaticResource f.check}"
+                        Command="{Binding ApplySelectedParseHistoryCommand}"
+                        Foreground="DodgerBlue"
+                        Style="{StaticResource ButtonIcon}"
+                        ToolTip="应用选中的历史解析结果"
+                        Visibility="{Binding HasSelectedParseHistory, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                    <Button
+                        hc:IconElement.Geometry="{StaticResource f.brain}"
+                        Command="{Binding ParseContractElementsCommand}"
+                        Foreground="Goldenrod"
+                        Style="{StaticResource ButtonIcon}"
+                        ToolTip="AI 解析合同要素"
+                        Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                    <hc:LoadingCircle
+                        Width="18"
+                        Height="18"
+                        Margin="10,0"
+                        Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                    <TextBlock
+                        Margin="10,0"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        Foreground="Gray"
+                        Text="{Binding ParseStatus}"
+                        Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                </DockPanel>
+            </Border>
+
+
             <Button
+                hc:IconElement.Geometry="{StaticResource f.rotate-left}"
+                Command="{Binding CancelAllCommand}"
+                Foreground="Red"
+                Style="{StaticResource ButtonIcon}"
+                ToolTip="还原所有设置"
+                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+            <Button
+                Margin="-8,0,0,0"
                 hc:IconElement.Geometry="{StaticResource f.floppy-disk}"
                 Command="{Binding SaveCommand}"
                 Style="{StaticResource ButtonIcon}"
                 Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
             <ToggleButton IsChecked="{Binding IsReadOnly}" Style="{StaticResource ToggleButtonFlip}">
                 <hc:StatusSwitchElement.CheckedElement>
                     <Viewbox Width="16" Height="16">
