@@ -142,8 +142,9 @@ public partial class WorkEventPageViewModel : ObservableObject
     {
         get
         {
-            if (SelectedEvent?.LinkedFundIds.Count == 0) return "未选择基金";
-            var selected = AllFunds.Where(f => SelectedEvent!.LinkedFundIds.Contains(f.Id)).Select(f => f.Display);
+            if (SelectedEvent is null) return "";
+            if (SelectedEvent.LinkedFundIds.Count == 0) return "未选择基金";
+            var selected = AllFunds.Where(f => SelectedEvent.LinkedFundIds.Contains(f.Id)).Select(f => f.Display);
             return string.Join("\n", selected);
         }
     }

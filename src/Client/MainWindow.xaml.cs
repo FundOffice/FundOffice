@@ -132,9 +132,9 @@ public partial class MainWindowViewModel : ObservableRecipient, IRecipient<strin
         Version = Assembly.GetExecutingAssembly().GetName().Version;
 
         MenuItems = [new MainMenu { IsEnabled = true, Title = "管理人", IconBrush = Brushes.BlueViolet, Command = OpenPageCommand, Parameter = "ManagerPage", Icon = GetGeometry("f.house") },
+                     new MainMenu { IsEnabled = true, Title = "事项", IconBrush = Brushes.Teal, Command = OpenPageCommand, Parameter = "WorkEvent", Icon = GetGeometry("f.clipboard")},
                      new MainMenu { IsEnabled = true, Title = "基金", IconBrush = Brushes.Violet, Command = OpenPageCommand, Parameter = "FundsPage", Icon = GetGeometry("f.fire")},
                      new MainMenu { IsEnabled = true, Title = "客户", IconBrush = Brushes.ForestGreen, Command = OpenPageCommand, Parameter = "Customer", Icon = GetGeometry("f.user")},
-                     new MainMenu { IsEnabled = true, Title = "工作", IconBrush = Brushes.Teal, Command = OpenPageCommand, Parameter = "WorkEvent", Icon = GetGeometry("f.clipboard")},
                      new MainMenu { IsEnabled = true, Title = "TA", IconBrush = Brushes.Orange, Command = OpenPageCommand, Parameter = "TA", Icon = GetGeometry("f.calendar-days")},
                      new MainMenu { IsEnabled = false, Title = "信批", IconBrush = Brushes.OliveDrab, Command = OpenPageCommand, Parameter = "Disclosure", Icon = GetGeometry("f.disclosure")},
                      new MainMenu { IsEnabled = false, Title = "平台", IconBrush = Brushes.Brown, Command = OpenPageCommand, Parameter = "Trustee", Icon = GetGeometry("f.infinity")},
