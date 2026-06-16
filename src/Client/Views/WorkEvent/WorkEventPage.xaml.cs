@@ -110,7 +110,18 @@ public partial class WorkEventPageViewModel : ObservableObject
     partial void OnSelectedEventChanged(WorkEventViewModel? value)
     {
         SelectedEventType = value?.Type ?? WorkEventType.Custom;
+        OnPropertyChanged(nameof(IsDetailEnabled));
     }
+
+    partial void OnSelectedEventTypeChanged(WorkEventType value)
+    {
+        OnPropertyChanged(nameof(IsDetailEnabled));
+    }
+
+    /// <summary>
+    /// 仅当类型下拉框与当前事件类型一致时，下方编辑区域才可用
+    /// </summary>
+    public bool IsDetailEnabled => SelectedEvent is not null && SelectedEventType == SelectedEvent.Type;
 
     partial void OnSelectedTagChanged(string? value) => EventSource.View?.Refresh();
 
