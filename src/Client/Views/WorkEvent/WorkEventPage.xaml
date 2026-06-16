@@ -273,7 +273,7 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" MinWidth="400" />
-            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="400" />
         </Grid.ColumnDefinitions>
 
         <Border
@@ -466,15 +466,10 @@
 
                     <hc:Divider Margin="0,10" Content="关联对象" />
 
-                    <CheckBox
-                        Margin="0,4"
-                        Content="关联管理人"
-                        IsChecked="{Binding SelectedEvent.IsManagerLinked}" />
-
-                    <CheckBox
-                        Margin="0,4"
-                        Content="关联基金"
-                        IsChecked="{Binding SelectedEvent.IsFundLinked}" />
+                    <hc:UniformSpacingPanel Margin="0,4" HorizontalSpacing="16" Orientation="Horizontal">
+                        <CheckBox Content="管理人" IsChecked="{Binding SelectedEvent.IsManagerLinked}" />
+                        <CheckBox Content="基金" IsChecked="{Binding SelectedEvent.IsFundLinked}" />
+                    </hc:UniformSpacingPanel>
 
                     <Border
                         Margin="0,4"
@@ -485,15 +480,20 @@
                         CornerRadius="3"
                         Visibility="{Binding SelectedEvent.IsFundLinked, Converter={StaticResource Boolean2VisibilityConverter}}">
                         <StackPanel>
+                            <TextBox
+                                Margin="0,0,0,4"
+                                hc:InfoElement.Placeholder="输入基金代码或名称快速筛选"
+                                hc:InfoElement.ShowClearButton="True"
+                                Text="{Binding FundFilterText, UpdateSourceTrigger=PropertyChanged}" />
                             <TextBlock
                                 Margin="0,0,0,4"
                                 FontSize="12"
                                 Foreground="Gray"
-                                Text="选择关联基金（可多选）：" />
+                                Text="选择基金（可多选）：" />
                             <ListBox
                                 MaxHeight="160"
                                 BorderThickness="0"
-                                ItemsSource="{Binding AllFunds}"
+                                ItemsSource="{Binding FundSource.View}"
                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate DataType="local:SelectableFund">
@@ -506,7 +506,7 @@
 
                     <CheckBox
                         Margin="0,8,0,4"
-                        Content="关联交易账户"
+                        Content="账户"
                         IsChecked="{Binding SelectedEvent.IsAccountLinked}"
                         Visibility="{Binding SelectedEvent.IsFundLinked, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
