@@ -477,6 +477,13 @@ public partial class WorkEventPageViewModel : ObservableObject
         workEvent.CreateTime = DateTime.Now;
         workEvent.Status = WorkEventStatus.Pending;
 
+        // 账户相关类型默认勾选关联基金；变更/销户再加勾关联账户
+        workEvent.IsFundLinked = type is WorkEventType.AccountOpening
+            or WorkEventType.AccountInfoChange
+            or WorkEventType.AccountCancellation;
+        workEvent.IsAccountLinked = type is WorkEventType.AccountInfoChange
+            or WorkEventType.AccountCancellation;
+
         var vm = WorkEventViewModel.Create(workEvent);
         Events.Insert(0, vm);
         SelectedEvent = vm;

@@ -107,6 +107,8 @@ public abstract partial class WorkEventViewModel : ObservableObject
         _ => Status.ToString(),
     };
 
+    partial void OnStatusChanged(WorkEventStatus value) => OnPropertyChanged(nameof(StatusDisplay));
+
     public string TypeDisplay => Type switch
     {
         WorkEventType.AccountOpening => "开户",
@@ -118,6 +120,8 @@ public abstract partial class WorkEventViewModel : ObservableObject
         WorkEventType.Custom => "自定义",
         _ => Type.ToString(),
     };
+
+    partial void OnTypeChanged(WorkEventType value) => OnPropertyChanged(nameof(TypeDisplay));
 
     protected void FillFrom(WorkEvent workEvent)
     {
