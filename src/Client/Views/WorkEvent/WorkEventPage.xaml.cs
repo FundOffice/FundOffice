@@ -4,6 +4,8 @@ using FMO.Models;
 using FMO.Utilities;
 using LiteDB;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -30,6 +32,18 @@ public partial class WorkEventPage : UserControl
         vm.SelectedEvent.AddTagCommand.Execute(tb.Text);
         tb.Clear();
         e.Handled = true;
+    }
+
+    private void OriginalDrop(object sender, DragEventArgs e)
+    {
+        if (DataContext is WorkEventPageViewModel vm && e.Data.GetData(DataFormats.FileDrop) is string[] files)
+            vm.DropFiles("原始文件", files);
+    }
+
+    private void SealDrop(object sender, DragEventArgs e)
+    {
+        if (DataContext is WorkEventPageViewModel vm && e.Data.GetData(DataFormats.FileDrop) is string[] files)
+            vm.DropFiles("用印文件", files);
     }
 }
 
@@ -455,6 +469,61 @@ public partial class WorkEventPageViewModel : ObservableObject
 
     [RelayCommand]
     public void OpenAccountPopup() => IsAccountPopupOpen = true;
+
+    [RelayCommand]
+    public void OpenOriginalFolder() => OpenEventFolder("原始文件");
+
+    [RelayCommand]
+    public void OpenSealFolder() => OpenEventFolder("用印文件");
+
+    private void OpenEventFolder(string sub)
+    {
+        if (SelectedEvent is null) return;
+        if (SelectedEvent.Id == 0)
+        {
+            MessageBox.Show("请先保存事项后再打开附件文件夹。");
+            return;
+        }
+        var folder = GetEventFolder(sub);
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = folder, UseShellExecute = true }); } catch { }
+    }
+
+    public void DropFiles(string sub, string[] files)
+    {
+        if (SelectedEvent is null || files is null || files.Length == 0) return;
+        if (SelectedEvent.Id == 0)
+        {
+            MessageBox.Show("请先保存事项后再拖入文件。");
+            return;
+        }
+        var folder = GetEventFolder(sub);
+        int saved = 0;
+        foreach (var file in files)
+        {
+            if (Directory.Exists(file)) continue;
+            if (!File.Exists(file)) continue;
+            try
+            {
+                var fi = new FileInfo(file);
+                var (_, full) = FileHelper.GenerateUniqueFileName(folder, fi.Name);
+                File.Copy(file, full);
+                saved++;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"保存文件失败：{file}\n{ex.Message}");
+            }
+        }
+        if (saved > 0)
+            MessageBox.Show($"已保存 {saved} 个文件到 {folder}");
+    }
+
+    private string GetEventFolder(string sub)
+    {
+        var folder = Path.Combine(Directory.GetCurrentDirectory(), "files", "events", SelectedEvent!.Id.ToString(), sub);
+        if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+        return folder;
+    }
 
     private static WorkEventViewModel CreateWithType(WorkEventViewModel source, WorkEventType type)
     {

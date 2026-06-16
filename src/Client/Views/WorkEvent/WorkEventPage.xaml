@@ -604,6 +604,56 @@
                             </StackPanel>
                         </hc:UniformSpacingPanel>
 
+                        <hc:Divider Margin="0,10" Content="附件" />
+
+                        <hc:UniformSpacingPanel
+                            Margin="0,4"
+                            HorizontalSpacing="10"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                            <Border
+                                x:Name="OriginalDropZone"
+                                MinWidth="130"
+                                Padding="12,6"
+                                AllowDrop="True"
+                                Background="#F0F8FF"
+                                BorderBrush="LightBlue"
+                                BorderThickness="1"
+                                CornerRadius="3"
+                                Drop="OriginalDrop">
+                                <Button
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Command="{Binding OpenOriginalFolderCommand}"
+                                    Content="📁 原始文件"
+                                    Cursor="Hand" />
+                            </Border>
+
+                            <Border
+                                x:Name="SealDropZone"
+                                MinWidth="130"
+                                Padding="12,6"
+                                AllowDrop="True"
+                                Background="#FFF8F0"
+                                BorderBrush="Orange"
+                                BorderThickness="1"
+                                CornerRadius="3"
+                                Drop="SealDrop">
+                                <Button
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Command="{Binding OpenSealFolderCommand}"
+                                    Content="📁 用印文件"
+                                    Cursor="Hand" />
+                            </Border>
+                        </hc:UniformSpacingPanel>
+
+                        <TextBlock
+                            Margin="0,2,0,0"
+                            FontSize="11"
+                            Foreground="Gray"
+                            Text="提示：点击按钮打开文件夹；或将文件拖拽到对应区域保存，同名文件自动重命名。" />
+
                         <ContentControl Margin="0,10" Content="{Binding SelectedEvent}" />
                     </StackPanel>
                 </StackPanel>
