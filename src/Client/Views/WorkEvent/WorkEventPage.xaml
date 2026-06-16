@@ -387,7 +387,7 @@
             CornerRadius="5"
             Visibility="{Binding SelectedEvent, Converter={StaticResource Object2VisibilityConverter}}">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel IsEnabled="{Binding IsDetailEnabled}">
+                <StackPanel>
                     <DockPanel Margin="0,0,0,10">
                         <TextBlock
                             VerticalAlignment="Center"
@@ -403,14 +403,16 @@
 
                     <hc:Divider Content="基本信息" />
 
-                    <DockPanel Margin="0,4">
+                    <DockPanel Margin="0,4" LastChildFill="True">
                         <Button
-                            Margin="8,0,0,0"
-                            HorizontalAlignment="Right"
+                            Width="60"
+                            Margin="8,18,0,0"
+                            VerticalAlignment="Bottom"
                             Command="{Binding SwitchTypeCommand}"
-                            Content="切换类型"
+                            Content="切换"
                             DockPanel.Dock="Right"
-                            Style="{StaticResource ButtonDefault.Small}" />
+                            Style="{StaticResource ButtonDefault.Small}"
+                            Visibility="{Binding IsDetailEnabled, Converter={StaticResource Boolean2VisibilityReConverter}}" />
                         <hc:ComboBox
                             hc:InfoElement.Placeholder="请选择事项类型"
                             hc:InfoElement.Title="事项类型"
@@ -421,9 +423,10 @@
                             SelectedValuePath="Key" />
                     </DockPanel>
 
-                    <TextBox
-                        Margin="0,4"
-                        hc:InfoElement.Placeholder="输入工作事项标题"
+                    <StackPanel IsEnabled="{Binding IsDetailEnabled}">
+                        <TextBox
+                            Margin="0,4"
+                            hc:InfoElement.Placeholder="输入工作事项标题"
                         hc:InfoElement.Title="标题"
                         hc:InfoElement.TitlePlacement="Top"
                         Text="{Binding SelectedEvent.Title}" />
@@ -484,7 +487,8 @@
                         hc:InfoElement.TitlePlacement="Top"
                         Text="{Binding SelectedEvent.LinkName}" />
 
-                    <ContentControl Margin="0,10" Content="{Binding SelectedEvent}" />
+                        <ContentControl Margin="0,10" Content="{Binding SelectedEvent}" />
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
         </Border>
