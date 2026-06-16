@@ -385,7 +385,7 @@ public partial class WorkEventPageViewModel : ObservableObject
         {
             var display = string.IsNullOrWhiteSpace(fund.ShortName)
                 ? $"[{fund.Code}] {fund.Name}"
-                : $"[{fund.Code}] {fund.Name} ({fund.ShortName})";
+                : $"[{fund.Code}] {fund.ShortName}";
             var selectable = new SelectableFund(fund.Id, fund.ShortName ?? string.Empty, display);
             selectable.PropertyChanged += OnFundSelectionChanged;
             AllFunds.Add(selectable);
