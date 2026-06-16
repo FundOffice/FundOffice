@@ -67,7 +67,10 @@
                             Visibility="{Binding Description, Converter={StaticResource ValueIsEffectToVisibilityConverter}}" />
 
                         <DockPanel Margin="0,6,0,0" Visibility="{Binding TagDisplay, Converter={StaticResource ValueIsEffectToVisibilityConverter}}">
-                            <TextBlock FontSize="11" Foreground="Gray" Text="标签：" />
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="Gray"
+                                Text="标签：" />
                             <TextBlock
                                 FontSize="11"
                                 Foreground="RoyalBlue"
@@ -75,7 +78,10 @@
                         </DockPanel>
 
                         <DockPanel Margin="0,2,0,0" Visibility="{Binding LinkName, Converter={StaticResource ValueIsEffectToVisibilityConverter}}">
-                            <TextBlock FontSize="11" Foreground="Gray" Text="关联：" />
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="Gray"
+                                Text="关联：" />
                             <TextBlock FontSize="11" Text="{Binding LinkName}" />
                         </DockPanel>
 
@@ -284,7 +290,10 @@
             Padding="8"
             Background="WhiteSmoke"
             CornerRadius="5">
-            <hc:UniformSpacingPanel HorizontalSpacing="8" Orientation="Horizontal" VerticalAlignment="Center">
+            <hc:UniformSpacingPanel
+                VerticalAlignment="Center"
+                HorizontalSpacing="8"
+                Orientation="Horizontal">
                 <DatePicker
                     Width="120"
                     hc:InfoElement.Placeholder="开始时间"
@@ -406,12 +415,12 @@
                     <DockPanel Margin="0,4" LastChildFill="True">
                         <Button
                             Width="60"
-                            Margin="8,18,0,0"
+                            Margin="2.0"
                             VerticalAlignment="Bottom"
                             Command="{Binding SwitchTypeCommand}"
                             Content="切换"
                             DockPanel.Dock="Right"
-                            Style="{StaticResource ButtonDefault.Small}"
+                            Style="{StaticResource ButtonDefault}"
                             Visibility="{Binding IsDetailEnabled, Converter={StaticResource Boolean2VisibilityReConverter}}" />
                         <hc:ComboBox
                             hc:InfoElement.Placeholder="请选择事项类型"
@@ -427,65 +436,65 @@
                         <TextBox
                             Margin="0,4"
                             hc:InfoElement.Placeholder="输入工作事项标题"
-                        hc:InfoElement.Title="标题"
-                        hc:InfoElement.TitlePlacement="Top"
-                        Text="{Binding SelectedEvent.Title}" />
+                            hc:InfoElement.Title="标题"
+                            hc:InfoElement.TitlePlacement="Top"
+                            Text="{Binding SelectedEvent.Title}" />
 
-                    <hc:ComboBox
-                        Margin="0,4"
-                        hc:InfoElement.Placeholder="请选择当前处理状态"
-                        hc:InfoElement.Title="处理状态"
-                        hc:InfoElement.TitlePlacement="Top"
-                        DisplayMemberPath="Value"
-                        ItemsSource="{Binding SelectedEvent.Status, Converter={StaticResource EnumToComboBoxItemsConverter}}"
-                        SelectedValue="{Binding SelectedEvent.Status}"
-                        SelectedValuePath="Key" />
+                        <hc:ComboBox
+                            Margin="0,4"
+                            hc:InfoElement.Placeholder="请选择当前处理状态"
+                            hc:InfoElement.Title="处理状态"
+                            hc:InfoElement.TitlePlacement="Top"
+                            DisplayMemberPath="Value"
+                            ItemsSource="{Binding SelectedEvent.Status, Converter={StaticResource EnumToComboBoxItemsConverter}}"
+                            SelectedValue="{Binding SelectedEvent.Status}"
+                            SelectedValuePath="Key" />
 
-                    <DatePicker
-                        Margin="0,4"
-                        hc:InfoElement.Placeholder="请选择截止时间（可选）"
-                        hc:InfoElement.Title="截止时间"
-                        hc:InfoElement.TitlePlacement="Top"
-                        SelectedDate="{Binding SelectedEvent.DueTime}" />
+                        <DatePicker
+                            Margin="0,4"
+                            hc:InfoElement.Placeholder="请选择截止时间（可选）"
+                            hc:InfoElement.Title="截止时间"
+                            hc:InfoElement.TitlePlacement="Top"
+                            SelectedDate="{Binding SelectedEvent.DueTime}" />
 
-                    <TextBox
-                        Margin="0,4"
-                        MinHeight="80"
-                        hc:InfoElement.Placeholder="填写事项详细描述"
-                        hc:InfoElement.Title="详细描述"
-                        hc:InfoElement.TitlePlacement="Top"
-                        Text="{Binding SelectedEvent.Description}"
-                        TextWrapping="Wrap" />
+                        <TextBox
+                            MinHeight="80"
+                            Margin="0,4"
+                            hc:InfoElement.Placeholder="填写事项详细描述"
+                            hc:InfoElement.Title="详细描述"
+                            hc:InfoElement.TitlePlacement="Top"
+                            Text="{Binding SelectedEvent.Description}"
+                            TextWrapping="Wrap" />
 
-                    <TextBox
-                        Margin="0,4"
-                        hc:InfoElement.Placeholder="多个标签可用逗号、分号分隔"
-                        hc:InfoElement.Title="标签"
-                        hc:InfoElement.TitlePlacement="Top"
-                        Text="{Binding SelectedEvent.TagsText, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBox
+                            Margin="0,4"
+                            hc:InfoElement.Placeholder="多个标签可用逗号、分号分隔"
+                            hc:InfoElement.Title="标签"
+                            hc:InfoElement.TitlePlacement="Top"
+                            Text="{Binding SelectedEvent.TagsText, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <hc:Divider Margin="0,10" Content="关联对象" />
+                        <hc:Divider Margin="0,10" Content="关联对象" />
 
-                    <TextBox
-                        Margin="0,4"
-                        hc:InfoElement.Placeholder="例如 Fund、Manager、Investor"
-                        hc:InfoElement.Title="关联对象类型"
-                        hc:InfoElement.TitlePlacement="Top"
-                        Text="{Binding SelectedEvent.LinkType}" />
+                        <TextBox
+                            Margin="0,4"
+                            hc:InfoElement.Placeholder="例如 Fund、Manager、Investor"
+                            hc:InfoElement.Title="关联对象类型"
+                            hc:InfoElement.TitlePlacement="Top"
+                            Text="{Binding SelectedEvent.LinkType}" />
 
-                    <hc:NumericUpDown
-                        Margin="0,4"
-                        hc:InfoElement.Placeholder="关联对象在数据库中的 Id"
-                        hc:InfoElement.Title="关联对象 Id"
-                        hc:InfoElement.TitlePlacement="Top"
-                        Value="{Binding SelectedEvent.LinkId}" />
+                        <hc:NumericUpDown
+                            Margin="0,4"
+                            hc:InfoElement.Placeholder="关联对象在数据库中的 Id"
+                            hc:InfoElement.Title="关联对象 Id"
+                            hc:InfoElement.TitlePlacement="Top"
+                            Value="{Binding SelectedEvent.LinkId}" />
 
-                    <TextBox
-                        Margin="0,4"
-                        hc:InfoElement.Placeholder="关联对象显示名称"
-                        hc:InfoElement.Title="关联对象名称"
-                        hc:InfoElement.TitlePlacement="Top"
-                        Text="{Binding SelectedEvent.LinkName}" />
+                        <TextBox
+                            Margin="0,4"
+                            hc:InfoElement.Placeholder="关联对象显示名称"
+                            hc:InfoElement.Title="关联对象名称"
+                            hc:InfoElement.TitlePlacement="Top"
+                            Text="{Binding SelectedEvent.LinkName}" />
 
                         <ContentControl Margin="0,10" Content="{Binding SelectedEvent}" />
                     </StackPanel>
