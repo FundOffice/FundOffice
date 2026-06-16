@@ -388,22 +388,16 @@
             Visibility="{Binding SelectedEvent, Converter={StaticResource Object2VisibilityConverter}}">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <DockPanel Margin="0,0,0,10">
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            FontSize="16"
-                            FontWeight="Bold"
-                            Text="详情" />
+                    <hc:Divider Content="基本信息" />
+
+                    <DockPanel Margin="0,4" LastChildFill="True">
                         <Button
+                            Margin="8,18,0,0"
+                            VerticalAlignment="Bottom"
                             Command="{Binding SelectedEvent.SaveCommand}"
                             Content="保存"
                             DockPanel.Dock="Right"
                             Style="{StaticResource ButtonPrimary.Small}" />
-                    </DockPanel>
-
-                    <hc:Divider Content="基本信息" />
-
-                    <DockPanel Margin="0,4" LastChildFill="True">
                         <Button
                             Width="60"
                             Margin="8,18,0,0"
