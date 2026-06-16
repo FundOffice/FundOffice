@@ -19,4 +19,5 @@
     <local:ListIsNotEmpty2BooleanConverter x:Key="ListIsNotEmpty2BooleanConverter" />
     <local:IsTodayConverter x:Key="IsTodayConverter" />
     <local:ConfidenceToBrushConverter x:Key="ConfidenceToBrushConverter" />
+    <local:EnumToComboBoxItemsConverter x:Key="EnumToComboBoxItemsConverter" />
 </ResourceDictionary>

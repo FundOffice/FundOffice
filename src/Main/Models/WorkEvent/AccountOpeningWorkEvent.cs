@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace FMO.Models;
 
 /// <summary>
@@ -5,9 +7,16 @@ namespace FMO.Models;
 /// </summary>
 public enum AccountOpeningType
 {
+    [Description("证券")]
     Securities,
+
+    [Description("期货")]
     Futures,
+
+    [Description("银行")]
     Bank,
+
+    [Description("其他")]
     Other,
 }
 

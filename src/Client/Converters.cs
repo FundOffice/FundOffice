@@ -441,3 +441,36 @@ public class ConfidenceToBrushConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// 枚举转 ComboBox 条目列表（Key=枚举值，Value=Description 或枚举名）
+/// </summary>
+public class EnumToComboBoxItemsConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is null) return Array.Empty<object>();
+
+        var enumType = value.GetType();
+        if (!enumType.IsEnum) return Array.Empty<object>();
+
+        return Enum.GetValues(enumType)
+            .Cast<object>()
+            .Select(e => new KeyValuePair<object, string>(e, GetEnumDescription(e)))
+            .ToArray();
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+
+    private static string GetEnumDescription(object value)
+    {
+        var fieldInfo = value.GetType().GetField(value.ToString()!);
+        if (fieldInfo is null) return value.ToString()!;
+
+        var attr = Attribute.GetCustomAttribute(fieldInfo, typeof(DescriptionAttribute)) as DescriptionAttribute;
+        return attr?.Description ?? value.ToString()!;
+    }
+}

@@ -49,6 +49,20 @@ public abstract partial class WorkEventViewModel : ObservableObject
 
     public string TagDisplay => Tags is null || Tags.Count == 0 ? string.Empty : string.Join(", ", Tags);
 
+    public string TagsText
+    {
+        get => TagDisplay;
+        set
+        {
+            Tags = string.IsNullOrWhiteSpace(value)
+                ? []
+                : new ObservableCollection<string>(value.Split([',', '，', ';'], StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)));
+            OnPropertyChanged(nameof(TagsText));
+            OnPropertyChanged(nameof(Tags));
+            OnPropertyChanged(nameof(TagDisplay));
+        }
+    }
+
     public string StatusDisplay => Status switch
     {
         WorkEventStatus.Pending => "待处理",

@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace FMO.Models;
 
 /// <summary>
@@ -5,8 +7,13 @@ namespace FMO.Models;
 /// </summary>
 public enum DueDiligenceType
 {
+    [Description("首次尽调")]
     Initial,
+
+    [Description("常规尽调")]
     Regular,
+
+    [Description("临时尽调")]
     AdHoc,
 }
 

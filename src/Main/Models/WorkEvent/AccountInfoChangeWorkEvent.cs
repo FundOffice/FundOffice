@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace FMO.Models;
 
 /// <summary>
@@ -5,10 +7,19 @@ namespace FMO.Models;
 /// </summary>
 public enum AccountInfoChangeType
 {
+    [Description("名称")]
     Name,
+
+    [Description("地址")]
     Address,
+
+    [Description("联系方式")]
     Contact,
+
+    [Description("银行信息")]
     BankInfo,
+
+    [Description("其他")]
     Other,
 }
 

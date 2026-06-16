@@ -67,6 +67,12 @@ public partial class WorkEventPageViewModel : ObservableObject
     [ObservableProperty]
     public partial string? SearchText { get; set; }
 
+    [ObservableProperty]
+    public partial WorkEventViewModel? SelectedEvent { get; set; }
+
+    [ObservableProperty]
+    public partial WorkEventType SelectedEventType { get; set; }
+
     public StatusOption[] StatusOptions { get; } =
     [
         new StatusOption(null, "全部"),
@@ -74,6 +80,15 @@ public partial class WorkEventPageViewModel : ObservableObject
         new StatusOption(WorkEventStatus.InProgress, "进行中"),
         new StatusOption(WorkEventStatus.Completed, "已完成"),
         new StatusOption(WorkEventStatus.Cancelled, "已取消"),
+    ];
+
+    public WorkEventType[] TypeOptions { get; } =
+    [
+        WorkEventType.Custom,
+        WorkEventType.AccountOpening,
+        WorkEventType.DueDiligence,
+        WorkEventType.ManagerAffairs,
+        WorkEventType.AccountInfoChange,
     ];
 
     partial void OnStartTimeChanged(DateTime? value)
@@ -90,6 +105,11 @@ public partial class WorkEventPageViewModel : ObservableObject
             StartTime = value.Value.Date;
 
         EventSource.View?.Refresh();
+    }
+
+    partial void OnSelectedEventChanged(WorkEventViewModel? value)
+    {
+        SelectedEventType = value?.Type ?? WorkEventType.Custom;
     }
 
     partial void OnSelectedTagChanged(string? value) => EventSource.View?.Refresh();
@@ -185,6 +205,49 @@ public partial class WorkEventPageViewModel : ObservableObject
         if (vm is null) return;
         vm.DeleteCommand.Execute(null);
         Events.Remove(vm);
+        if (SelectedEvent == vm) SelectedEvent = null;
+    }
+
+    [RelayCommand]
+    public void SwitchType()
+    {
+        if (SelectedEvent is null || SelectedEvent.Type == SelectedEventType) return;
+
+        var newVm = CreateWithType(SelectedEvent, SelectedEventType);
+        var index = Events.IndexOf(SelectedEvent);
+        if (index >= 0)
+            Events[index] = newVm;
+        else
+            Events.Add(newVm);
+
+        SelectedEvent = newVm;
+    }
+
+    private static WorkEventViewModel CreateWithType(WorkEventViewModel source, WorkEventType type)
+    {
+        WorkEvent target = type switch
+        {
+            WorkEventType.AccountOpening => new AccountOpeningWorkEvent(),
+            WorkEventType.DueDiligence => new DueDiligenceWorkEvent(),
+            WorkEventType.ManagerAffairs => new ManagerAffairsWorkEvent(),
+            WorkEventType.AccountInfoChange => new AccountInfoChangeWorkEvent(),
+            _ => new CustomWorkEvent(),
+        };
+
+        target.Id = source.Id;
+        target.Title = source.Title;
+        target.Type = type;
+        target.CreateTime = source.CreateTime;
+        target.UpdateTime = DateTime.Now;
+        target.DueTime = source.DueTime;
+        target.Status = source.Status;
+        target.Description = source.Description;
+        target.Tags = source.Tags?.ToList() ?? [];
+        target.LinkType = source.LinkType;
+        target.LinkId = source.LinkId;
+        target.LinkName = source.LinkName;
+
+        return WorkEventViewModel.Create(target);
     }
 }
 

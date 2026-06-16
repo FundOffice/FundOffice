@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace FMO.Models;
 
 /// <summary>
@@ -5,10 +7,19 @@ namespace FMO.Models;
 /// </summary>
 public enum WorkEventType
 {
+    [Description("自定义")]
     Custom,
+
+    [Description("开户")]
     AccountOpening,
+
+    [Description("尽调")]
     DueDiligence,
+
+    [Description("管理人事务")]
     ManagerAffairs,
+
+    [Description("账户资料变更")]
     AccountInfoChange,
 }
 
@@ -17,9 +28,16 @@ public enum WorkEventType
 /// </summary>
 public enum WorkEventStatus
 {
+    [Description("待处理")]
     Pending,
+
+    [Description("进行中")]
     InProgress,
+
+    [Description("已完成")]
     Completed,
+
+    [Description("已取消")]
     Cancelled,
 }
 

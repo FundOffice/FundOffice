@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace FMO.Models;
 
 /// <summary>
@@ -5,9 +7,16 @@ namespace FMO.Models;
 /// </summary>
 public enum ManagerAffairsType
 {
+    [Description("登记备案")]
     Registration,
+
+    [Description("资质申请")]
     Qualification,
+
+    [Description("信息变更")]
     InformationChange,
+
+    [Description("其他")]
     Other,
 }
 
