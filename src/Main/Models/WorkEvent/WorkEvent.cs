@@ -89,17 +89,42 @@ public class WorkEvent
     public List<string> Tags { get; set; } = [];
 
     /// <summary>
-    /// 关联类型，如 Fund、Manager、Investor 等
+    /// 关联类型，如 Fund、Manager、Investor 等（旧版单关联，保留兼容）
     /// </summary>
     public string? LinkType { get; set; }
 
     /// <summary>
-    /// 关联对象 Id
+    /// 关联对象 Id（旧版单关联，保留兼容）
     /// </summary>
     public int LinkId { get; set; }
 
     /// <summary>
-    /// 关联对象名称
+    /// 关联对象名称（旧版单关联，保留兼容）
     /// </summary>
     public string? LinkName { get; set; }
+
+    /// <summary>
+    /// 是否关联管理人
+    /// </summary>
+    public bool IsManagerLinked { get; set; }
+
+    /// <summary>
+    /// 是否关联基金
+    /// </summary>
+    public bool IsFundLinked { get; set; }
+
+    /// <summary>
+    /// 关联的基金 Id 列表
+    /// </summary>
+    public List<int> LinkedFundIds { get; set; } = [];
+
+    /// <summary>
+    /// 是否关联交易账户
+    /// </summary>
+    public bool IsAccountLinked { get; set; }
+
+    /// <summary>
+    /// 关联的交易账户 Id 列表
+    /// </summary>
+    public List<int> LinkedAccountIds { get; set; } = [];
 }

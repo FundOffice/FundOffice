@@ -475,26 +475,77 @@
 
                         <hc:Divider Margin="0,10" Content="关联对象" />
 
-                        <TextBox
-                            Margin="0,4"
-                            hc:InfoElement.Placeholder="例如 Fund、Manager、Investor"
-                            hc:InfoElement.Title="关联对象类型"
-                            hc:InfoElement.TitlePlacement="Top"
-                            Text="{Binding SelectedEvent.LinkType}" />
+                    <CheckBox
+                        Margin="0,4"
+                        Content="关联管理人"
+                        IsChecked="{Binding SelectedEvent.IsManagerLinked}" />
 
-                        <hc:NumericUpDown
-                            Margin="0,4"
-                            hc:InfoElement.Placeholder="关联对象在数据库中的 Id"
-                            hc:InfoElement.Title="关联对象 Id"
-                            hc:InfoElement.TitlePlacement="Top"
-                            Value="{Binding SelectedEvent.LinkId}" />
+                    <CheckBox
+                        Margin="0,4"
+                        Content="关联基金"
+                        IsChecked="{Binding SelectedEvent.IsFundLinked}" />
 
-                        <TextBox
-                            Margin="0,4"
-                            hc:InfoElement.Placeholder="关联对象显示名称"
-                            hc:InfoElement.Title="关联对象名称"
-                            hc:InfoElement.TitlePlacement="Top"
-                            Text="{Binding SelectedEvent.LinkName}" />
+                    <Border
+                        Margin="0,4"
+                        Padding="4"
+                        Background="White"
+                        BorderBrush="LightGray"
+                        BorderThickness="1"
+                        CornerRadius="3"
+                        Visibility="{Binding SelectedEvent.IsFundLinked, Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock
+                                Margin="0,0,0,4"
+                                FontSize="12"
+                                Foreground="Gray"
+                                Text="选择关联基金（可多选）：" />
+                            <ListBox
+                                MaxHeight="160"
+                                BorderThickness="0"
+                                ItemsSource="{Binding AllFunds}"
+                                ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate DataType="local:SelectableFund">
+                                        <CheckBox Content="{Binding Display}" IsChecked="{Binding IsSelected}" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </Border>
+
+                    <CheckBox
+                        Margin="0,8,0,4"
+                        Content="关联交易账户"
+                        IsChecked="{Binding SelectedEvent.IsAccountLinked}"
+                        Visibility="{Binding SelectedEvent.IsFundLinked, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                    <Border
+                        Margin="0,4"
+                        Padding="4"
+                        Background="White"
+                        BorderBrush="LightGray"
+                        BorderThickness="1"
+                        CornerRadius="3"
+                        Visibility="{Binding SelectedEvent.IsAccountLinked, Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock
+                                Margin="0,0,0,4"
+                                FontSize="12"
+                                Foreground="Gray"
+                                Text="选择已选基金的交易账户（可多选）：" />
+                            <ListBox
+                                MaxHeight="160"
+                                BorderThickness="0"
+                                ItemsSource="{Binding FilteredAccounts}"
+                                ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate DataType="local:SelectableAccount">
+                                        <CheckBox Content="{Binding Display}" IsChecked="{Binding IsSelected}" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </StackPanel>
+                    </Border>
 
                         <ContentControl Margin="0,10" Content="{Binding SelectedEvent}" />
                     </StackPanel>

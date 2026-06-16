@@ -47,6 +47,21 @@ public abstract partial class WorkEventViewModel : ObservableObject
     [ObservableProperty]
     public partial string? LinkName { get; set; }
 
+    [ObservableProperty]
+    public partial bool IsManagerLinked { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsFundLinked { get; set; }
+
+    [ObservableProperty]
+    public partial ObservableCollection<int> LinkedFundIds { get; set; } = [];
+
+    [ObservableProperty]
+    public partial bool IsAccountLinked { get; set; }
+
+    [ObservableProperty]
+    public partial ObservableCollection<int> LinkedAccountIds { get; set; } = [];
+
     public string TagDisplay => Tags is null || Tags.Count == 0 ? string.Empty : string.Join(", ", Tags);
 
     public string TagsText
@@ -96,6 +111,11 @@ public abstract partial class WorkEventViewModel : ObservableObject
         LinkType = workEvent.LinkType;
         LinkId = workEvent.LinkId;
         LinkName = workEvent.LinkName;
+        IsManagerLinked = workEvent.IsManagerLinked;
+        IsFundLinked = workEvent.IsFundLinked;
+        LinkedFundIds = workEvent.LinkedFundIds is null ? [] : new ObservableCollection<int>(workEvent.LinkedFundIds);
+        IsAccountLinked = workEvent.IsAccountLinked;
+        LinkedAccountIds = workEvent.LinkedAccountIds is null ? [] : new ObservableCollection<int>(workEvent.LinkedAccountIds);
     }
 
     protected void CopyTo(WorkEvent workEvent)
@@ -112,6 +132,11 @@ public abstract partial class WorkEventViewModel : ObservableObject
         workEvent.LinkType = LinkType;
         workEvent.LinkId = LinkId;
         workEvent.LinkName = LinkName;
+        workEvent.IsManagerLinked = IsManagerLinked;
+        workEvent.IsFundLinked = IsFundLinked;
+        workEvent.LinkedFundIds = LinkedFundIds?.ToList() ?? [];
+        workEvent.IsAccountLinked = IsAccountLinked;
+        workEvent.LinkedAccountIds = LinkedAccountIds?.ToList() ?? [];
     }
 
     [RelayCommand]
