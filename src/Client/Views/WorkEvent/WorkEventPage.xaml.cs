@@ -123,7 +123,7 @@ public partial class WorkEventPageViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsAccountPopupOpen { get; set; }
 
-    public string FundButtonText => $"基金({SelectedEvent?.LinkedFundIds.Count ?? 0})";
+    public string FundButtonText => $"已选({SelectedEvent?.LinkedFundIds.Count ?? 0})";
 
     public string FundButtonTooltip
     {
@@ -135,7 +135,7 @@ public partial class WorkEventPageViewModel : ObservableObject
         }
     }
 
-    public string AccountButtonText => $"账户({SelectedEvent?.LinkedAccountIds.Count ?? 0})";
+    public string AccountButtonText => $"已选({SelectedEvent?.LinkedAccountIds.Count ?? 0})";
 
     public string AccountButtonTooltip
     {
