@@ -76,9 +76,21 @@ public partial class WorkEventPageViewModel : ObservableObject
         new StatusOption(WorkEventStatus.Cancelled, "已取消"),
     ];
 
-    partial void OnStartTimeChanged(DateTime? value) => EventSource.View?.Refresh();
+    partial void OnStartTimeChanged(DateTime? value)
+    {
+        if (value is not null && EndTime is not null && value.Value.Date > EndTime.Value.Date)
+            EndTime = value.Value.Date;
 
-    partial void OnEndTimeChanged(DateTime? value) => EventSource.View?.Refresh();
+        EventSource.View?.Refresh();
+    }
+
+    partial void OnEndTimeChanged(DateTime? value)
+    {
+        if (value is not null && StartTime is not null && value.Value.Date < StartTime.Value.Date)
+            StartTime = value.Value.Date;
+
+        EventSource.View?.Refresh();
+    }
 
     partial void OnSelectedTagChanged(string? value) => EventSource.View?.Refresh();
 
@@ -92,8 +104,13 @@ public partial class WorkEventPageViewModel : ObservableObject
     {
         if (vm is null) return false;
 
-        if (StartTime is not null && vm.CreateTime < StartTime.Value) return false;
-        if (EndTime is not null && vm.CreateTime > EndTime.Value.AddDays(1).AddTicks(-1)) return false;
+        // 仅当起止日期都选择了才按时间过滤
+        if (StartTime is not null && EndTime is not null)
+        {
+            var start = StartTime.Value.Date;
+            var end = EndTime.Value.Date.AddDays(1).AddTicks(-1);
+            if (vm.CreateTime < start || vm.CreateTime > end) return false;
+        }
 
         if (!string.IsNullOrWhiteSpace(SelectedTag) && (vm.Tags is null || !vm.Tags.Contains(SelectedTag!))) return false;
 
