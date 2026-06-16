@@ -56,6 +56,15 @@ public abstract partial class WorkEventViewModel : ObservableObject
     [ObservableProperty]
     public partial ObservableCollection<int> LinkedFundIds { get; set; } = [];
 
+    partial void OnLinkedFundIdsChanged(ObservableCollection<int> value)
+    {
+        if (value is null) return;
+        value.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasLinkedFunds));
+        OnPropertyChanged(nameof(HasLinkedFunds));
+    }
+
+    public bool HasLinkedFunds => LinkedFundIds is { Count: > 0 };
+
     [ObservableProperty]
     public partial bool IsAccountLinked { get; set; }
 
