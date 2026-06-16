@@ -598,8 +598,7 @@
 
                             <StackPanel
                                 VerticalAlignment="Center"
-                                Orientation="Horizontal"
-                                Visibility="{Binding SelectedEvent.LinkedFundIds, Converter={StaticResource ListIsNotEmpty2VisibilityConverter}}">
+                                Orientation="Horizontal">
                                 <CheckBox Content="账户" IsChecked="{Binding SelectedEvent.IsAccountLinked}" />
                                 <Button
                                     x:Name="AccountSelectorBtn"
