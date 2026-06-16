@@ -40,6 +40,9 @@ public partial class WorkEventPageViewModel : ObservableObject
             AllFunds.Add(selectable);
         }
 
+        FundSource.Source = AllFunds;
+        FundSource.Filter += (s, e) => e.Accepted = FilterFund(e.Item as SelectableFund);
+
         // 加载所有交易账户
         var accounts = db.GetCollection<TradingAccoutOfFund>().Query().ToList();
         foreach (var account in accounts)
@@ -70,6 +73,8 @@ public partial class WorkEventPageViewModel : ObservableObject
 
     public ObservableCollection<SelectableFund> AllFunds { get; } = [];
 
+    public CollectionViewSource FundSource { get; } = new();
+
     public ObservableCollection<SelectableAccount> AllAccounts { get; } = [];
 
     [ObservableProperty]
@@ -95,6 +100,9 @@ public partial class WorkEventPageViewModel : ObservableObject
 
     [ObservableProperty]
     public partial WorkEventType SelectedEventType { get; set; }
+
+    [ObservableProperty]
+    public partial string? FundFilterText { get; set; }
 
     public StatusOption[] StatusOptions { get; } =
     [
@@ -142,10 +150,22 @@ public partial class WorkEventPageViewModel : ObservableObject
         OnPropertyChanged(nameof(IsDetailEnabled));
     }
 
+    partial void OnFundFilterTextChanged(string? value)
+    {
+        FundSource.View?.Refresh();
+    }
+
     /// <summary>
     /// 仅当类型下拉框与当前事件类型一致时，下方编辑区域才可用
     /// </summary>
     public bool IsDetailEnabled => SelectedEvent is not null && SelectedEventType == SelectedEvent.Type;
+
+    private bool FilterFund(SelectableFund? fund)
+    {
+        if (fund is null) return false;
+        if (string.IsNullOrWhiteSpace(FundFilterText)) return true;
+        return fund.Display.Contains(FundFilterText.Trim(), StringComparison.OrdinalIgnoreCase);
+    }
 
     partial void OnSelectedTagChanged(string? value) => EventSource.View?.Refresh();
 
@@ -276,6 +296,7 @@ public partial class WorkEventPageViewModel : ObservableObject
             selectable.PropertyChanged += OnFundSelectionChanged;
             AllFunds.Add(selectable);
         }
+        FundSource.View?.Refresh();
 
         var accounts = db.GetCollection<TradingAccoutOfFund>().Query().ToList();
         AllAccounts.Clear();
