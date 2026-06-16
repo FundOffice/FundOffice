@@ -35,7 +35,10 @@ public partial class WorkEventPageViewModel : ObservableObject
         var funds = db.GetCollection<Fund>().Query().OrderBy(x => x.Name).ToList();
         foreach (var fund in funds)
         {
-            var selectable = new SelectableFund(fund.Id, $"[{fund.Code}] {fund.Name}");
+            var display = string.IsNullOrWhiteSpace(fund.ShortName)
+                ? $"[{fund.Code}] {fund.Name}"
+                : $"[{fund.Code}] {fund.Name} ({fund.ShortName})";
+            var selectable = new SelectableFund(fund.Id, fund.ShortName ?? string.Empty, display);
             selectable.PropertyChanged += OnFundSelectionChanged;
             AllFunds.Add(selectable);
         }
@@ -43,11 +46,21 @@ public partial class WorkEventPageViewModel : ObservableObject
         FundSource.Source = AllFunds;
         FundSource.Filter += (s, e) => e.Accepted = FilterFund(e.Item as SelectableFund);
 
+        var fundShortNameMap = funds.ToDictionary(f => f.Id, f => f.ShortName ?? f.Name);
+
         // 加载所有交易账户
         var accounts = db.GetCollection<TradingAccoutOfFund>().Query().ToList();
         foreach (var account in accounts)
         {
-            var display = $"[{GetAccountTypeName(account)}] {account.Company}";
+            var fundName = fundShortNameMap.GetValueOrDefault(account.FundId, "未知基金");
+            var accountNo = account switch
+            {
+                StockAccount sa => sa.Common?.Account,
+                FutureAccount fa => fa.Common?.Account,
+                _ => null,
+            };
+            var noText = string.IsNullOrWhiteSpace(accountNo) ? "无账号" : accountNo;
+            var display = $"[{GetAccountTypeName(account)}] {noText} / {fundName}";
             var selectable = new SelectableAccount(account.Id, account.FundId, display);
             selectable.PropertyChanged += OnAccountSelectionChanged;
             AllAccounts.Add(selectable);
@@ -342,17 +355,30 @@ public partial class WorkEventPageViewModel : ObservableObject
         AllFunds.Clear();
         foreach (var fund in funds)
         {
-            var selectable = new SelectableFund(fund.Id, $"[{fund.Code}] {fund.Name}");
+            var display = string.IsNullOrWhiteSpace(fund.ShortName)
+                ? $"[{fund.Code}] {fund.Name}"
+                : $"[{fund.Code}] {fund.Name} ({fund.ShortName})";
+            var selectable = new SelectableFund(fund.Id, fund.ShortName ?? string.Empty, display);
             selectable.PropertyChanged += OnFundSelectionChanged;
             AllFunds.Add(selectable);
         }
         FundSource.View?.Refresh();
 
+        var fundShortNameMap = funds.ToDictionary(f => f.Id, f => f.ShortName ?? f.Name);
+
         var accounts = db.GetCollection<TradingAccoutOfFund>().Query().ToList();
         AllAccounts.Clear();
         foreach (var account in accounts)
         {
-            var display = $"[{GetAccountTypeName(account)}] {account.Company}";
+            var fundName = fundShortNameMap.GetValueOrDefault(account.FundId, "未知基金");
+            var accountNo = account switch
+            {
+                StockAccount sa => sa.Common?.Account,
+                FutureAccount fa => fa.Common?.Account,
+                _ => null,
+            };
+            var noText = string.IsNullOrWhiteSpace(accountNo) ? "无账号" : accountNo;
+            var display = $"[{GetAccountTypeName(account)}] {noText} / {fundName}";
             var selectable = new SelectableAccount(account.Id, account.FundId, display);
             selectable.PropertyChanged += OnAccountSelectionChanged;
             AllAccounts.Add(selectable);
@@ -452,14 +478,16 @@ public partial class WorkEventPageViewModel : ObservableObject
 public partial class SelectableFund : ObservableObject
 {
     public int Id { get; }
+    public string ShortName { get; }
     public string Display { get; }
 
     [ObservableProperty]
     public partial bool IsSelected { get; set; }
 
-    public SelectableFund(int id, string display)
+    public SelectableFund(int id, string shortName, string display)
     {
         Id = id;
+        ShortName = shortName;
         Display = display;
     }
 }
