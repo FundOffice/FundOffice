@@ -380,6 +380,9 @@
                             Content="销户"
                             Foreground="White"
                             Style="{StaticResource ButtonDanger}" />
+
+
+                        <Button Content="其它" />
                     </hc:UniformSpacingPanel>
                 </Border>
 
@@ -473,15 +476,20 @@
                                 Text="{Binding SelectedEvent.Title}" />
                         </DockPanel>
 
-                        <hc:ComboBox
-                            Margin="0,4"
-                            hc:InfoElement.Placeholder="请选择当前处理状态"
-                            hc:InfoElement.Title="状态"
-                            hc:InfoElement.TitlePlacement="Left"
-                            DisplayMemberPath="Value"
-                            ItemsSource="{Binding SelectedEvent.Status, Converter={StaticResource EnumToComboBoxItemsConverter}}"
-                            SelectedValue="{Binding SelectedEvent.Status}"
-                            SelectedValuePath="Key" />
+                        <DockPanel>
+                            <TextBlock
+                                Width="30"
+                                VerticalAlignment="Center"
+                                Text="状态" />
+                            <ListBox
+                                Margin="0,4"
+                                DisplayMemberPath="Value"
+                                ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
+                                ItemsPanel="{StaticResource UniformHorizontalItemsPanelTemplate}"
+                                ItemsSource="{Binding SelectedEvent.Status, Converter={StaticResource EnumToComboBoxItemsConverter}}"
+                                SelectedValue="{Binding SelectedEvent.Status}"
+                                SelectedValuePath="Key" />
+                        </DockPanel>
 
                         <hc:TextBox
                             x:Name="TagInput"
