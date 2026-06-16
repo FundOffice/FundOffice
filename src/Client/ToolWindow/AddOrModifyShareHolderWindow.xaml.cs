@@ -28,12 +28,12 @@ public partial class AddOrModifyShareHolderWindowViewModel : ObservableObject
         var per = db.GetCollection<IEntity>().FindAll().ToList();
 
         Institution = institution;
-        Entities = new(per); 
+        Entities = new(per);
 
         Entities.CollectionChanged += (s, e) => OnPropertyChanged(nameof(Candidates));
     }
 
-     
+
 
 
     public ObservableCollection<IEntity> Entities { get; }
@@ -50,7 +50,7 @@ public partial class AddOrModifyShareHolderWindowViewModel : ObservableObject
     [ObservableProperty]
     public partial string? HolderName { get; set; }
 
-    public IEnumerable<IEntity>? Candidates => Institution is null ? Entities : Entities.Where(x=>x.Id != Institution.Id);
+    public IEnumerable<IEntity>? Candidates => Institution is null ? Entities : Entities.Where(x => x.Id != Institution.Id);
 
 
     [ObservableProperty]
@@ -104,13 +104,14 @@ public partial class AddOrModifyShareHolderWindowViewModel : ObservableObject
 
         // 检测是否有相同的数据
         var old = db.GetCollection<Ownership>().FindOne(x => x.HolderId == Holder.Id && x.InstitutionId == iid);
-        if (old is not null)
-            Holder.Id = old.Id;
+        if (old is not null && Holder.Id == 0)
+            Holder.Id = old.HolderId;
 
         db.GetCollection<IEntity>().Upsert(Holder);
 
-        db.GetCollection<Ownership>().Insert(new Ownership { HolderId = Holder.Id, InstitutionId = iid, Share = ShareAmount.Value });
+        db.GetCollection<Ownership>().Upsert(new Ownership { Id = old?.Id ?? 0, HolderId = Holder.Id, InstitutionId = iid, Share = ShareAmount.Value });
 
+        wnd.DialogResult = true;
         App.Current.Dispatcher.BeginInvoke(() => wnd.Close());
     }
 
