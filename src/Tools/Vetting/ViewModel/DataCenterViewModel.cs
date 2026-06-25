@@ -17,6 +17,7 @@ public partial class DataCenterViewModel : ObservableObject
 
     // 列表项
     [ObservableProperty] public partial StaffVM? SelectedStaff { get; set; }
+    [ObservableProperty] public partial object? CurrentItem { get; set; }
     public ObservableCollection<StaffVM> Staffs { get; } = [];
     public ObservableCollection<ShareholderVM> Shareholders { get; } = [];
     public ObservableCollection<DepartmentVM> Departments { get; } = [];
@@ -63,6 +64,66 @@ public partial class DataCenterViewModel : ObservableObject
         target.Clear();
         foreach (var item in source.FindAll()) target.Add(wrap(item));
     }
+
+    [RelayCommand]
+    private void DeleteItem()
+    {
+        if (CurrentItem == null) return;
+        var entity = CurrentItem.GetType().GetProperty("Entity")?.GetValue(CurrentItem);
+        if (entity == null) return;
+        var id = (int)(entity.GetType().GetProperty("Id")?.GetValue(entity) ?? 0);
+        if (id <= 0) return;
+        using var db = new VettingDbContext();
+        db.DeleteEntity(entity.GetType(), id);
+        FindCollection(CurrentItem)?.Remove(CurrentItem);
+        CurrentItem = null;
+    }
+
+    [RelayCommand]
+    private void ClearItems(string? collectionName)
+    {
+        if (string.IsNullOrEmpty(collectionName)) return;
+        var col = FindCollectionByName(collectionName);
+        if (col == null || col.Count == 0) return;
+        if (HandyControl.Controls.MessageBox.Show($"确认清空全部 {col.Count} 条数据？", "确认", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes) return;
+        using var db = new VettingDbContext();
+        db.DropCollection(collectionName);
+        col.Clear();
+    }
+
+    private System.Collections.IList? FindCollection(object item)
+    {
+        var t = item.GetType().Name;
+        return t switch
+        {
+            nameof(StaffVM) => Staffs,
+            nameof(ShareholderVM) => Shareholders,
+            nameof(DepartmentVM) => Departments,
+            nameof(StrategyVM) => Strategies,
+            nameof(FundInfoVM) => FundInfos,
+            nameof(AwardVM) => Awards,
+            nameof(AUMVM) => AUMs,
+            nameof(DrawdownRecordVM) => DrawdownRecords,
+            nameof(FinancialStatementVM) => FinancialStatements,
+            nameof(QAVM) => QAs,
+            _ => null
+        };
+    }
+
+    private System.Collections.IList? FindCollectionByName(string name) => name switch
+    {
+        "Staff" => Staffs,
+        "Shareholder" => Shareholders,
+        "Department" => Departments,
+        "Strategy" => Strategies,
+        "FundInfo" => FundInfos,
+        "Award" => Awards,
+        "AUM" => AUMs,
+        "DrawdownRecord" => DrawdownRecords,
+        "FinancialStatement" => FinancialStatements,
+        "QA" => QAs,
+        _ => null
+    };
 
     [RelayCommand]
     private void DeleteStaff()
@@ -317,7 +378,7 @@ public partial class DataCenterViewModel : ObservableObject
         using var db = new VettingDbContext();
         switch (category)
         {
-            case "人员":
+            case "Staff":
                 var newStaff = new Staff();
                 db.Staffs.Insert(newStaff);
                 var staffVm = new StaffVM(newStaff);
@@ -325,15 +386,15 @@ public partial class DataCenterViewModel : ObservableObject
                 Staffs.Add(staffVm);
                 SelectedStaff = staffVm;
                 break;
-            case "股东": AddAndSave(db.Shareholders, Shareholders, e => new ShareholderVM(e), new Shareholder()); break;
-            case "部门": AddAndSave(db.Departments, Departments, e => new DepartmentVM(e), new Department()); break;
-            case "策略": AddAndSave(db.Strategies, Strategies, e => new StrategyVM(e), new Strategy()); break;
-            case "产品": AddAndSave(db.FundInfos, FundInfos, e => new FundInfoVM(e), new FundInfo()); break;
-            case "奖项": AddAndSave(db.Awards, Awards, e => new AwardVM(e), new Award()); break;
-            case "规模": AddAndSave(db.AUMs, AUMs, e => new AUMVM(e), new AUM()); break;
-            case "回撤": AddAndSave(db.DrawdownRecords, DrawdownRecords, e => new DrawdownRecordVM(e), new DrawdownRecord()); break;
-            case "财务": AddAndSave(db.FinancialStatements, FinancialStatements, e => new FinancialStatementVM(e), new FinancialStatement()); break;
-            case "问答": AddAndSave(db.QA, QAs, e => new QAVM(e), new QA()); break;
+            case "Shareholder": AddAndSave(db.Shareholders, Shareholders, e => new ShareholderVM(e), new Shareholder()); break;
+            case "Department": AddAndSave(db.Departments, Departments, e => new DepartmentVM(e), new Department()); break;
+            case "Strategy": AddAndSave(db.Strategies, Strategies, e => new StrategyVM(e), new Strategy()); break;
+            case "FundInfo": AddAndSave(db.FundInfos, FundInfos, e => new FundInfoVM(e), new FundInfo()); break;
+            case "Award": AddAndSave(db.Awards, Awards, e => new AwardVM(e), new Award()); break;
+            case "AUM": AddAndSave(db.AUMs, AUMs, e => new AUMVM(e), new AUM()); break;
+            case "DrawdownRecord": AddAndSave(db.DrawdownRecords, DrawdownRecords, e => new DrawdownRecordVM(e), new DrawdownRecord()); break;
+            case "FinancialStatement": AddAndSave(db.FinancialStatements, FinancialStatements, e => new FinancialStatementVM(e), new FinancialStatement()); break;
+            case "QA": AddAndSave(db.QA, QAs, e => new QAVM(e), new QA()); break;
         }
     }
 

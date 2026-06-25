@@ -176,7 +176,7 @@
                         <Button
                             Margin="4"
                             Command="{Binding AddItemCommand}"
-                            CommandParameter="人员"
+                            CommandParameter="Staff"
                             Content="新增"
                             Style="{StaticResource ButtonSuccess}" />
                         <Button
@@ -252,18 +252,15 @@
 
             <TabItem Header="股东">
                 <DockPanel>
-                    <Button
-                        Margin="4"
-                        HorizontalAlignment="Left"
-                        Command="{Binding AddItemCommand}"
-                        CommandParameter="股东"
-                        Content="新增"
-                        DockPanel.Dock="Top"
-                        Style="{StaticResource ButtonSuccess}" />
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button Margin="4" Command="{Binding AddItemCommand}" CommandParameter="Shareholder" Content="新增" Style="{StaticResource ButtonSuccess}" />
+                        <Button Margin="4" Command="{Binding DeleteItemCommand}" Content="删除" Style="{StaticResource ButtonDanger}" />
+                        <Button Margin="4" Command="{Binding ClearItemsCommand}" CommandParameter="Shareholder" Content="清空" Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
                     <DataGrid
                         AutoGenerateColumns="False"
-                        CanUserDeleteRows="True"
-                        ItemsSource="{Binding Shareholders}">
+                        ItemsSource="{Binding Shareholders}"
+                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
                         <DataGrid.Columns>
                             <DataGridTextColumn
                                 Width="120"
@@ -312,18 +309,15 @@
 
             <TabItem Header="部门">
                 <DockPanel>
-                    <Button
-                        Margin="4"
-                        HorizontalAlignment="Left"
-                        Command="{Binding AddItemCommand}"
-                        CommandParameter="部门"
-                        Content="新增"
-                        DockPanel.Dock="Top"
-                        Style="{StaticResource ButtonSuccess}" />
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button Margin="4" Command="{Binding AddItemCommand}" CommandParameter="Department" Content="新增" Style="{StaticResource ButtonSuccess}" />
+                        <Button Margin="4" Command="{Binding DeleteItemCommand}" Content="删除" Style="{StaticResource ButtonDanger}" />
+                        <Button Margin="4" Command="{Binding ClearItemsCommand}" CommandParameter="Department" Content="清空" Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
                     <DataGrid
                         AutoGenerateColumns="False"
-                        CanUserDeleteRows="True"
-                        ItemsSource="{Binding Departments}">
+                        ItemsSource="{Binding Departments}"
+                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
                         <DataGrid.Columns>
                             <DataGridTextColumn
                                 Width="120"
@@ -359,18 +353,15 @@
 
             <TabItem Header="策略">
                 <DockPanel>
-                    <Button
-                        Margin="4"
-                        HorizontalAlignment="Left"
-                        Command="{Binding AddItemCommand}"
-                        CommandParameter="策略"
-                        Content="新增"
-                        DockPanel.Dock="Top"
-                        Style="{StaticResource ButtonSuccess}" />
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button Margin="4" Command="{Binding AddItemCommand}" CommandParameter="Strategy" Content="新增" Style="{StaticResource ButtonSuccess}" />
+                        <Button Margin="4" Command="{Binding DeleteItemCommand}" Content="删除" Style="{StaticResource ButtonDanger}" />
+                        <Button Margin="4" Command="{Binding ClearItemsCommand}" CommandParameter="Strategy" Content="清空" Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
                     <DataGrid
                         AutoGenerateColumns="False"
-                        CanUserDeleteRows="True"
-                        ItemsSource="{Binding Strategies}">
+                        ItemsSource="{Binding Strategies}"
+                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
                         <DataGrid.Columns>
                             <DataGridTextColumn
                                 Width="120"
@@ -435,18 +426,15 @@
 
             <TabItem Header="产品">
                 <DockPanel>
-                    <Button
-                        Margin="4"
-                        HorizontalAlignment="Left"
-                        Command="{Binding AddItemCommand}"
-                        CommandParameter="产品"
-                        Content="新增"
-                        DockPanel.Dock="Top"
-                        Style="{StaticResource ButtonSuccess}" />
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button Margin="4" Command="{Binding AddItemCommand}" CommandParameter="FundInfo" Content="新增" Style="{StaticResource ButtonSuccess}" />
+                        <Button Margin="4" Command="{Binding DeleteItemCommand}" Content="删除" Style="{StaticResource ButtonDanger}" />
+                        <Button Margin="4" Command="{Binding ClearItemsCommand}" CommandParameter="FundInfo" Content="清空" Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
                     <DataGrid
                         AutoGenerateColumns="False"
-                        CanUserDeleteRows="True"
-                        ItemsSource="{Binding FundInfos}">
+                        ItemsSource="{Binding FundInfos}"
+                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
                         <DataGrid.Columns>
                             <DataGridTextColumn
                                 Width="120"
@@ -523,18 +511,15 @@
 
             <TabItem Header="奖项">
                 <DockPanel>
-                    <Button
-                        Margin="4"
-                        HorizontalAlignment="Left"
-                        Command="{Binding AddItemCommand}"
-                        CommandParameter="奖项"
-                        Content="新增"
-                        DockPanel.Dock="Top"
-                        Style="{StaticResource ButtonSuccess}" />
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button Margin="4" Command="{Binding AddItemCommand}" CommandParameter="Award" Content="新增" Style="{StaticResource ButtonSuccess}" />
+                        <Button Margin="4" Command="{Binding DeleteItemCommand}" Content="删除" Style="{StaticResource ButtonDanger}" />
+                        <Button Margin="4" Command="{Binding ClearItemsCommand}" CommandParameter="Award" Content="清空" Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
                     <DataGrid
                         AutoGenerateColumns="False"
-                        CanUserDeleteRows="True"
-                        ItemsSource="{Binding Awards}">
+                        ItemsSource="{Binding Awards}"
+                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
                         <DataGrid.Columns>
                             <DataGridTextColumn
                                 Width="120"
@@ -559,18 +544,15 @@
 
             <TabItem Header="资产规模">
                 <DockPanel>
-                    <Button
-                        Margin="4"
-                        HorizontalAlignment="Left"
-                        Command="{Binding AddItemCommand}"
-                        CommandParameter="规模"
-                        Content="新增"
-                        DockPanel.Dock="Top"
-                        Style="{StaticResource ButtonSuccess}" />
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button Margin="4" Command="{Binding AddItemCommand}" CommandParameter="AUM" Content="新增" Style="{StaticResource ButtonSuccess}" />
+                        <Button Margin="4" Command="{Binding DeleteItemCommand}" Content="删除" Style="{StaticResource ButtonDanger}" />
+                        <Button Margin="4" Command="{Binding ClearItemsCommand}" CommandParameter="AUM" Content="清空" Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
                     <DataGrid
                         AutoGenerateColumns="False"
-                        CanUserDeleteRows="True"
-                        ItemsSource="{Binding AUMs}">
+                        ItemsSource="{Binding AUMs}"
+                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
                         <DataGrid.Columns>
                             <DataGridTextColumn
                                 Width="120"
@@ -587,18 +569,15 @@
 
             <TabItem Header="回撤记录">
                 <DockPanel>
-                    <Button
-                        Margin="4"
-                        HorizontalAlignment="Left"
-                        Command="{Binding AddItemCommand}"
-                        CommandParameter="回撤"
-                        Content="新增"
-                        DockPanel.Dock="Top"
-                        Style="{StaticResource ButtonSuccess}" />
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button Margin="4" Command="{Binding AddItemCommand}" CommandParameter="DrawdownRecord" Content="新增" Style="{StaticResource ButtonSuccess}" />
+                        <Button Margin="4" Command="{Binding DeleteItemCommand}" Content="删除" Style="{StaticResource ButtonDanger}" />
+                        <Button Margin="4" Command="{Binding ClearItemsCommand}" CommandParameter="DrawdownRecord" Content="清空" Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
                     <DataGrid
                         AutoGenerateColumns="False"
-                        CanUserDeleteRows="True"
-                        ItemsSource="{Binding DrawdownRecords}">
+                        ItemsSource="{Binding DrawdownRecords}"
+                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
                         <DataGrid.Columns>
                             <DataGridTextColumn
                                 Width="150"
@@ -631,18 +610,15 @@
 
             <TabItem Header="财务报表">
                 <DockPanel>
-                    <Button
-                        Margin="4"
-                        HorizontalAlignment="Left"
-                        Command="{Binding AddItemCommand}"
-                        CommandParameter="财务"
-                        Content="新增"
-                        DockPanel.Dock="Top"
-                        Style="{StaticResource ButtonSuccess}" />
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button Margin="4" Command="{Binding AddItemCommand}" CommandParameter="FinancialStatement" Content="新增" Style="{StaticResource ButtonSuccess}" />
+                        <Button Margin="4" Command="{Binding DeleteItemCommand}" Content="删除" Style="{StaticResource ButtonDanger}" />
+                        <Button Margin="4" Command="{Binding ClearItemsCommand}" CommandParameter="FinancialStatement" Content="清空" Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
                     <DataGrid
                         AutoGenerateColumns="False"
-                        CanUserDeleteRows="True"
-                        ItemsSource="{Binding FinancialStatements}">
+                        ItemsSource="{Binding FinancialStatements}"
+                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
                         <DataGrid.Columns>
                             <DataGridTextColumn
                                 Width="80"
@@ -679,18 +655,15 @@
 
             <TabItem Header="问答">
                 <DockPanel>
-                    <Button
-                        Margin="4"
-                        HorizontalAlignment="Left"
-                        Command="{Binding AddItemCommand}"
-                        CommandParameter="问答"
-                        Content="新增"
-                        DockPanel.Dock="Top"
-                        Style="{StaticResource ButtonSuccess}" />
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button Margin="4" Command="{Binding AddItemCommand}" CommandParameter="QA" Content="新增" Style="{StaticResource ButtonSuccess}" />
+                        <Button Margin="4" Command="{Binding DeleteItemCommand}" Content="删除" Style="{StaticResource ButtonDanger}" />
+                        <Button Margin="4" Command="{Binding ClearItemsCommand}" CommandParameter="QA" Content="清空" Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
                     <DataGrid
                         AutoGenerateColumns="False"
-                        CanUserDeleteRows="True"
-                        ItemsSource="{Binding QAs}">
+                        ItemsSource="{Binding QAs}"
+                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
                         <DataGrid.Columns>
                             <DataGridTextColumn
                                 Width="60"

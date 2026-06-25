@@ -83,4 +83,6 @@ public class VettingDbContext : IDisposable
         dynamic col = method.Invoke(_db, null)!;
         col.Delete(id);
     }
+
+    public void DropCollection(string name) => _db.DropCollection(name);
 }

@@ -76,9 +76,11 @@
 
         <DockPanel>
             <hc:SearchBar
+                hc:InfoElement.Placeholder="搜索"
+                hc:InfoElement.ShowClearButton="True"
                 hc:InfoElement.Title="筛选"
                 DockPanel.Dock="Top"
-                Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+                Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
             <ListBox
                 Width="400"
                 ItemsSource="{Binding VettingView.View}"
