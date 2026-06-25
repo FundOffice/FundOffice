@@ -13,25 +13,57 @@
     WindowStartupLocation="CenterOwner"
     mc:Ignorable="d">
 
-    <ScrollViewer Padding="12" VerticalScrollBarVisibility="Auto">
-        <ItemsControl ItemsSource="{Binding Questions}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Margin="0,0,0,12">
-                        <TextBlock
-                            FontWeight="SemiBold"
-                            Text="{Binding Question}"
-                            TextWrapping="Wrap" />
-                        <hc:TextBox
-                            Margin="0,4,0,0"
-                            hc:InfoElement.Title="{Binding Placeholder}"
-                            hc:InfoElement.TitlePlacement="Left"
-                            AcceptsReturn="True"
-                            Text="{Binding Answer, UpdateSourceTrigger=LostFocus}"
-                            TextWrapping="Wrap" />
-                    </StackPanel>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-    </ScrollViewer>
+    <DockPanel Margin="8">
+        <DockPanel DockPanel.Dock="Top">
+            <TextBlock VerticalAlignment="Center" Text="自定义问题汇总" />
+
+            <Button
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Content="AI回答"
+                Style="{StaticResource ButtonSuccess}" />
+        </DockPanel>
+
+        <Separator Margin="0,5" DockPanel.Dock="Top" />
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Questions}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,0,0,16">
+                            <!--  问题  -->
+                            <TextBlock
+                                FontWeight="SemiBold"
+                                Text="{Binding Question}"
+                                TextWrapping="Wrap" />
+                            <!--  手动回答  -->
+                            <hc:TextBox
+                                Margin="0,4,0,0"
+                                hc:InfoElement.Title="手动填写"
+                                hc:InfoElement.TitlePlacement="Left"
+                                AcceptsReturn="True"
+                                Text="{Binding ManualAnswer, UpdateSourceTrigger=LostFocus}"
+                                TextWrapping="Wrap" />
+                            <!--  AI 渠道回答  -->
+                            <ItemsControl Margin="0,4,0,0" ItemsSource="{Binding Answers}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <hc:TextBox
+                                            Margin="0,2,0,0"
+                                            hc:InfoElement.Title="{Binding Identifier}"
+                                            hc:InfoElement.TitlePlacement="Left"
+                                            IsReadOnly="True"
+                                            Text="{Binding Value}"
+                                            TextWrapping="Wrap" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+
+    </DockPanel>
 </Window>

@@ -14,6 +14,8 @@ public class VettingDbContext : IDisposable
     public ILiteCollection<VettingReport> Reports => _db.GetCollection<VettingReport>();
     public ILiteCollection<AIProviderConfig> AIProviderConfigs => _db.GetCollection<AIProviderConfig>();
     public ILiteCollection<FileSpecialQuestion> FileSpecialQuestions => _db.GetCollection<FileSpecialQuestion>();
+    public ILiteCollection<SpecialAnswer> SpecialAnswers => _db.GetCollection<SpecialAnswer>();
+    public ILiteCollection<QA> QA => _db.GetCollection<QA>();
 
     public VettingDbContext()
     {

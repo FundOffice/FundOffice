@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text.RegularExpressions;
 using Vetting.Data;
 using Vetting.Entity;
 
@@ -70,7 +71,7 @@ public partial class VettingReportViewModel : ObservableObject
     {
         if (!Directory.Exists(TplPath)) return;
         var files = new DirectoryInfo(TplPath).GetFiles()
-            .Where(f => !f.Name.StartsWith("~$")
+            .Where(f => !f.Name.StartsWith("~$") && Regex.IsMatch(f.Name, @"by\[.+\]")
                 && !f.Attributes.HasFlag(FileAttributes.Hidden)
                 && !f.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
             .ToArray();

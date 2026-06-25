@@ -88,8 +88,8 @@ public partial class VettingParseTaskViewModel : ObservableObject
             var ext = Path.GetExtension(FileName);
             var tplDir = Path.Combine("files", "vetting", VettingId, "tpl");
             Directory.CreateDirectory(tplDir);
-            var srcPath = Path.Combine("files", "vetting", VettingId, $"{safeName}_by[{Provider.Identifier}]{ext}");
-            var tplPath = Path.Combine(tplDir, FileName);
+            var srcPath = Path.Combine("files", "vetting", VettingId, FileName);
+            var tplPath = Path.Combine(tplDir, $"{safeName}_by[{Provider.Identifier}]{ext}");
             File.Copy(srcPath, tplPath, overwrite: true);
 
 

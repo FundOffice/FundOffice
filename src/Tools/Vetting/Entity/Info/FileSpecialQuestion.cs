@@ -18,7 +18,21 @@ public class FileSpecialQuestion
 
     /// <summary>问题描述</summary>
     public string? Question { get; set; }
+     
+}
 
-    /// <summary>AI 回答</summary>
-    public string? Answer { get; set; }
+
+public class SpecialAnswer
+{
+    public int Id { get; set; }
+
+    public int QuestionId { get; set; }
+
+    /// <summary>
+    /// manual
+    /// provider
+    /// </summary>
+    public string? Identifier { get; set; }
+
+    public string? Value { get; set; }
 }
