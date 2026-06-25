@@ -83,65 +83,93 @@ public partial class DataCenterViewModel : ObservableObject
         {
             using var db = new VettingDbContext();
 
+            var r = Random.Shared;
+            var surnames = new[] { "王","李","张","刘","陈","杨","赵","黄","周","吴","徐","孙","胡","朱","高","林","何","郭","马","罗","梁","宋","郑","谢","韩","唐","冯","于","董","萧" };
+            var givenNames = new[] { "明","洋","静","强","慧","涛","丽","伟","芳","磊","军","平","刚","桂英","秀英","敏","娜","燕","华","建国","文","志强","海燕","小红","思远","天宇","雨晴","嘉欣","子轩","浩然" };
+            string RandName() => surnames[r.Next(surnames.Length)] + givenNames[r.Next(givenNames.Length)];
+            string RandPhone() => $"1{new[]{"38","39","58","59","86","87","36","37"}[r.Next(8)]}{r.Next(10000000,99999999)}";
+            DateTime RandBirth(int lo, int hi) => new(lo + r.Next(hi - lo), r.Next(1, 13), r.Next(1, 28));
+
             // 单例
             db.UpsertEntity(new Manager
             {
                 Id = 1, Name = "鼎丰资产管理有限公司", RegisterNo = "91310000MA1FL8X93Q", ArtificialPerson = "张伟",
-                RegisterCapital = "5000", RealCapital = "3000", SetupDate = "2018-06-15", BusinessScope = "资产管理、投资管理",
-                RegisterAddress = "上海市浦东新区陆家嘴环路1000号", OfficeAddress = "上海市浦东新区世纪大道88号金茂大厦32层",
-                Phone = "13812345678", Telephone = "021-58889999", Email = "contact@dingfeng.com", Fax = "021-58889998",
-                EnglishName = "DingFeng Asset Management Co., Ltd.", WebSite = "www.dingfeng-am.com", AmacId = "P1068852",
-                Membership = MembershipLevel.普通会员, InvestmentAdvisor = true, InstitutionType = "私募证券",
-                RelatedCompany = "鼎丰资本控股有限公司", ActualController = "张伟", ContactName = "李芳",
-                ContactPhoneAndEmail = "13987654321 / lifang@dingfeng.com", GoverningSecuritiesBureau = "上海证监局"
+                RegisterCapital = "5000", RealCapital = "3000", SetupDate = "2018-06-15",
+                BusinessScope = "私募证券投资基金管理、投资管理、资产管理",
+                RegisterAddress = "上海市浦东新区陆家嘴环路1000号恒生银行大厦18层",
+                OfficeAddress = "上海市浦东新区世纪大道88号金茂大厦32层",
+                Phone = RandPhone(), Telephone = "021-58889999", Email = "contact@dingfeng-am.com",
+                Fax = "021-58889998", EnglishName = "DingFeng Asset Management Co., Ltd.",
+                WebSite = "www.dingfeng-am.com", AmacId = "P1068852",
+                Membership = MembershipLevel.普通会员, InvestmentAdvisor = true,
+                InstitutionType = "私募证券投资基金管理人",
+                RelatedCompany = "鼎丰资本控股有限公司、鼎丰财富管理有限公司",
+                ActualController = "张伟", ContactName = "李芳",
+                ContactPhoneAndEmail = $"{RandPhone()} / lifang@dingfeng-am.com",
+                GoverningSecuritiesBureau = "上海证监局",
+                Description = "鼎丰资产管理有限公司成立于2018年，是一家专注于二级市场投资的私募基金管理公司。公司秉承'深度研究、价值发现'的投资理念，致力于为高净值客户和机构投资者创造长期稳定的绝对收益。",
+                HistoricalEvolution = "2018年6月 公司成立，注册资本5000万元\n2019年3月 完成基金业协会登记（P1068852）\n2020年 管理规模突破10亿元\n2022年 获得基金业协会普通会员资格\n2024年 管理规模突破30亿元",
+                OrgStructureIntro = "公司设有投资决策委员会、研究部、投资部、风控部、运营部。投资决策委员会为最高投资决策机构，由CIO、CRO及核心投资经理组成。",
+                FutureStrategicPlan = "未来三年计划拓展量化策略线，引入CTA和宏观策略，目标管理规模突破50亿元。同时加强合规风控体系建设，申请投顾资质。"
             });
 
             db.UpsertEntity(new CreditStanding
             {
-                Id = 1, AdminPenalty = "无", BusinessException = "无", SeriousIllegal = "无", ExecutionInfo = "无",
-                SecuritiesDishonesty = "无", CorePersonDishonesty = "无", FundAssocCreditReport = "正常",
-                AICQuery = "正常", CSRCQuery = "无异常", AssociationQuery = "正常", JudicialQuery = "无涉诉",
-                AntiMoneyLaundering = "已建立反洗钱内控制度"
+                Id = 1,
+                AdminPenalty = "无行政处罚记录",
+                BusinessException = "无经营异常信息",
+                SeriousIllegal = "无严重违法失信记录",
+                ExecutionInfo = "无被执行人信息",
+                SecuritiesDishonesty = "无证券期货市场失信记录",
+                CorePersonDishonesty = "核心人员无失信被执行人记录",
+                FundAssocCreditReport = "基金业协会信用信息报告正常，无负面信息",
+                AICQuery = "工商登记信息正常，无异常经营",
+                CSRCQuery = "证监会行政许可及处罚查询无异常",
+                AssociationQuery = "基金业协会信息公示系统查询正常",
+                JudicialQuery = "中国裁判文书网查询无涉诉记录",
+                AntiMoneyLaundering = "已建立反洗钱内部控制制度，配备专职反洗钱岗，定期报送可疑交易报告"
             });
 
             db.UpsertEntity(new InvestmentInfo
             {
-                Id = 1, Target = "追求绝对收益，年化目标15%-20%",
-                Philosophy = "基于基本面深度研究，结合量化模型筛选，寻找被市场低估的优质标的",
-                Research = "行业研究+个股深度调研，覆盖消费、科技、医药三大赛道",
-                Decision = "投资决策委员会每月召开例会，重大投资需三分之二委员同意",
-                Trading = "集中交易制度，交易员执行指令，风控实时监控",
-                RiskControl = "事前风控审批+事中实时监控+事后归因分析",
-                PortfolioAdjust = "月度调仓为主，极端行情下可临时调仓",
-                PositionBuilding = "分批建仓，单票仓位上限20%",
-                CommitteeRole = "投资决策委员会负责重大投资决策和风险审批",
-                ResearchAuthority = "研究员独立出具研究报告，投资经理参考决策",
-                SystemAndData = "恒生O3.5投资管理系统+Wind数据终端",
-                DataStorage = "数据存储于阿里云金融云，定期异地备份",
-                TradingControl = "系统自动限制单笔委托金额和个股集中度",
-                TradingErrorFix = "发现错误交易30分钟内启动应急处置流程",
-                AbnormalTrading = "异常交易实时预警，风控经理即时介入",
-                AccountFairness = "各账户公平对待，采用统一指令分配系统"
+                Id = 1,
+                Target = "追求长期绝对收益，年化目标收益率15%-20%，最大回撤控制在15%以内",
+                Philosophy = "基于深度基本面研究，结合量化模型辅助筛选，在消费、科技、医药三大核心赛道中寻找被市场低估的优质企业，通过长期持有获取企业成长带来的价值增值。",
+                Research = "采用'自上而下'与'自下而上'相结合的研究框架。宏观层面关注货币政策、产业政策；中观层面筛选景气度向上的行业；微观层面通过实地调研、产业链验证精选个股。覆盖消费、科技、医药三大核心赛道。",
+                Decision = "投资决策委员会每月召开例会审议投资策略和组合调整方案。单只个股投资需研究员出具深度报告并经投资经理推荐，投决会三分之二以上委员同意方可执行。超过组合净值5%的单笔投资需CRO会签。",
+                Trading = "采用集中交易制度，由交易部统一执行投资经理下达的交易指令。交易指令通过恒生O3.5系统下达，交易员实时执行，执行结果实时反馈。大额交易采用TWAP/VWAP算法拆分执行。",
+                RiskControl = "事前：投资范围限制、个股集中度限制、行业集中度限制；事中：实时监控组合风险指标、异常交易预警；事后：每日归因分析、每周压力测试、每月风险报告。",
+                PortfolioAdjust = "以月度调仓为主，根据市场环境和个股基本面变化动态调整。极端行情（如单日跌幅超3%）可启动临时调仓机制。调仓需经投资经理审批，超过10%仓位变动需投决会审批。",
+                PositionBuilding = "新建仓标的采用分批建仓策略，首次建仓不超过目标仓位的30%，根据市场走势和基本面验证逐步加仓。单票仓位上限20%，前十大重仓合计不超过60%。",
+                CommitteeRole = "投资决策委员会为公司最高投资决策机构，负责审议年度投资策略、重大投资决策、风控政策制定。委员会由CIO（张伟）担任主席，CRO（赵强）、研究总监（陈静）、核心投资经理为委员。",
+                ResearchAuthority = "研究员独立出具行业研究报告和个股深度报告，报告需经研究总监审核后发布。投资经理根据研究报告自主做出投资决策，但需遵守投资范围和集中度限制。",
+                SystemAndData = "投资管理：恒生O3.5投资管理系统；研究平台：Wind金融终端、iFind；交易执行：券商PB系统；风控系统：恒生风控模块+自研预警模型",
+                DataStorage = "核心数据存储于阿里云金融专区，采用同城双活+异地灾备架构。交易数据保留20年，通讯记录保留3年，符合监管要求。",
+                TradingControl = "系统自动限制：单笔委托金额不超过产品净值的5%；单日买卖同一证券金额不超过产品净值的10%；单只个股持仓不超过产品净值的20%。超出限制需CRO审批。",
+                TradingErrorFix = "发现错误交易后30分钟内启动应急处置：1)立即停止相关交易；2)评估损失范围；3)制定纠错方案（对冲/平仓）；4)CRO审批后执行；5)事后出具差错报告并完善内控。",
+                AbnormalTrading = "系统实时监控异常交易行为（频繁撤单、对敲对倒、尾盘异动等），触发预警后风控经理即时介入核查，必要时暂停相关账户交易权限。",
+                AccountFairness = "采用恒生指令分配系统实现多账户公平交易。同一投资经理管理的多个产品，买卖同一证券时采用按比例分配原则，确保各产品获得相同的执行价格和数量比例。"
             });
 
             db.UpsertEntity(new RiskControl
             {
-                Id = 1, SystemIntro = "三级风控体系：交易员自查→风控部监控→合规部审计",
-                DecisionMechanism = "投决会+风控委员会双层决策机制",
-                RiskMgmtCommittee = "风控委员会由CRO、CIO、合规总监组成",
-                DrawdownControl = "产品净值回撤达8%预警，达12%强制减仓",
-                SystemicRiskResponse = "对冲工具+仓位管控+流动性储备",
-                TradingMonitoring = "恒生系统实时监控，每笔交易留痕",
-                RiskMeasures = "VaR、压力测试、情景分析",
-                ManualVsSystem = "系统为主、人工为辅，重大异常由人工复核",
-                RiskMeasurement = "每日计算组合VaR，每周压力测试",
-                MaxDrawdownTolerance = "最大回撤容忍度15%",
-                TailRisk = "期权对冲尾部风险，黑天鹅事件启动应急预案",
-                RiskReserve = "管理费收入的5%计提风险准备金",
-                LiquidityMgmt = "保持10%以上现金类资产，应对赎回需求",
-                InsiderTradingPrevention = "信息隔离墙制度+员工交易申报制度",
-                EmployeeTradingMonitor = "员工个人证券交易需提前报备，禁止与产品同向交易",
-                ProductFairness = "统一交易指令分配系统，确保各产品公平执行"
+                Id = 1,
+                SystemIntro = "公司建立了三级风控体系：第一级-交易员自查与合规审查；第二级-风控部独立监控与预警；第三级-合规部定期审计与外部评估。三道防线相互独立、逐级强化。",
+                DecisionMechanism = "双层决策机制：投资层面-投决会负责投资策略和重大投资决策；风控层面-风控委员会负责风险政策、止损审批、合规审查。两个委员会人员部分重叠但投票独立。",
+                RiskMgmtCommittee = "风控委员会由首席风控官（CRO）赵强担任主席，成员包括CIO张伟、合规总监周慧、风控经理。每月召开风控例会，审议风险报告、压力测试结果和风控政策调整。",
+                DrawdownControl = "预警线：产品净值回撤达8%时系统自动预警，投资经理需在24小时内出具回撤分析报告；止损线：回撤达12%时强制减仓至半仓以下；清盘线：回撤达20%时启动产品清盘程序。",
+                SystemicRiskResponse = "应对系统性风险的三层防线：1)对冲工具（股指期货、期权）对冲Beta风险；2)仓位管控（极端行情下总仓位降至50%以下）；3)流动性储备（保持15%以上现金及高流动性资产）。",
+                TradingMonitoring = "恒生系统实时监控所有交易指令和成交记录。监控指标包括：个股集中度、行业集中度、换手率异常、频繁撤单、尾盘交易等。异常情况实时推送至风控经理终端。",
+                RiskMeasures = "主要风险度量工具：1)VaR（99%置信度，10日持有期）；2)压力测试（历史情景：2015股灾、2018贸易战、2020疫情）；3)情景分析（利率冲击、汇率波动等）；4)敏感性分析（久期、Beta等）。",
+                ManualVsSystem = "系统为主（80%风控指标自动监控）、人工为辅（20%需人工判断的例外事项）。系统预警分级处理：绿色自动记录、黄色风控经理复核、红色CRO审批。",
+                RiskMeasurement = "每日计算组合VaR、跟踪误差、Beta、行业偏离度等风险指标，每周进行压力测试，每月出具综合风险报告提交投决会审议。",
+                MaxDrawdownTolerance = "各产品最大回撤容忍度：股票多头策略15%、量化对冲策略5%、固收增强策略3%。超过容忍度需启动止损程序并报告CRO。",
+                TailRisk = "通过期权组合（保护性看跌期权）对冲尾部风险。黑天鹅事件应急预案：1)立即评估敞口；2)启动对冲头寸；3)减仓至安全水平；4)启动投资者沟通机制。",
+                RiskReserve = "按管理费收入的5%计提风险准备金，累计达到产品规模的1%后不再计提。风险准备金专户管理，用于弥补因管理人过错导致的投资者损失。",
+                LiquidityMgmt = "保持10%以上现金及货币基金等高流动性资产。对持仓证券进行流动性分级评估（A/B/C级），C级资产合计不超过10%。大额赎回（超过产品规模10%）需提前5个工作日预约。",
+                InsiderTradingPrevention = "信息隔离墙制度：研究部与交易部物理隔离，敏感信息分级管理。内幕信息知情人登记制度：知情人及其近亲属证券账户报备，敏感期禁止交易。",
+                EmployeeTradingMonitor = "员工个人证券交易需提前3个工作日报备，审批通过后方可执行。禁止与公司产品同方向交易同一证券。员工证券账户每季度申报，由合规部统一核查。",
+                ProductFairness = "统一交易指令分配系统确保各产品公平执行。同一投资经理管理的产品，买卖同一证券时按产品规模比例分配。禁止利益输送和不公平对待投资者。"
             });
 
             // 清空旧数据
@@ -157,43 +185,124 @@ public partial class DataCenterViewModel : ObservableObject
             db.QA.DeleteAll();
 
             // 人员
-            var staffData = new[] { ("王明", "总经理", EducationLevel.硕士, StaffRole.高管, 1), ("刘洋", "投资总监", EducationLevel.硕士, StaffRole.投资经理, 1), ("陈静", "研究总监", EducationLevel.博士, StaffRole.投研, 2), ("赵强", "风控总监", EducationLevel.硕士, StaffRole.风控, 3), ("周慧", "合规经理", EducationLevel.本科, StaffRole.合规, 4), ("吴涛", "高级研究员", EducationLevel.硕士, StaffRole.投研, 2), ("孙丽", "交易主管", EducationLevel.本科, StaffRole.运营, 4) };
-            foreach (var (name, title, edu, role, deptId) in staffData)
-                db.Staffs.Insert(new Staff { Name = name, Title = title, Education = edu, Role = role, DepartmentId = deptId, Years = Random.Shared.Next(3, 15).ToString(), MobilePhone = $"138{Random.Shared.Next(10000000, 99999999)}", Email = $"{name}@dingfeng.com" });
+            var roles = new[] { StaffRole.高管, StaffRole.投资经理, StaffRole.投研, StaffRole.风控, StaffRole.合规, StaffRole.运营, StaffRole.投研|StaffRole.投资经理 };
+            var titles = new[] { "总经理", "投资总监", "研究总监", "风控总监", "合规经理", "高级研究员", "交易主管", "投资经理", "行业研究员", "风控经理" };
+            var edus = new[] { EducationLevel.博士, EducationLevel.硕士, EducationLevel.MBA, EducationLevel.本科 };
+            var specialties = new[] { "消费行业", "科技行业", "医药行业", "TMT", "新能源", "大金融", "先进制造", "量化策略" };
+            var profiles = new[] {
+                "10年证券从业经验，曾任某大型公募基金研究员，专注消费行业研究，覆盖食品饮料、家电等子行业。",
+                "CFA持证人，8年投资研究经验，擅长宏观经济分析和大类资产配置，曾任券商研究所策略分析师。",
+                "清华大学金融学博士，6年量化投资经验，精通多因子模型和机器学习选股策略。",
+                "注册会计师，12年风控经验，曾任某信托公司风控部总经理，熟悉各类金融产品风控体系。",
+                "复旦大学法学硕士，持有法律职业资格证，8年基金合规管理经验。"
+            };
+            var staffData2 = new[] {
+                ("王明", "总经理", EducationLevel.MBA, StaffRole.高管, 1, "公司管理、战略规划", "1980"),
+                ("刘洋", "投资总监", EducationLevel.硕士, StaffRole.投资经理|StaffRole.高管, 1, "价值投资、消费行业", "1983"),
+                ("陈静", "研究总监", EducationLevel.博士, StaffRole.投研, 2, "TMT、半导体", "1985"),
+                ("赵强", "风控总监", EducationLevel.硕士, StaffRole.风控, 3, "信用风险、市场风险", "1982"),
+                ("周慧", "合规经理", EducationLevel.硕士, StaffRole.合规, 4, "基金合规、信息披露", "1988"),
+                (RandName(), "高级研究员", EducationLevel.博士, StaffRole.投研, 2, "医药行业、创新药", "1990"),
+                (RandName(), "交易主管", EducationLevel.本科, StaffRole.运营, 4, "交易执行、算法交易", "1992"),
+                (RandName(), "投资经理", EducationLevel.硕士, StaffRole.投资经理, 1, "量化对冲、CTA策略", "1987"),
+                (RandName(), "行业研究员", EducationLevel.硕士, StaffRole.投研, 2, "新能源、光伏", "1991"),
+                (RandName(), "风控经理", EducationLevel.本科, StaffRole.风控, 3, "操作风险、合规审查", "1993"),
+                (RandName(), "研究员", EducationLevel.硕士, StaffRole.投研, 2, "大金融、银行保险", "1994"),
+                (RandName(), "投资经理", EducationLevel.MBA, StaffRole.投资经理, 1, "宏观策略、大类资产配置", "1986"),
+                (RandName(), "运营专员", EducationLevel.本科, StaffRole.运营, 4, "基金估值、信息披露", "1995"),
+                (RandName(), "合规专员", EducationLevel.本科, StaffRole.合规, 4, "反洗钱、投资者适当性", "1993"),
+                (RandName(), "研究员", EducationLevel.博士, StaffRole.投研, 2, "先进制造、军工", "1989"),
+            };
+            foreach (var (name, title, edu, role, deptId, spec, birthYear) in staffData2)
+                db.Staffs.Insert(new Staff
+                {
+                    Name = name, Title = title, Education = edu, Role = role, DepartmentId = deptId,
+                    Years = r.Next(3, 18).ToString(), BirthDate = RandBirth(int.Parse(birthYear), int.Parse(birthYear) + 3),
+                    Specialty = spec, ResearchFocus = spec, MobilePhone = RandPhone(), Telephone = $"021-{r.Next(5000,6000)}{r.Next(1000,9999)}",
+                    Email = $"{name}@dingfeng-am.com", Profile = profiles[r.Next(profiles.Length)],
+                    IdNumber = $"310115{r.Next(1970,2000)}{r.Next(1,13):D2}{r.Next(1,29):D2}{r.Next(1000,9999)}"
+                });
 
             // 股东
-            foreach (var (name, ratio, nature) in new[] { ("张伟", "45%", "自然人"), ("李芳", "25%", "自然人"), ("鼎丰资本控股有限公司", "30%", "法人") })
-                db.Shareholders.Insert(new Shareholder { Name = name, Ratio = ratio, Nature = nature, IsActualController = name == "张伟" });
+            foreach (var (name, ratio, nature, intro, paid, identity, role2, pos) in new[] {
+                ("张伟", "45%", "自然人", "公司创始人，实际控制人。清华大学MBA，20年证券从业经验，曾任某知名私募基金投资总监。", "2250万元", "中国籍，无境外永久居留权", "董事长兼CIO", "全面负责公司战略和投资决策"),
+                ("李芳", "25%", "自然人", "公司联合创始人，负责运营和市场。复旦大学金融学硕士，15年金融行业从业经验。", "1250万元", "中国籍，无境外永久居留权", "董事兼COO", "负责公司运营管理、市场拓展和客户服务"),
+                ("鼎丰资本控股有限公司", "30%", "法人", "控股股东，成立于2015年，注册资本1亿元，主营业务为股权投资和资产管理。", "1500万元", "统一社会信用代码：91310000MA1FL5XX8K", "控股股东", "战略投资与资本运作")
+            })
+                db.Shareholders.Insert(new Shareholder { Name = name, Ratio = ratio, Nature = nature, Intro = intro, PaidInAmount = paid, IdentityBrief = identity, CompanyRole = role2, CompanyPosition = pos, IsActualController = name == "张伟" });
 
             // 部门
-            foreach (var (name, head, func) in new[] { ("投资部", "刘洋", "投资决策与执行"), ("研究部", "陈静", "行业研究与个股分析"), ("风控部", "赵强", "风险监控与合规管理"), ("运营部", "周慧", "基金运营与信息披露") })
+            foreach (var (name, head, func) in new[] {
+                ("投资部", "刘洋", "负责投资决策执行、投资组合管理和交易执行。管理投资经理团队，监督各产品投资运作。"),
+                ("研究部", "陈静", "负责宏观经济研究、行业研究和个股研究。出具研究报告，为投资决策提供研究支持。"),
+                ("风控部", "赵强", "负责公司全面风险管理，包括市场风险、信用风险、操作风险的识别、评估、监控和报告。"),
+                ("运营部", "周慧", "负责基金运营、信息披露、投资者服务、合规管理和行政事务。")
+            })
                 db.Departments.Insert(new Department { Name = name, Head = head, MainFunction = func });
 
             // 策略
-            foreach (var (name, type, scale) in new[] { ("主观多头", "股票多头", "5.2"), ("量化对冲", "市场中性", "3.8"), ("固收增强", "债券+", "8.5") })
-                db.Strategies.Insert(new Strategy { Name = name, Type = type, Scale = scale, Manager = "刘洋", Capacity = "20" });
+            foreach (var (name, type, scale, cap, factor, capRisk, repl, style, turn, hold, weight, ws) in new[] {
+                ("主观多头", "股票多头", "5.2", "20亿", "基本面+行业景气度", "容量充足，当前规模远低于容量上限", "策略可复制性较强，依赖核心投研团队", "偏成长风格，重仓消费和科技", "年化换手率约300%", "平均持仓3-6个月", "前十大重仓占比约55%", "预警-8%，止损-15%"),
+                ("量化对冲", "市场中性", "3.8", "10亿", "多因子模型（价值/动量/质量/波动率）", "策略容量有限，超额收益随规模增长递减", "模型标准化程度高，可复制性强", "市场中性，无明显风格暴露", "年化换手率约800%", "持仓周期1-4周", "行业中性，个股权重上限2%", "预警-3%，止损-5%"),
+                ("固收增强", "债券+", "8.5", "30亿", "信用分析+利率择时+转债增强", "容量充足，固收策略规模效应明显", "策略标准化，可高度复制", "偏稳健，以高等级信用债为主", "年化换手率约150%", "债券持仓1-3年，股票部分3-6个月", "债券80%+股票20%", "预警-2%，止损-3%")
+            })
+                db.Strategies.Insert(new Strategy { Name = name, Type = type, Scale = scale, Manager = "刘洋", Capacity = cap, FactorPool = factor, CapacityAndRisk = capRisk, Replicated = repl, StyleExposure = style, Turnover = turn, HoldingPeriod = hold, WeightAllocation = weight, WarningStoploss = ws });
 
             // 产品
-            foreach (var (n, c, t, s, nav, r, dd, rk) in new[] { ("鼎丰价值优选1号","DF001","股票多头","5.2","1.352","15.2%","-8.5%","R4"), ("鼎丰量化对冲1号","DF002","市场中性","3.8","1.186","9.8%","-3.2%","R3"), ("鼎丰固收增强1号","DF003","债券+","8.5","1.092","6.5%","-1.8%","R2"), ("鼎丰成长精选2号","DF004","股票多头","4.1","1.523","22.6%","-12.3%","R5"), ("鼎丰CTA趋势1号","DF005","管理期货","2.5","1.278","18.4%","-9.7%","R4"), ("鼎丰宏观策略1号","DF006","宏观策略","6.0","1.145","11.3%","-5.6%","R3"), ("鼎丰指数增强1号","DF007","指数增强","7.2","1.218","13.7%","-10.1%","R4"), ("鼎丰事件驱动1号","DF008","事件驱动","3.3","1.089","7.2%","-6.8%","R4"), ("鼎丰FOF配置1号","DF009","FOF","10.0","1.068","5.8%","-2.5%","R2"), ("鼎丰多策略1号","DF010","多策略","5.8","1.312","16.9%","-7.4%","R3") })
-                db.FundInfos.Insert(new FundInfo { Name = n, Code = c, Type = t, StrategyType = t, Scale = s, UnitNav = nav, AnnualReturn = r, MaxDrawdown = dd, RiskLevel = rk });
+            foreach (var (n, c, t, s, nav, ret, dd, rk, dur, freq, cust, mfee, sfee, scope, est, sharpe, cumRet, vol) in new[] {
+                ("鼎丰价值优选1号","DF001","股票多头","5.2","1.352","15.2%","-8.5%","R4","无固定期限","月度开放","招商证券","1.5%","开放期申购1%，持有满1年赎回免费","沪深A股、港股通","2019-03-15","1.25","35.2%","12.8%"),
+                ("鼎丰量化对冲1号","DF002","市场中性","3.8","1.186","9.8%","-3.2%","R3","无固定期限","月度开放","中信证券","1.5%","申购1%，赎回0.5%","沪深A股+股指期货对冲","2020-06-20","1.82","18.6%","5.2%"),
+                ("鼎丰固收增强1号","DF003","债券+","8.5","1.092","6.5%","-1.8%","R2","无固定期限","季度开放","国泰君安","0.8%","申购0.5%，赎回0.3%","利率债、信用债、可转债","2019-09-01","2.15","9.2%","3.1%"),
+                ("鼎丰成长精选2号","DF004","股票多头","4.1","1.523","22.6%","-12.3%","R5","无固定期限","月度开放","海通证券","2.0%","申购1.5%，持有满2年赎回免费","沪深A股、科创板","2020-01-10","1.08","52.3%","18.5%"),
+                ("鼎丰CTA趋势1号","DF005","管理期货","2.5","1.278","18.4%","-9.7%","R4","无固定期限","月度开放","中信建投","1.5%","申购1%，赎回0.5%","商品期货、金融期货","2021-03-08","1.35","27.8%","14.2%"),
+                ("鼎丰宏观策略1号","DF006","宏观策略","6.0","1.145","11.3%","-5.6%","R3","无固定期限","季度开放","华泰证券","1.2%","申购0.8%，赎回0.5%","股票、债券、商品、外汇","2020-08-15","1.52","14.5%","7.8%"),
+                ("鼎丰指数增强1号","DF007","指数增强","7.2","1.218","13.7%","-10.1%","R4","无固定期限","月度开放","广发证券","1.0%","申购0.5%，赎回0.3%","沪深300成分股+股指期货","2019-12-01","1.18","21.8%","15.3%"),
+                ("鼎丰事件驱动1号","DF008","事件驱动","3.3","1.089","7.2%","-6.8%","R4","2年","封闭期后季度开放","申万宏源","1.5%","封闭期内不可赎回","沪深A股（并购重组、定增等）","2022-06-01","0.95","8.9%","11.5%"),
+                ("鼎丰FOF配置1号","DF009","FOF","10.0","1.068","5.8%","-2.5%","R2","无固定期限","季度开放","国信证券","0.6%","申购0.3%，赎回0.2%","公募基金、私募基金","2021-01-15","1.68","6.8%","3.8%"),
+                ("鼎丰多策略1号","DF010","多策略","5.8","1.312","16.9%","-7.4%","R3","无固定期限","月度开放","东方证券","1.5%","申购1%，持有满1年赎回免费","股票+期货+期权多策略","2020-05-01","1.42","31.2%","10.5%")
+            })
+                db.FundInfos.Insert(new FundInfo { Name = n, Code = c, Type = t, StrategyType = t, Scale = s, UnitNav = nav, AnnualReturn = ret, MaxDrawdown = dd, RiskLevel = rk, Duration = dur, Frequency = freq, Custodian = cust, MgmtFee = mfee, BuySellFee = sfee, Scope = scope, EstablishmentDate = est, Sharpe = sharpe, CumulativeReturn = cumRet, Volatility = vol });
 
             // 奖项
-            foreach (var (time, name, ev) in new[] { ("2024", "金牛私募基金管理公司", "中国证券报"), ("2023", "最佳私募基金公司", "上海证券报"), ("2023", "五年期金牛私募投资经理", "中国证券报") })
-                db.Awards.Insert(new Award { Time = time, Name = name, Evaluator = ev, Entity = "鼎丰资产管理有限公司" });
+            foreach (var (time, name, ev, ent) in new[] {
+                ("2024", "金牛私募基金管理公司（五年期）", "中国证券报", "鼎丰资产管理有限公司"),
+                ("2024", "年度最佳私募基金公司", "证券时报", "鼎丰资产管理有限公司"),
+                ("2023", "金牛私募投资经理（三年期）", "中国证券报", "刘洋"),
+                ("2023", "最佳私募基金风控团队", "上海证券报", "鼎丰资产管理有限公司"),
+                ("2022", "英华奖·最佳私募基金公司", "中国基金报", "鼎丰资产管理有限公司")
+            })
+                db.Awards.Insert(new Award { Time = time, Name = name, Evaluator = ev, Entity = ent });
 
             // 规模
-            foreach (var (year, scale) in new[] { ("2021", "12.5"), ("2022", "18.3"), ("2023", "25.6"), ("2024", "32.8"), ("2025", "38.5") })
+            foreach (var (year, scale) in new[] { ("2019", "3.2"), ("2020", "8.7"), ("2021", "15.3"), ("2022", "22.1"), ("2023", "28.6"), ("2024", "35.2"), ("2025", "38.5") })
                 db.AUMs.Insert(new AUM { Year = year, Scale = scale });
 
             // 回撤
-            db.DrawdownRecords.Insert(new DrawdownRecord { ProductName = "鼎丰价值优选1号", Date = "2022-04", Amplitude = "-12.3%", Reason = "市场系统性下跌", Countermeasures = "减仓至60%，增加对冲头寸", RecoveryDays = "45" });
+            foreach (var (pn, dt, amp, reason, counter, days) in new[] {
+                ("鼎丰价值优选1号", "2022-04", "-12.3%", "市场系统性下跌，俄乌冲突引发全球风险偏好急剧下降", "减仓至60%，增加股指期货空头对冲，增持防御性板块", "45"),
+                ("鼎丰成长精选2号", "2022-04", "-18.5%", "成长股大幅回调，科技板块领跌", "大幅减仓科技股，增配价值股和高股息标的", "62"),
+                ("鼎丰CTA趋势1号", "2023-08", "-9.7%", "商品市场震荡加剧，趋势策略反复止损", "降低仓位至50%，缩短持仓周期，增加均值回归策略权重", "28"),
+                ("鼎丰指数增强1号", "2024-02", "-10.1%", "小微盘股流动性危机，量化策略集体回撤", "暂停小市值因子暴露，增配大盘蓝筹对冲", "15")
+            })
+                db.DrawdownRecords.Insert(new DrawdownRecord { ProductName = pn, Date = dt, Amplitude = amp, Reason = reason, Countermeasures = counter, RecoveryDays = days });
 
             // 财报
-            foreach (var year in new[] { "2022", "2023", "2024" })
-                db.FinancialStatements.Insert(new FinancialStatement { Year = year, TotalAssets = $"{Random.Shared.Next(800, 1500)}", TotalLiabilities = $"{Random.Shared.Next(200, 400)}", OwnersEquity = $"{Random.Shared.Next(500, 1100)}", Revenue = $"{Random.Shared.Next(100, 300)}", Cost = $"{Random.Shared.Next(50, 150)}", NetProfit = $"{Random.Shared.Next(30, 120)}" });
+            foreach (var (year, ta, tl, oe, rev, cost, np) in new[] {
+                ("2022", "1280", "320", "960", "185", "98", "62"),
+                ("2023", "1520", "380", "1140", "245", "125", "88"),
+                ("2024", "1850", "420", "1430", "310", "155", "118")
+            })
+                db.FinancialStatements.Insert(new FinancialStatement { Year = year, TotalAssets = ta, TotalLiabilities = tl, OwnersEquity = oe, Revenue = rev, Cost = cost, NetProfit = np });
 
             // 问答
-            foreach (var (q, a) in new[] { ("公司核心投资理念是什么？", "基于深度基本面研究，寻找被低估的优质标的"), ("风控体系如何运作？", "三级风控：交易员自查→风控部监控→合规部审计"), ("投研团队构成？", "6名研究员覆盖消费、科技、医药三大赛道") })
+            foreach (var (q, a) in new[] {
+                ("公司核心投资理念是什么？", "基于深度基本面研究，结合量化模型辅助筛选，在消费、科技、医药三大核心赛道中寻找被市场低估的优质企业，追求长期绝对收益。"),
+                ("风控体系如何运作？", "三级风控体系：交易员自查→风控部独立监控→合规部定期审计。产品净值回撤达8%预警、12%强制减仓、20%清盘。"),
+                ("投研团队构成？", "研究部6名研究员覆盖消费、科技、医药、新能源、大金融、量化策略六大方向，投资部4名投资经理管理10只产品。"),
+                ("公司历史业绩如何？", "自2019年首只产品成立以来，主观多头策略年化收益15.2%，量化对冲策略年化收益9.8%，固收增强策略年化收益6.5%，均跑赢同期基准。"),
+                ("如何保证各产品公平对待？", "采用恒生指令分配系统，同一投资经理管理的产品买卖同一证券时按规模比例分配，禁止利益输送。"),
+                ("公司的竞争优势是什么？", "1)核心团队稳定，平均从业经验超过10年；2)投研体系完善，覆盖三大核心赛道；3)风控体系严格，历史最大回撤控制在预期范围内。")
+            })
                 db.QA.Insert(new QA { Question = q, Answer = a });
         });
 
