@@ -82,7 +82,7 @@
                 DockPanel.Dock="Top"
                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
             <ListBox
-                Width="400"
+                Width="300"
                 ItemsSource="{Binding VettingView.View}"
                 SelectedItem="{Binding SelectedVetting}">
                 <ListBox.ItemContainerStyle>
