@@ -1,11 +1,15 @@
 namespace Vetting.Models.Entities;
 
 /// <summary>
-/// 投资流程
+/// 投资理念与流程
 /// </summary>
-public class InvestmentProcess
+public class InvestmentInfo
 {
     public int Id { get; set; } = 1;
+    // 理念
+    public string? Target { get; set; }
+    public string? Philosophy { get; set; }
+    // 流程
     public string? Research { get; set; }
     public string? Decision { get; set; }
     public string? Trading { get; set; }

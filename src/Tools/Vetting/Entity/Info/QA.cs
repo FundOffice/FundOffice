@@ -7,7 +7,6 @@ namespace Vetting.Models.Entities;
 public class QA
 {
     public int Id { get; set; }
-
     /// <summary>来源: 0=种子数据, 其他=VettingReport.Id</summary>
     public int Source { get; set; }
     public string? Question { get; set; }

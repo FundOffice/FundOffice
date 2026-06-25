@@ -1,0 +1,709 @@
+<Window
+    x:Class="Vetting.View.DataCenterWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:ent="clr-namespace:Vetting.Models.Entities"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+    xmlns:vm="clr-namespace:Vetting.ViewModel"
+    Title="数据中心"
+    Width="1100"
+    Height="700"
+    d:DataContext="{d:DesignInstance Type=vm:DataCenterViewModel}"
+    WindowStartupLocation="CenterOwner"
+    mc:Ignorable="d">
+
+    <Window.Resources>
+        <ObjectDataProvider
+            x:Key="MembershipLevels"
+            MethodName="GetValues"
+            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="ent:MembershipLevel" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <ObjectDataProvider
+            x:Key="EducationLevels"
+            MethodName="GetValues"
+            ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="ent:EducationLevel" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <x:Array x:Key="RoleOptions" Type="sys:String">
+            <sys:String>高管</sys:String>
+            <sys:String>投研</sys:String>
+            <sys:String>风控</sys:String>
+            <sys:String>投资经理</sys:String>
+            <sys:String>合规</sys:String>
+            <sys:String>运营</sys:String>
+            <sys:String>联系人</sys:String>
+        </x:Array>
+
+        <Style BasedOn="{StaticResource TextBoxExtend}" TargetType="{x:Type hc:TextBox}">
+            <Setter Property="Margin" Value="5" />
+            <Setter Property="AcceptsReturn" Value="True" />
+        </Style>
+
+
+
+        <Style BasedOn="{StaticResource ComboBoxExtend}" TargetType="{x:Type hc:ComboBox}">
+            <Setter Property="Margin" Value="5" />
+        </Style>
+
+
+        <Style BasedOn="{StaticResource DatePickerExtend}" TargetType="{x:Type hc:DatePicker}">
+            <Setter Property="Margin" Value="5" />
+        </Style>
+
+
+
+        <Style BasedOn="{StaticResource DataGrid.Small}" TargetType="DataGrid" />
+    </Window.Resources>
+
+    <hc:SimplePanel>
+        <TabControl
+            x:Name="Tabs"
+            Margin="5"
+            SelectionChanged="OnTabChanged"
+            TabStripPlacement="Left">
+
+            <!--  ═══ 唯一项: VM 自动保存 ═══  -->
+
+            <TabItem Header="管理人">
+                <ScrollViewer Padding="8" VerticalScrollBarVisibility="Auto">
+                    <WrapPanel ItemWidth="320">
+                        <hc:TextBox hc:InfoElement.Title="机构名称" Text="{Binding ManagerVM.Name, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="统一社会信用代码" Text="{Binding ManagerVM.RegisterNo, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="法定代表人" Text="{Binding ManagerVM.ArtificialPerson, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="注册资本(万)" Text="{Binding ManagerVM.RegisterCapital, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="实缴资本(万)" Text="{Binding ManagerVM.RealCapital, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="成立时间" Text="{Binding ManagerVM.SetupDate, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="经营范围" Text="{Binding ManagerVM.BusinessScope, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="注册地址" Text="{Binding ManagerVM.RegisterAddress, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="办公地址" Text="{Binding ManagerVM.OfficeAddress, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="联系电话" Text="{Binding ManagerVM.Phone, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="固定电话" Text="{Binding ManagerVM.Telephone, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="邮箱" Text="{Binding ManagerVM.Email, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="传真" Text="{Binding ManagerVM.Fax, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="英文名称" Text="{Binding ManagerVM.EnglishName, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="官网" Text="{Binding ManagerVM.WebSite, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="基金业协会编号" Text="{Binding ManagerVM.AmacId, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:ComboBox
+                            hc:InfoElement.Title="会员资格"
+                            ItemsSource="{Binding Source={StaticResource MembershipLevels}}"
+                            SelectedItem="{Binding ManagerVM.Membership}" />
+                        <CheckBox
+                            Margin="8,4"
+                            VerticalAlignment="Center"
+                            Content="投资顾问资质"
+                            IsChecked="{Binding ManagerVM.InvestmentAdvisor}" />
+                        <hc:TextBox hc:InfoElement.Title="机构类型" Text="{Binding ManagerVM.InstitutionType, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="关联公司" Text="{Binding ManagerVM.RelatedCompany, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="实际控制人" Text="{Binding ManagerVM.ActualController, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="联系人姓名" Text="{Binding ManagerVM.ContactName, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="联系电话和邮箱" Text="{Binding ManagerVM.ContactPhoneAndEmail, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="所属证监局" Text="{Binding ManagerVM.GoverningSecuritiesBureau, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                    </WrapPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="诚信合规">
+                <ScrollViewer Padding="8" VerticalScrollBarVisibility="Auto">
+                    <WrapPanel ItemWidth="320">
+                        <hc:TextBox hc:InfoElement.Title="行政处罚" Text="{Binding CreditStandingVM.AdminPenalty, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="经营异常" Text="{Binding CreditStandingVM.BusinessException, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="严重违法" Text="{Binding CreditStandingVM.SeriousIllegal, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="执行信息" Text="{Binding CreditStandingVM.ExecutionInfo, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="证券失信" Text="{Binding CreditStandingVM.SecuritiesDishonesty, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="核心人员失信" Text="{Binding CreditStandingVM.CorePersonDishonesty, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="基金业协会信用报告" Text="{Binding CreditStandingVM.FundAssocCreditReport, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="工商查询" Text="{Binding CreditStandingVM.AICQuery, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="证监会查询" Text="{Binding CreditStandingVM.CSRCQuery, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="协会查询" Text="{Binding CreditStandingVM.AssociationQuery, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="司法查询" Text="{Binding CreditStandingVM.JudicialQuery, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="反洗钱" Text="{Binding CreditStandingVM.AntiMoneyLaundering, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                    </WrapPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="投资">
+                <ScrollViewer Padding="8" VerticalScrollBarVisibility="Auto">
+                    <WrapPanel ItemWidth="320">
+                        <hc:TextBox hc:InfoElement.Title="投资目标" Text="{Binding InvestmentInfoVM.Target, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="投资理念" Text="{Binding InvestmentInfoVM.Philosophy, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="研究" Text="{Binding InvestmentInfoVM.Research, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="决策" Text="{Binding InvestmentInfoVM.Decision, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="交易" Text="{Binding InvestmentInfoVM.Trading, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="评估" Text="{Binding InvestmentInfoVM.Evaluation, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="风控" Text="{Binding InvestmentInfoVM.RiskControl, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="组合调整" Text="{Binding InvestmentInfoVM.PortfolioAdjust, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="建仓" Text="{Binding InvestmentInfoVM.PositionBuilding, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="委员会职责" Text="{Binding InvestmentInfoVM.CommitteeRole, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="研究权限" Text="{Binding InvestmentInfoVM.ResearchAuthority, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="系统与数据" Text="{Binding InvestmentInfoVM.SystemAndData, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="数据存储" Text="{Binding InvestmentInfoVM.DataStorage, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="交易控制" Text="{Binding InvestmentInfoVM.TradingControl, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="交易纠错" Text="{Binding InvestmentInfoVM.TradingErrorFix, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="异常交易" Text="{Binding InvestmentInfoVM.AbnormalTrading, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="账户公平" Text="{Binding InvestmentInfoVM.AccountFairness, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                    </WrapPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="风控体系">
+                <ScrollViewer Padding="8" VerticalScrollBarVisibility="Auto">
+                    <WrapPanel ItemWidth="320">
+                        <hc:TextBox hc:InfoElement.Title="体系概述" Text="{Binding RiskControlVM.SystemIntro, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="决策机制" Text="{Binding RiskControlVM.DecisionMechanism, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="风管委员会" Text="{Binding RiskControlVM.RiskMgmtCommittee, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="回撤控制" Text="{Binding RiskControlVM.DrawdownControl, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="系统性风险应对" Text="{Binding RiskControlVM.SystemicRiskResponse, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="交易监控" Text="{Binding RiskControlVM.TradingMonitoring, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="风险措施" Text="{Binding RiskControlVM.RiskMeasures, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="人工vs系统" Text="{Binding RiskControlVM.ManualVsSystem, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="风险度量" Text="{Binding RiskControlVM.RiskMeasurement, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="最大回撤容忍" Text="{Binding RiskControlVM.MaxDrawdownTolerance, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="尾部风险" Text="{Binding RiskControlVM.TailRisk, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="风险准备金" Text="{Binding RiskControlVM.RiskReserve, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="流动性管理" Text="{Binding RiskControlVM.LiquidityMgmt, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="内幕交易防范" Text="{Binding RiskControlVM.InsiderTradingPrevention, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="员工交易监控" Text="{Binding RiskControlVM.EmployeeTradingMonitor, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox hc:InfoElement.Title="产品公平性" Text="{Binding RiskControlVM.ProductFairness, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                    </WrapPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!--  ═══ 列表项 ═══  -->
+
+            <TabItem Header="人员">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button
+                            Margin="4"
+                            Command="{Binding AddItemCommand}"
+                            CommandParameter="人员"
+                            Content="新增"
+                            Style="{StaticResource ButtonSuccess}" />
+                        <Button
+                            Margin="4"
+                            Command="{Binding DeleteStaffCommand}"
+                            Content="删除"
+                            Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
+                    <ListBox
+                        Width="200"
+                        DockPanel.Dock="Left"
+                        ItemsSource="{Binding Staffs}"
+                        SelectedItem="{Binding SelectedStaff}">
+                        <ListBox.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource ListBoxItemBaseStyle}" TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Title}" />
+                                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <ScrollViewer Padding="8" VerticalScrollBarVisibility="Auto">
+                        <WrapPanel DataContext="{Binding SelectedStaff}" ItemWidth="320">
+                            <hc:TextBox hc:InfoElement.Title="姓名" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="职务" Text="{Binding Title, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:ComboBox
+                                hc:InfoElement.Title="学历"
+                                ItemsSource="{Binding Source={StaticResource EducationLevels}}"
+                                SelectedItem="{Binding Education}" />
+                            <hc:ComboBox
+                                hc:InfoElement.Title="角色"
+                                IsEditable="True"
+                                ItemsSource="{Binding Source={StaticResource RoleOptions}}"
+                                Text="{Binding Role, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="从业年限" Text="{Binding Years, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:DatePicker hc:InfoElement.Title="出生年月" SelectedDate="{Binding BirthDate, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+
+                            <hc:TextBox hc:InfoElement.Title="擅长领域" Text="{Binding Specialty, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="投研重点" Text="{Binding ResearchFocus, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="手机" Text="{Binding MobilePhone, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="固定电话" Text="{Binding Telephone, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="邮箱" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="身份证号" Text="{Binding IdNumber, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="详细履历" Text="{Binding Profile, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        </WrapPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="股东">
+                <DockPanel>
+                    <Button
+                        Margin="4"
+                        HorizontalAlignment="Left"
+                        Command="{Binding AddItemCommand}"
+                        CommandParameter="股东"
+                        Content="新增"
+                        DockPanel.Dock="Top"
+                        Style="{StaticResource ButtonSuccess}" />
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        CanUserDeleteRows="True"
+                        ItemsSource="{Binding Shareholders}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="股东名称" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding Ratio, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="持股比例" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding Nature, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="股东性质" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding PaidInAmount, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="实缴金额" />
+                            <DataGridCheckBoxColumn
+                                Width="70"
+                                Binding="{Binding IsActualController}"
+                                Header="是否实控" />
+                            <DataGridTextColumn
+                                Width="150"
+                                Binding="{Binding IdentityBrief, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="身份简要" />
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding CompanyRole, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="在公司职责" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding IsCoreResearch, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="是否核心投研" />
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding CompanyPosition, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="内部任职" />
+                            <DataGridTextColumn
+                                Width="200"
+                                Binding="{Binding Intro, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="股东简介" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="部门">
+                <DockPanel>
+                    <Button
+                        Margin="4"
+                        HorizontalAlignment="Left"
+                        Command="{Binding AddItemCommand}"
+                        CommandParameter="部门"
+                        Content="新增"
+                        DockPanel.Dock="Top"
+                        Style="{StaticResource ButtonSuccess}" />
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        CanUserDeleteRows="True"
+                        ItemsSource="{Binding Departments}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="部门名称" />
+                            <DataGridTextColumn
+                                Width="60"
+                                Binding="{Binding Headcount, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="人数" />
+                            <DataGridTextColumn
+                                Width="200"
+                                Binding="{Binding MainFunction, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="主要职能" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding Head, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="负责人" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding HasPartTime, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="是否有兼职" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="策略">
+                <DockPanel>
+                    <Button
+                        Margin="4"
+                        HorizontalAlignment="Left"
+                        Command="{Binding AddItemCommand}"
+                        CommandParameter="策略"
+                        Content="新增"
+                        DockPanel.Dock="Top"
+                        Style="{StaticResource ButtonSuccess}" />
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        CanUserDeleteRows="True"
+                        ItemsSource="{Binding Strategies}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="策略名称" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding Manager, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="策略负责人" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding Scale, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="规模(亿)" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding Type, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="类型" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding Capacity, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="容量" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding SameStrategyCount, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="同策略数量" />
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding FactorPool, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="因子池" />
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding CapacityAndRisk, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="容量与风险" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding Replicated, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="可复制性" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding StyleExposure, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="风格暴露" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding Turnover, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="换手率" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding HoldingPeriod, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="持仓周期" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding WeightAllocation, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="权重分配" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding WarningStoploss, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="预警止损" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="产品">
+                <DockPanel>
+                    <Button
+                        Margin="4"
+                        HorizontalAlignment="Left"
+                        Command="{Binding AddItemCommand}"
+                        CommandParameter="产品"
+                        Content="新增"
+                        DockPanel.Dock="Top"
+                        Style="{StaticResource ButtonSuccess}" />
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        CanUserDeleteRows="True"
+                        ItemsSource="{Binding FundInfos}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="产品名称" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding Code, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="产品编码" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding Type, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="产品类型" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding Duration, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="存续期限" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding MinSubscription, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="认购起点" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding Frequency, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="开放频率" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding Custodian, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="托管人" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding RiskLevel, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="风险等级" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding MgmtFee, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="管理费" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding StrategyType, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="策略类型" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding Scale, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="规模" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding UnitNav, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="单位净值" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding AnnualReturn, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="年化收益" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding MaxDrawdown, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="最大回撤" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding Sharpe, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="夏普比率" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding EstablishmentDate, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="成立日期" />
+                            <DataGridTextColumn
+                                Width="150"
+                                Binding="{Binding Scope, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="投资范围" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="奖项">
+                <DockPanel>
+                    <Button
+                        Margin="4"
+                        HorizontalAlignment="Left"
+                        Command="{Binding AddItemCommand}"
+                        CommandParameter="奖项"
+                        Content="新增"
+                        DockPanel.Dock="Top"
+                        Style="{StaticResource ButtonSuccess}" />
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        CanUserDeleteRows="True"
+                        ItemsSource="{Binding Awards}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding Time, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="获奖时间" />
+                            <DataGridTextColumn
+                                Width="150"
+                                Binding="{Binding Entity2, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="获奖主体" />
+                            <DataGridTextColumn
+                                Width="200"
+                                Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="奖项名称" />
+                            <DataGridTextColumn
+                                Width="150"
+                                Binding="{Binding Evaluator, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="评价机构" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="资产规模">
+                <DockPanel>
+                    <Button
+                        Margin="4"
+                        HorizontalAlignment="Left"
+                        Command="{Binding AddItemCommand}"
+                        CommandParameter="规模"
+                        Content="新增"
+                        DockPanel.Dock="Top"
+                        Style="{StaticResource ButtonSuccess}" />
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        CanUserDeleteRows="True"
+                        ItemsSource="{Binding AUMs}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding Year, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="年份" />
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding Scale, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="规模" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="回撤记录">
+                <DockPanel>
+                    <Button
+                        Margin="4"
+                        HorizontalAlignment="Left"
+                        Command="{Binding AddItemCommand}"
+                        CommandParameter="回撤"
+                        Content="新增"
+                        DockPanel.Dock="Top"
+                        Style="{StaticResource ButtonSuccess}" />
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        CanUserDeleteRows="True"
+                        ItemsSource="{Binding DrawdownRecords}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="150"
+                                Binding="{Binding ProductName, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="产品名称" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding Date, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="日期" />
+                            <DataGridTextColumn
+                                Width="90"
+                                Binding="{Binding Amplitude, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="回撤幅度" />
+                            <DataGridTextColumn
+                                Width="200"
+                                Binding="{Binding Reason, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="原因" />
+                            <DataGridTextColumn
+                                Width="200"
+                                Binding="{Binding Countermeasures, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="应对措施" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding RecoveryDays, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="恢复天数" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="财务报表">
+                <DockPanel>
+                    <Button
+                        Margin="4"
+                        HorizontalAlignment="Left"
+                        Command="{Binding AddItemCommand}"
+                        CommandParameter="财务"
+                        Content="新增"
+                        DockPanel.Dock="Top"
+                        Style="{StaticResource ButtonSuccess}" />
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        CanUserDeleteRows="True"
+                        ItemsSource="{Binding FinancialStatements}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding Year, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="年份" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding TotalAssets, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="总资产" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding TotalLiabilities, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="总负债" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding OwnersEquity, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="所有者权益" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding Revenue, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="营收" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding Cost, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="成本" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding NetProfit, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="净利润" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="问答">
+                <DockPanel>
+                    <Button
+                        Margin="4"
+                        HorizontalAlignment="Left"
+                        Command="{Binding AddItemCommand}"
+                        CommandParameter="问答"
+                        Content="新增"
+                        DockPanel.Dock="Top"
+                        Style="{StaticResource ButtonSuccess}" />
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        CanUserDeleteRows="True"
+                        ItemsSource="{Binding QAs}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="60"
+                                Binding="{Binding Source, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="来源" />
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding Question, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="问题" />
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding Answer, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="回答" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+        </TabControl>
+
+
+        <Button
+            Margin="10"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Bottom"
+            Command="{Binding GenerateMockCommand}"
+            Content="Mock"
+            Style="{StaticResource ButtonDanger}" />
+
+    </hc:SimplePanel>
+</Window>

@@ -1,5 +1,7 @@
 namespace Vetting.Models.Entities;
 
+public enum MembershipLevel { 无, 观察会员, 普通会员 }
+
 /// <summary>
 /// 管理人基本信息 (单值, collection 中仅一条)
 /// </summary>
@@ -23,7 +25,8 @@ public class Manager
     public string? EnglishName { get; set; }
     public string? WebSite { get; set; }
     public string? AmacId { get; set; }
-    public string? MemberType { get; set; }
+    public MembershipLevel Membership { get; set; }
+    public bool InvestmentAdvisor { get; set; }
     public string? InstitutionType { get; set; }
     public string? RelatedCompany { get; set; }
     public string? Description { get; set; }

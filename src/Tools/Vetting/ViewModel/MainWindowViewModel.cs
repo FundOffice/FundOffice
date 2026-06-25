@@ -93,6 +93,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable, IRecip
     [RelayCommand]
     private void SetAIConfig() => new AIProviderConfigWindow { Owner = Application.Current.MainWindow }.ShowDialog();
 
+    [RelayCommand]
+    private void OpenDataCenter() => new DataCenterWindow { Owner = Application.Current.MainWindow, DataContext = new DataCenterViewModel() }.Show();
+
      public void Receive(AIProviderChanged message)
     {
         switch (message.Type)

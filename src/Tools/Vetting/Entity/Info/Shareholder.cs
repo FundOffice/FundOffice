@@ -15,4 +15,5 @@ public class Shareholder
     public string? CompanyRole { get; set; }
     public string? IsCoreResearch { get; set; }
     public string? CompanyPosition { get; set; }
+    public bool IsActualController { get; set; }
 }

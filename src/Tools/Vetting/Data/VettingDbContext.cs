@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using LiteDB;
@@ -16,6 +17,23 @@ public class VettingDbContext : IDisposable
     public ILiteCollection<FileSpecialQuestion> FileSpecialQuestions => _db.GetCollection<FileSpecialQuestion>();
     public ILiteCollection<SpecialAnswer> SpecialAnswers => _db.GetCollection<SpecialAnswer>();
     public ILiteCollection<QA> QA => _db.GetCollection<QA>();
+
+    // 唯一项
+    public ILiteCollection<Manager> Managers => _db.GetCollection<Manager>();
+    public ILiteCollection<CreditStanding> CreditStandings => _db.GetCollection<CreditStanding>();
+    public ILiteCollection<InvestmentInfo> InvestmentInfos => _db.GetCollection<InvestmentInfo>();
+    public ILiteCollection<RiskControl> RiskControls => _db.GetCollection<RiskControl>();
+
+    // 列表项
+    public ILiteCollection<AUM> AUMs => _db.GetCollection<AUM>();
+    public ILiteCollection<Award> Awards => _db.GetCollection<Award>();
+    public ILiteCollection<Department> Departments => _db.GetCollection<Department>();
+    public ILiteCollection<DrawdownRecord> DrawdownRecords => _db.GetCollection<DrawdownRecord>();
+    public ILiteCollection<FinancialStatement> FinancialStatements => _db.GetCollection<FinancialStatement>();
+    public ILiteCollection<FundInfo> FundInfos => _db.GetCollection<FundInfo>();
+    public ILiteCollection<Shareholder> Shareholders => _db.GetCollection<Shareholder>();
+    public ILiteCollection<Staff> Staffs => _db.GetCollection<Staff>();
+    public ILiteCollection<Strategy> Strategies => _db.GetCollection<Strategy>();
 
     public VettingDbContext()
     {
@@ -49,4 +67,22 @@ public class VettingDbContext : IDisposable
     }
 
     public void Dispose() => _db.Dispose();
+
+    private static readonly MethodInfo GetCollectionGeneric = typeof(LiteDatabase)
+        .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+        .First(m => m.Name == "GetCollection" && m.IsGenericMethod && m.GetParameters().Length == 0);
+
+    public void UpsertEntity(object entity)
+    {
+        var method = GetCollectionGeneric.MakeGenericMethod(entity.GetType());
+        dynamic col = method.Invoke(_db, null)!;
+        col.Upsert((dynamic)entity);
+    }
+
+    public void DeleteEntity(Type type, int id)
+    {
+        var method = GetCollectionGeneric.MakeGenericMethod(type);
+        dynamic col = method.Invoke(_db, null)!;
+        col.Delete(id);
+    }
 }
