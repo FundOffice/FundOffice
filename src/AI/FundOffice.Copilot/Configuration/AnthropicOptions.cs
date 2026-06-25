@@ -21,6 +21,8 @@ namespace FundOffice.Copilot.Configuration;
 /// </summary>
 public sealed class AnthropicOptions
 {
+    public required string Identifier { get; set; }
+
     /// <summary>API Key（必填）。Anthropic 格式通常以 "sk-ant-" 开头。</summary>
     public required string ApiKey { get; set; }
 

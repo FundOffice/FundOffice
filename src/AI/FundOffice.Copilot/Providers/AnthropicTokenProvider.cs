@@ -41,6 +41,10 @@ public sealed class AnthropicTokenProvider : TokenProviderBase
     private readonly string _baseUrl;
     private readonly string _model;
     private readonly string _apiVersion;
+    private readonly string _idf;
+
+    public override string Identifier => _idf;
+
 
     /// <summary>
     /// 创建 Anthropic Provider。
@@ -65,6 +69,7 @@ public sealed class AnthropicTokenProvider : TokenProviderBase
         _baseUrl = options.BaseUrl.TrimEnd('/');
         _model = options.Model;
         _apiVersion = options.ApiVersion;
+        _idf = options.Identifier;
     }
 
     /// <summary>流式调用。详见 OpenAiTokenProvider 同名方法的生命周期说明。</summary>

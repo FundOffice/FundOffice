@@ -85,12 +85,12 @@ public partial class VettingParseTaskViewModel : ObservableObject
 
             var tplDir = Path.Combine("files", "vetting", VettingId, "tpl");
             Directory.CreateDirectory(tplDir);
-            var srcPath = Path.Combine("files", "vetting", VettingId, FileName);
+            var srcPath = Path.Combine("files", "vetting", VettingId, $"{FileName}_by[{Provider.Identifier}]");
             var tplPath = Path.Combine(tplDir, FileName);
             File.Copy(srcPath, tplPath, overwrite: true);
 
             // 保存返回json，用于调试
-            File.WriteAllText(Path.Combine(tplDir, Path.GetFileNameWithoutExtension(FileName) + ".json"), json);
+            File.WriteAllText(Path.Combine(tplDir, $"{Path.GetFileNameWithoutExtension(FileName)}_by[{Provider.Identifier}].json"), json);
 
             var ops = new List<(string tool, Dictionary<string, System.Text.Json.JsonElement> input)>();
             foreach (var op in root.GetProperty("operations").EnumerateArray())

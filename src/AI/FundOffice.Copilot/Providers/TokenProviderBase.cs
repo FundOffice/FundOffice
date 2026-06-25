@@ -18,6 +18,10 @@ namespace FundOffice.Copilot.Providers;
 /// </summary>
 public abstract class TokenProviderBase : ITokenProvider
 {
+    public abstract string Identifier { get; }
+
+
+
     /// <summary>子类必须实现的流式方法</summary>
     public abstract IAsyncEnumerable<StreamingToken> ChatCompletionStreamAsync(
         IReadOnlyList<ChatMessage> messages,

@@ -120,9 +120,9 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<AIProvid
     private static FundOffice.Copilot.Providers.ITokenProvider CreateProvider(AIProviderItemViewModel vm) => vm.ProviderType switch
     {
         "Anthropic" => new FundOffice.Copilot.Providers.AnthropicTokenProvider(
-            new FundOffice.Copilot.Configuration.AnthropicOptions { ApiKey = vm.ApiKey, BaseUrl = vm.BaseUrl, Model = vm.Model }),
+            new FundOffice.Copilot.Configuration.AnthropicOptions { Identifier = vm.Name, ApiKey = vm.ApiKey, BaseUrl = vm.BaseUrl, Model = vm.Model }),
         _ => new FundOffice.Copilot.Providers.OpenAITokenProvider(
-            new FundOffice.Copilot.Configuration.OpenAIOptions { ApiKey = vm.ApiKey, BaseUrl = vm.BaseUrl,Model = vm.Model }),
+            new FundOffice.Copilot.Configuration.OpenAIOptions { Identifier = vm.Name, ApiKey = vm.ApiKey, BaseUrl = vm.BaseUrl,Model = vm.Model }),
     };
 
     public void Receive(AIProviderChanged message)

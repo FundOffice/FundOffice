@@ -26,6 +26,8 @@ namespace FundOffice.Copilot.Providers;
 /// </summary>
 public interface ITokenProvider
 {
+    string Identifier { get; }
+
     /// <summary>
     /// 流式聊天完成。逐块返回文本、工具调用、用量和结束信号。
     /// </summary>

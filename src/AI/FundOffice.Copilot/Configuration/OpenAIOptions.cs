@@ -21,6 +21,8 @@ namespace FundOffice.Copilot.Configuration;
 /// </summary>
 public sealed class OpenAIOptions
 {
+    public required string Identifier { get; set; }
+
     /// <summary>API Key（必填）。OpenAI 格式通常以 "sk-" 开头。</summary>
     public required string ApiKey { get; set; }
 

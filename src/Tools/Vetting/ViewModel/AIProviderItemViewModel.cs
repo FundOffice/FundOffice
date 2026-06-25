@@ -92,7 +92,7 @@ public partial class AIProviderItemViewModel : ObservableObject
 
     private ITokenProvider CreateProvider() => ProviderType switch
     {
-        "Anthropic" => new AnthropicTokenProvider(new AnthropicOptions { ApiKey = ApiKey, BaseUrl = BaseUrl }),
-        _ => new OpenAITokenProvider(new OpenAIOptions { ApiKey = ApiKey, BaseUrl = BaseUrl }),
+        "Anthropic" => new AnthropicTokenProvider(new AnthropicOptions { Identifier = Name, ApiKey = ApiKey, BaseUrl = BaseUrl }),
+        _ => new OpenAITokenProvider(new OpenAIOptions { Identifier = Name, ApiKey = ApiKey, BaseUrl = BaseUrl }),
     };
 }

@@ -37,6 +37,9 @@ public sealed class OpenAITokenProvider : TokenProviderBase
     private readonly string _apiKey;
     private readonly string _baseUrl;
     private readonly string _model;
+    private readonly string _idf;
+
+    public override string Identifier => _idf;
 
     /// <summary>
     /// 创建 OpenAI Provider。
@@ -60,6 +63,7 @@ public sealed class OpenAITokenProvider : TokenProviderBase
         _apiKey = options.ApiKey;
         _baseUrl = options.BaseUrl.TrimEnd('/');
         _model = options.Model;
+        _idf = options.Identifier;
     }
 
     /// <summary>
