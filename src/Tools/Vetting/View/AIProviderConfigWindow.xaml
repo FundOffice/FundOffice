@@ -31,7 +31,7 @@
                         Margin="10,0"
                         Command="{Binding AddProviderCommand}"
                         Content="添加"
-                        Style="{StaticResource ButtonDefault.Small}" />
+                        Style="{StaticResource ButtonPrimary.Small}" />
                 </DockPanel>
             </GroupBox.Header>
 
