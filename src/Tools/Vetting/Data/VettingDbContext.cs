@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using LiteDB;
 using Vetting.Entity;
+using Vetting.Models.Entities;
 
 namespace Vetting.Data;
 
@@ -12,6 +13,7 @@ public class VettingDbContext : IDisposable
     private readonly LiteDatabase _db;
     public ILiteCollection<VettingReport> Reports => _db.GetCollection<VettingReport>();
     public ILiteCollection<AIProviderConfig> AIProviderConfigs => _db.GetCollection<AIProviderConfig>();
+    public ILiteCollection<FileSpecialQuestion> FileSpecialQuestions => _db.GetCollection<FileSpecialQuestion>();
 
     public VettingDbContext()
     {

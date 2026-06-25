@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FundOffice.Copilot.Providers;
+using Vetting.Models.Entities;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -83,14 +84,17 @@ public partial class VettingParseTaskViewModel : ObservableObject
             using var jsonDoc = System.Text.Json.JsonDocument.Parse(json);
             var root = jsonDoc.RootElement;
 
+            var safeName = Path.GetFileNameWithoutExtension(FileName);
+            var ext = Path.GetExtension(FileName);
             var tplDir = Path.Combine("files", "vetting", VettingId, "tpl");
             Directory.CreateDirectory(tplDir);
-            var srcPath = Path.Combine("files", "vetting", VettingId, $"{FileName}_by[{Provider.Identifier}]");
+            var srcPath = Path.Combine("files", "vetting", VettingId, $"{safeName}_by[{Provider.Identifier}]{ext}");
             var tplPath = Path.Combine(tplDir, FileName);
             File.Copy(srcPath, tplPath, overwrite: true);
 
+
             // 保存返回json，用于调试
-            File.WriteAllText(Path.Combine(tplDir, $"{Path.GetFileNameWithoutExtension(FileName)}_by[{Provider.Identifier}].json"), json);
+            File.WriteAllText(Path.Combine(tplDir, $"{safeName}_by[{Provider.Identifier}].json"), json);
 
             var ops = new List<(string tool, Dictionary<string, System.Text.Json.JsonElement> input)>();
             foreach (var op in root.GetProperty("operations").EnumerateArray())
@@ -101,11 +105,33 @@ public partial class VettingParseTaskViewModel : ObservableObject
                     input[prop.Name] = prop.Value.Clone();
                 ops.Add((tool, input));
             }
-            FundOffice.Vetting.Services.DocOps.BatchWrite(tplPath, ops);
+            Vetting.Services.DocOps.BatchWrite(tplPath, ops);
 
             var placeholders = root.TryGetProperty("placeholders", out var ph) ? ph.EnumerateObject().Count() : 0;
             Output.Add($"模板已生成: {tplPath} ({ops.Count} 操作, {placeholders} 占位符)");
             Complete();
+
+
+            // save FileSpecialQuestion
+            if (root.TryGetProperty("placeholders", out var phEl) && phEl.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                var fileHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(srcPath))).ToLowerInvariant();
+                var providerId = Provider!.Identifier;
+                using var db = new Vetting.Data.VettingDbContext();
+                db.FileSpecialQuestions.DeleteMany(q => q.FileHash == fileHash && q.Provider == providerId);
+                var questions = phEl.EnumerateObject()
+                    .Where(p => p.Name.StartsWith('a') && int.TryParse(p.Name.TrimStart('a'), out _))
+                    .Select(p => new FileSpecialQuestion
+                    {
+                        FileHash = fileHash,
+                        Provider = providerId,
+                        Index = int.Parse(p.Name.TrimStart('a')),
+                        Question = p.Value.GetString()
+                    }).ToArray();
+                db.FileSpecialQuestions.InsertBulk(questions);
+            }
+
+
         }
         catch (Exception ex) { Fail(ex.Message); }
     }

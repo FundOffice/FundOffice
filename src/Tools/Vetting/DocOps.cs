@@ -3,7 +3,7 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 
-namespace FundOffice.Vetting.Services;
+namespace Vetting.Services;
 
 /// <summary>
 /// docx 文档操作工具 — 给 AI agent 调用
