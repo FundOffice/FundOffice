@@ -142,35 +142,19 @@
                     <DataTemplate>
                         <Border>
                             <StackPanel>
-                                <DockPanel>
+                                <DockPanel LastChildFill="False">
                                     <Button
                                         Command="{Binding GenerateTemplatesCommand}"
                                         Content="解析成模板"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource ButtonPrimary}" />
 
-
-                                    <ListBox
-                                        Margin="8,0"
-                                        VerticalAlignment="Center"
-                                        BorderThickness="0"
-                                        DockPanel.Dock="Right"
-                                        IsEnabled="{Binding GenerateTemplatesCommand.IsRunning, Converter={StaticResource Boolean2BooleanReConverter}}"
-                                        ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
-                                        ItemsSource="{Binding Providers}"
-                                        SelectionMode="Multiple"
-                                        Style="{StaticResource ListBoxCustom}">
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <CheckBox
-                                                    Margin="2,0"
-                                                    Content="{Binding Name}"
-                                                    IsChecked="{Binding IsSelected}" />
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
-
                                     <TextBlock VerticalAlignment="Center" Text="{Binding FileName}" />
+                                    <Button
+                                        Margin="5,0"
+                                        Command="{Binding OpenFileCommand}"
+                                        Content="打开"
+                                        Style="{StaticResource ButtonInfo.Small}" />
                                 </DockPanel>
 
 
@@ -204,31 +188,63 @@
                     <DataTemplate>
                         <Border>
                             <StackPanel>
-                                <DockPanel>
+                                <DockPanel LastChildFill="False">
                                     <Button
+                                        Margin="4,0"
                                         Command="{Binding FillTemplateCommand}"
                                         Content="填充模板"
                                         DockPanel.Dock="Right"
-                                        Margin="4,0"
                                         Style="{StaticResource ButtonSuccess}" />
                                     <Button
+                                        Margin="4,0"
                                         Command="{Binding AIAnswerCustomQuestionsCommand}"
                                         Content="AI回答"
                                         DockPanel.Dock="Right"
-                                        Margin="4,0"
                                         Style="{StaticResource ButtonPrimary}" />
                                     <Button
+                                        Margin="4,0"
                                         Command="{Binding ViewCustomQuestionsCommand}"
                                         Content="查看问题"
-                                        DockPanel.Dock="Right"
-                                        Margin="4,0" />
+                                        DockPanel.Dock="Right" />
+
+
                                     <TextBlock VerticalAlignment="Center" Text="{Binding FileName}" />
+
+                                    <Button
+                                        Margin="5,0"
+                                        Command="{Binding OpenFileCommand}"
+                                        Content="打开"
+                                        Style="{StaticResource ButtonInfo.Small}" />
                                 </DockPanel>
-                                <ItemsControl
-                                    ItemsSource="{Binding Output}"
-                                    Visibility="{Binding Output.Count, Converter={StaticResource Int2VisibilityConverter}}" />
                             </StackPanel>
                         </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </GroupBox>
+
+
+        <GroupBox
+            Header="报告列表"
+            Style="{StaticResource GroupBoxTab}"
+            Visibility="{Binding FinalFiles.Count, Converter={StaticResource Int2VisibilityConverter}}">
+            <ListBox ItemsSource="{Binding FinalFiles}">
+                <ListBox.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource ListBoxItemCustom}" TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Margin" Value="4,4" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel>
+                            <Button
+                                Command="{Binding OpenFileCommand}"
+                                Content="打开"
+                                DockPanel.Dock="Right"
+                                Style="{StaticResource ButtonInfo.Small}" />
+                            <TextBlock VerticalAlignment="Center" Text="{Binding FileName}" />
+                        </DockPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
