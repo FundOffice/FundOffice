@@ -4,7 +4,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Text;
 using Vetting.Data;
 using Vetting.Entity;
 
@@ -47,7 +46,9 @@ public partial class VettingReportViewModel : ObservableObject
 
     private void ReloadFiles()
     {
-        var files = new DirectoryInfo(FolderPath).GetFiles();
+        var files = new DirectoryInfo(FolderPath).GetFiles()
+            .Where(f => !f.Name.StartsWith("~$") && !f.Attributes.HasFlag(FileAttributes.Hidden))
+            .ToArray();
         App.Current.Dispatcher.Invoke(() =>
         {
             OriginalFiles.Clear();
@@ -95,98 +96,25 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<AIProvid
         var sel = Providers.Where(x => x.IsSelected).ToArray();
         if (sel.Length == 0) return;
 
+        // Step 1: 解析文档结构
+        var structure = FundOffice.Vetting.Services.DocOps.AnalyzeStructure(AbsolutePath);
+
+        if (string.IsNullOrWhiteSpace(structure))
+        {
+            HandyControl.Controls.Growl.Warning("无法解析文档结构");
+            return;
+        }
+
         IsExpanded = true;
-        Tasks = [.. sel.Select(provider => new VettingParseTaskViewModel { TaskName = provider.Name, Provider = CreateProvider(provider) })];
-        await Task.WhenAll(Tasks.Select(RunSingleTaskAsync).ToArray());
-    }
-
-    private async Task RunSingleTaskAsync(VettingParseTaskViewModel task)
-    {
-        task.Start();
-        try
+        var sysPrompt = await VettingParseTaskViewModel.LoadSysptAsync();
+        Tasks = [.. sel.Select(provider => new VettingParseTaskViewModel
         {
-            // Step 1: 解析文档结构
-            var structure = FundOffice.Vetting.Services.DocOps.AnalyzeStructure(AbsolutePath);
-
-            // Step 2: 读取 system prompt（本地版本优先），调用 AI
-            var sysPrompt = await LoadSysptAsync();
-            var messages = new[]
-            {
-                FundOffice.Copilot.Models.ChatMessage.System(sysPrompt),
-                FundOffice.Copilot.Models.ChatMessage.User(structure)
-            };
-            var options = new FundOffice.Copilot.Models.ChatOptions
-            {
-                AdditionalProperties = new Dictionary<string, object>
-                {
-                    ["response_format"] = new { type = "json_object" }
-                }
-            };
-
-            var sb = new StringBuilder();
-            await foreach (var token in task.Provider!.ChatCompletionStreamAsync(messages, options: options))
-            {
-                switch (token)
-                {
-                    case FundOffice.Copilot.Models.TextDelta td:
-                        sb.Append(td.Text);
-                        task.Usage = sb.Length / 4; // 估算: ~4字符/token
-                        break;
-                    case FundOffice.Copilot.Models.UsageUpdate u:
-                        task.Usage = (u.PromptTokens ?? 0) + (u.CompletionTokens ?? 0);
-                        break;
-                }
-            }
-
-            // Step 3: 校验 JSON，调用 DocOps 生成模板文件
-            var json = sb.ToString().Trim();
-            using var jsonDoc = System.Text.Json.JsonDocument.Parse(json);
-            var root = jsonDoc.RootElement;
-
-            var tplDir = Path.Combine("files", "vetting", VettingId, "tpl");
-            Directory.CreateDirectory(tplDir);
-            var tplPath = Path.Combine(tplDir, FileName);
-            File.Copy(AbsolutePath, tplPath, overwrite: true);
-
-            var ops = new List<(string tool, Dictionary<string, System.Text.Json.JsonElement> input)>();
-            foreach (var op in root.GetProperty("operations").EnumerateArray())
-            {
-                var tool = op.GetProperty("tool").GetString()!;
-                var input = new Dictionary<string, System.Text.Json.JsonElement>();
-                foreach (var prop in op.EnumerateObject())
-                    input[prop.Name] = prop.Value.Clone();
-                ops.Add((tool, input));
-            }
-            FundOffice.Vetting.Services.DocOps.BatchWrite(tplPath, ops);
-
-            var placeholders = root.TryGetProperty("placeholders", out var ph) ? ph.EnumerateObject().Count() : 0;
-            task.Output.Add($"模板已生成: {tplPath} ({ops.Count} 操作, {placeholders} 占位符)");
-            task.Complete();
-        }
-        catch (Exception ex) { task.Fail(ex.Message); }
-    }
-
-    private static async Task<string> LoadSysptAsync()
-    {
-        var localPath = Path.Combine("files", "vetting", "syspt.md");
-        var asm = typeof(ReportFileViewModel).Assembly;
-        using var embeddedSr = new StreamReader(asm.GetManifestResourceStream("Vetting.syspt.md")!);
-        var embedded = await embeddedSr.ReadToEndAsync();
-        var embeddedVer = ExtractVersion(embedded);
-
-        if (File.Exists(localPath))
-        {
-            var local = await File.ReadAllTextAsync(localPath);
-            var localVer = ExtractVersion(local);
-            if (localVer >= embeddedVer) return local;
-        }
-        return embedded;
-    }
-
-    private static int ExtractVersion(string content)
-    {
-        var match = System.Text.RegularExpressions.Regex.Match(content, @"<!--\s*version:(\d+)\s*-->");
-        return match.Success ? int.Parse(match.Groups[1].Value) : 0;
+            TaskName = provider.Name,
+            Provider = CreateProvider(provider),
+            VettingId = VettingId,
+            FileName = FileName
+        })];
+        await Task.WhenAll(Tasks.Select(t => t.RunAsync(structure, sysPrompt)).ToArray());
     }
 
     private static FundOffice.Copilot.Providers.ITokenProvider CreateProvider(AIProviderItemViewModel vm) => vm.ProviderType switch

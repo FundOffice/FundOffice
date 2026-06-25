@@ -72,6 +72,10 @@
             </ListBox>
         </DockPanel>
 
-        <ContentControl Content="{Binding SelectedVetting}" />
+        <hc:SimplePanel>
+            <ContentControl Content="{Binding SelectedVetting}" />
+
+            <StackPanel hc:Growl.GrowlParent="True" />
+        </hc:SimplePanel>
     </DockPanel>
 </Window>
