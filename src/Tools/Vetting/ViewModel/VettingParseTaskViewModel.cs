@@ -1,15 +1,16 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using FundOffice.Copilot.Providers;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 namespace Vetting.ViewModel;
+
 public partial class VettingParseTaskViewModel : ObservableObject
 {
     public ITokenProvider? Provider { get; set; }
     [ObservableProperty] public partial string TaskName { get; set; } = "";
     [ObservableProperty] public partial TaskStatus Status { get; set; } = TaskStatus.Pending;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(UsageText))]public partial int Usage { get; set; }
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(UsageText))] public partial int Usage { get; set; }
     public string UsageText => Usage >= 1000 ? $"{Usage / 1000.0:F1}k tokens" : Usage > 0 ? $"{Usage} tokens" : "";
     [ObservableProperty] public partial string Elapsed { get; set; } = "";
     [ObservableProperty] public partial string? ErrorMessage { get; set; }

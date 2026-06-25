@@ -138,16 +138,29 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<AIProvid
                 }
             }
 
-            // Step 3: 校验 JSON，生成模板文件
+            // Step 3: 校验 JSON，调用 DocOps 生成模板文件
             var json = sb.ToString().Trim();
-            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            using var jsonDoc = System.Text.Json.JsonDocument.Parse(json);
+            var root = jsonDoc.RootElement;
 
             var tplDir = Path.Combine("files", "vetting", VettingId, "tpl");
             Directory.CreateDirectory(tplDir);
             var tplPath = Path.Combine(tplDir, FileName);
             File.Copy(AbsolutePath, tplPath, overwrite: true);
 
-            task.Output.Add($"模板已生成: {tplPath}");
+            var ops = new List<(string tool, Dictionary<string, System.Text.Json.JsonElement> input)>();
+            foreach (var op in root.GetProperty("operations").EnumerateArray())
+            {
+                var tool = op.GetProperty("tool").GetString()!;
+                var input = new Dictionary<string, System.Text.Json.JsonElement>();
+                foreach (var prop in op.EnumerateObject())
+                    input[prop.Name] = prop.Value.Clone();
+                ops.Add((tool, input));
+            }
+            FundOffice.Vetting.Services.DocOps.BatchWrite(tplPath, ops);
+
+            var placeholders = root.TryGetProperty("placeholders", out var ph) ? ph.EnumerateObject().Count() : 0;
+            task.Output.Add($"模板已生成: {tplPath} ({ops.Count} 操作, {placeholders} 占位符)");
             task.Complete();
         }
         catch (Exception ex) { task.Fail(ex.Message); }
