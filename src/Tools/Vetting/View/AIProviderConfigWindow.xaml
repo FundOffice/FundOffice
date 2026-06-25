@@ -56,6 +56,13 @@
                                 DockPanel.Dock="Right"
                                 Text="{Binding ProviderType}" />
 
+
+                            <TextBlock
+                                Margin="5,0,20,0"
+                                VerticalAlignment="Center"
+                                DockPanel.Dock="Right"
+                                Text="{Binding Model}" />
+
                             <TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
                         </DockPanel>
                         <DataTemplate.Triggers>

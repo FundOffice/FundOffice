@@ -31,7 +31,7 @@
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Status}" Value="Running">
                     <DataTrigger.EnterActions>
-                        <BeginStoryboard>
+                        <BeginStoryboard x:Name="run">
                             <Storyboard RepeatBehavior="Forever">
                                 <DoubleAnimation
                                     Storyboard.TargetProperty="RenderTransform.Angle"
@@ -42,7 +42,7 @@
                         </BeginStoryboard>
                     </DataTrigger.EnterActions>
                     <DataTrigger.ExitActions>
-                        <StopStoryboard />
+                        <StopStoryboard BeginStoryboardName="run" />
                     </DataTrigger.ExitActions>
                 </DataTrigger>
             </Style.Triggers>
@@ -91,14 +91,16 @@
                         VerticalAlignment="Center"
                         Foreground="Gray"
                         Text="{Binding UsageText}" />
+
+
+                    <TextBlock
+                        Foreground="Red"
+                        Text="{Binding ErrorMessage}"
+                        Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />
                 </DockPanel>
 
                 <!--  展开时显示 Output 和 ErrorMessage  -->
                 <ItemsControl ItemsSource="{Binding Output}" Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}" />
-                <TextBlock
-                    Foreground="Red"
-                    Text="{Binding ErrorMessage}"
-                    Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />
             </StackPanel>
         </DataTemplate>
     </UserControl.Resources>
