@@ -57,9 +57,51 @@ public static class DocOps
         return sb.ToString();
     }
 
- 
+    /// <summary>解析完整文档内容（段落和表格按文档顺序，含索引和内容）</summary>
+    public static string ParseDocument(string filePath)
+    {
+        using var doc = WordprocessingDocument.Open(filePath, false);
+        var body = doc.MainDocumentPart!.Document.Body!;
+        var sb = new System.Text.StringBuilder();
 
- 
+        int pi = 0, ti = 0;
+        foreach (var element in body.ChildElements)
+        {
+            switch (element)
+            {
+                case Paragraph p:
+                    var text = p.InnerText;
+                    var style = GetParagraphStyle(p);
+                    var prefix = style.Length > 0 ? $"[{style}] " : "";
+                    sb.AppendLine($"P[{pi}] {prefix}{(string.IsNullOrWhiteSpace(text) ? "(EMPTY)" : text)}");
+                    pi++;
+                    break;
+                case Table table:
+                    var rows = table.Elements<TableRow>().ToList();
+                    bool hasHeader = DetectHeaderRow(rows.FirstOrDefault());
+                    sb.AppendLine($"T[{ti}] ({rows.Count} rows){(hasHeader ? " [has header]" : "")}");
+                    for (int ri = 0; ri < rows.Count; ri++)
+                    {
+                        var row = rows[ri];
+                        var rowLabel = (ri == 0 && hasHeader) ? "H" : $"{ri}";
+                        int ci = 0;
+                        foreach (var cell in row.Elements<TableCell>())
+                        {
+                            var cellText = cell.InnerText.Replace("\n", "\\n");
+                            var (rs, cs) = GetMergeInfo(cell);
+                            var merge = cs > 1 ? $"(span={cs})" : rs == 0 ? "(vcont)" : "";
+                            sb.AppendLine($"  [{rowLabel},{ci}]{merge} {(string.IsNullOrWhiteSpace(cellText) ? "(EMPTY)" : cellText)}");
+                            ci++;
+                        }
+                    }
+                    ti++;
+                    break;
+            }
+        }
+        return sb.ToString();
+    }
+
+
 
     /// <summary>读取文档段落（含索引、样式标记、空段落标记）。可选 start/end 分段读取</summary>
     public static string ReadParagraphs(string filePath, int? start = null, int? end = null)

@@ -96,12 +96,12 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<AIProvid
         var sel = Providers.Where(x => x.IsSelected).ToArray();
         if (sel.Length == 0) return;
 
-        // Step 1: 解析文档结构
-        var structure = FundOffice.Vetting.Services.DocOps.AnalyzeStructure(AbsolutePath);
+        // Step 1: 解析文档完整内容
+        var structure = FundOffice.Vetting.Services.DocOps.ParseDocument(AbsolutePath);
 
         if (string.IsNullOrWhiteSpace(structure))
         {
-            HandyControl.Controls.Growl.Warning("无法解析文档结构");
+            HandyControl.Controls.Growl.Warning("无法解析文档");
             return;
         }
 
