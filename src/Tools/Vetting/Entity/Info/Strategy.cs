@@ -1,54 +1,23 @@
-using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace FundOffice.Vetting.Models.Entities;
+namespace Vetting.Models.Entities;
 
 /// <summary>
 /// 投资策略
 /// </summary>
-public partial class Strategy : ObservableObject
+public class Strategy
 {
     public int Id { get; set; }
-    [ObservableProperty]
-    private string? _name;
-
-    [ObservableProperty]
-    private string? _manager;
-
-    [ObservableProperty]
-    private string? _scale;
-
-    [ObservableProperty]
-    private string? _type;
-
-    [ObservableProperty]
-    private string? _capacity;
-
-    [ObservableProperty]
-    private string? _sameStrategyCount;
-
-    [ObservableProperty]
-    private string? _factorPool;
-
-    [ObservableProperty]
-    private string? _capacityAndRisk;
-
-    [ObservableProperty]
-    private string? _replicated;
-
-    [ObservableProperty]
-    private string? _styleExposure;
-
-    [ObservableProperty]
-    private string? _turnover;
-
-    [ObservableProperty]
-    private string? _holdingPeriod;
-
-    [ObservableProperty]
-    private string? _weightAllocation;
-
-    [ObservableProperty]
-    private string? _warningStoploss;
-
+    public string? Name { get; set; }
+    public string? Manager { get; set; }
+    public string? Scale { get; set; }
+    public string? Type { get; set; }
+    public string? Capacity { get; set; }
+    public string? SameStrategyCount { get; set; }
+    public string? FactorPool { get; set; }
+    public string? CapacityAndRisk { get; set; }
+    public string? Replicated { get; set; }
+    public string? StyleExposure { get; set; }
+    public string? Turnover { get; set; }
+    public string? HoldingPeriod { get; set; }
+    public string? WeightAllocation { get; set; }
+    public string? WarningStoploss { get; set; }
 }

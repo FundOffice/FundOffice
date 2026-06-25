@@ -1,32 +1,16 @@
-using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace FundOffice.Vetting.Models.Entities;
+namespace Vetting.Models.Entities;
 
 /// <summary>
 /// 财务报表 (按年份)
 /// </summary>
-public partial class FinancialStatement : ObservableObject
+public class FinancialStatement
 {
     public int Id { get; set; }
-    [ObservableProperty]
-    private string? _year;
-
-    [ObservableProperty]
-    private string? _totalAssets;
-
-    [ObservableProperty]
-    private string? _totalLiabilities;
-
-    [ObservableProperty]
-    private string? _ownersEquity;
-
-    [ObservableProperty]
-    private string? _revenue;
-
-    [ObservableProperty]
-    private string? _cost;
-
-    [ObservableProperty]
-    private string? _netProfit;
+    public string? Year { get; set; }
+    public string? TotalAssets { get; set; }
+    public string? TotalLiabilities { get; set; }
+    public string? OwnersEquity { get; set; }
+    public string? Revenue { get; set; }
+    public string? Cost { get; set; }
+    public string? NetProfit { get; set; }
 }

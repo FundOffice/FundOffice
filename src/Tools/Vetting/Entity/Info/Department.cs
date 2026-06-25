@@ -1,29 +1,15 @@
-using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace FundOffice.Vetting.Models.Entities;
+namespace Vetting.Models.Entities;
 
 /// <summary>
 /// 部门信息
 /// </summary>
-public partial class Department : ObservableObject
+public class Department
 {
     public int Id { get; set; }
-    [ObservableProperty]
-    private string? _name;
-
-    [ObservableProperty]
-    private string? _headcount;
-
-    [ObservableProperty]
-    private string? _mainFunction;
-
-    [ObservableProperty]
-    private string? _head;
-
-    [ObservableProperty]
-    private string? _recruitmentPlan;
-
-    [ObservableProperty]
-    private string? _hasPartTime;
+    public string? Name { get; set; }
+    public string? Headcount { get; set; }
+    public string? MainFunction { get; set; }
+    public string? Head { get; set; }
+    public string? RecruitmentPlan { get; set; }
+    public string? HasPartTime { get; set; }
 }

@@ -1,18 +1,11 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace FundOffice.Vetting.Models.Entities;
+namespace Vetting.Models.Entities;
 
 /// <summary>
 /// 文件列表项
 /// </summary>
-public partial class FileItem : ObservableObject
+public class FileItem
 {
-    [ObservableProperty]
-    private string? _fileName;
-
-    [ObservableProperty]
-    private string? _fullPath;
-
-    [ObservableProperty]
-    private long _size;
+    public string? FileName { get; set; }
+    public string? FullPath { get; set; }
+    public long Size { get; set; }
 }

@@ -1,77 +1,31 @@
-using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace FundOffice.Vetting.Models.Entities;
+namespace Vetting.Models.Entities;
 
 /// <summary>
 /// 诚信合规情况
 /// </summary>
-public partial class CreditStanding : ObservableObject
+public class CreditStanding
 {
     public int Id { get; set; } = 1;
-    [ObservableProperty]
-    private string? _adminPenalty;
-
-    [ObservableProperty]
-    private string? _businessException;
-
-    [ObservableProperty]
-    private string? _seriousIllegal;
-
-    [ObservableProperty]
-    private string? _executionInfo;
-
-    [ObservableProperty]
-    private string? _securitiesDishonesty;
-
-    [ObservableProperty]
-    private string? _corePersonDishonesty;
-
-    [ObservableProperty]
-    private string? _fundAssocCreditReport;
-
-    [ObservableProperty]
-    private string? _aICQuery;
-
-    [ObservableProperty]
-    private string? _cSRCQuery;
-
-    [ObservableProperty]
-    private string? _associationQuery;
-
-    [ObservableProperty]
-    private string? _judicialQuery;
-
-    [ObservableProperty]
-    private string? _regPenalty3Y;
-
-    [ObservableProperty]
-    private string? _adminPenalty3Y;
-
-    [ObservableProperty]
-    private string? _moneyLaundering5Y;
-
-    [ObservableProperty]
-    private string? _falseMaterials3Y;
-
-    [ObservableProperty]
-    private string? _majorChange;
-
-    [ObservableProperty]
-    private string? _majorOperationalRisk;
-
-    [ObservableProperty]
-    private string? _pendingInvestigation;
-
-    [ObservableProperty]
-    private string? _negativeReports;
-
-    [ObservableProperty]
-    private string? _execViolation;
-
-    [ObservableProperty]
-    private string? _otherNegative;
-
-    [ObservableProperty]
-    private string? _antiMoneyLaundering;
+    public string? AdminPenalty { get; set; }
+    public string? BusinessException { get; set; }
+    public string? SeriousIllegal { get; set; }
+    public string? ExecutionInfo { get; set; }
+    public string? SecuritiesDishonesty { get; set; }
+    public string? CorePersonDishonesty { get; set; }
+    public string? FundAssocCreditReport { get; set; }
+    public string? AICQuery { get; set; }
+    public string? CSRCQuery { get; set; }
+    public string? AssociationQuery { get; set; }
+    public string? JudicialQuery { get; set; }
+    public string? RegPenalty3Y { get; set; }
+    public string? AdminPenalty3Y { get; set; }
+    public string? MoneyLaundering5Y { get; set; }
+    public string? FalseMaterials3Y { get; set; }
+    public string? MajorChange { get; set; }
+    public string? MajorOperationalRisk { get; set; }
+    public string? PendingInvestigation { get; set; }
+    public string? NegativeReports { get; set; }
+    public string? ExecViolation { get; set; }
+    public string? OtherNegative { get; set; }
+    public string? AntiMoneyLaundering { get; set; }
 }

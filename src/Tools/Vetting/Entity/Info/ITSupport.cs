@@ -1,32 +1,16 @@
-using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace FundOffice.Vetting.Models.Entities;
+namespace Vetting.Models.Entities;
 
 /// <summary>
 /// IT/技术支持
 /// </summary>
-public partial class ITSupport : ObservableObject
+public class ITSupport
 {
     public int Id { get; set; } = 1;
-    [ObservableProperty]
-    private string? _teamDemand;
-
-    [ObservableProperty]
-    private string? _headcount;
-
-    [ObservableProperty]
-    private string? _supportScope;
-
-    [ObservableProperty]
-    private string? _selfDeveloped;
-
-    [ObservableProperty]
-    private string? _keyFeatures;
-
-    [ObservableProperty]
-    private string? _annualInvestment;
-
-    [ObservableProperty]
-    private string? _emergencyResponse;
+    public string? TeamDemand { get; set; }
+    public string? Headcount { get; set; }
+    public string? SupportScope { get; set; }
+    public string? SelfDeveloped { get; set; }
+    public string? KeyFeatures { get; set; }
+    public string? AnnualInvestment { get; set; }
+    public string? EmergencyResponse { get; set; }
 }

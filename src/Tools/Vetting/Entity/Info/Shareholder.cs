@@ -1,38 +1,18 @@
-using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace FundOffice.Vetting.Models.Entities;
+namespace Vetting.Models.Entities;
 
 /// <summary>
 /// 股东信息
 /// </summary>
-public partial class Shareholder : ObservableObject
+public class Shareholder
 {
     public int Id { get; set; }
-    [ObservableProperty]
-    private string? _name;
-
-    [ObservableProperty]
-    private string? _ratio;
-
-    [ObservableProperty]
-    private string? _intro;
-
-    [ObservableProperty]
-    private string? _nature;
-
-    [ObservableProperty]
-    private string? _paidInAmount;
-
-    [ObservableProperty]
-    private string? _identityBrief;
-
-    [ObservableProperty]
-    private string? _companyRole;
-
-    [ObservableProperty]
-    private string? _isCoreResearch;
-
-    [ObservableProperty]
-    private string? _companyPosition;
+    public string? Name { get; set; }
+    public string? Ratio { get; set; }
+    public string? Intro { get; set; }
+    public string? Nature { get; set; }
+    public string? PaidInAmount { get; set; }
+    public string? IdentityBrief { get; set; }
+    public string? CompanyRole { get; set; }
+    public string? IsCoreResearch { get; set; }
+    public string? CompanyPosition { get; set; }
 }

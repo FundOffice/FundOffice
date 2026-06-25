@@ -1,23 +1,13 @@
-using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace FundOffice.Vetting.Models.Entities;
+namespace Vetting.Models.Entities;
 
 /// <summary>
 /// 奖项
 /// </summary>
-public partial class Award : ObservableObject
+public class Award
 {
     public int Id { get; set; }
-    [ObservableProperty]
-    private string? _time;
-
-    [ObservableProperty]
-    private string? _entity;
-
-    [ObservableProperty]
-    private string? _name;
-
-    [ObservableProperty]
-    private string? _evaluator;
+    public string? Time { get; set; }
+    public string? Entity { get; set; }
+    public string? Name { get; set; }
+    public string? Evaluator { get; set; }
 }

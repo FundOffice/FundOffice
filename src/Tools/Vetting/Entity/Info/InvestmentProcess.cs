@@ -1,56 +1,24 @@
-using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace FundOffice.Vetting.Models.Entities;
+namespace Vetting.Models.Entities;
 
 /// <summary>
 /// 投资流程
 /// </summary>
-public partial class InvestmentProcess : ObservableObject
+public class InvestmentProcess
 {
     public int Id { get; set; } = 1;
-    [ObservableProperty]
-    private string? _research;
-
-    [ObservableProperty]
-    private string? _decision;
-
-    [ObservableProperty]
-    private string? _trading;
-
-    [ObservableProperty]
-    private string? _evaluation;
-
-    [ObservableProperty]
-    private string? _riskControl;
-
-    [ObservableProperty]
-    private string? _portfolioAdjust;
-
-    [ObservableProperty]
-    private string? _positionBuilding;
-
-    [ObservableProperty]
-    private string? _committeeRole;
-
-    [ObservableProperty]
-    private string? _researchAuthority;
-
-    [ObservableProperty]
-    private string? _systemAndData;
-
-    [ObservableProperty]
-    private string? _dataStorage;
-
-    [ObservableProperty]
-    private string? _tradingControl;
-
-    [ObservableProperty]
-    private string? _tradingErrorFix;
-
-    [ObservableProperty]
-    private string? _abnormalTrading;
-
-    [ObservableProperty]
-    private string? _accountFairness;
+    public string? Research { get; set; }
+    public string? Decision { get; set; }
+    public string? Trading { get; set; }
+    public string? Evaluation { get; set; }
+    public string? RiskControl { get; set; }
+    public string? PortfolioAdjust { get; set; }
+    public string? PositionBuilding { get; set; }
+    public string? CommitteeRole { get; set; }
+    public string? ResearchAuthority { get; set; }
+    public string? SystemAndData { get; set; }
+    public string? DataStorage { get; set; }
+    public string? TradingControl { get; set; }
+    public string? TradingErrorFix { get; set; }
+    public string? AbnormalTrading { get; set; }
+    public string? AccountFairness { get; set; }
 }

@@ -1,29 +1,15 @@
-using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace FundOffice.Vetting.Models.Entities;
+namespace Vetting.Models.Entities;
 
 /// <summary>
 /// 回撤记录
 /// </summary>
-public partial class DrawdownRecord : ObservableObject
+public class DrawdownRecord
 {
     public int Id { get; set; }
-    [ObservableProperty]
-    private string? _productName;
-
-    [ObservableProperty]
-    private string? _date;
-
-    [ObservableProperty]
-    private string? _amplitude;
-
-    [ObservableProperty]
-    private string? _reason;
-
-    [ObservableProperty]
-    private string? _countermeasures;
-
-    [ObservableProperty]
-    private string? _recoveryDays;
+    public string? ProductName { get; set; }
+    public string? Date { get; set; }
+    public string? Amplitude { get; set; }
+    public string? Reason { get; set; }
+    public string? Countermeasures { get; set; }
+    public string? RecoveryDays { get; set; }
 }

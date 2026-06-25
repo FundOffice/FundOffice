@@ -1,53 +1,39 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace FundOffice.Vetting.Models.Entities;
+namespace Vetting.Models.Entities;
 
 /// <summary>
 /// AI 会话记录 — 保存到数据库，支持断点续传
 /// </summary>
-public partial class ConversationRecord : ObservableObject
+public class ConversationRecord
 {
     public int Id { get; set; }
 
     /// <summary>关联文件路径</summary>
-    [ObservableProperty]
-    private string? _sourcePath;
+    public string? SourcePath { get; set; }
 
     /// <summary>文件 hash</summary>
-    [ObservableProperty]
-    private string? _fileHash;
+    public string? FileHash { get; set; }
 
     /// <summary>输出模板路径</summary>
-    [ObservableProperty]
-    private string? _outputPath;
+    public string? OutputPath { get; set; }
 
     /// <summary>会话消息 (JSON 序列化的 ChatMessage 列表)</summary>
-    [ObservableProperty]
-    private string? _messagesJson;
+    public string? MessagesJson { get; set; }
 
     /// <summary>已完成的轮数</summary>
-    [ObservableProperty]
-    private int _completedTurns;
+    public int CompletedTurns { get; set; }
 
     /// <summary>累计输入 token</summary>
-    [ObservableProperty]
-    private int _totalInput;
+    public int TotalInput { get; set; }
 
     /// <summary>累计输出 token</summary>
-    [ObservableProperty]
-    private int _totalOutput;
+    public int TotalOutput { get; set; }
 
     /// <summary>状态: running/completed/failed</summary>
-    [ObservableProperty]
-    private string? _status;
+    public string? Status { get; set; }
 
     /// <summary>已生成的占位符 (JSON)</summary>
-    [ObservableProperty]
-    private string? _placeholdersJson;
+    public string? PlaceholdersJson { get; set; }
 
-    [ObservableProperty]
-    private DateTime _createdAt;
-
-    [ObservableProperty]
-    private DateTime _updatedAt;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }

@@ -1,59 +1,25 @@
-using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace FundOffice.Vetting.Models.Entities;
+namespace Vetting.Models.Entities;
 
 /// <summary>
 /// 风控体系
 /// </summary>
-public partial class RiskControl : ObservableObject
+public class RiskControl
 {
     public int Id { get; set; } = 1;
-    [ObservableProperty]
-    private string? _systemIntro;
-
-    [ObservableProperty]
-    private string? _decisionMechanism;
-
-    [ObservableProperty]
-    private string? _riskMgmtCommittee;
-
-    [ObservableProperty]
-    private string? _drawdownControl;
-
-    [ObservableProperty]
-    private string? _systemicRiskResponse;
-
-    [ObservableProperty]
-    private string? _tradingMonitoring;
-
-    [ObservableProperty]
-    private string? _riskMeasures;
-
-    [ObservableProperty]
-    private string? _manualVsSystem;
-
-    [ObservableProperty]
-    private string? _riskMeasurement;
-
-    [ObservableProperty]
-    private string? _maxDrawdownTolerance;
-
-    [ObservableProperty]
-    private string? _tailRisk;
-
-    [ObservableProperty]
-    private string? _riskReserve;
-
-    [ObservableProperty]
-    private string? _liquidityMgmt;
-
-    [ObservableProperty]
-    private string? _insiderTradingPrevention;
-
-    [ObservableProperty]
-    private string? _employeeTradingMonitor;
-
-    [ObservableProperty]
-    private string? _productFairness;
+    public string? SystemIntro { get; set; }
+    public string? DecisionMechanism { get; set; }
+    public string? RiskMgmtCommittee { get; set; }
+    public string? DrawdownControl { get; set; }
+    public string? SystemicRiskResponse { get; set; }
+    public string? TradingMonitoring { get; set; }
+    public string? RiskMeasures { get; set; }
+    public string? ManualVsSystem { get; set; }
+    public string? RiskMeasurement { get; set; }
+    public string? MaxDrawdownTolerance { get; set; }
+    public string? TailRisk { get; set; }
+    public string? RiskReserve { get; set; }
+    public string? LiquidityMgmt { get; set; }
+    public string? InsiderTradingPrevention { get; set; }
+    public string? EmployeeTradingMonitor { get; set; }
+    public string? ProductFairness { get; set; }
 }
