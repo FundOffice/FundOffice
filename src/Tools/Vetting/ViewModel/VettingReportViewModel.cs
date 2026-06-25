@@ -70,15 +70,29 @@ public partial class ReportFileViewModel : ObservableObject
 {
     public required string FileName { get; set; }
     public required string AbsolutePath { get; set; }
-
+    [ObservableProperty] public partial bool IsExpanded { get; set; }
     public ObservableCollection<VettingParseTaskViewModel> Tasks { get; } = [];
-
-
 
     [SetsRequiredMembers]
     public ReportFileViewModel(FileInfo fileInfo)
     {
         FileName = fileInfo.Name;
         AbsolutePath = fileInfo.FullName;
+    }
+
+    // TODO: 具体调用后面再写
+    public async Task RunTasksAsync()
+    {
+        foreach (var task in Tasks)
+        {
+            task.Start();
+            try
+            {
+                // TODO: 调用 task.Provider 执行解析
+                await Task.Delay(1); // placeholder
+                task.Complete();
+            }
+            catch (Exception ex) { task.Fail(ex.Message); }
+        }
     }
 }
