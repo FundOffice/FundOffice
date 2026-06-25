@@ -28,4 +28,10 @@ public partial class AIProviderConfigViewModel : ObservableObject
         Providers.Remove(vm);
         if (SelectedProvider == vm) SelectedProvider = Providers.FirstOrDefault();
     }
+
+    [RelayCommand]
+    private void AddProvider(AIProviderItemViewModel vm)
+    {
+        Providers.Add(new AIProviderItemViewModel());
+    }
 }

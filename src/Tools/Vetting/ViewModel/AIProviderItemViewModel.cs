@@ -13,9 +13,9 @@ public partial class AIProviderItemViewModel : ObservableObject
     public int Id { get; set; }
     [ObservableProperty] public partial string Name { get; set; } = "";
     public string[] ProviderTypes { get; } = ["OpenAI", "Anthropic"];
-    [ObservableProperty] public partial string SelectedProviderType { get; set; } = "OpenAI";
+    [ObservableProperty] public partial string ProviderType { get; set; } = "OpenAI";
     [ObservableProperty] public partial string ApiKey { get; set; } = "";
-    [ObservableProperty] public partial string BaseUrl { get; set; } = "https://api.openai.com";
+    [ObservableProperty] public partial string BaseUrl { get; set; } = "";
     [ObservableProperty] public partial string Model { get; set; } = "";
     [ObservableProperty] public partial bool Tested { get; set; }
     [ObservableProperty] public partial string StatusMessage { get; set; } = "";
@@ -28,15 +28,15 @@ public partial class AIProviderItemViewModel : ObservableObject
     {
         Id = config.Id;
         Name = config.Name;
-        SelectedProviderType = config.ProviderType;
+        ProviderType = config.ProviderType;
         ApiKey = config.ApiKey;
         BaseUrl = config.BaseUrl;
         Model = config.Model;
     }
 
-    partial void OnSelectedProviderTypeChanged(string value)
+    partial void OnProviderTypeChanged(string value)
     {
-        BaseUrl = value == "Anthropic" ? "https://api.anthropic.com" : "https://api.openai.com";
+        //BaseUrl = value == "Anthropic" ? "https://api.anthropic.com" : "https://api.openai.com";
         Tested = false;
         AvailableModels.Clear();
         Model = "";
@@ -67,15 +67,15 @@ public partial class AIProviderItemViewModel : ObservableObject
     private void Save(Window window)
     {
         using var db = new VettingDbContext();
-        db.AIProviderConfigs.Upsert(new AIProviderConfig(Id, Name, SelectedProviderType, ApiKey, BaseUrl, Model));
+        db.AIProviderConfigs.Upsert(new AIProviderConfig(Id, Name, ProviderType, ApiKey, BaseUrl, Model));
         StatusMessage = "已保存";
         window.Close();
     }
-    private bool CanSave() => Tested && !string.IsNullOrEmpty(Model);
+    private bool CanSave() => !string.IsNullOrWhiteSpace(Name) && Tested && !string.IsNullOrWhiteSpace(Model);
 
     partial void OnTestedChanged(bool value) => SaveCommand.NotifyCanExecuteChanged();
 
-    private ITokenProvider CreateProvider() => SelectedProviderType switch
+    private ITokenProvider CreateProvider() => ProviderType switch
     {
         "Anthropic" => new AnthropicTokenProvider(new AnthropicOptions { ApiKey = ApiKey, BaseUrl = BaseUrl }),
         _ => new OpenAITokenProvider(new OpenAIOptions { ApiKey = ApiKey, BaseUrl = BaseUrl }),
