@@ -22,6 +22,9 @@ public partial class AIProviderItemViewModel : ObservableObject
     [ObservableProperty] public partial bool Tested { get; set; }
     [ObservableProperty] public partial string StatusMessage { get; set; } = "";
     [ObservableProperty] public partial bool IsBusy { get; set; }
+
+    public bool IsSelected { get; set; }
+
     public ObservableCollection<string> AvailableModels { get; } = [];
 
     public AIProviderItemViewModel() { }

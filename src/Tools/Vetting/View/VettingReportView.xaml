@@ -35,7 +35,9 @@
                             <Storyboard RepeatBehavior="Forever">
                                 <DoubleAnimation
                                     Storyboard.TargetProperty="RenderTransform.Angle"
-                                    From="0" To="360" Duration="0:0:0.8" />
+                                    From="0"
+                                    To="360"
+                                    Duration="0:0:0.8" />
                             </Storyboard>
                         </BeginStoryboard>
                     </DataTrigger.EnterActions>
@@ -47,31 +49,32 @@
         </Style>
 
         <DataTemplate DataType="{x:Type vm:VettingParseTaskViewModel}">
-            <StackPanel>
+            <StackPanel Margin="0,4">
                 <DockPanel>
-                    <!-- Done: 绿勾 -->
+                    <!--  Done: 绿勾  -->
                     <TextBlock
                         DockPanel.Dock="Left"
                         Foreground="Green"
                         Text="✔"
                         Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Done}" />
-                    <!-- Error: 红叉 -->
+                    <!--  Error: 红叉  -->
                     <TextBlock
                         DockPanel.Dock="Left"
                         Foreground="Red"
                         Text="✖"
                         Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Error}" />
-                    <!-- Running: spinner -->
+                    <!--  Running: spinner  -->
                     <Ellipse
                         DockPanel.Dock="Left"
                         Style="{StaticResource SpinnerStyle}"
                         Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Running}" />
-                    <!-- Pending: 灰点 -->
+                    <!--  Pending: 灰点  -->
                     <Ellipse
-                        Width="8" Height="8"
+                        Width="8"
+                        Height="8"
+                        Margin="3,0"
                         DockPanel.Dock="Left"
                         Fill="Gray"
-                        Margin="3,0"
                         Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Pending}" />
 
                     <TextBlock
@@ -90,10 +93,8 @@
                         Text="{Binding Usage}" />
                 </DockPanel>
 
-                <!-- 展开时显示 Output 和 ErrorMessage -->
-                <ItemsControl
-                    ItemsSource="{Binding Output}"
-                    Visibility="{Binding IsExpanded, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <!--  展开时显示 Output 和 ErrorMessage  -->
+                <ItemsControl ItemsSource="{Binding Output}" Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}" />
                 <TextBlock
                     Foreground="Red"
                     Text="{Binding ErrorMessage}"
@@ -139,14 +140,40 @@
                             <StackPanel>
                                 <DockPanel>
                                     <Button
+                                        Command="{Binding GenerateTemplatesCommand}"
                                         Content="解析成模板"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource ButtonPrimary}" />
+
+
+                                    <ListBox
+                                        Margin="8,0"
+                                        VerticalAlignment="Center"
+                                        BorderThickness="0"
+                                        DockPanel.Dock="Right"
+                                        IsEnabled="{Binding GenerateTemplatesCommand.IsRunning, Converter={StaticResource Boolean2BooleanReConverter}}"
+                                        ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
+                                        ItemsSource="{Binding Providers}"
+                                        SelectionMode="Multiple"
+                                        Style="{StaticResource ListBoxCustom}">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox
+                                                    Margin="2,0"
+                                                    Content="{Binding Name}"
+                                                    IsChecked="{Binding IsSelected}" />
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+
                                     <TextBlock VerticalAlignment="Center" Text="{Binding FileName}" />
                                 </DockPanel>
 
 
-                                <ListBox ItemsSource="{Binding Tasks}" Visibility="{Binding Tasks.Count, Converter={StaticResource Int2VisibilityConverter}}" />
+                                <ListBox
+                                    ItemsSource="{Binding Tasks}"
+                                    Style="{StaticResource ListBoxCustom}"
+                                    Visibility="{Binding Tasks.Count, Converter={StaticResource Int2VisibilityConverter}}" />
 
                             </StackPanel>
                         </Border>
