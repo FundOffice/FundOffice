@@ -78,8 +78,8 @@ public partial class AIProviderItemViewModel : ObservableObject
 
         if (Id == 0)
         {
-            WeakReferenceMessenger.Default.Send(new AIProviderChanged(Id, ChangedType.Add));
             Id = entity.Id;
+            WeakReferenceMessenger.Default.Send(new AIProviderChanged(Id, ChangedType.Add));
         }
         else
             WeakReferenceMessenger.Default.Send(new AIProviderChanged(Id, ChangedType.Update));

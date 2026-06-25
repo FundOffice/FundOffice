@@ -1,7 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using Vetting.Data;
 using Vetting.Models.Entities;
+using Vetting.Services;
 
 namespace Vetting.ViewModel;
 
@@ -10,10 +12,15 @@ public partial class CustomQuestionsViewModel : ObservableObject
     public ObservableCollection<QuestionItem> Questions { get; } = [];
     public string WindowTitle { get; }
 
+    private readonly string _fileHash = "";
+    private readonly string _providerId = "";
+
     public CustomQuestionsViewModel() { WindowTitle = "自定义问题"; }
 
     public CustomQuestionsViewModel(string fileHash, string providerId, string fileName)
     {
+        _fileHash = fileHash;
+        _providerId = providerId;
         WindowTitle = $"自定义问题 — {fileName}";
 
         using var db = new VettingDbContext();
@@ -31,6 +38,30 @@ public partial class CustomQuestionsViewModel : ObservableObject
                 item.Answers.Add(new AnswerItem { Identifier = a.Identifier, Value = a.Value });
             Questions.Add(item);
         }
+    }
+
+    [RelayCommand]
+    private async Task AIAnswerAsync()
+    {
+        var sel = MainWindowViewModel.GlobalProviders.Where(p => p.IsSelected).ToArray();
+        if (sel.Length == 0) { HandyControl.Controls.Growl.Warning("请先选择 AI 接口"); return; }
+
+        var tasks = sel.Select(p => CustomQuestionAnswerService.AnswerAsync(
+            _fileHash, _providerId,
+            CustomQuestionAnswerService.CreateProvider(p), p.Name));
+        var counts = await Task.WhenAll(tasks);
+
+        // 刷新 Answers
+        using var db = new VettingDbContext();
+        foreach (var item in Questions)
+        {
+            item.Answers.Clear();
+            var answers = db.SpecialAnswers.Find(a => a.QuestionId == item.Id).ToArray();
+            item.ManualAnswer = answers.FirstOrDefault(a => a.Identifier == "manual")?.Value;
+            foreach (var a in answers.Where(a => a.Identifier != "manual"))
+                item.Answers.Add(new AnswerItem { Identifier = a.Identifier, Value = a.Value });
+        }
+        HandyControl.Controls.Growl.Success($"AI 回答完成，共 {counts.Sum()} 条");
     }
 
     public partial class QuestionItem(FileSpecialQuestion q) : ObservableObject

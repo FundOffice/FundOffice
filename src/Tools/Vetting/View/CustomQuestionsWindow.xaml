@@ -20,6 +20,7 @@
             <Button
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
+                Command="{Binding AIAnswerCommand}"
                 Content="AI回答"
                 Style="{StaticResource ButtonSuccess}" />
         </DockPanel>
@@ -30,7 +31,7 @@
             <ItemsControl ItemsSource="{Binding Questions}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Margin="0,0,0,16">
+                        <StackPanel>
                             <!--  问题  -->
                             <TextBlock
                                 FontWeight="SemiBold"
@@ -58,6 +59,8 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <Separator Margin="0,8" />
                         </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

@@ -24,6 +24,41 @@
             <Button Command="{Binding NewVettingCommand}" Content="新建尽调" />
             <Button Command="{Binding SetAIConfigCommand}" Content="AI设置" />
             <Button Content="数据中心" />
+
+            <Border
+                BorderBrush="RoyalBlue"
+                BorderThickness="1"
+                CornerRadius="5">
+                <DockPanel>
+                    <TextBlock
+                        Margin="5,0"
+                        VerticalAlignment="Center"
+                        Text="请选择AI接口" />
+
+                    <ListBox
+                        VerticalAlignment="Center"
+                        BorderThickness="0"
+                        ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
+                        ItemsSource="{Binding Source={x:Static vm:MainWindowViewModel.GlobalProviders}}"
+                        SelectionMode="Multiple"
+                        Style="{StaticResource ListBoxCustom}">
+
+                        <ListBox.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource ListBoxItemCustom}" TargetType="ListBoxItem">
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox
+                                    Margin="5,0"
+                                    Content="{Binding Name}"
+                                    IsChecked="{Binding IsSelected}" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
         </hc:UniformSpacingPanel>
 
         <Separator Margin="5" DockPanel.Dock="Top" />
@@ -75,7 +110,10 @@
         <hc:SimplePanel>
             <ContentControl Content="{Binding SelectedVetting}" />
 
-            <StackPanel hc:Growl.GrowlParent="True" />
+            <StackPanel
+                HorizontalAlignment="Right"
+                VerticalAlignment="Bottom"
+                hc:Growl.GrowlParent="True" />
         </hc:SimplePanel>
     </DockPanel>
 </Window>
