@@ -21,11 +21,22 @@
     </Window.Resources>
     <DockPanel Margin="8">
         <hc:UniformSpacingPanel DockPanel.Dock="Top" Spacing="8">
-            <Button Command="{Binding NewVettingCommand}" Content="新建尽调" />
-            <Button Command="{Binding SetAIConfigCommand}" Content="AI设置" />
-            <Button Content="数据中心" />
+            <Button
+                Background="GreenYellow"
+                Command="{Binding NewVettingCommand}"
+                Content="新建尽调" />
+            <Button
+                Command="{Binding SetAIConfigCommand}"
+                Content="AI设置"
+                Style="{StaticResource ButtonPrimary}" />
+            <Button
+                Background="Orange"
+                Command="{Binding OpenDataCenterCommand}"
+                Content="数据中心"
+                Foreground="White" />
 
             <Border
+                Margin="50,0,0,0"
                 BorderBrush="RoyalBlue"
                 BorderThickness="1"
                 CornerRadius="5">
