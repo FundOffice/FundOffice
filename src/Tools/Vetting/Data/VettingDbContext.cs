@@ -17,6 +17,7 @@ public class VettingDbContext : IDisposable
     public ILiteCollection<FileSpecialQuestion> FileSpecialQuestions => _db.GetCollection<FileSpecialQuestion>();
     public ILiteCollection<SpecialAnswer> SpecialAnswers => _db.GetCollection<SpecialAnswer>();
     public ILiteCollection<QA> QA => _db.GetCollection<QA>();
+    public ILiteCollection<TemplateRecommend> TemplateRecommends => _db.GetCollection<TemplateRecommend>();
 
     // 唯一项
     public ILiteCollection<Manager> Managers => _db.GetCollection<Manager>();

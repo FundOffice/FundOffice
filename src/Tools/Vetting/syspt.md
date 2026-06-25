@@ -133,6 +133,17 @@
 {{product.Return1Y}} 近一年收益率
 {{product.Return1M}} 近1月收益
 
+### 推荐产品（Recommend Products）
+当 LEFT_Q_RIGHT_A 表格应填入产品信息时，使用 {{recommendN_XXX}} 格式，N 按表格出现顺序从 1 开始。
+输出 JSON 中必须包含 "recommendCount": N 表示识别到的推荐产品表格数量。
+示例：
+```json
+{"tool": "set_cell", "table_index": 3, "row_index": 1, "col_index": 1, "text": "{{recommend1_Name}}"}
+{"tool": "set_cell", "table_index": 3, "row_index": 2, "col_index": 1, "text": "{{recommend1_Scale}}"}
+{"tool": "set_cell", "table_index": 5, "row_index": 1, "col_index": 1, "text": "{{recommend2_Name}}"}
+```
+属性名与 product 完全一致，只是前缀改为 recommendN_。
+
 ### 人员类
 executive(高管) / researcher(投研) / riskctrl(风控) / pm(基金经理) / contact(联系人) / compliance(合规)
 {{*.Name}} 姓名

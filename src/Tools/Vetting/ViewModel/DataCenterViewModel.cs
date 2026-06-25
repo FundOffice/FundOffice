@@ -29,6 +29,11 @@ public partial class DataCenterViewModel : ObservableObject
     public ObservableCollection<FinancialStatementVM> FinancialStatements { get; } = [];
     public ObservableCollection<QAVM> QAs { get; } = [];
 
+    // 全局推荐产品
+    public ObservableCollection<FundInfoVM> GlobalRecommendedFunds { get; } = [];
+    [ObservableProperty] public partial FundInfoVM? GlobalSelectedAvailable { get; set; }
+    [ObservableProperty] public partial FundInfoVM? GlobalSelectedRecommended { get; set; }
+
     public DataCenterViewModel() => LoadAll();
 
     private void LoadAll()
@@ -50,6 +55,18 @@ public partial class DataCenterViewModel : ObservableObject
         LoadList(db.DrawdownRecords, DrawdownRecords, e => new DrawdownRecordVM(e));
         LoadList(db.FinancialStatements, FinancialStatements, e => new FinancialStatementVM(e));
         LoadList(db.QA, QAs, e => new QAVM(e));
+
+        // 加载全局推荐产品
+        var rec = db.TemplateRecommends.FindOne(r => r.FileHash == "__global__");
+        if (rec?.FundIds != null)
+        {
+            var ids = rec.FundIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse);
+            foreach (var id in ids)
+            {
+                var fund = FundInfos.FirstOrDefault(f => f.Entity.Id == id);
+                if (fund != null) GlobalRecommendedFunds.Add(fund);
+            }
+        }
     }
 
     private static T LoadOrInit<T>(LiteDB.ILiteCollection<T> source) where T : new()
@@ -370,6 +387,56 @@ public partial class DataCenterViewModel : ObservableObject
         // 刷新 UI
         LoadAll();
         HandyControl.Controls.Growl.Success("模拟数据已生成");
+    }
+
+    public void SaveGlobalRecommend()
+    {
+        using var db = new VettingDbContext();
+        var existing = db.TemplateRecommends.FindOne(r => r.FileHash == "__global__");
+        var ids = string.Join(",", GlobalRecommendedFunds.Select(f => f.Entity.Id));
+        if (existing != null)
+        {
+            existing.FundIds = ids;
+            db.TemplateRecommends.Update(existing);
+        }
+        else if (GlobalRecommendedFunds.Count > 0)
+        {
+            db.TemplateRecommends.Insert(new TemplateRecommend { FileHash = "__global__", FundIds = ids });
+        }
+    }
+
+    [RelayCommand]
+    private void AddGlobalRecommend()
+    {
+        if (GlobalSelectedAvailable == null || GlobalRecommendedFunds.Contains(GlobalSelectedAvailable)) return;
+        GlobalRecommendedFunds.Add(GlobalSelectedAvailable);
+        SaveGlobalRecommend();
+    }
+
+    [RelayCommand]
+    private void RemoveGlobalRecommend()
+    {
+        if (GlobalSelectedRecommended == null) return;
+        GlobalRecommendedFunds.Remove(GlobalSelectedRecommended);
+        SaveGlobalRecommend();
+    }
+
+    [RelayCommand]
+    private void MoveGlobalUp()
+    {
+        var idx = GlobalSelectedRecommended != null ? GlobalRecommendedFunds.IndexOf(GlobalSelectedRecommended) : -1;
+        if (idx <= 0) return;
+        GlobalRecommendedFunds.Move(idx, idx - 1);
+        SaveGlobalRecommend();
+    }
+
+    [RelayCommand]
+    private void MoveGlobalDown()
+    {
+        var idx = GlobalSelectedRecommended != null ? GlobalRecommendedFunds.IndexOf(GlobalSelectedRecommended) : -1;
+        if (idx < 0 || idx >= GlobalRecommendedFunds.Count - 1) return;
+        GlobalRecommendedFunds.Move(idx, idx + 1);
+        SaveGlobalRecommend();
     }
 
     [RelayCommand]

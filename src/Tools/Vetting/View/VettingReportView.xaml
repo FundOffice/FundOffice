@@ -195,6 +195,49 @@
                                         Content="填充模板"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource ButtonSuccess}" />
+                                    <ToggleButton
+                                        x:Name="RecommendToggle"
+                                        Margin="4,0"
+                                        Content="设置推荐产品"
+                                        DockPanel.Dock="Right"
+                                        IsChecked="{Binding IsRecommendOpen}" />
+                                    <Popup
+                                        PlacementTarget="{Binding ElementName=RecommendToggle}"
+                                        Placement="Bottom"
+                                        IsOpen="{Binding IsRecommendOpen}"
+                                        StaysOpen="False"
+                                        AllowsTransparency="True">
+                                        <Border Background="White" BorderBrush="Gray" BorderThickness="1" Padding="8" CornerRadius="4" MinWidth="400">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <DockPanel Grid.Column="0" Margin="4">
+                                                    <TextBlock DockPanel.Dock="Top" FontWeight="SemiBold" Text="所有产品（拖到右侧添加）" Margin="0,0,0,4" />
+                                                    <ListBox
+                                                        AllowDrop="True"
+                                                        DisplayMemberPath="Name"
+                                                        ItemsSource="{Binding AvailableFunds}"
+                                                        SelectedItem="{Binding SelectedAvailable}"
+                                                        PreviewMouseMove="FundList_PreviewMouseMove"
+                                                        DragOver="FundList_DragOver"
+                                                        Drop="FundList_Drop" />
+                                                </DockPanel>
+                                                <DockPanel Grid.Column="1" Margin="4">
+                                                    <TextBlock DockPanel.Dock="Top" FontWeight="SemiBold" Text="推荐产品（拖动排序，拖到左侧移除）" Margin="0,0,0,4" />
+                                                    <ListBox
+                                                        AllowDrop="True"
+                                                        DisplayMemberPath="Name"
+                                                        ItemsSource="{Binding RecommendedFunds}"
+                                                        SelectedItem="{Binding SelectedRecommended}"
+                                                        PreviewMouseMove="FundList_PreviewMouseMove"
+                                                        DragOver="FundList_DragOver"
+                                                        Drop="FundList_Drop" />
+                                                </DockPanel>
+                                            </Grid>
+                                        </Border>
+                                    </Popup>
                                     <Button
                                         Margin="4,0"
                                         Command="{Binding AIAnswerCustomQuestionsCommand}"

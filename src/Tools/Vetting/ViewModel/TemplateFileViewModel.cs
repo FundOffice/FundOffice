@@ -19,7 +19,17 @@ public partial class TemplateFileViewModel : ObservableObject
     public required string AbsolutePath { get; set; }
     public string VettingId { get; set; } = "";
     [ObservableProperty] public partial bool IsExpanded { get; set; }
+    [ObservableProperty] public partial bool IsRecommendOpen { get; set; }
     public ObservableCollection<string> Output { get; } = [];
+
+    // 推荐产品
+    public ObservableCollection<FundInfoVM> AvailableFunds { get; } = [];
+    public ObservableCollection<FundInfoVM> RecommendedFunds { get; } = [];
+    [ObservableProperty] public partial FundInfoVM? SelectedAvailable { get; set; }
+    [ObservableProperty] public partial FundInfoVM? SelectedRecommended { get; set; }
+
+    private string _fileHash = "";
+    private string _providerId = "";
 
     [SetsRequiredMembers]
     public TemplateFileViewModel(FileInfo fileInfo, string vettingId)
@@ -27,10 +37,87 @@ public partial class TemplateFileViewModel : ObservableObject
         FileName = fileInfo.Name;
         AbsolutePath = fileInfo.FullName;
         VettingId = vettingId;
+
+        // 解析文件名获取 fileHash + providerId
+        var m = Regex.Match(FileName, @"(.+)_by\[(.+)\](.*)");
+        if (m.Success)
+        {
+            var srcPath = Path.Combine("files", "vetting", VettingId, $"{m.Groups[1].Value}{m.Groups[3].Value}");
+            if (File.Exists(srcPath))
+                _fileHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(srcPath))).ToLowerInvariant();
+            _providerId = m.Groups[2].Value;
+        }
+
+        // 加载所有产品
+        using var db = new VettingDbContext();
+        foreach (var f in db.FundInfos.FindAll())
+            AvailableFunds.Add(new FundInfoVM(f));
+
+        // 加载推荐产品
+        var rec = db.TemplateRecommends.FindOne(r => r.FileHash == _fileHash && r.ProviderId == _providerId);
+        if (rec?.FundIds != null)
+        {
+            var ids = rec.FundIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
+            foreach (var id in ids)
+            {
+                var fund = AvailableFunds.FirstOrDefault(f => f.Entity.Id == id);
+                if (fund != null) RecommendedFunds.Add(fund);
+            }
+        }
+    }
+
+    public void SaveRecommend()
+    {
+        using var db = new VettingDbContext();
+        var existing = db.TemplateRecommends.FindOne(r => r.FileHash == _fileHash && r.ProviderId == _providerId);
+        var ids = string.Join(",", RecommendedFunds.Select(f => f.Entity.Id));
+        if (existing != null)
+        {
+            existing.FundIds = ids;
+            db.TemplateRecommends.Update(existing);
+        }
+        else if (RecommendedFunds.Count > 0)
+        {
+            db.TemplateRecommends.Insert(new TemplateRecommend { FileHash = _fileHash, ProviderId = _providerId, FundIds = ids });
+        }
     }
 
     [RelayCommand]
     private void OpenFile() => Process.Start(new ProcessStartInfo(AbsolutePath) { UseShellExecute = true });
+
+    [RelayCommand]
+    private void AddRecommend()
+    {
+        if (SelectedAvailable == null || RecommendedFunds.Contains(SelectedAvailable)) return;
+        RecommendedFunds.Add(SelectedAvailable);
+        SaveRecommend();
+    }
+
+    [RelayCommand]
+    private void RemoveRecommend()
+    {
+        if (SelectedRecommended == null) return;
+        RecommendedFunds.Remove(SelectedRecommended);
+        SaveRecommend();
+    }
+
+    [RelayCommand]
+    private void MoveUp()
+    {
+        var idx = SelectedRecommended != null ? RecommendedFunds.IndexOf(SelectedRecommended) : -1;
+        if (idx <= 0) return;
+        RecommendedFunds.Move(idx, idx - 1);
+        SaveRecommend();
+    }
+
+    [RelayCommand]
+    private void MoveDown()
+    {
+        var idx = SelectedRecommended != null ? RecommendedFunds.IndexOf(SelectedRecommended) : -1;
+        if (idx < 0 || idx >= RecommendedFunds.Count - 1) return;
+        RecommendedFunds.Move(idx, idx + 1);
+        SaveRecommend();
+    }
 
     [RelayCommand]
     private void ViewCustomQuestions()
@@ -106,7 +193,10 @@ public partial class TemplateFileViewModel : ObservableObject
             : "";
         var providerId = m.Groups[2].Value;
 
-        var obj = await Task.Run(() => BuildFillObject(fileHash, providerId));
+        var recommendIds = RecommendedFunds.Count > 0
+            ? RecommendedFunds.Select(f => f.Entity.Id).ToArray()
+            : LoadGlobalRecommendIds();
+        var obj = await Task.Run(() => BuildFillObject(fileHash, providerId, recommendIds));
 
         var safeName = Path.GetFileNameWithoutExtension(FileName);
         var outDir = Path.Combine("files", "vetting", VettingId, "final");
@@ -115,8 +205,14 @@ public partial class TemplateFileViewModel : ObservableObject
 
         try
         {
-            MiniWord.SaveAsByTemplate(outPath, tplPath, obj);
-            Output.Add($"已生成: {outPath}");
+            var tempPath = Path.Combine(Path.GetTempPath(), $"vetting_{Guid.NewGuid():N}.docx");
+            try
+            {
+                MiniWord.SaveAsByTemplate(tempPath, tplPath, obj);
+                MiniWord.SaveAsByTemplate(outPath, tempPath, obj);
+                Output.Add($"已生成: {outPath}");
+            }
+            finally { File.Delete(tempPath); }
         }
         catch (Exception ex)
         {
@@ -124,7 +220,15 @@ public partial class TemplateFileViewModel : ObservableObject
         }
     }
 
-    private static Dictionary<string, object> BuildFillObject(string fileHash, string providerId)
+    private static int[] LoadGlobalRecommendIds()
+    {
+        using var db = new VettingDbContext();
+        var rec = db.TemplateRecommends.FindOne(r => r.FileHash == "__global__");
+        if (rec?.FundIds == null) return [];
+        return rec.FundIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
+    }
+
+    private static Dictionary<string, object> BuildFillObject(string fileHash, string providerId, int[] recommendIds)
     {
         using var db = new VettingDbContext();
         var manager = db.Managers.FindById(1) ?? new Manager();
@@ -139,31 +243,19 @@ public partial class TemplateFileViewModel : ObservableObject
         var allFunds = db.FundInfos.FindAll().ToArray();
         var allAwards = db.Awards.FindAll().ToArray();
 
-        // 散装问题答案
-        Dictionary<string, object> scatter = new();
-        if (!string.IsNullOrEmpty(fileHash))
-        {
-            var questions = db.FileSpecialQuestions.Find(q => q.FileHash == fileHash && q.Provider == providerId).ToArray();
-            var answers = db.SpecialAnswers.Query().ToEnumerable().Where(a => questions.Any(q => q.Id == a.QuestionId)).ToArray();
-            foreach (var q in questions)
-            {
-                var best = answers.Where(a => a.QuestionId == q.Id)
-                    .OrderByDescending(a => a.Identifier == "manual" ? 1 : 0)
-                    .FirstOrDefault();
-                scatter[$"a{q.Index}"] = (object)(best?.Value ?? "");
-            }
-        }
-
-        // 人员按角色分组
         Staff[] Filter(StaffRole role) => allStaff.Where(s => s.Role.HasFlag(role)).ToArray();
 
         var obj = new Dictionary<string, object>();
-        // 唯一项：扁平化为 manager_Name 格式
         FlattenInto(obj, "manager", manager);
         FlattenInto(obj, "credit", credit);
         FlattenInto(obj, "invest", invest);
         FlattenInto(obj, "risk", risk);
-        // 列表项：保持数组（MiniWord 支持 list.property）
+        obj["recommendCount"] = recommendIds.Length;
+        for (int i = 0; i < recommendIds.Length; i++)
+        {
+            var fund = allFunds.FirstOrDefault(f => f.Id == recommendIds[i]);
+            if (fund != null) FlattenInto(obj, $"recommend{i + 1}", fund);
+        }
         obj["shareholder"] = allShareholders.Select(ToDict).ToArray();
         obj["actualcontroller"] = allShareholders.Where(s => s.IsActualController).Select(s => ToDict(new { s.Name, Penetration = s.Ratio, Intro = s.Intro })).ToArray();
         obj["department"] = allDepts.Select(d => {
@@ -181,7 +273,19 @@ public partial class TemplateFileViewModel : ObservableObject
         obj["contact"] = Filter(StaffRole.联系人).Select(ToDict).ToArray();
         obj["compliance"] = Filter(StaffRole.合规).Select(ToDict).ToArray();
 
-        foreach (var kv in scatter) obj[kv.Key] = kv.Value;
+        // 散装问题答案
+        if (!string.IsNullOrEmpty(fileHash))
+        {
+            var questions = db.FileSpecialQuestions.Find(q => q.FileHash == fileHash && q.Provider == providerId).ToArray();
+            var answers = db.SpecialAnswers.Query().ToEnumerable().Where(a => questions.Any(q => q.Id == a.QuestionId)).ToArray();
+            foreach (var q in questions)
+            {
+                var best = answers.Where(a => a.QuestionId == q.Id)
+                    .OrderByDescending(a => a.Identifier == "manual" ? 1 : 0)
+                    .FirstOrDefault();
+                obj[$"a{q.Index}"] = (object)(best?.Value ?? "");
+            }
+        }
         return obj;
     }
 
