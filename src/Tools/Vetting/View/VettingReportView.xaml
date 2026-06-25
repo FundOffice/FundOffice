@@ -8,6 +8,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:Vetting.ViewModel"
     d:DataContext="{d:DesignInstance vm:VettingReportViewModel}"
+    d:Height="900"
+    d:Width="1000"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -183,5 +185,55 @@
                 </ListBox.ItemTemplate>
             </ListBox>
         </GroupBox>
+
+
+        <Separator />
+
+        <GroupBox
+            Header="模板列表"
+            Style="{StaticResource GroupBoxTab}"
+            Visibility="{Binding TemplateFiles.Count, Converter={StaticResource Int2VisibilityConverter}}">
+            <ListBox ItemsSource="{Binding TemplateFiles}">
+                <ListBox.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource ListBoxItemCustom}" TargetType="ListBoxItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Margin" Value="4,4" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border>
+                            <StackPanel>
+                                <DockPanel>
+                                    <Button
+                                        Command="{Binding FillTemplateCommand}"
+                                        Content="填充模板"
+                                        DockPanel.Dock="Right"
+                                        Margin="4,0"
+                                        Style="{StaticResource ButtonSuccess}" />
+                                    <Button
+                                        Command="{Binding AIAnswerCustomQuestionsCommand}"
+                                        Content="AI回答"
+                                        DockPanel.Dock="Right"
+                                        Margin="4,0"
+                                        Style="{StaticResource ButtonPrimary}" />
+                                    <Button
+                                        Command="{Binding ViewCustomQuestionsCommand}"
+                                        Content="查看问题"
+                                        DockPanel.Dock="Right"
+                                        Margin="4,0" />
+                                    <TextBlock VerticalAlignment="Center" Text="{Binding FileName}" />
+                                </DockPanel>
+                                <ItemsControl
+                                    ItemsSource="{Binding Output}"
+                                    Visibility="{Binding Output.Count, Converter={StaticResource Int2VisibilityConverter}}" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </GroupBox>
+
+
     </StackPanel>
 </UserControl>
