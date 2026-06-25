@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../../AI/FundOffice.Copilot/FundOffice.Copilot.csproj" />
+  <Project Path="Vetting.csproj" />
+</Solution>

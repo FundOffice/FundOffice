@@ -1,0 +1,28 @@
+<UserControl
+    x:Class="Vetting.View.VettingReportView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:hc="https://handyorg.github.io/handycontrol">
+    <StackPanel Margin="16">
+        <DockPanel>
+            <Button
+                Margin="10,0,0,0"
+                Command="{Binding SaveNameCommand}"
+                Content="保存"
+                DockPanel.Dock="Right"
+                Style="{StaticResource ButtonSuccess}" />
+            <hc:TextBox
+                hc:InfoElement.ShowClearButton="True"
+                hc:InfoElement.Title="尽调名称"
+                hc:InfoElement.TitlePlacement="Left"
+                Text="{Binding NameEdit, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+        </DockPanel>
+
+        <Separator Margin="5,10" />
+
+        <GroupBox Header="文件列表" Style="{StaticResource GroupBoxTab}">
+
+            <ListBox ItemsSource="{Binding OriginalFiles}" />
+        </GroupBox>
+    </StackPanel>
+</UserControl>
