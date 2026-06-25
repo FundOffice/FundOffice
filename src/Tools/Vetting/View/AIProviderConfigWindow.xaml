@@ -22,38 +22,51 @@
     </Window.DataContext>
 
     <DockPanel Margin="5">
-        <ListBox
-            DockPanel.Dock="Top"
-            ItemContainerStyle="{StaticResource listitem}"
-            ItemsSource="{Binding Providers}"
-            SelectedItem="{Binding SelectedProvider}">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <DockPanel Background="Transparent">
-                        <Button
-                            x:Name="del"
-                            Command="{Binding DataContext.DeleteProviderCommand, ElementName=root}"
-                            CommandParameter="{Binding}"
-                            Content="删除"
-                            DockPanel.Dock="Right"
-                            Style="{StaticResource ButtonDanger.Small}"
-                            Visibility="Hidden" />
-                        <TextBlock
-                            Margin="5,0"
-                            VerticalAlignment="Center"
-                            DockPanel.Dock="Right"
-                            Text="{Binding ProviderType}" />
+        <GroupBox DockPanel.Dock="Top">
+            <GroupBox.Header>
+                <DockPanel>
+                    <TextBlock VerticalAlignment="Center" Text="AI 接口列表" />
 
-                        <TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
-                    </DockPanel>
-                    <DataTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="del" Property="Visibility" Value="Visible" />
-                        </Trigger>
-                    </DataTemplate.Triggers>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+                    <Button
+                        Margin="10,0"
+                        Command="{Binding AddProviderCommand}"
+                        Content="添加"
+                        Style="{StaticResource ButtonDefault.Small}" />
+                </DockPanel>
+            </GroupBox.Header>
+
+            <ListBox
+                ItemContainerStyle="{StaticResource listitem}"
+                ItemsSource="{Binding Providers}"
+                SelectedItem="{Binding SelectedProvider}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel Background="Transparent">
+                            <Button
+                                x:Name="del"
+                                Command="{Binding DataContext.DeleteProviderCommand, ElementName=root}"
+                                CommandParameter="{Binding}"
+                                Content="删除"
+                                DockPanel.Dock="Right"
+                                Style="{StaticResource ButtonDanger.Small}"
+                                Visibility="Hidden" />
+                            <TextBlock
+                                Margin="5,0"
+                                VerticalAlignment="Center"
+                                DockPanel.Dock="Right"
+                                Text="{Binding ProviderType}" />
+
+                            <TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
+                        </DockPanel>
+                        <DataTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="del" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </GroupBox>
 
         <Separator Margin="10" DockPanel.Dock="Top" />
 

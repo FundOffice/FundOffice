@@ -1,13 +1,15 @@
-using System.Collections.ObjectModel;
-using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using FundOffice.Copilot.Configuration;
 using FundOffice.Copilot.Providers;
+using System.Collections.ObjectModel;
+using System.Windows;
 using Vetting.Data;
 using Vetting.Entity;
 
 namespace Vetting.ViewModel;
+
 public partial class AIProviderItemViewModel : ObservableObject
 {
     public int Id { get; set; }
@@ -67,8 +69,18 @@ public partial class AIProviderItemViewModel : ObservableObject
     private void Save(Window window)
     {
         using var db = new VettingDbContext();
-        db.AIProviderConfigs.Upsert(new AIProviderConfig(Id, Name, ProviderType, ApiKey, BaseUrl, Model));
+        AIProviderConfig entity = new(Id, Name, ProviderType, ApiKey, BaseUrl, Model);
+        db.AIProviderConfigs.Upsert(entity);
         StatusMessage = "已保存";
+
+        if (Id == 0)
+        {
+            WeakReferenceMessenger.Default.Send(new AIProviderChanged(Id, ChangedType.Add));
+            Id = entity.Id;
+        }
+        else
+            WeakReferenceMessenger.Default.Send(new AIProviderChanged(Id, ChangedType.Update));
+
         window.Close();
     }
     private bool CanSave() => !string.IsNullOrWhiteSpace(Name) && Tested && !string.IsNullOrWhiteSpace(Model);

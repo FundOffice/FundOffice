@@ -1,11 +1,13 @@
-using System.Collections.ObjectModel;
-using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using System.Collections.ObjectModel;
+using System.Windows;
 using Vetting.Data;
 using Vetting.Entity;
 
 namespace Vetting.ViewModel;
+
 public partial class AIProviderConfigViewModel : ObservableObject
 {
     public ObservableCollection<AIProviderItemViewModel> Providers { get; } = [];
@@ -27,11 +29,15 @@ public partial class AIProviderConfigViewModel : ObservableObject
         db.AIProviderConfigs.Delete(vm.Id);
         Providers.Remove(vm);
         if (SelectedProvider == vm) SelectedProvider = Providers.FirstOrDefault();
+
+        WeakReferenceMessenger.Default.Send(new AIProviderChanged(vm.Id, ChangedType.Delete));
     }
 
     [RelayCommand]
-    private void AddProvider(AIProviderItemViewModel vm)
+    private void AddProvider()
     {
-        Providers.Add(new AIProviderItemViewModel());
+        AIProviderItemViewModel vm = new();
+        Providers.Add(vm);
+        SelectedProvider = vm;
     }
 }
