@@ -8,7 +8,7 @@
 ```json
 {
   "operations": [
-    {"tool": "set_cell", "table_index": 0, "row_index": 1, "col_index": 1, "text": "{{manager.Name}}"},
+    {"tool": "set_cell", "table_index": 0, "row_index": 1, "col_index": 1, "text": "{{manager_Name}}"},
     {"tool": "set_cell", "table_index": 0, "row_index": 2, "col_index": 1, "text": "{{a1}}", "question": "公司基本情况介绍"},
     {"tool": "set_paragraph", "para_index": 5, "text": "{{a1}}", "question": "基金投资策略说明"}
   ],
@@ -66,33 +66,33 @@
 ## 占位符命名（严格按以下属性名，不要改名）
 
 ### Manager（管理人基本信息）
-{{manager.Name}} 机构名称/公司名称
-{{manager.RegisterNo}} 统一社会信用代码/营业执照号码
-{{manager.ArtificialPerson}} 法定代表人/法人代表
-{{manager.RegisterCapital}} 注册资本（万元）
-{{manager.RealCapital}} 实缴资本（万元）
-{{manager.SetupDate}} 成立时间/成立日期
-{{manager.BusinessScope}} 经营范围
-{{manager.RegisterAddress}} 注册地址/注册地点
-{{manager.OfficeAddress}} 办公地址/办公地点
-{{manager.Phone}} 联系电话/手机
-{{manager.Telephone}} 固定电话
-{{manager.Email}} 邮箱/电子邮箱
-{{manager.Fax}} 传真
-{{manager.AmacId}} 基金业协会私募基金管理人登记编号
-{{manager.MemberType}} 基金业协会会员资格
-{{manager.Description}} 公司简介
-{{manager.EnglishName}} 英文名称
-{{manager.WebSite}} 官网
-{{manager.ActualController}} 实际控制人
-{{manager.ContactName}} 联系人姓名
-{{manager.ContactPhoneAndEmail}} 联系电话和邮箱
-{{manager.InstitutionType}} 机构类型
-{{manager.RelatedCompany}} 关联公司
-{{manager.HistoricalEvolution}} 重要历史沿革
-{{manager.OrgStructureIntro}} 组织架构简介
-{{manager.FutureStrategicPlan}} 公司未来战略规划
-{{manager.GoverningSecuritiesBureau}} 所属证监局
+{{manager_Name}} 机构名称/公司名称
+{{manager_RegisterNo}} 统一社会信用代码/营业执照号码
+{{manager_ArtificialPerson}} 法定代表人/法人代表
+{{manager_RegisterCapital}} 注册资本（万元）
+{{manager_RealCapital}} 实缴资本（万元）
+{{manager_SetupDate}} 成立时间/成立日期
+{{manager_BusinessScope}} 经营范围
+{{manager_RegisterAddress}} 注册地址/注册地点
+{{manager_OfficeAddress}} 办公地址/办公地点
+{{manager_Phone}} 联系电话/手机
+{{manager_Telephone}} 固定电话
+{{manager_Email}} 邮箱/电子邮箱
+{{manager_Fax}} 传真
+{{manager_AmacId}} 基金业协会私募基金管理人登记编号
+{{manager_Membership}} 基金业协会会员资格
+{{manager_Description}} 公司简介
+{{manager_EnglishName}} 英文名称
+{{manager_WebSite}} 官网
+{{manager_ActualController}} 实际控制人
+{{manager_ContactName}} 联系人姓名
+{{manager_ContactPhoneAndEmail}} 联系电话和邮箱
+{{manager_InstitutionType}} 机构类型
+{{manager_RelatedCompany}} 关联公司
+{{manager_HistoricalEvolution}} 重要历史沿革
+{{manager_OrgStructureIntro}} 组织架构简介
+{{manager_FutureStrategicPlan}} 公司未来战略规划
+{{manager_GoverningSecuritiesBureau}} 所属证监局
 
 ### FundInfo（产品/基金）
 {{product.Name}} 产品名称
@@ -112,6 +112,10 @@
 {{product.PerformanceFee}} 业绩报酬
 {{product.Dividend}} 产品分红
 {{product.Other}} 其他
+{{product.EstablishmentDate}} 成立日期
+{{product.LockupPeriod}} 封闭期
+{{product.OpeningDay}} 开放日
+{{product.FilingOrRegistration}} 备案/登记情况
 {{product.StrategyType}} 策略类型
 {{product.NavDate}} 数据截止日/净值日期
 {{product.Scale}} 产品规模
@@ -159,14 +163,14 @@ executive(高管) / researcher(投研) / riskctrl(风控) / pm(基金经理) / c
 {{shareholder.IsCoreResearch}} 是否核心投研人员
 {{shareholder.CompanyPosition}} 股东在公司内部任职情况
 
-### BeneficialOwner（实控人/穿透股东）
-{{bo.Name}} 实控人名称
-{{bo.Penetration}} 穿透后股权比例
-{{bo.Intro}} 实控人简介
+### ActualController（实控人/穿透股东）
+{{actualcontroller.Name}} 实控人名称
+{{actualcontroller.Penetration}} 穿透后股权比例
+{{actualcontroller.Intro}} 实控人简介
 
 ### Department（部门）
 {{department.Name}} 部门名称
-{{department.Headcount}} 部门人数
+{{department.StaffCount}} 部门人数
 {{department.MainFunction}} 部门主要职能
 {{department.Head}} 负责人
 

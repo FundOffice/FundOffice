@@ -34,16 +34,6 @@
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
 
-        <x:Array x:Key="RoleOptions" Type="sys:String">
-            <sys:String>高管</sys:String>
-            <sys:String>投研</sys:String>
-            <sys:String>风控</sys:String>
-            <sys:String>投资经理</sys:String>
-            <sys:String>合规</sys:String>
-            <sys:String>运营</sys:String>
-            <sys:String>联系人</sys:String>
-        </x:Array>
-
         <Style BasedOn="{StaticResource TextBoxExtend}" TargetType="{x:Type hc:TextBox}">
             <Setter Property="Margin" Value="5" />
             <Setter Property="AcceptsReturn" Value="True" />
@@ -222,11 +212,23 @@
                                 hc:InfoElement.Title="学历"
                                 ItemsSource="{Binding Source={StaticResource EducationLevels}}"
                                 SelectedItem="{Binding Education}" />
-                            <hc:ComboBox
+                            <ItemsControl
                                 hc:InfoElement.Title="角色"
-                                IsEditable="True"
-                                ItemsSource="{Binding Source={StaticResource RoleOptions}}"
-                                Text="{Binding Role, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                                ItemsSource="{Binding Roles}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox
+                                            Margin="2,0"
+                                            Content="{Binding DisplayName}"
+                                            IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                             <hc:TextBox hc:InfoElement.Title="从业年限" Text="{Binding Years, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
                             <hc:DatePicker hc:InfoElement.Title="出生年月" SelectedDate="{Binding BirthDate, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
 
@@ -236,6 +238,12 @@
                             <hc:TextBox hc:InfoElement.Title="固定电话" Text="{Binding Telephone, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
                             <hc:TextBox hc:InfoElement.Title="邮箱" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
                             <hc:TextBox hc:InfoElement.Title="身份证号" Text="{Binding IdNumber, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:ComboBox
+                                hc:InfoElement.Title="所属部门"
+                                DisplayMemberPath="Name"
+                                ItemsSource="{Binding DataContext.Departments, ElementName=Tabs}"
+                                SelectedValue="{Binding DepartmentId}"
+                                SelectedValuePath="Entity.Id" />
                             <hc:TextBox hc:InfoElement.Title="详细履历" Text="{Binding Profile, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
                         </WrapPanel>
                     </ScrollViewer>
@@ -323,16 +331,23 @@
                                 Header="部门名称" />
                             <DataGridTextColumn
                                 Width="60"
-                                Binding="{Binding Headcount, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Binding="{Binding StaffCount, UpdateSourceTrigger=PropertyChanged, Delay=200}"
                                 Header="人数" />
                             <DataGridTextColumn
                                 Width="200"
                                 Binding="{Binding MainFunction, UpdateSourceTrigger=PropertyChanged, Delay=200}"
                                 Header="主要职能" />
-                            <DataGridTextColumn
-                                Width="90"
-                                Binding="{Binding Head, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="负责人" />
+                            <DataGridTemplateColumn Width="90" Header="负责人">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ComboBox
+                                            DisplayMemberPath="Name"
+                                            ItemsSource="{Binding DeptStaff}"
+                                            SelectedValue="{Binding Head, UpdateSourceTrigger=PropertyChanged}"
+                                            SelectedValuePath="Name" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTextColumn
                                 Width="90"
                                 Binding="{Binding HasPartTime, UpdateSourceTrigger=PropertyChanged, Delay=200}"

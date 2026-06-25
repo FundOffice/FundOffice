@@ -1,4 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
+using System.Collections.ObjectModel;
 using Vetting.Data;
 using Vetting.Models.Entities;
 
@@ -7,10 +9,13 @@ namespace Vetting.ViewModel;
 public abstract partial class AutoSaveViewModel<T> : ObservableObject where T : class, new()
 {
     public T Entity { get; }
+    private static readonly SemaphoreSlim _saveLock = new(1, 1);
 
-    protected AutoSaveViewModel(T entity)
+    protected AutoSaveViewModel(T entity) => Entity = entity;
+
+    /// <summary>子类构造完成后调用，开始自动保存</summary>
+    protected void EndInit()
     {
-        Entity = entity;
         PropertyChanged += (_, args) =>
         {
             if (args.PropertyName != null) Save();
@@ -19,15 +24,21 @@ public abstract partial class AutoSaveViewModel<T> : ObservableObject where T : 
 
     private void Save()
     {
-        using var db = new VettingDbContext();
-        db.UpsertEntity(Entity);
+        _saveLock.Wait();
+        try
+        {
+            using var db = new VettingDbContext();
+            db.UpsertEntity(Entity);
+        }
+        finally { _saveLock.Release(); }
     }
 }
 
 // ═══ 唯一项 ═══
 
-public partial class ManagerViewModel(Manager entity) : AutoSaveViewModel<Manager>(entity)
+public partial class ManagerViewModel : AutoSaveViewModel<Manager>
 {
+    public ManagerViewModel(Manager entity) : base(entity) { EndInit(); }
     public string? Name { get => Entity.Name; set { Entity.Name = value; OnPropertyChanged(); } }
     public string? RegisterNo { get => Entity.RegisterNo; set { Entity.RegisterNo = value; OnPropertyChanged(); } }
     public string? ArtificialPerson { get => Entity.ArtificialPerson; set { Entity.ArtificialPerson = value; OnPropertyChanged(); } }
@@ -54,8 +65,9 @@ public partial class ManagerViewModel(Manager entity) : AutoSaveViewModel<Manage
     public string? GoverningSecuritiesBureau { get => Entity.GoverningSecuritiesBureau; set { Entity.GoverningSecuritiesBureau = value; OnPropertyChanged(); } }
 }
 
-public partial class CreditStandingViewModel(CreditStanding entity) : AutoSaveViewModel<CreditStanding>(entity)
+public partial class CreditStandingViewModel : AutoSaveViewModel<CreditStanding>
 {
+    public CreditStandingViewModel(CreditStanding entity) : base(entity) { EndInit(); }
     public string? AdminPenalty { get => Entity.AdminPenalty; set { Entity.AdminPenalty = value; OnPropertyChanged(); } }
     public string? BusinessException { get => Entity.BusinessException; set { Entity.BusinessException = value; OnPropertyChanged(); } }
     public string? SeriousIllegal { get => Entity.SeriousIllegal; set { Entity.SeriousIllegal = value; OnPropertyChanged(); } }
@@ -70,8 +82,9 @@ public partial class CreditStandingViewModel(CreditStanding entity) : AutoSaveVi
     public string? AntiMoneyLaundering { get => Entity.AntiMoneyLaundering; set { Entity.AntiMoneyLaundering = value; OnPropertyChanged(); } }
 }
 
-public partial class InvestmentInfoViewModel(InvestmentInfo entity) : AutoSaveViewModel<InvestmentInfo>(entity)
+public partial class InvestmentInfoViewModel : AutoSaveViewModel<InvestmentInfo>
 {
+    public InvestmentInfoViewModel(InvestmentInfo entity) : base(entity) { EndInit(); }
     // 理念
     public string? Target { get => Entity.Target; set { Entity.Target = value; OnPropertyChanged(); } }
     public string? Philosophy { get => Entity.Philosophy; set { Entity.Philosophy = value; OnPropertyChanged(); } }
@@ -93,8 +106,9 @@ public partial class InvestmentInfoViewModel(InvestmentInfo entity) : AutoSaveVi
     public string? AccountFairness { get => Entity.AccountFairness; set { Entity.AccountFairness = value; OnPropertyChanged(); } }
 }
 
-public partial class RiskControlViewModel(RiskControl entity) : AutoSaveViewModel<RiskControl>(entity)
+public partial class RiskControlViewModel : AutoSaveViewModel<RiskControl>
 {
+    public RiskControlViewModel(RiskControl entity) : base(entity) { EndInit(); }
     public string? SystemIntro { get => Entity.SystemIntro; set { Entity.SystemIntro = value; OnPropertyChanged(); } }
     public string? DecisionMechanism { get => Entity.DecisionMechanism; set { Entity.DecisionMechanism = value; OnPropertyChanged(); } }
     public string? RiskMgmtCommittee { get => Entity.RiskMgmtCommittee; set { Entity.RiskMgmtCommittee = value; OnPropertyChanged(); } }
@@ -115,8 +129,9 @@ public partial class RiskControlViewModel(RiskControl entity) : AutoSaveViewMode
 
 // ═══ 列表项 ═══
 
-public partial class StaffVM(Staff entity) : AutoSaveViewModel<Staff>(entity)
+public partial class StaffVM : AutoSaveViewModel<Staff>
 {
+    public StaffVM(Staff entity) : base(entity) { EndInit(); }
     public string? Name { get => Entity.Name; set { Entity.Name = value; OnPropertyChanged(); } }
     public string? Title { get => Entity.Title; set { Entity.Title = value; OnPropertyChanged(); } }
     public EducationLevel Education { get => Entity.Education; set { Entity.Education = value; OnPropertyChanged(); } }
@@ -130,11 +145,56 @@ public partial class StaffVM(Staff entity) : AutoSaveViewModel<Staff>(entity)
     public string? MobilePhone { get => Entity.MobilePhone; set { Entity.MobilePhone = value; OnPropertyChanged(); } }
     public string? Telephone { get => Entity.Telephone; set { Entity.Telephone = value; OnPropertyChanged(); } }
     public string? Email { get => Entity.Email; set { Entity.Email = value; OnPropertyChanged(); } }
-    public string? Role { get => Entity.Role; set { Entity.Role = value; OnPropertyChanged(); } }
+    public int? DepartmentId { get => Entity.DepartmentId; set { Entity.DepartmentId = value; OnPropertyChanged(); WeakReferenceMessenger.Default.Send(new StaffChangedMessage()); } }
+
+    public ObservableCollection<StaffRoleVM> Roles { get; } =
+        Enum.GetValues<StaffRole>().Select(r => new StaffRoleVM(r)).ToArray().ToObservable();
+
+    public void InitRoles()
+    {
+        var current = Entity.Role;
+        foreach (var r in Roles)
+            r.SetSelected(current.HasFlag(r.Value), this);
+    }
+
+    internal void OnRoleChanged()
+    {
+        StaffRole combined = 0;
+        foreach (var r in Roles.Where(r => r.IsSelected)) combined |= r.Value;
+        Entity.Role = combined;
+        OnPropertyChanged(nameof(Roles));
+    }
 }
 
-public partial class ShareholderVM(Shareholder entity) : AutoSaveViewModel<Shareholder>(entity)
+public class StaffRoleVM(StaffRole value) : ObservableObject
 {
+    public StaffRole Value { get; } = value;
+    public string DisplayName => Value.ToString();
+
+    private bool _isSelected;
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set { if (SetProperty(ref _isSelected, value)) _owner?.OnRoleChanged(); }
+    }
+
+    private StaffVM? _owner;
+
+    internal void SetSelected(bool selected, StaffVM owner)
+    {
+        _owner = owner;
+        _isSelected = selected;
+    }
+}
+
+public static class CollectionExtensions
+{
+    public static ObservableCollection<T> ToObservable<T>(this IEnumerable<T> source) => [.. source];
+}
+
+public partial class ShareholderVM : AutoSaveViewModel<Shareholder>
+{
+    public ShareholderVM(Shareholder entity) : base(entity) { EndInit(); }
     public string? Name { get => Entity.Name; set { Entity.Name = value; OnPropertyChanged(); } }
     public string? Ratio { get => Entity.Ratio; set { Entity.Ratio = value; OnPropertyChanged(); } }
     public string? Intro { get => Entity.Intro; set { Entity.Intro = value; OnPropertyChanged(); } }
@@ -147,17 +207,37 @@ public partial class ShareholderVM(Shareholder entity) : AutoSaveViewModel<Share
     public bool IsActualController { get => Entity.IsActualController; set { Entity.IsActualController = value; OnPropertyChanged(); } }
 }
 
-public partial class DepartmentVM(Department entity) : AutoSaveViewModel<Department>(entity)
+public partial class DepartmentVM : AutoSaveViewModel<Department>, IRecipient<StaffChangedMessage>
 {
+    public DepartmentVM(Department entity) : base(entity)
+    {
+        WeakReferenceMessenger.Default.Register(this);
+        RefreshStaff();
+        EndInit();
+    }
     public string? Name { get => Entity.Name; set { Entity.Name = value; OnPropertyChanged(); } }
-    public string? Headcount { get => Entity.Headcount; set { Entity.Headcount = value; OnPropertyChanged(); } }
+    public string StaffCount => DataCenterViewModel.AllStaff?.Count(s => s.Entity.DepartmentId == Entity.Id).ToString() ?? "0";
     public string? MainFunction { get => Entity.MainFunction; set { Entity.MainFunction = value; OnPropertyChanged(); } }
     public string? Head { get => Entity.Head; set { Entity.Head = value; OnPropertyChanged(); } }
     public string? HasPartTime { get => Entity.HasPartTime; set { Entity.HasPartTime = value; OnPropertyChanged(); } }
+
+    public System.Collections.ObjectModel.ObservableCollection<StaffVM> DeptStaff { get; } = [];
+
+    public void Receive(StaffChangedMessage message) => RefreshStaff();
+
+    private void RefreshStaff()
+    {
+        DeptStaff.Clear();
+        foreach (var s in DataCenterViewModel.AllStaff?.Where(s => s.Entity.DepartmentId == Entity.Id) ?? [])
+            DeptStaff.Add(s);
+        OnPropertyChanged(nameof(StaffCount));
+        OnPropertyChanged(nameof(DeptStaff));
+    }
 }
 
-public partial class StrategyVM(Strategy entity) : AutoSaveViewModel<Strategy>(entity)
+public partial class StrategyVM : AutoSaveViewModel<Strategy>
 {
+    public StrategyVM(Strategy entity) : base(entity) { EndInit(); }
     public string? Name { get => Entity.Name; set { Entity.Name = value; OnPropertyChanged(); } }
     public string? Manager { get => Entity.Manager; set { Entity.Manager = value; OnPropertyChanged(); } }
     public string? Scale { get => Entity.Scale; set { Entity.Scale = value; OnPropertyChanged(); } }
@@ -174,8 +254,9 @@ public partial class StrategyVM(Strategy entity) : AutoSaveViewModel<Strategy>(e
     public string? WarningStoploss { get => Entity.WarningStoploss; set { Entity.WarningStoploss = value; OnPropertyChanged(); } }
 }
 
-public partial class FundInfoVM(FundInfo entity) : AutoSaveViewModel<FundInfo>(entity)
+public partial class FundInfoVM : AutoSaveViewModel<FundInfo>
 {
+    public FundInfoVM(FundInfo entity) : base(entity) { EndInit(); }
     public string? Name { get => Entity.Name; set { Entity.Name = value; OnPropertyChanged(); } }
     public string? Code { get => Entity.Code; set { Entity.Code = value; OnPropertyChanged(); } }
     public string? Duration { get => Entity.Duration; set { Entity.Duration = value; OnPropertyChanged(); } }
@@ -195,22 +276,25 @@ public partial class FundInfoVM(FundInfo entity) : AutoSaveViewModel<FundInfo>(e
     public string? Scope { get => Entity.Scope; set { Entity.Scope = value; OnPropertyChanged(); } }
 }
 
-public partial class AwardVM(Award entity) : AutoSaveViewModel<Award>(entity)
+public partial class AwardVM : AutoSaveViewModel<Award>
 {
+    public AwardVM(Award entity) : base(entity) { EndInit(); }
     public string? Time { get => Entity.Time; set { Entity.Time = value; OnPropertyChanged(); } }
     public string? Entity2 { get => Entity.Entity; set { Entity.Entity = value; OnPropertyChanged(); } }
     public string? Name { get => Entity.Name; set { Entity.Name = value; OnPropertyChanged(); } }
     public string? Evaluator { get => Entity.Evaluator; set { Entity.Evaluator = value; OnPropertyChanged(); } }
 }
 
-public partial class AUMVM(AUM entity) : AutoSaveViewModel<AUM>(entity)
+public partial class AUMVM : AutoSaveViewModel<AUM>
 {
+    public AUMVM(AUM entity) : base(entity) { EndInit(); }
     public string? Year { get => Entity.Year; set { Entity.Year = value; OnPropertyChanged(); } }
     public string? Scale { get => Entity.Scale; set { Entity.Scale = value; OnPropertyChanged(); } }
 }
 
-public partial class DrawdownRecordVM(DrawdownRecord entity) : AutoSaveViewModel<DrawdownRecord>(entity)
+public partial class DrawdownRecordVM : AutoSaveViewModel<DrawdownRecord>
 {
+    public DrawdownRecordVM(DrawdownRecord entity) : base(entity) { EndInit(); }
     public string? ProductName { get => Entity.ProductName; set { Entity.ProductName = value; OnPropertyChanged(); } }
     public string? Date { get => Entity.Date; set { Entity.Date = value; OnPropertyChanged(); } }
     public string? Amplitude { get => Entity.Amplitude; set { Entity.Amplitude = value; OnPropertyChanged(); } }
@@ -219,8 +303,9 @@ public partial class DrawdownRecordVM(DrawdownRecord entity) : AutoSaveViewModel
     public string? RecoveryDays { get => Entity.RecoveryDays; set { Entity.RecoveryDays = value; OnPropertyChanged(); } }
 }
 
-public partial class FinancialStatementVM(FinancialStatement entity) : AutoSaveViewModel<FinancialStatement>(entity)
+public partial class FinancialStatementVM : AutoSaveViewModel<FinancialStatement>
 {
+    public FinancialStatementVM(FinancialStatement entity) : base(entity) { EndInit(); }
     public string? Year { get => Entity.Year; set { Entity.Year = value; OnPropertyChanged(); } }
     public string? TotalAssets { get => Entity.TotalAssets; set { Entity.TotalAssets = value; OnPropertyChanged(); } }
     public string? TotalLiabilities { get => Entity.TotalLiabilities; set { Entity.TotalLiabilities = value; OnPropertyChanged(); } }
@@ -230,8 +315,9 @@ public partial class FinancialStatementVM(FinancialStatement entity) : AutoSaveV
     public string? NetProfit { get => Entity.NetProfit; set { Entity.NetProfit = value; OnPropertyChanged(); } }
 }
 
-public partial class QAVM(QA entity) : AutoSaveViewModel<QA>(entity)
+public partial class QAVM : AutoSaveViewModel<QA>
 {
+    public QAVM(QA entity) : base(entity) { EndInit(); }
     public int Source { get => Entity.Source; set { Entity.Source = value; OnPropertyChanged(); } }
     public string? Question { get => Entity.Question; set { Entity.Question = value; OnPropertyChanged(); } }
     public string? Answer { get => Entity.Answer; set { Entity.Answer = value; OnPropertyChanged(); } }

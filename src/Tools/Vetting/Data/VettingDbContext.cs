@@ -72,11 +72,9 @@ public class VettingDbContext : IDisposable
         .GetMethods(BindingFlags.Public | BindingFlags.Instance)
         .First(m => m.Name == "GetCollection" && m.IsGenericMethod && m.GetParameters().Length == 0);
 
-    public void UpsertEntity(object entity)
+    public void UpsertEntity<T>(T entity)
     {
-        var method = GetCollectionGeneric.MakeGenericMethod(entity.GetType());
-        dynamic col = method.Invoke(_db, null)!;
-        col.Upsert((dynamic)entity);
+        _db.GetCollection<T>().Upsert(entity);
     }
 
     public void DeleteEntity(Type type, int id)

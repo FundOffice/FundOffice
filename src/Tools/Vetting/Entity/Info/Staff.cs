@@ -2,6 +2,18 @@ namespace Vetting.Models.Entities;
 
 public enum EducationLevel { 高中, 大专, 本科, 硕士, 博士, MBA, 其他 }
 
+[Flags]
+public enum StaffRole
+{
+    高管 = 1,
+    投研 = 2,
+    风控 = 4,
+    投资经理 = 8,
+    合规 = 16,
+    运营 = 32,
+    联系人 = 64,
+}
+
 /// <summary>
 /// 人员信息 (高管/投研/风控/投资经理通用)
 /// </summary>
@@ -21,6 +33,7 @@ public class Staff
     public string? MobilePhone { get; set; }
     public string? Telephone { get; set; }
     public string? Email { get; set; }
-    /// <summary>角色: Executive(高管) / Researcher(投研) / RiskCtrl(风控) / PM(投资经理)</summary>
-    public string? Role { get; set; }
+    /// <summary>角色（可多选）</summary>
+    public StaffRole Role { get; set; }
+    public int? DepartmentId { get; set; }
 }
