@@ -1,21 +1,30 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Vetting.Data;
 using Vetting.Entity;
 
 namespace Vetting.ViewModel;
-public partial class VettingReportViewModel(VettingReport report) : ObservableObject
+public partial class VettingReportViewModel : ObservableObject
 {
-    public VettingReport Report { get; } = report;
+    public VettingReport Report { get; }
     public string Id => Report.Id;
     public string FolderPath => Path.Combine("files", "vetting", Id);
     public DateTime CreateTime => Report.CreateTime;
-    [ObservableProperty] public partial string Name { get; set; } = report.Name;
-    [ObservableProperty] public partial string NameEdit { get; set; } = report.Name;
-    public ObservableCollection<FileInfo> OriginalFiles { get; } = [];
+    [ObservableProperty] public partial string Name { get; set; }
+    [ObservableProperty] public partial string NameEdit { get; set; }
+    public ObservableCollection<ReportFileViewModel> OriginalFiles { get; } = [];
 
     private FileSystemWatcher? _watcher;
+
+    public VettingReportViewModel(VettingReport report)
+    {
+        Report = report;
+        Name = report.Name;
+        NameEdit = report.Name;
+    }
 
     public void StartWatching()
     {
@@ -39,10 +48,37 @@ public partial class VettingReportViewModel(VettingReport report) : ObservableOb
         App.Current.Dispatcher.Invoke(() =>
         {
             OriginalFiles.Clear();
-            foreach (var f in files) OriginalFiles.Add(f);
+            foreach (var f in files) OriginalFiles.Add(new ReportFileViewModel(f));
         });
     }
 
     [RelayCommand]
-    private void SaveName() => Name = NameEdit;
+    private void SaveName()
+    {
+        Name = NameEdit;
+        SaveToDb();
+    }
+
+    public void SaveToDb()
+    {
+        using var db = new VettingDbContext();
+        db.Reports.Upsert(new VettingReport(Id, Name, CreateTime));
+    }
+}
+
+public partial class ReportFileViewModel : ObservableObject
+{
+    public required string FileName { get; set; }
+    public required string AbsolutePath { get; set; }
+
+    public ObservableCollection<VettingParseTaskViewModel> Tasks { get; } = [];
+
+
+
+    [SetsRequiredMembers]
+    public ReportFileViewModel(FileInfo fileInfo)
+    {
+        FileName = fileInfo.Name;
+        AbsolutePath = fileInfo.FullName;
+    }
 }

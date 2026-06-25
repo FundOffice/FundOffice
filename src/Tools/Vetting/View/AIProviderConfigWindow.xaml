@@ -1,0 +1,80 @@
+<Window
+    x:Class="Vetting.View.AIProviderConfigWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:vm="clr-namespace:Vetting.ViewModel"
+    Title="AI设置"
+    Width="500"
+    Height="400"
+    WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <Style BasedOn="{StaticResource ListBoxItemBaseStyle}" TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
+    <Window.DataContext>
+        <vm:AIProviderConfigViewModel />
+    </Window.DataContext>
+
+    <DockPanel>
+        <ListBox DockPanel.Dock="Top" ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedProvider}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Name}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <hc:UniformSpacingPanel
+            Margin="16"
+            DataContext="{Binding SelectedProvider}"
+            Orientation="Vertical"
+            Spacing="8">
+            <DockPanel LastChildFill="False">
+                <TextBlock VerticalAlignment="Center" Text="API 风格" />
+
+                <ListBox
+                    Margin="10,0,0,0"
+                    ItemsPanel="{StaticResource UniformHorizontalItemsPanelTemplate}"
+                    ItemsSource="{Binding ProviderTypes}"
+                    SelectedItem="{Binding SelectedProviderType}" />
+
+
+            </DockPanel>
+            <hc:PasswordBox
+                hc:InfoElement.Title="API Key"
+                hc:InfoElement.TitlePlacement="Left"
+                IsSafeEnabled="False"
+                ShowEyeButton="True"
+                UnsafePassword="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+
+            <hc:TextBox
+                hc:InfoElement.Title="Base URL"
+                hc:InfoElement.TitlePlacement="Left"
+                Text="{Binding BaseUrl, UpdateSourceTrigger=PropertyChanged}" />
+
+            <DockPanel>
+                <Button
+                    HorizontalAlignment="Left"
+                    Command="{Binding FetchModelsCommand}"
+                    Content="获取模型"
+                    DockPanel.Dock="Right" />
+                <hc:ComboBox
+                    hc:InfoElement.Title="模型"
+                    hc:InfoElement.TitlePlacement="Left"
+                    IsEditable="True"
+                    ItemsSource="{Binding AvailableModels}"
+                    Text="{Binding Model, UpdateSourceTrigger=PropertyChanged}" />
+            </DockPanel>
+
+
+            <Button
+                HorizontalAlignment="Left"
+                Command="{Binding SaveCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                Content="保存" />
+            <TextBlock Margin="0,8" Text="{Binding StatusMessage}" />
+        </hc:UniformSpacingPanel>
+    </DockPanel>
+</Window>

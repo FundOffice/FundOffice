@@ -22,9 +22,12 @@
     <DockPanel Margin="8">
         <hc:UniformSpacingPanel DockPanel.Dock="Top" Spacing="8">
             <Button Command="{Binding NewVettingCommand}" Content="新建尽调" />
-            <Button Content="AI设置" />
+            <Button Command="{Binding SetAIConfigCommand}" Content="AI设置" />
             <Button Content="数据中心" />
         </hc:UniformSpacingPanel>
+
+        <Separator Margin="5" DockPanel.Dock="Top" />
+
         <DockPanel>
             <hc:SearchBar
                 hc:InfoElement.Title="筛选"
