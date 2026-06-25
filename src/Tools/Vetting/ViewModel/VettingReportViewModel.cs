@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Text;
 using Vetting.Data;
 using Vetting.Entity;
 
@@ -50,7 +51,7 @@ public partial class VettingReportViewModel : ObservableObject
         App.Current.Dispatcher.Invoke(() =>
         {
             OriginalFiles.Clear();
-            foreach (var f in files) OriginalFiles.Add(new ReportFileViewModel(f));
+            foreach (var f in files) OriginalFiles.Add(new ReportFileViewModel(f, Id));
         });
     }
 
@@ -72,20 +73,17 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<AIProvid
 {
     public required string FileName { get; set; }
     public required string AbsolutePath { get; set; }
+    public string VettingId { get; set; } = "";
     [ObservableProperty] public partial bool IsExpanded { get; set; }
-
-
-
     [ObservableProperty] public partial ObservableCollection<VettingParseTaskViewModel> Tasks { get; set; } = [];
-
-
     public ObservableCollection<AIProviderItemViewModel> Providers { get; } = [];
 
     [SetsRequiredMembers]
-    public ReportFileViewModel(FileInfo fileInfo)
+    public ReportFileViewModel(FileInfo fileInfo, string vettingId)
     {
         FileName = fileInfo.Name;
         AbsolutePath = fileInfo.FullName;
+        VettingId = vettingId;
         using var db = new VettingDbContext();
         foreach (var config in db.AIProviderConfigs.FindAll())
             Providers.Add(new AIProviderItemViewModel(config));
@@ -95,28 +93,87 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<AIProvid
     private async Task GenerateTemplatesAsync()
     {
         var sel = Providers.Where(x => x.IsSelected).ToArray();
-
         if (sel.Length == 0) return;
 
         IsExpanded = true;
-
         Tasks = [.. sel.Select(provider => new VettingParseTaskViewModel { TaskName = provider.Name, Provider = CreateProvider(provider) })];
-
-        var tasks = Tasks.Select(RunSingleTaskAsync).ToArray();
-
-        await Task.WhenAll(tasks);
+        await Task.WhenAll(Tasks.Select(RunSingleTaskAsync).ToArray());
     }
 
-    private static async Task RunSingleTaskAsync(VettingParseTaskViewModel task)
+    private async Task RunSingleTaskAsync(VettingParseTaskViewModel task)
     {
         task.Start();
         try
         {
-            // TODO: 实际工作函数等会再写
-            await Task.Delay(100000);
+            // Step 1: 解析文档结构
+            var structure = FundOffice.Vetting.Services.DocOps.AnalyzeStructure(AbsolutePath);
+
+            // Step 2: 读取 system prompt（本地版本优先），调用 AI
+            var sysPrompt = await LoadSysptAsync();
+            var messages = new[]
+            {
+                FundOffice.Copilot.Models.ChatMessage.System(sysPrompt),
+                FundOffice.Copilot.Models.ChatMessage.User(structure)
+            };
+            var options = new FundOffice.Copilot.Models.ChatOptions
+            {
+                AdditionalProperties = new Dictionary<string, object>
+                {
+                    ["response_format"] = new { type = "json_object" }
+                }
+            };
+
+            var sb = new StringBuilder();
+            await foreach (var token in task.Provider!.ChatCompletionStreamAsync(messages, options: options))
+            {
+                switch (token)
+                {
+                    case FundOffice.Copilot.Models.TextDelta td:
+                        sb.Append(td.Text);
+                        task.Usage = sb.Length / 4; // 估算: ~4字符/token
+                        break;
+                    case FundOffice.Copilot.Models.UsageUpdate u:
+                        task.Usage = (u.PromptTokens ?? 0) + (u.CompletionTokens ?? 0);
+                        break;
+                }
+            }
+
+            // Step 3: 校验 JSON，生成模板文件
+            var json = sb.ToString().Trim();
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+
+            var tplDir = Path.Combine("files", "vetting", VettingId, "tpl");
+            Directory.CreateDirectory(tplDir);
+            var tplPath = Path.Combine(tplDir, FileName);
+            File.Copy(AbsolutePath, tplPath, overwrite: true);
+
+            task.Output.Add($"模板已生成: {tplPath}");
             task.Complete();
         }
         catch (Exception ex) { task.Fail(ex.Message); }
+    }
+
+    private static async Task<string> LoadSysptAsync()
+    {
+        var localPath = Path.Combine("files", "vetting", "syspt.md");
+        var asm = typeof(ReportFileViewModel).Assembly;
+        using var embeddedSr = new StreamReader(asm.GetManifestResourceStream("Vetting.syspt.md")!);
+        var embedded = await embeddedSr.ReadToEndAsync();
+        var embeddedVer = ExtractVersion(embedded);
+
+        if (File.Exists(localPath))
+        {
+            var local = await File.ReadAllTextAsync(localPath);
+            var localVer = ExtractVersion(local);
+            if (localVer >= embeddedVer) return local;
+        }
+        return embedded;
+    }
+
+    private static int ExtractVersion(string content)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(content, @"<!--\s*version:(\d+)\s*-->");
+        return match.Success ? int.Parse(match.Groups[1].Value) : 0;
     }
 
     private static FundOffice.Copilot.Providers.ITokenProvider CreateProvider(AIProviderItemViewModel vm) => vm.ProviderType switch
@@ -157,6 +214,5 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<AIProvid
             default:
                 break;
         }
-
     }
 }

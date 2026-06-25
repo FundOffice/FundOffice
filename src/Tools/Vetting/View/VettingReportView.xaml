@@ -90,7 +90,7 @@
                         Margin="8,0"
                         VerticalAlignment="Center"
                         Foreground="Gray"
-                        Text="{Binding Usage}" />
+                        Text="{Binding UsageText}" />
                 </DockPanel>
 
                 <!--  展开时显示 Output 和 ErrorMessage  -->
