@@ -21,11 +21,9 @@ public partial class VettingReportViewModel : ObservableObject
     [ObservableProperty] public partial string Name { get; set; }
     [ObservableProperty] public partial string NameEdit { get; set; }
     public ObservableCollection<ReportFileViewModel> OriginalFiles { get; } = [];
-    public ObservableCollection<TemplateFileViewModel> TemplateFiles { get; } = [];
     public ObservableCollection<FinalFileViewModel> FinalFiles { get; } = [];
 
     private FileSystemWatcher? _watcher;
-    private FileSystemWatcher? _tplWatcher;
     private FileSystemWatcher? _finalWatcher;
 
     public VettingReportViewModel(VettingReport report)
@@ -45,14 +43,6 @@ public partial class VettingReportViewModel : ObservableObject
         _watcher.Renamed += (_, _) => ReloadFiles();
         _watcher.EnableRaisingEvents = true;
 
-        Directory.CreateDirectory(TplPath);
-        ReloadTemplateFiles();
-        _tplWatcher = new FileSystemWatcher(TplPath) { NotifyFilter = NotifyFilters.FileName | NotifyFilters.Size };
-        _tplWatcher.Created += (_, _) => ReloadTemplateFiles();
-        _tplWatcher.Deleted += (_, _) => ReloadTemplateFiles();
-        _tplWatcher.Renamed += (_, _) => ReloadTemplateFiles();
-        _tplWatcher.EnableRaisingEvents = true;
-
         Directory.CreateDirectory(FinalPath);
         ReloadFinalFiles();
         _finalWatcher = new FileSystemWatcher(FinalPath) { NotifyFilter = NotifyFilters.FileName | NotifyFilters.Size };
@@ -65,7 +55,6 @@ public partial class VettingReportViewModel : ObservableObject
     public void StopWatching()
     {
         if (_watcher is { } w) { w.EnableRaisingEvents = false; w.Dispose(); _watcher = null; }
-        if (_tplWatcher is { } tw) { tw.EnableRaisingEvents = false; tw.Dispose(); _tplWatcher = null; }
         if (_finalWatcher is { } fw) { fw.EnableRaisingEvents = false; fw.Dispose(); _finalWatcher = null; }
     }
 
@@ -78,21 +67,6 @@ public partial class VettingReportViewModel : ObservableObject
         {
             OriginalFiles.Clear();
             foreach (var f in files) OriginalFiles.Add(new ReportFileViewModel(f, Id));
-        });
-    }
-
-    private void ReloadTemplateFiles()
-    {
-        if (!Directory.Exists(TplPath)) return;
-        var files = new DirectoryInfo(TplPath).GetFiles()
-            .Where(f => !f.Name.StartsWith("~$") && Regex.IsMatch(f.Name, @"by\[.+\]")
-                && !f.Attributes.HasFlag(FileAttributes.Hidden)
-                && !f.Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
-            .ToArray();
-        App.Current.Dispatcher.Invoke(() =>
-        {
-            TemplateFiles.Clear();
-            foreach (var f in files) TemplateFiles.Add(new TemplateFileViewModel(f, Id));
         });
     }
 

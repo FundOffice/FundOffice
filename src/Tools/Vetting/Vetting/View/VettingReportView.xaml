@@ -144,200 +144,170 @@
                             <StackPanel>
                                 <DockPanel LastChildFill="False">
                                     <Button
-                                        Command="{Binding GenerateTemplatesCommand}"
-                                        Content="解析"
-                                        DockPanel.Dock="Right"
-                                        Style="{StaticResource ButtonPrimary}" />
-
-                                    <TextBlock VerticalAlignment="Center" Text="{Binding FileName}" />
-                                    <Button
-                                        Margin="5,0"
-                                        Command="{Binding OpenFileCommand}"
-                                        Content="打开"
-                                        Style="{StaticResource ButtonInfo.Small}" />
-                                </DockPanel>
-
-
-                                <ListBox
-                                    ItemsSource="{Binding Tasks}"
-                                    Style="{StaticResource ListBoxCustom}"
-                                    Visibility="{Binding Tasks.Count, Converter={StaticResource Int2VisibilityConverter}}" />
-
-                            </StackPanel>
-                        </Border>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </GroupBox>
-
-
-        <Separator />
-
-        <GroupBox
-            Header="模板列表"
-            Style="{StaticResource GroupBoxTab}"
-            Visibility="{Binding TemplateFiles.Count, Converter={StaticResource Int2VisibilityConverter}}">
-            <ListBox ItemsSource="{Binding TemplateFiles}">
-                <ListBox.ItemContainerStyle>
-                    <Style BasedOn="{StaticResource ListBoxItemCustom}" TargetType="ListBoxItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="Margin" Value="4,4" />
-                    </Style>
-                </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Border>
-                            <StackPanel>
-
-                                <DockPanel LastChildFill="False">
-
-                                    <Button
-                                        Margin="4,0"
                                         Command="{Binding FillTemplateCommand}"
-                                        Content="填充模板"
+                                        Content="生成"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource ButtonSuccess}" />
-                                    <Popup
-                                        AllowsTransparency="True"
-                                        IsOpen="{Binding IsRecommendOpen}"
-                                        Placement="Bottom"
-                                        PlacementTarget="{Binding ElementName=RecommendToggle}"
-                                        StaysOpen="False">
-                                        <Border
-                                            MinWidth="400"
-                                            Padding="8"
-                                            Background="White"
-                                            BorderBrush="Gray"
-                                            BorderThickness="1"
-                                            CornerRadius="4">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <DockPanel Grid.Column="0" Margin="4">
-                                                    <TextBlock
-                                                        Margin="0,0,0,4"
-                                                        DockPanel.Dock="Top"
-                                                        FontWeight="SemiBold"
-                                                        Text="所有产品（拖到右侧添加）" />
-                                                    <ListBox
-                                                        AllowDrop="True"
-                                                        DisplayMemberPath="Name"
-                                                        DragOver="FundList_DragOver"
-                                                        Drop="FundList_Drop"
-                                                        ItemsSource="{Binding AvailableFunds}"
-                                                        PreviewMouseMove="FundList_PreviewMouseMove"
-                                                        SelectedItem="{Binding SelectedAvailable}" />
-                                                </DockPanel>
-                                                <DockPanel Grid.Column="1" Margin="4">
-                                                    <TextBlock
-                                                        Margin="0,0,0,4"
-                                                        DockPanel.Dock="Top"
-                                                        FontWeight="SemiBold"
-                                                        Text="推荐产品（拖动排序，拖到左侧移除）" />
-                                                    <ListBox
-                                                        AllowDrop="True"
-                                                        DisplayMemberPath="Name"
-                                                        DragOver="FundList_DragOver"
-                                                        Drop="FundList_Drop"
-                                                        ItemsSource="{Binding RecommendedFunds}"
-                                                        PreviewMouseMove="FundList_PreviewMouseMove"
-                                                        SelectedItem="{Binding SelectedRecommended}" />
-                                                </DockPanel>
-                                            </Grid>
-                                        </Border>
-                                    </Popup>
-                                    <Button
-                                        Margin="4,0"
-                                        Command="{Binding ViewCustomQuestionsCommand}"
-                                        Content="查看问题"
-                                        DockPanel.Dock="Right"
-                                        Style="{StaticResource ButtonDefault.Small}" />
-                                    <ToggleButton
-                                        x:Name="RecommendToggle"
-                                        Margin="4,0"
-                                        Content="设置推荐产品"
-                                        DockPanel.Dock="Right"
-                                        IsChecked="{Binding IsRecommendOpen}"
-                                        Style="{StaticResource ToggleButtonPrimary.Small}" />
-
-                                    <TextBlock VerticalAlignment="Center" Text="{Binding FileName}" />
-
-                                    <Button
-                                        Margin="5,0"
-                                        Command="{Binding OpenFileCommand}"
-                                        Content="打开"
-                                        Style="{StaticResource ButtonInfo.Small}" />
-                                </DockPanel>
-
-                                <DockPanel Margin="0,5,0,0" LastChildFill="False">
                                     <Button
                                         Margin="4,0"
                                         Command="{Binding AIAnswerCustomQuestionsCommand}"
                                         Content="AI回答"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource ButtonPrimary}" />
-                                    <ListBox
+                                    <Button
                                         Margin="4,0"
-                                        BorderThickness="0"
-                                        ItemsSource="{Binding AIStatuses}"
-                                        Style="{StaticResource ListBoxCustom}">
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Margin="0,2">
-                                                    <DockPanel>
-                                                        <!--  Done: 绿勾  -->
-                                                        <TextBlock
-                                                            DockPanel.Dock="Left"
-                                                            Foreground="Green"
-                                                            Text="✔"
-                                                            Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Done}" />
-                                                        <!--  Error: 红叉  -->
-                                                        <TextBlock
-                                                            DockPanel.Dock="Left"
-                                                            Foreground="Red"
-                                                            Text="✖"
-                                                            Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Error}" />
-                                                        <!--  Running: spinner  -->
-                                                        <Ellipse
-                                                            DockPanel.Dock="Left"
-                                                            Style="{StaticResource SpinnerStyle}"
-                                                            Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Running}" />
-                                                        <!--  Pending: 灰点  -->
-                                                        <Ellipse
-                                                            Width="8"
-                                                            Height="8"
-                                                            Margin="3,0"
-                                                            DockPanel.Dock="Left"
-                                                            Fill="Gray"
-                                                            Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Pending}" />
+                                        Command="{Binding ViewCustomQuestionsCommand}"
+                                        Content="查看问题"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource ButtonDefault}" />
+                                    <ToggleButton
+                                        x:Name="RecommendToggle"
+                                        Margin="4,0" BorderBrush="Orange"
+                                        Content="推荐产品"
+                                        DockPanel.Dock="Right" Background="Orange"
+                                        IsChecked="{Binding IsRecommendOpen}"
+                                        Style="{StaticResource ToggleButtonPrimary}" />
+                                    <Button
+                                        Command="{Binding GenerateTemplatesCommand}"
+                                        Content="解析"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource ButtonPrimary}" />
 
-                                                        <TextBlock
-                                                            Margin="6,0,0,0"
-                                                            VerticalAlignment="Center"
-                                                            Text="{Binding TaskName}" />
-                                                        <TextBlock
-                                                            Margin="8,0"
-                                                            VerticalAlignment="Center"
-                                                            Foreground="Gray"
-                                                            Text="{Binding Elapsed}" />
-                                                        <TextBlock
-                                                            Margin="8,0"
-                                                            VerticalAlignment="Center"
-                                                            Foreground="Gray"
-                                                            Text="{Binding UsageText}" />
-                                                        <TextBlock
-                                                            Foreground="Red"
-                                                            Text="{Binding ErrorMessage}"
-                                                            Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />
-                                                    </DockPanel>
-                                                    <ItemsControl ItemsSource="{Binding Output}" Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}" />
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
+                                    <TextBlock
+                                        Margin="5,0"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding FileName}" />
+                                    <Button
+                                        Margin="5,0"
+                                        Command="{Binding OpenFileCommand}"
+                                        Content="打开"
+                                        Style="{StaticResource ButtonInfo.Small}" />
                                 </DockPanel>
+
+                                <!--  推荐产品浮层（文件级）  -->
+                                <Popup
+                                    AllowsTransparency="True"
+                                    IsOpen="{Binding IsRecommendOpen}"
+                                    Placement="Bottom"
+                                    PlacementTarget="{Binding ElementName=RecommendToggle}"
+                                    StaysOpen="False">
+                                    <Border
+                                        MinWidth="400"
+                                        Padding="8"
+                                        Background="White"
+                                        BorderBrush="Gray"
+                                        BorderThickness="1"
+                                        CornerRadius="4">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <DockPanel Grid.Column="0" Margin="4">
+                                                <TextBlock
+                                                    Margin="0,0,0,4"
+                                                    DockPanel.Dock="Top"
+                                                    FontWeight="SemiBold"
+                                                    Text="所有产品（拖到右侧添加）" />
+                                                <ListBox
+                                                    x:Name="AvailableFundList"
+                                                    DisplayMemberPath="Name"
+                                                    ItemsSource="{Binding AvailableFunds}"
+                                                    AllowDrop="True"
+                                                    DragOver="FundList_DragOver"
+                                                    Drop="FundList_Drop"
+                                                    PreviewMouseMove="FundList_PreviewMouseMove"
+                                                    SelectedItem="{Binding SelectedAvailable}" />
+                                            </DockPanel>
+                                            <DockPanel Grid.Column="1" Margin="4">
+                                                <TextBlock
+                                                    Margin="0,0,0,4"
+                                                    DockPanel.Dock="Top"
+                                                    FontWeight="SemiBold"
+                                                    Text="推荐产品（拖动排序，拖回左侧移除）" />
+                                                <ListBox
+                                                    x:Name="RecommendedFundList"
+                                                    DisplayMemberPath="Name"
+                                                    ItemsSource="{Binding RecommendedFunds}"
+                                                    AllowDrop="True"
+                                                    DragOver="FundList_DragOver"
+                                                    Drop="FundList_Drop"
+                                                    PreviewMouseMove="FundList_PreviewMouseMove"
+                                                    SelectedItem="{Binding SelectedRecommended}" />
+                                            </DockPanel>
+                                        </Grid>
+                                    </Border>
+                                </Popup>
+
+                                <!--  解析任务  -->
+                                <ListBox
+                                    ItemsSource="{Binding Tasks}"
+                                    Style="{StaticResource ListBoxCustom}"
+                                    Visibility="{Binding Tasks.Count, Converter={StaticResource Int2VisibilityConverter}}" />
+
+                                <!--  AI 回答任务状态  -->
+                                <ListBox
+                                    Margin="0,5,0,0"
+                                    BorderThickness="0"
+                                    ItemsSource="{Binding AIStatuses}"
+                                    Style="{StaticResource ListBoxCustom}"
+                                    Visibility="{Binding AIStatuses.Count, Converter={StaticResource Int2VisibilityConverter}}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,2">
+                                                <DockPanel>
+                                                    <TextBlock
+                                                        DockPanel.Dock="Left"
+                                                        Foreground="Green"
+                                                        Text="✔"
+                                                        Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Done}" />
+                                                    <TextBlock
+                                                        DockPanel.Dock="Left"
+                                                        Foreground="Red"
+                                                        Text="✖"
+                                                        Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Error}" />
+                                                    <Ellipse
+                                                        DockPanel.Dock="Left"
+                                                        Style="{StaticResource SpinnerStyle}"
+                                                        Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Running}" />
+                                                    <Ellipse
+                                                        Width="8"
+                                                        Height="8"
+                                                        Margin="3,0"
+                                                        DockPanel.Dock="Left"
+                                                        Fill="Gray"
+                                                        Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Pending}" />
+                                                    <TextBlock
+                                                        Margin="6,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        Text="{Binding TaskName}" />
+                                                    <TextBlock
+                                                        Margin="8,0"
+                                                        VerticalAlignment="Center"
+                                                        Foreground="Gray"
+                                                        Text="{Binding Elapsed}" />
+                                                    <TextBlock
+                                                        Margin="8,0"
+                                                        VerticalAlignment="Center"
+                                                        Foreground="Gray"
+                                                        Text="{Binding UsageText}" />
+                                                    <TextBlock
+                                                        Foreground="Red"
+                                                        Text="{Binding ErrorMessage}"
+                                                        Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />
+                                                </DockPanel>
+                                                <ItemsControl ItemsSource="{Binding Output}" Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+
+                                <!--  填充输出日志  -->
+                                <ItemsControl
+                                    Margin="0,5,0,0"
+                                    ItemsSource="{Binding Output}"
+                                    Visibility="{Binding Output.Count, Converter={StaticResource Int2VisibilityConverter}}" />
+
                             </StackPanel>
                         </Border>
                     </DataTemplate>
@@ -345,6 +315,8 @@
             </ListBox>
         </GroupBox>
 
+
+        <Separator Margin="0,20" />
 
         <GroupBox
             Header="报告列表"

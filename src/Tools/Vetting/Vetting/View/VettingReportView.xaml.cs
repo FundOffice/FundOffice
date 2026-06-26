@@ -49,9 +49,9 @@ public partial class VettingReportView : UserControl
         if (sender is not ListBox listBox) return;
         if (!e.Data.GetDataPresent("FundInfoVM")) return;
         var fund = (FundInfoVM)e.Data.GetData("FundInfoVM");
-        if (listBox.DataContext is not TemplateFileViewModel vm) return;
+        if (listBox.DataContext is not ReportFileViewModel vm) return;
 
-        var targetIsRecommended = listBox.ItemsSource == vm.RecommendedFunds;
+        var targetIsRecommended = ReferenceEquals(listBox.ItemsSource, vm.RecommendedFunds);
 
         if (targetIsRecommended)
         {
