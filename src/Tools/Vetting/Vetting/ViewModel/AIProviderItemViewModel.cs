@@ -80,7 +80,7 @@ public partial class AIProviderItemViewModel : ObservableObject
         IsBusy = true; StatusMessage = "正在获取模型..."; Tested = false;
         try
         {
-            var provider = CreateProvider();
+            var provider = CreateProvider(overrideModel: string.IsNullOrWhiteSpace(Model) ? "gpt-4o-mini" : Model);
             var models = await provider.GetModelsAsync();
             AvailableModels.Clear();
             foreach (var m in models) AvailableModels.Add(m.Id);
@@ -114,9 +114,9 @@ public partial class AIProviderItemViewModel : ObservableObject
 
     partial void OnTestedChanged(bool value) => SaveCommand.NotifyCanExecuteChanged();
 
-    private ITokenProvider CreateProvider() => ProviderType switch
+    private ITokenProvider CreateProvider(string? overrideModel = null) => ProviderType switch
     {
-        "Anthropic" => new AnthropicTokenProvider(new AnthropicOptions { Identifier = Name, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = Model }),
-        _ => new OpenAITokenProvider(new OpenAIOptions { Identifier = Name, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = Model }),
+        "Anthropic" => new AnthropicTokenProvider(new AnthropicOptions { Identifier = Name, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model }),
+        _ => new OpenAITokenProvider(new OpenAIOptions { Identifier = Name, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model }),
     };
 }
