@@ -76,7 +76,7 @@ public class CustomQuestionAnswerer
             var prompt = BuildPrompt(qaList, questions);
             var messages = new[]
             {
-                ChatMessage.System("你是一名尽职调查分析师，根据提供的历史问答资料，准确回答尽调问题。直接回答，不要废话。如果资料中没有相关信息，回答\"暂无相关信息\"。"),
+                ChatMessage.System("你是一名尽职调查分析师，根据提供的历史问答资料，准确回答尽调问题。直接回答，不要废话。如果资料中没有相关信息，回答\"\"(空字符串)。"),
                 ChatMessage.User(prompt)
             };
             var options = new ChatOptions

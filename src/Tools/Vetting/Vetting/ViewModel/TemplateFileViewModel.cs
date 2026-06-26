@@ -192,6 +192,10 @@ public partial class TemplateFileViewModel : ObservableObject
         // 解析文件名获取 fileHash + providerId
         var m = Regex.Match(FileName, @"(.+)_by\[(.+)\](.*)");
         if (!m.Success) { Output.Add("文件名格式无法解析"); return; }
+        var safeName = m.Groups[1].Value;
+        var ext = m.Groups[3].Value;
+
+
         var srcPath = Path.Combine("files", "vetting", VettingId, $"{m.Groups[1].Value}{m.Groups[3].Value}");
         var fileHash = File.Exists(srcPath)
             ? Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(srcPath))).ToLowerInvariant()
@@ -202,20 +206,23 @@ public partial class TemplateFileViewModel : ObservableObject
             ? RecommendedFunds.Select(f => f.Entity.Id).ToArray()
             : LoadGlobalRecommendIds();
         var obj = await Task.Run(() => BuildFillObject(fileHash, providerId, recommendIds));
-
-        var safeName = Path.GetFileNameWithoutExtension(FileName);
+         
         var outDir = Path.Combine("files", "vetting", VettingId, "final");
         Directory.CreateDirectory(outDir);
-        var outPath = Path.Combine(outDir, $"{safeName}_filled.docx");
+        var outPath = Path.Combine(outDir, $"{safeName}_filled{ext}");
 
         try
         {
-            var tempPath = Path.Combine(Path.GetTempPath(), $"vetting_{Guid.NewGuid():N}.docx");
+            var tempPath = Path.Combine(Path.GetTempPath(), $"vetting_{Guid.NewGuid():N}{ext}");
             try
             {
                 FileRetry.Run(() => MiniWord.SaveAsByTemplate(tempPath, tplPath, obj), "生成临时模板", onRetry: m => Output.Add(m));
                 FileRetry.Run(() => MiniWord.SaveAsByTemplate(outPath, tempPath, obj), "生成最终文件", onRetry: m => Output.Add(m));
                 Output.Add($"已生成: {outPath}");
+            }
+            catch(Exception ex)
+            {
+                Output.Add($"填充失败: {ex.Message}");
             }
             finally { try { File.Delete(tempPath); } catch { } }
         }
