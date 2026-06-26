@@ -145,7 +145,7 @@
                                 <DockPanel LastChildFill="False">
                                     <Button
                                         Command="{Binding GenerateTemplatesCommand}"
-                                        Content="解析成模板"
+                                        Content="解析"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource ButtonPrimary}" />
 
