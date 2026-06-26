@@ -281,6 +281,19 @@ public partial class TemplateFileViewModel : ObservableObject
         obj["contact"] = Filter(StaffRole.联系人).Select(ToDict).ToArray();
         obj["compliance"] = Filter(StaffRole.合规).Select(ToDict).ToArray();
 
+        // 年份分组列表（编号 N=1 最近，N=2 去年，N=3 前年）
+        var fsList = db.FinancialStatements.FindAll().OrderByDescending(f => f.Year).ToArray();
+        for (int i = 0; i < fsList.Length; i++) FlattenInto(obj, $"financialstatement{i + 1}", fsList[i]);
+        obj["financialstatement"] = fsList.Select(ToDict).ToArray();
+
+        var drList = db.DrawdownRecords.FindAll().OrderByDescending(d => d.Date).ToArray();
+        for (int i = 0; i < drList.Length; i++) FlattenInto(obj, $"drawdownrecord{i + 1}", drList[i]);
+        obj["drawdownrecord"] = drList.Select(ToDict).ToArray();
+
+        var aumList = db.AUMs.FindAll().OrderByDescending(a => a.Year).ToArray();
+        for (int i = 0; i < aumList.Length; i++) FlattenInto(obj, $"aum{i + 1}", aumList[i]);
+        obj["aum"] = aumList.Select(ToDict).ToArray();
+
         // 散装问题答案
         if (!string.IsNullOrEmpty(fileHash))
         {
