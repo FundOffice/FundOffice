@@ -83,14 +83,13 @@ public static class DocOps
                     for (int ri = 0; ri < rows.Count; ri++)
                     {
                         var row = rows[ri];
-                        var rowLabel = (ri == 0 && hasHeader) ? "H" : $"{ri}";
                         int ci = 0;
                         foreach (var cell in row.Elements<TableCell>())
                         {
                             var cellText = cell.InnerText.Replace("\n", "\\n");
                             var (rs, cs) = GetMergeInfo(cell);
                             var merge = cs > 1 ? $"(span={cs})" : rs == 0 ? "(vcont)" : "";
-                            sb.AppendLine($"  [{rowLabel},{ci}]{merge} {(string.IsNullOrWhiteSpace(cellText) ? "(EMPTY)" : cellText)}");
+                            sb.AppendLine($"  [{ri},{ci}]{merge} {(string.IsNullOrWhiteSpace(cellText) ? "(EMPTY)" : cellText)}");
                             ci++;
                         }
                     }
@@ -155,7 +154,7 @@ public static class DocOps
         for (int ri = from; ri < to; ri++)
         {
             var row = rows[ri];
-            var rowLabel = (ri == 0 && hasHeader) ? " H" : $"{ri,2}";
+            var rowLabel = $"{ri,2}";
             int ci = 0;
             foreach (var cell in row.Elements<TableCell>())
             {
@@ -182,7 +181,7 @@ public static class DocOps
         for (int ri = 0; ri < totalRows; ri++)
         {
             var row = rows[ri];
-            var rowLabel = (ri == 0 && hasHeader) ? " H" : $"{ri,2}";
+            var rowLabel = $"{ri,2}";
             int ci = 0;
             foreach (var cell in row.Elements<TableCell>())
             {

@@ -188,68 +188,79 @@
                     <DataTemplate>
                         <Border>
                             <StackPanel>
+
                                 <DockPanel LastChildFill="False">
+
                                     <Button
                                         Margin="4,0"
                                         Command="{Binding FillTemplateCommand}"
                                         Content="填充模板"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource ButtonSuccess}" />
-                                    <ToggleButton
-                                        x:Name="RecommendToggle"
-                                        Margin="4,0"
-                                        Content="设置推荐产品"
-                                        DockPanel.Dock="Right"
-                                        IsChecked="{Binding IsRecommendOpen}" />
                                     <Popup
-                                        PlacementTarget="{Binding ElementName=RecommendToggle}"
-                                        Placement="Bottom"
+                                        AllowsTransparency="True"
                                         IsOpen="{Binding IsRecommendOpen}"
-                                        StaysOpen="False"
-                                        AllowsTransparency="True">
-                                        <Border Background="White" BorderBrush="Gray" BorderThickness="1" Padding="8" CornerRadius="4" MinWidth="400">
+                                        Placement="Bottom"
+                                        PlacementTarget="{Binding ElementName=RecommendToggle}"
+                                        StaysOpen="False">
+                                        <Border
+                                            MinWidth="400"
+                                            Padding="8"
+                                            Background="White"
+                                            BorderBrush="Gray"
+                                            BorderThickness="1"
+                                            CornerRadius="4">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
                                                 <DockPanel Grid.Column="0" Margin="4">
-                                                    <TextBlock DockPanel.Dock="Top" FontWeight="SemiBold" Text="所有产品（拖到右侧添加）" Margin="0,0,0,4" />
+                                                    <TextBlock
+                                                        Margin="0,0,0,4"
+                                                        DockPanel.Dock="Top"
+                                                        FontWeight="SemiBold"
+                                                        Text="所有产品（拖到右侧添加）" />
                                                     <ListBox
                                                         AllowDrop="True"
                                                         DisplayMemberPath="Name"
-                                                        ItemsSource="{Binding AvailableFunds}"
-                                                        SelectedItem="{Binding SelectedAvailable}"
-                                                        PreviewMouseMove="FundList_PreviewMouseMove"
                                                         DragOver="FundList_DragOver"
-                                                        Drop="FundList_Drop" />
+                                                        Drop="FundList_Drop"
+                                                        ItemsSource="{Binding AvailableFunds}"
+                                                        PreviewMouseMove="FundList_PreviewMouseMove"
+                                                        SelectedItem="{Binding SelectedAvailable}" />
                                                 </DockPanel>
                                                 <DockPanel Grid.Column="1" Margin="4">
-                                                    <TextBlock DockPanel.Dock="Top" FontWeight="SemiBold" Text="推荐产品（拖动排序，拖到左侧移除）" Margin="0,0,0,4" />
+                                                    <TextBlock
+                                                        Margin="0,0,0,4"
+                                                        DockPanel.Dock="Top"
+                                                        FontWeight="SemiBold"
+                                                        Text="推荐产品（拖动排序，拖到左侧移除）" />
                                                     <ListBox
                                                         AllowDrop="True"
                                                         DisplayMemberPath="Name"
-                                                        ItemsSource="{Binding RecommendedFunds}"
-                                                        SelectedItem="{Binding SelectedRecommended}"
-                                                        PreviewMouseMove="FundList_PreviewMouseMove"
                                                         DragOver="FundList_DragOver"
-                                                        Drop="FundList_Drop" />
+                                                        Drop="FundList_Drop"
+                                                        ItemsSource="{Binding RecommendedFunds}"
+                                                        PreviewMouseMove="FundList_PreviewMouseMove"
+                                                        SelectedItem="{Binding SelectedRecommended}" />
                                                 </DockPanel>
                                             </Grid>
                                         </Border>
                                     </Popup>
                                     <Button
                                         Margin="4,0"
-                                        Command="{Binding AIAnswerCustomQuestionsCommand}"
-                                        Content="AI回答"
-                                        DockPanel.Dock="Right"
-                                        Style="{StaticResource ButtonPrimary}" />
-                                    <Button
-                                        Margin="4,0"
                                         Command="{Binding ViewCustomQuestionsCommand}"
                                         Content="查看问题"
-                                        DockPanel.Dock="Right" />
-
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource ButtonDefault.Small}" />
+                                    <ToggleButton
+                                        x:Name="RecommendToggle"
+                                        Margin="4,0"
+                                        Content="设置推荐产品"
+                                        DockPanel.Dock="Right"
+                                        IsChecked="{Binding IsRecommendOpen}"
+                                        Style="{StaticResource ToggleButtonPrimary.Small}" />
 
                                     <TextBlock VerticalAlignment="Center" Text="{Binding FileName}" />
 
@@ -258,6 +269,16 @@
                                         Command="{Binding OpenFileCommand}"
                                         Content="打开"
                                         Style="{StaticResource ButtonInfo.Small}" />
+                                </DockPanel>
+
+                                <DockPanel Margin="0,5,0,0" LastChildFill="False">
+                                    <Button
+                                        Margin="4,0"
+                                        Command="{Binding AIAnswerCustomQuestionsCommand}"
+                                        Content="AI回答"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource ButtonPrimary}" />
+
                                 </DockPanel>
                             </StackPanel>
                         </Border>

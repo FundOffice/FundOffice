@@ -102,7 +102,17 @@ public partial class VettingParseTaskViewModel : ObservableObject
                 var tool = op.GetProperty("tool").GetString()!;
                 var input = new Dictionary<string, System.Text.Json.JsonElement>();
                 foreach (var prop in op.EnumerateObject())
-                    input[prop.Name] = prop.Value.Clone();
+                {
+                    // 修复 AI 错误: {{product_XXX}} → {{product.XXX}}
+                    if (prop.Name == "text" && prop.Value.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        var fixedText = System.Text.RegularExpressions.Regex.Replace(
+                            prop.Value.GetString()!, @"\{\{product_", "{{product.");
+                        input[prop.Name] = System.Text.Json.JsonSerializer.SerializeToElement(fixedText);
+                    }
+                    else
+                        input[prop.Name] = prop.Value.Clone();
+                }
                 ops.Add((tool, input));
             }
             Vetting.Services.DocOps.BatchWrite(tplPath, ops);
