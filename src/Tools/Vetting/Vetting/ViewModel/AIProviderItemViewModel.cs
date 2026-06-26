@@ -49,6 +49,29 @@ public partial class AIProviderItemViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task TestConnectivityAsync()
+    {
+        if (string.IsNullOrWhiteSpace(BaseUrl)) { StatusMessage = "请输入 Url"; return; }
+        if (string.IsNullOrWhiteSpace(ApiKey)) { StatusMessage = "请输入 API Key"; return; }
+        if (string.IsNullOrWhiteSpace(Model)) { StatusMessage = "请先选择模型"; return; }
+
+        IsBusy = true; StatusMessage = "正在测试连通性...";
+        try
+        {
+            var provider = CreateProvider();
+            await provider.TestConnectivityAsync();
+            Tested = true;
+            StatusMessage = "连通测试通过";
+        }
+        catch (Exception ex)
+        {
+            Tested = false;
+            StatusMessage = $"连通失败({ex.GetType().Name}): {ex.Message}";
+        }
+        finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
     private async Task FetchModelsAsync()
     {
         if (string.IsNullOrWhiteSpace(BaseUrl)) { StatusMessage = "请输入 Url"; return; }

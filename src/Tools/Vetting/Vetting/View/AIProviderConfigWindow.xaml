@@ -78,7 +78,6 @@
         <Separator Margin="10" DockPanel.Dock="Top" />
 
         <hc:UniformSpacingPanel
-            Margin="16"
             DataContext="{Binding SelectedProvider}"
             Orientation="Vertical"
             Spacing="8">
@@ -125,6 +124,21 @@
             <DockPanel>
                 <Button
                     HorizontalAlignment="Left"
+                    Command="{Binding SaveCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                    Content="保存"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource ButtonSuccess}" />
+                <Button
+                    Margin="10,0,10,0"
+                    HorizontalAlignment="Left"
+                    Command="{Binding TestConnectivityCommand}"
+                    Content="连通测试"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource ButtonDashedPrimary}" />
+
+                <Button
+                    HorizontalAlignment="Left"
                     Command="{Binding FetchModelsCommand}"
                     Content="获取模型"
                     DockPanel.Dock="Right" />
@@ -135,15 +149,12 @@
                     IsEditable="True"
                     ItemsSource="{Binding AvailableModels}"
                     Text="{Binding Model, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+
             </DockPanel>
-
-
-            <Button
-                HorizontalAlignment="Left"
-                Command="{Binding SaveCommand}"
-                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
-                Content="保存" />
-            <TextBlock Margin="0,8" Text="{Binding StatusMessage}" />
+            <TextBlock
+                Margin="10,0"
+                Foreground="Red"
+                Text="{Binding StatusMessage}" />
         </hc:UniformSpacingPanel>
     </DockPanel>
 </Window>
