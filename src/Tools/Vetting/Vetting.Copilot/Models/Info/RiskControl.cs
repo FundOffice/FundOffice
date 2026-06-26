@@ -1,6 +1,6 @@
 namespace Vetting.Copilot.Models.Info;
 
-public class RiskControl
+public class RiskControl : IResolve
 {
     public int Id { get; set; } = 1;
     public string? SystemIntro { get; set; }
@@ -19,4 +19,25 @@ public class RiskControl
     public string? InsiderTradingPrevention { get; set; }
     public string? EmployeeTradingMonitor { get; set; }
     public string? ProductFairness { get; set; }
+
+    public object? Resolve(string propertyName) => propertyName switch
+    {
+        nameof(SystemIntro) => SystemIntro,
+        nameof(DecisionMechanism) => DecisionMechanism,
+        nameof(RiskMgmtCommittee) => RiskMgmtCommittee,
+        nameof(DrawdownControl) => DrawdownControl,
+        nameof(SystemicRiskResponse) => SystemicRiskResponse,
+        nameof(TradingMonitoring) => TradingMonitoring,
+        nameof(RiskMeasures) => RiskMeasures,
+        nameof(ManualVsSystem) => ManualVsSystem,
+        nameof(RiskMeasurement) => RiskMeasurement,
+        nameof(MaxDrawdownTolerance) => MaxDrawdownTolerance,
+        nameof(TailRisk) => TailRisk,
+        nameof(RiskReserve) => RiskReserve,
+        nameof(LiquidityMgmt) => LiquidityMgmt,
+        nameof(InsiderTradingPrevention) => InsiderTradingPrevention,
+        nameof(EmployeeTradingMonitor) => EmployeeTradingMonitor,
+        nameof(ProductFairness) => ProductFairness,
+        _ => null,
+    };
 }

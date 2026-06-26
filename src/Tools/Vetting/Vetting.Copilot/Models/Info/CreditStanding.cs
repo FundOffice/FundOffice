@@ -1,6 +1,6 @@
 namespace Vetting.Copilot.Models.Info;
 
-public class CreditStanding
+public class CreditStanding : IResolve
 {
     public int Id { get; set; } = 1;
     public string? AdminPenalty { get; set; }
@@ -25,4 +25,21 @@ public class CreditStanding
     public string? ExecViolation { get; set; }
     public string? OtherNegative { get; set; }
     public string? AntiMoneyLaundering { get; set; }
+
+    public object? Resolve(string propertyName) => propertyName switch
+    {
+        nameof(AdminPenalty) => AdminPenalty,
+        nameof(BusinessException) => BusinessException,
+        nameof(SeriousIllegal) => SeriousIllegal,
+        nameof(ExecutionInfo) => ExecutionInfo,
+        nameof(SecuritiesDishonesty) => SecuritiesDishonesty,
+        nameof(CorePersonDishonesty) => CorePersonDishonesty,
+        nameof(FundAssocCreditReport) => FundAssocCreditReport,
+        nameof(AICQuery) => AICQuery,
+        nameof(CSRCQuery) => CSRCQuery,
+        nameof(AssociationQuery) => AssociationQuery,
+        nameof(JudicialQuery) => JudicialQuery,
+        nameof(AntiMoneyLaundering) => AntiMoneyLaundering,
+        _ => null,
+    };
 }

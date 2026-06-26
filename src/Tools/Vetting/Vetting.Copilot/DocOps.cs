@@ -2,6 +2,7 @@ using System.Text.Json;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Vetting.Copilot.Models.Info;
 
 namespace Vetting.Copilot;
 
@@ -304,6 +305,266 @@ public static class DocOps
             return (0, colSpan);
         return (1, colSpan);
     }
+
+    /// <summary>
+    /// 按 operator 列表直接填充文档（无占位符，直接写值）
+    /// </summary>
+    public static void Fill(string templatePath, string outputPath, IReadOnlyList<FillOperator> operators, DataResolver resolver)
+    {
+        var outDir = Path.GetDirectoryName(outputPath)!;
+        Directory.CreateDirectory(outDir);
+        File.Copy(templatePath, outputPath, true);
+
+        using var doc = WordprocessingDocument.Open(outputPath, true);
+        var body = doc.MainDocumentPart!.Document.Body!;
+        var tables = body.Elements<Table>().ToList();
+        var paragraphs = body.Elements<Paragraph>().ToList();
+
+        // 累计行偏移：同一表格内 Type c 扩展行后，后续操作的 row 需要加上偏移
+        var tableOffsets = new Dictionary<int, int>();
+
+        foreach (var op in operators)
+        {
+            try
+            {
+                switch (op)
+                {
+                    case ScalarOp scalar:
+                        FillScalar(tables, paragraphs, scalar, resolver, tableOffsets);
+                        break;
+                    case RecommendOp rec:
+                        FillRecommend(tables, paragraphs, rec, resolver, tableOffsets);
+                        break;
+                    case ListExpandOp list:
+                        FillListExpand(tables, list, resolver, tableOffsets);
+                        break;
+                    case GridOp grid:
+                        FillGrid(tables, grid, resolver, tableOffsets);
+                        break;
+                    case ParagraphOp para:
+                        FillParagraph(paragraphs, para, resolver);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DocOps.Fill error ({op}): {ex}");
+            }
+        }
+        doc.MainDocumentPart.Document.Save();
+    }
+
+    #region Fill Implementations
+
+    private static void FillScalar(List<Table> tables, List<Paragraph> paragraphs, ScalarOp op, DataResolver resolver, Dictionary<int, int> offsets)
+    {
+        var value = resolver.Resolve(op.Entity, op.Property, op.Format);
+        if (op.Location.IsCell)
+        {
+            var cell = GetCell(tables, op.Location.TableIndex, op.Location.RowIndex + offsets.GetValueOrDefault(op.Location.TableIndex), op.Location.ColIndex);
+            if (cell != null) SetCellContent(cell, value);
+        }
+        else if (op.Location.IsParagraph)
+        {
+            var para = paragraphs.ElementAtOrDefault(op.Location.ParaIndex);
+            if (para != null) SetParaContent(para, value);
+        }
+    }
+
+    private static void FillRecommend(List<Table> tables, List<Paragraph> paragraphs, RecommendOp op, DataResolver resolver, Dictionary<int, int> offsets)
+    {
+        var value = resolver.ResolveRecommend(op.FundIndex, op.Property, op.Format);
+        if (string.IsNullOrEmpty(value)) return; // recommend 越界或属性为空，不填充
+
+        if (op.Location.IsCell)
+        {
+            var cell = GetCell(tables, op.Location.TableIndex, op.Location.RowIndex + offsets.GetValueOrDefault(op.Location.TableIndex), op.Location.ColIndex);
+            if (cell != null) SetCellContent(cell, value);
+        }
+        else if (op.Location.IsParagraph)
+        {
+            var para = paragraphs.ElementAtOrDefault(op.Location.ParaIndex);
+            if (para != null) SetParaContent(para, value);
+        }
+    }
+
+    private static void FillListExpand(List<Table> tables, ListExpandOp op, DataResolver resolver, Dictionary<int, int> offsets)
+    {
+        var table = tables.ElementAtOrDefault(op.Ts.TableIndex);
+        if (table == null) return;
+
+        var items = resolver.GetList(op.Entity);
+        if (items.Length == 0) return;
+
+        var rows = table.Elements<TableRow>().ToList();
+        int offset = offsets.GetValueOrDefault(op.Ts.TableIndex);
+        int availableRows = op.Te.RowIndex - op.Ts.RowIndex + 1;
+
+        // 需要扩展行
+        if (items.Length > availableRows)
+        {
+            int extraCount = items.Length - availableRows;
+            var templateRow = rows[op.Te.RowIndex];
+            var insertAfter = rows[op.Te.RowIndex];
+
+            for (int i = 0; i < extraCount; i++)
+            {
+                var newRow = (TableRow)templateRow.CloneNode(true);
+                // 清除克隆行中合并单元格的 vMerge 标记（首行应设为 Restart）
+                foreach (var cell in newRow.Elements<TableCell>())
+                {
+                    var vMerge = cell.TableCellProperties?.VerticalMerge;
+                    if (vMerge != null)
+                    {
+                        // 克隆行不继承跨行合并
+                        vMerge.Val = null; // Restart
+                    }
+                }
+                insertAfter = (TableRow)insertAfter.InsertAfterSelf(newRow);
+            }
+
+            offsets[op.Ts.TableIndex] = offset + extraCount;
+        }
+
+        // 填充数据
+        // 重新获取行列表（可能已插入新行）
+        rows = table.Elements<TableRow>().ToList();
+        var propKeys = op.Properties.Keys.ToArray();
+
+        for (int i = 0; i < items.Length; i++)
+        {
+            int rowIdx = op.Ts.RowIndex + i + offset;
+            var row = rows.ElementAtOrDefault(rowIdx);
+            if (row == null) continue;
+
+            var cells = row.Elements<TableCell>().ToList();
+            for (int j = 0; j < propKeys.Length; j++)
+            {
+                int colIdx = op.Ts.ColIndex + j;
+                var cell = cells.ElementAtOrDefault(colIdx);
+                if (cell == null) continue;
+
+                var propName = propKeys[j];
+                var value = items[i].TryGetValue(propName, out var v) ? v : "";
+                if (!string.IsNullOrEmpty(value) && op.Formats != null && op.Formats.TryGetValue(propName, out var fmt))
+                    value = ResolveHelper.ToString(value, fmt);
+                SetCellContent(cell, value);
+            }
+        }
+    }
+
+    private static void FillGrid(List<Table> tables, GridOp op, DataResolver resolver, Dictionary<int, int> offsets)
+    {
+        var table = tables.ElementAtOrDefault(op.Ts.TableIndex);
+        if (table == null) return;
+
+        var items = resolver.GetList(op.Entity);
+        if (items.Length == 0) return;
+
+        int offset = offsets.GetValueOrDefault(op.Ts.TableIndex);
+        var rows = table.Elements<TableRow>().ToList();
+        var propKeys = op.Properties.Keys.ToArray();
+
+        if (op.EntityPerRow)
+        {
+            // Type d: 一行一 entity，列头是属性
+            for (int ri = op.Ts.RowIndex; ri <= op.Te.RowIndex; ri++)
+            {
+                var row = rows.ElementAtOrDefault(ri + offset);
+                if (row == null) continue;
+
+                var cells = row.Elements<TableCell>().ToList();
+                var rowHeader = cells.ElementAtOrDefault(op.Ts.ColIndex - 1)?.InnerText?.Trim() ?? "";
+
+                Dictionary<string, string>? matched = null;
+                if (!string.IsNullOrEmpty(op.FilterBy))
+                {
+                    matched = items.FirstOrDefault(item =>
+                        item.TryGetValue(op.FilterBy, out var val) && val?.Trim() == rowHeader);
+                }
+                matched ??= items.ElementAtOrDefault(ri - op.Ts.RowIndex);
+
+                if (matched == null) continue;
+
+                for (int j = 0; j < propKeys.Length; j++)
+                {
+                    int colIdx = op.Ts.ColIndex + j;
+                    var cell = cells.ElementAtOrDefault(colIdx);
+                    if (cell == null) continue;
+
+                    var propName = propKeys[j];
+                    var value = matched.TryGetValue(propName, out var v) ? v : "";
+                    if (!string.IsNullOrEmpty(value) && op.Formats != null && op.Formats.TryGetValue(propName, out var fmt))
+                        value = ResolveHelper.ToString(value, fmt);
+                    SetCellContent(cell, value);
+                }
+            }
+        }
+        else
+        {
+            // Type e: 一列一 entity，行头是属性
+            var headerRow = rows.ElementAtOrDefault(op.Ts.RowIndex - 1 + offset);
+
+            for (int ci = op.Ts.ColIndex; ci <= op.Te.ColIndex; ci++)
+            {
+                var headerCells = headerRow?.Elements<TableCell>().ToList();
+                var colHeader = headerCells?.ElementAtOrDefault(ci)?.InnerText?.Trim() ?? "";
+
+                Dictionary<string, string>? matched = null;
+                if (!string.IsNullOrEmpty(op.FilterBy))
+                {
+                    matched = items.FirstOrDefault(item =>
+                        item.TryGetValue(op.FilterBy, out var val) && val?.Trim() == colHeader);
+                }
+                matched ??= items.ElementAtOrDefault(ci - op.Ts.ColIndex);
+
+                if (matched == null) continue;
+
+                for (int i = 0; i < propKeys.Length; i++)
+                {
+                    int rowIdx = op.Ts.RowIndex + i + offset;
+                    var row = rows.ElementAtOrDefault(rowIdx);
+                    if (row == null) continue;
+
+                    var cell = row.Elements<TableCell>().ElementAtOrDefault(ci);
+                    if (cell == null) continue;
+
+                    var propName = propKeys[i];
+                    var value = matched.TryGetValue(propName, out var v) ? v : "";
+                    if (!string.IsNullOrEmpty(value) && op.Formats != null && op.Formats.TryGetValue(propName, out var fmt))
+                        value = ResolveHelper.ToString(value, fmt);
+                    SetCellContent(cell, value);
+                }
+            }
+        }
+    }
+
+    private static void FillParagraph(List<Paragraph> paragraphs, ParagraphOp op, DataResolver resolver)
+    {
+        if (!op.Location.IsParagraph) return;
+        var para = paragraphs.ElementAtOrDefault(op.Location.ParaIndex);
+        if (para == null) return;
+
+        string value;
+        if (op.Entity != null && op.Property != null)
+            value = resolver.Resolve(op.Entity, op.Property, op.Format);
+        else
+            value = resolver.GetAnswerByQuestion(op.Question);
+
+        if (!string.IsNullOrEmpty(value))
+            SetParaContent(para, value);
+    }
+
+    private static TableCell? GetCell(List<Table> tables, int tableIndex, int rowIndex, int colIndex)
+    {
+        var table = tables.ElementAtOrDefault(tableIndex);
+        if (table == null) return null;
+        var row = table.Elements<TableRow>().ElementAtOrDefault(rowIndex);
+        if (row == null) return null;
+        return row.Elements<TableCell>().ElementAtOrDefault(colIndex);
+    }
+
+    #endregion
 
     #region Private Helpers
 

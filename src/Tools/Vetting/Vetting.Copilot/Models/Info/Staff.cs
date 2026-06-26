@@ -14,7 +14,7 @@ public enum StaffRole
     联系人 = 64,
 }
 
-public class Staff
+public class Staff : IResolve
 {
     public int Id { get; set; }
     public string? Name { get; set; }
@@ -32,4 +32,22 @@ public class Staff
     public string? Email { get; set; }
     public StaffRole Role { get; set; }
     public int? DepartmentId { get; set; }
+
+    public object? Resolve(string propertyName) => propertyName switch
+    {
+        nameof(Name) => Name,
+        nameof(Title) => Title,
+        nameof(Education) => Education,
+        nameof(Profile) => Profile,
+        nameof(IdNumber) => IdNumber,
+        nameof(Years) => Years,
+        nameof(Age) => Age,
+        nameof(BirthDate) => BirthDate,
+        nameof(Specialty) => Specialty,
+        nameof(ResearchFocus) => ResearchFocus,
+        nameof(MobilePhone) => MobilePhone,
+        nameof(Telephone) => Telephone,
+        nameof(Email) => Email,
+        _ => null,
+    };
 }

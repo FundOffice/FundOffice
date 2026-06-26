@@ -1,6 +1,6 @@
 namespace Vetting.Copilot.Models.Info;
 
-public class InvestmentInfo
+public class InvestmentInfo : IResolve
 {
     public int Id { get; set; } = 1;
     public string? Target { get; set; }
@@ -20,4 +20,26 @@ public class InvestmentInfo
     public string? TradingErrorFix { get; set; }
     public string? AbnormalTrading { get; set; }
     public string? AccountFairness { get; set; }
+
+    public object? Resolve(string propertyName) => propertyName switch
+    {
+        nameof(Target) => Target,
+        nameof(Philosophy) => Philosophy,
+        nameof(Research) => Research,
+        nameof(Decision) => Decision,
+        nameof(Trading) => Trading,
+        nameof(Evaluation) => Evaluation,
+        nameof(RiskControl) => RiskControl,
+        nameof(PortfolioAdjust) => PortfolioAdjust,
+        nameof(PositionBuilding) => PositionBuilding,
+        nameof(CommitteeRole) => CommitteeRole,
+        nameof(ResearchAuthority) => ResearchAuthority,
+        nameof(SystemAndData) => SystemAndData,
+        nameof(DataStorage) => DataStorage,
+        nameof(TradingControl) => TradingControl,
+        nameof(TradingErrorFix) => TradingErrorFix,
+        nameof(AbnormalTrading) => AbnormalTrading,
+        nameof(AccountFairness) => AccountFairness,
+        _ => null,
+    };
 }

@@ -20,8 +20,8 @@ public record ProviderConfig(string Name, string ProviderType, string ApiKey, st
 /// </summary>
 public class IntegrationTests
 {
-    private const string TestFilesDir = @"F:\Project\FundOffice\src\Tools\Vetting\test-files";
-    private const string OutputDir = @"F:\Project\FundOffice\src\Tools\Vetting\test-output";
+    private const string TestFilesDir = @"D:\Projects\FundOffice\src\Tools\Vetting\test-files";
+    private const string OutputDir = @"D:\Projects\FundOffice\src\Tools\Vetting\test-output";
 
     /// <summary>
     /// 从 Vetting 数据库读取已配置的 AI 提供者
@@ -31,11 +31,13 @@ public class IntegrationTests
         var providers = new List<ProviderConfig>();
 
         // 尝试多个可能的数据库路径
+        var testFilesDir = @"D:\Projects\FundOffice\src\Tools\Vetting\test-files";
         var possiblePaths = new[]
         {
             Path.Combine(AppContext.BaseDirectory, "data", "vetting.db"),
             Path.Combine(Directory.GetCurrentDirectory(), "data", "vetting.db"),
-            @"F:\Project\FundOffice\src\Tools\Vetting\Vetting\bin\Debug\net10.0-windows\data\vetting.db",
+            @"D:\Projects\FundOffice\src\Tools\Vetting\Vetting\bin\Debug\net10.0-windows\data\vetting.db",
+            @"D:\Projects\FundOffice\src\Tools\Vetting\vetting.db",
         };
 
         foreach (var dbPath in possiblePaths)

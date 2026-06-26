@@ -2,7 +2,7 @@ namespace Vetting.Copilot.Models.Info;
 
 public enum MembershipLevel { 无, 观察会员, 普通会员 }
 
-public class Manager
+public class Manager : IResolve
 {
     public int Id { get; set; } = 1;
     public string? Name { get; set; }
@@ -33,4 +33,36 @@ public class Manager
     public string? ActualController { get; set; }
     public string? ContactName { get; set; }
     public string? ContactPhoneAndEmail { get; set; }
+
+    public object? Resolve(string propertyName) => propertyName switch
+    {
+        nameof(Name) => Name,
+        nameof(RegisterNo) => RegisterNo,
+        nameof(ArtificialPerson) => ArtificialPerson,
+        nameof(RegisterCapital) => RegisterCapital,
+        nameof(RealCapital) => RealCapital,
+        nameof(SetupDate) => SetupDate,
+        nameof(BusinessScope) => BusinessScope,
+        nameof(RegisterAddress) => RegisterAddress,
+        nameof(OfficeAddress) => OfficeAddress,
+        nameof(Phone) => Phone,
+        nameof(Telephone) => Telephone,
+        nameof(Email) => Email,
+        nameof(Fax) => Fax,
+        nameof(EnglishName) => EnglishName,
+        nameof(WebSite) => WebSite,
+        nameof(AmacId) => AmacId,
+        nameof(Membership) => Membership,
+        nameof(InstitutionType) => InstitutionType,
+        nameof(RelatedCompany) => RelatedCompany,
+        nameof(Description) => Description,
+        nameof(HistoricalEvolution) => HistoricalEvolution,
+        nameof(OrgStructureIntro) => OrgStructureIntro,
+        nameof(FutureStrategicPlan) => FutureStrategicPlan,
+        nameof(GoverningSecuritiesBureau) => GoverningSecuritiesBureau,
+        nameof(ActualController) => ActualController,
+        nameof(ContactName) => ContactName,
+        nameof(ContactPhoneAndEmail) => ContactPhoneAndEmail,
+        _ => null,
+    };
 }
