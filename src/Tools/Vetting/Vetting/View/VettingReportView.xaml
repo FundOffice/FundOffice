@@ -281,16 +281,59 @@
                                     <ListBox
                                         Margin="4,0"
                                         BorderThickness="0"
-                                        ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
                                         ItemsSource="{Binding AIStatuses}"
                                         Style="{StaticResource ListBoxCustom}">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <TextBlock Margin="4,0" VerticalAlignment="Center">
-                                                    <Run Text="{Binding Name, Mode=OneWay}" />
-                                                    <Run Text=" " />
-                                                    <Run Foreground="Gray" Text="{Binding Status, Mode=OneWay}" />
-                                                </TextBlock>
+                                                <StackPanel Margin="0,2">
+                                                    <DockPanel>
+                                                        <!--  Done: 绿勾  -->
+                                                        <TextBlock
+                                                            DockPanel.Dock="Left"
+                                                            Foreground="Green"
+                                                            Text="✔"
+                                                            Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Done}" />
+                                                        <!--  Error: 红叉  -->
+                                                        <TextBlock
+                                                            DockPanel.Dock="Left"
+                                                            Foreground="Red"
+                                                            Text="✖"
+                                                            Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Error}" />
+                                                        <!--  Running: spinner  -->
+                                                        <Ellipse
+                                                            DockPanel.Dock="Left"
+                                                            Style="{StaticResource SpinnerStyle}"
+                                                            Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Running}" />
+                                                        <!--  Pending: 灰点  -->
+                                                        <Ellipse
+                                                            Width="8"
+                                                            Height="8"
+                                                            Margin="3,0"
+                                                            DockPanel.Dock="Left"
+                                                            Fill="Gray"
+                                                            Visibility="{Binding Status, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Pending}" />
+
+                                                        <TextBlock
+                                                            Margin="6,0,0,0"
+                                                            VerticalAlignment="Center"
+                                                            Text="{Binding TaskName}" />
+                                                        <TextBlock
+                                                            Margin="8,0"
+                                                            VerticalAlignment="Center"
+                                                            Foreground="Gray"
+                                                            Text="{Binding Elapsed}" />
+                                                        <TextBlock
+                                                            Margin="8,0"
+                                                            VerticalAlignment="Center"
+                                                            Foreground="Gray"
+                                                            Text="{Binding UsageText}" />
+                                                        <TextBlock
+                                                            Foreground="Red"
+                                                            Text="{Binding ErrorMessage}"
+                                                            Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />
+                                                    </DockPanel>
+                                                    <ItemsControl ItemsSource="{Binding Output}" Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                                </StackPanel>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>
