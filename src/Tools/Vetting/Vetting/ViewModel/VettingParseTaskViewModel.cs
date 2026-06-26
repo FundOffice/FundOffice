@@ -52,7 +52,6 @@ public partial class VettingParseTaskViewModel : ObservableObject
         Start();
         try
         {
-            // Step 2: 调用 AI
             var messages = new[]
             {
                 FundOffice.Copilot.Models.ChatMessage.System(sysPrompt),
@@ -81,69 +80,67 @@ public partial class VettingParseTaskViewModel : ObservableObject
                 }
             }
 
-            // Step 3: 校验 JSON，调用 DocOps 生成模板文件
             var json = sb.ToString().Trim();
+
+            // 校验 JSON 格式
             using var jsonDoc = System.Text.Json.JsonDocument.Parse(json);
             var root = jsonDoc.RootElement;
+            if (!root.TryGetProperty("operations", out var opsEl) || opsEl.ValueKind != System.Text.Json.JsonValueKind.Array)
+            {
+                Fail("AI 返回的 JSON 缺少 operations 数组");
+                return;
+            }
 
+            // 保存 JSON 文件
             var safeName = Path.GetFileNameWithoutExtension(FileName);
             var ext = Path.GetExtension(FileName);
             var tplDir = Path.Combine("files", "vetting", VettingId, "tpl");
             Directory.CreateDirectory(tplDir);
+            var jsonPath = Path.Combine(tplDir, $"{safeName}_by[{Provider.Identifier}].json");
+            FileRetry.Run(() => File.WriteAllText(jsonPath, json), "保存JSON", onRetry: m => Output.Add(m));
+
+            // 计算源文件 hash
             var srcPath = Path.Combine("files", "vetting", VettingId, FileName);
-            var tplPath = Path.Combine(tplDir, $"{safeName}_by[{Provider.Identifier}]{ext}");
-            FileRetry.Run(() => File.Copy(srcPath, tplPath, overwrite: true), "复制源文件", onRetry: m => Output.Add(m));
+            var fileHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(srcPath))).ToLowerInvariant();
+            var providerId = Provider!.Identifier;
 
+            // 用新解析器解析并收集警告
+            var (operators, warnings) = Vetting.Copilot.OperatorParser.ParseWithWarnings(opsEl);
+            foreach (var w in warnings) Output.Add($"⚠ {w}");
 
-            // 保存返回json，用于调试
-            FileRetry.Run(() => File.WriteAllText(Path.Combine(tplDir, $"{safeName}_by[{Provider.Identifier}].json"), json), "保存JSON", onRetry: m => Output.Add(m));
-
-            var ops = new List<(string tool, Dictionary<string, System.Text.Json.JsonElement> input)>();
-            foreach (var op in root.GetProperty("operations").EnumerateArray())
+            // 提取 Type f 的 question 保存为 FileSpecialQuestion
+            int questionCount = 0;
+            using (var db = new Vetting.Copilot.Data.VettingDbContext())
             {
-                var tool = op.GetProperty("tool").GetString()!;
-                var input = new Dictionary<string, System.Text.Json.JsonElement>();
-                foreach (var prop in op.EnumerateObject())
+                var oldQuestions = db.FileSpecialQuestions.Find(q => q.FileHash == fileHash && q.Provider == providerId).ToArray();
+                foreach (var old in oldQuestions)
                 {
-                    // 修复 AI 错误: {{product_XXX}} → {{product.XXX}}
-                    if (prop.Name == "text" && prop.Value.ValueKind == System.Text.Json.JsonValueKind.String)
-                    {
-                        var fixedText = System.Text.RegularExpressions.Regex.Replace(
-                            prop.Value.GetString()!, @"\{\{product_", "{{product.");
-                        input[prop.Name] = System.Text.Json.JsonSerializer.SerializeToElement(fixedText);
-                    }
-                    else
-                        input[prop.Name] = prop.Value.Clone();
+                    var oldAnswers = db.SpecialAnswers.Find(a => a.QuestionId == old.Id).ToArray();
+                    foreach (var oa in oldAnswers) db.SpecialAnswers.Delete(oa.Id);
+                    db.FileSpecialQuestions.Delete(old.Id);
                 }
-                ops.Add((tool, input));
-            }
-            FileRetry.Run(() => Vetting.Copilot.DocOps.BatchWrite(tplPath, ops), "生成模板", onRetry: m => Output.Add(m));
 
-            var placeholders = root.TryGetProperty("placeholders", out var ph) ? ph.EnumerateObject().Count() : 0;
-            Output.Add($"模板已生成: {tplPath} ({ops.Count} 操作, {placeholders} 占位符)");
-            Complete();
+                int idx = 0;
+                foreach (var op in operators)
+                {
+                    if (op is not ParagraphOp paraOp) continue;
+                    if (string.IsNullOrWhiteSpace(paraOp.Question)) continue;
 
-
-            // save FileSpecialQuestion
-            if (root.TryGetProperty("placeholders", out var phEl) && phEl.ValueKind == System.Text.Json.JsonValueKind.Object)
-            {
-                var fileHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(srcPath))).ToLowerInvariant();
-                var providerId = Provider!.Identifier;
-                using var db = new Vetting.Copilot.Data.VettingDbContext();
-                db.FileSpecialQuestions.DeleteMany(q => q.FileHash == fileHash && q.Provider == providerId);
-                var questions = phEl.EnumerateObject()
-                    .Where(p => p.Name.StartsWith('a') && int.TryParse(p.Name.TrimStart('a'), out _))
-                    .Select(p => new FileSpecialQuestion
+                    db.FileSpecialQuestions.Insert(new FileSpecialQuestion
                     {
                         FileHash = fileHash,
                         Provider = providerId,
-                        Index = int.Parse(p.Name.TrimStart('a')),
-                        Question = p.Value.GetString()
-                    }).ToArray();
-                db.FileSpecialQuestions.InsertBulk(questions);
+                        Index = idx,
+                        Question = paraOp.Question,
+                    });
+                    idx++;
+                }
+                questionCount = idx;
             }
 
-
+            Output.Add($"已保存 {jsonPath} ({operators.Count} 操作, {questionCount} 个自定义问题)");
+            foreach (var w in warnings) Output.Add($"  ⚠ {w}");
+            Complete();
         }
         catch (Exception ex) { Fail(ex.Message); }
     }

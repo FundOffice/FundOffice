@@ -11,6 +11,7 @@ using Vetting.Copilot.Data;
 using Vetting.Copilot.Models.Entities;
 using Vetting.Copilot.Models.Info;
 using Vetting.Copilot;
+using static Vetting.ViewModel.CustomQuestionsViewModel;
 
 namespace Vetting.ViewModel;
 
@@ -144,6 +145,41 @@ public partial class TemplateFileViewModel : ObservableObject
         var fileHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(srcPath))).ToLowerInvariant();
 
         var vm = new CustomQuestionsViewModel(fileHash, providerId, FileName);
+
+        // 数据库没有数据，尝试从 tpl 目录的 json 解析
+        if (vm.Questions.Count == 0)
+        {
+            var jsonPath = Path.Combine("files", "vetting", VettingId, "tpl", $"{safeName}_by[{providerId}].json");
+            if (File.Exists(jsonPath))
+            {
+                try
+                {
+                    var json = File.ReadAllText(jsonPath);
+                    using var jsonDoc = JsonDocument.Parse(json);
+                    if (jsonDoc.RootElement.TryGetProperty("operations", out var opsEl))
+                    {
+                        var (operators, _) = OperatorParser.ParseWithWarnings(opsEl);
+                        foreach (var op in operators)
+                        {
+                            if (op is not ParagraphOp paraOp) continue;
+                            if (string.IsNullOrWhiteSpace(paraOp.Question)) continue;
+                            vm.Questions.Add(new QuestionItem(new FileSpecialQuestion
+                            {
+                                FileHash = fileHash,
+                                Provider = providerId,
+                                Index = vm.Questions.Count,
+                                Question = paraOp.Question,
+                            }));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    HandyControl.Controls.Growl.Warning($"解析 JSON 失败: {ex.Message}");
+                }
+            }
+        }
+
         if (vm.Questions.Count == 0)
         {
             HandyControl.Controls.Growl.Warning("没有找到自定义问题");
@@ -217,7 +253,8 @@ public partial class TemplateFileViewModel : ObservableObject
         {
             var json = await File.ReadAllTextAsync(jsonPath);
             using var jsonDoc = JsonDocument.Parse(json);
-            var operators = OperatorParser.Parse(jsonDoc.RootElement.GetProperty("operations"));
+            var (operators, warnings) = OperatorParser.ParseWithWarnings(jsonDoc.RootElement.GetProperty("operations"));
+            foreach (var w in warnings) Output.Add($"⚠ {w}");
             Output.Add($"已解析 {operators.Count} 个操作");
 
             var resolver = await Task.Run(() => DataResolver.Load(fileHash, providerId, recommendIds));
