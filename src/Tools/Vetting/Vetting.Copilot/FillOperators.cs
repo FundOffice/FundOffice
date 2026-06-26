@@ -89,7 +89,7 @@ public record GridOp : FillOperator
 }
 
 /// <summary>
-/// Type f: 段落问题（散装或实体属性）
+/// Type z: 段落问题（散装或实体属性）
 /// </summary>
 public record ParagraphOp : FillOperator
 {
@@ -98,6 +98,19 @@ public record ParagraphOp : FillOperator
     public string? Entity { get; init; }
     public string? Property { get; init; }
     public string? Format { get; init; }
+}
+
+/// <summary>
+/// Type g: 未知实体表格 — 无法映射到已知 entity 的表格，记录结构供调试和后续追加 entity
+/// </summary>
+public record UnknownTableOp : FillOperator
+{
+    /// <summary>表格用途描述（如"离职人员信息"、"实缴交易规模构成"），方便人工识别</summary>
+    public required string Description { get; init; }
+    /// <summary>列头文本 → 属性名占位（属性名用列头原文，后续追加 entity 时再映射）</summary>
+    public required Dictionary<string, string> Properties { get; init; }
+    public required DocLocation Ts { get; init; }
+    public required DocLocation Te { get; init; }
 }
 
 public static class OperatorParser
@@ -131,7 +144,8 @@ public static class OperatorParser
                     "c" => TryParseListExpand(op, warnings, idx),
                     "d" => TryParseGrid(op, true, warnings, idx),
                     "e" => TryParseGrid(op, false, warnings, idx),
-                    "f" => TryParseParagraph(op, warnings, idx),
+                    "z" => TryParseParagraph(op, warnings, idx),
+                    "g" => TryParseUnknown(op, warnings, idx),
                     _ => null
                 };
 
@@ -269,17 +283,17 @@ public static class OperatorParser
         };
     }
 
-    // ── Type f ──────────────────────────────────────────
+    // ── Type z ──────────────────────────────────────────
 
     private static ParagraphOp? TryParseParagraph(JsonElement op, List<string> warnings, int idx)
     {
         var location = op.TryGetProperty("location", out var loc) ? DocLocation.FromJson(loc) : new DocLocation();
         if (!location.IsParagraph)
         {
-            // Type f 也可能在表格中（entity+property），检查 cell
+            // Type z 也可能在表格中（entity+property），检查 cell
             if (!location.IsCell)
             {
-                warnings.Add($"操作 #{idx} (type=f): location 无效（无 para_index），跳过");
+                warnings.Add($"操作 #{idx} (type=z): location 无效（无 para_index），跳过");
                 return null;
             }
         }
@@ -290,6 +304,26 @@ public static class OperatorParser
             Entity = GetOptionalString(op, "entity"),
             Property = GetOptionalString(op, "property"),
             Format = GetOptionalString(op, "format"),
+        };
+    }
+
+    // ── Type g ──────────────────────────────────────────
+
+    private static UnknownTableOp? TryParseUnknown(JsonElement op, List<string> warnings, int idx)
+    {
+        if (!op.TryGetProperty("ts", out var tsEl) ||
+            !op.TryGetProperty("te", out var teEl))
+        {
+            warnings.Add($"操作 #{idx} (type=g): 缺少 ts 或 te，跳过");
+            return null;
+        }
+        var properties = op.TryGetProperty("properties", out var propsEl) ? ParseStringDict(propsEl) : new Dictionary<string, string>();
+        return new UnknownTableOp
+        {
+            Description = GetStringOrEmpty(op, "description"),
+            Properties = properties,
+            Ts = DocLocation.FromJson(tsEl),
+            Te = DocLocation.FromJson(teEl),
         };
     }
 

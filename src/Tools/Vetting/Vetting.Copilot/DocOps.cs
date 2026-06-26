@@ -344,6 +344,10 @@ public static class DocOps
                     case ParagraphOp para:
                         FillParagraph(paragraphs, para, resolver);
                         break;
+                    case UnknownTableOp unknown:
+                        // Type g: 未知实体表格，无数据可填，记录日志供调试
+                        System.Diagnostics.Debug.WriteLine($"[Type g] 跳过未知表格 T[{unknown.Ts.TableIndex}]: {unknown.Description}");
+                        break;
                 }
             }
             catch (Exception ex)

@@ -574,7 +574,7 @@ public class DocOpsFillTests : IDisposable
         Assert.Contains("50亿", result);
     }
 
-    // ── Type f: ParagraphOp ────────────────────────────
+    // ── Type z: ParagraphOp ────────────────────────────
 
     [Fact]
     public void TypeF_ParagraphOp_FillsParagraph()

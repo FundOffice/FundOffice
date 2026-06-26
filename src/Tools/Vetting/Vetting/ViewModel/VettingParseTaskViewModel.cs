@@ -108,7 +108,7 @@ public partial class VettingParseTaskViewModel : ObservableObject
             var (operators, warnings) = Vetting.Copilot.OperatorParser.ParseWithWarnings(opsEl);
             foreach (var w in warnings) Output.Add($"⚠ {w}");
 
-            // 提取 Type f 的 question 保存为 FileSpecialQuestion
+            // 提取 Type z 的 question 保存为 FileSpecialQuestion
             int questionCount = 0;
             using (var db = new Vetting.Copilot.Data.VettingDbContext())
             {

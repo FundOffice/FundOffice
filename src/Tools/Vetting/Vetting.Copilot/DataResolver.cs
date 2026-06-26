@@ -136,7 +136,7 @@ public class DataResolver
     }
 
     /// <summary>
-    /// 解析单值实体属性（Type a / Type f with entity）
+    /// 解析单值实体属性（Type a / Type z with entity）
     /// </summary>
     public string Resolve(string entity, string property, string? format = null)
     {
@@ -156,7 +156,7 @@ public class DataResolver
     }
 
     /// <summary>
-    /// 获取散装问题答案（Type f without entity）— 按问题文本匹配
+    /// 获取散装问题答案（Type z without entity）— 按问题文本匹配
     /// </summary>
     public string GetAnswerByQuestion(string question)
     {
