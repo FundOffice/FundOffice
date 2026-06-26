@@ -278,7 +278,22 @@
                                         Content="AI回答"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource ButtonPrimary}" />
-
+                                    <ListBox
+                                        Margin="4,0"
+                                        BorderThickness="0"
+                                        ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
+                                        ItemsSource="{Binding AIStatuses}"
+                                        Style="{StaticResource ListBoxCustom}">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Margin="4,0" VerticalAlignment="Center">
+                                                    <Run Text="{Binding Name, Mode=OneWay}" />
+                                                    <Run Text=" " />
+                                                    <Run Foreground="Gray" Text="{Binding Status, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
                                 </DockPanel>
                             </StackPanel>
                         </Border>

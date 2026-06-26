@@ -9,7 +9,7 @@
     xmlns:vm="clr-namespace:Vetting.ViewModel"
     x:Name="root"
     Title="AI尽调"
-    Width="1200"
+    Width="1300"
     Height="850"
     d:DataContext="{d:DesignInstance vm:MainWindowViewModel}"
     WindowStartupLocation="CenterScreen"

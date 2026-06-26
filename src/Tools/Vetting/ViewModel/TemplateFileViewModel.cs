@@ -21,6 +21,7 @@ public partial class TemplateFileViewModel : ObservableObject
     [ObservableProperty] public partial bool IsExpanded { get; set; }
     [ObservableProperty] public partial bool IsRecommendOpen { get; set; }
     public ObservableCollection<string> Output { get; } = [];
+    public ObservableCollection<ProviderTaskStatus> AIStatuses { get; } = [];
 
     // 推荐产品
     public ObservableCollection<FundInfoVM> AvailableFunds { get; } = [];
@@ -165,12 +166,19 @@ public partial class TemplateFileViewModel : ObservableObject
         var sel = MainWindowViewModel.GlobalProviders.Where(p => p.IsSelected).ToArray();
         if (sel.Length == 0) { HandyControl.Controls.Growl.Warning("请先选择 AI 接口"); return; }
 
-        Output.Clear();
-        IsExpanded = true;
-        var tasks = sel.Select(p => CustomQuestionAnswerService.AnswerAsync(
+        AIStatuses.Clear();
+        foreach (var p in sel)
+            AIStatuses.Add(new ProviderTaskStatus { Name = p.Name, Status = "⏳" });
+
+        var tasks = sel.Select((p, i) => CustomQuestionAnswerService.AnswerAsync(
             fileHash, providerId,
             CustomQuestionAnswerService.CreateProvider(p), p.Name,
-            output: line => Output.Add(line)));
+            output: line => Output.Add(line))
+            .ContinueWith(t =>
+            {
+                AIStatuses[i].Status = t.IsCompletedSuccessfully ? $"✔ {t.Result}" : "✖";
+                return t.IsCompletedSuccessfully ? t.Result : 0;
+            }));
         var counts = await Task.WhenAll(tasks);
         Output.Add($"AI 回答完成，共 {counts.Sum()} 条");
     }
@@ -315,4 +323,10 @@ public partial class TemplateFileViewModel : ObservableObject
             target[$"{prefix}_{p.Name}"] = val;
         }
     }
+}
+
+public partial class ProviderTaskStatus : ObservableObject
+{
+    public string Name { get; set; } = "";
+    [ObservableProperty] public partial string Status { get; set; } = "";
 }
