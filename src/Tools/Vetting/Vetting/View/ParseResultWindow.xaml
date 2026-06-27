@@ -385,9 +385,12 @@
         </Style>
 
         <DataTemplate DataType="{x:Type c:ParsedJson}">
-            <TextBlock Text="{Binding Time, StringFormat=yyyy-MM-dd HH:mm:ss}" />
+            <TextBlock Text="{Binding Time, StringFormat=MM-dd HH:mm:ss}" />
         </DataTemplate>
 
+        <ItemsPanelTemplate x:Key="HistoryPanel">
+            <WrapPanel IsItemsHost="True" />
+        </ItemsPanelTemplate>
     </Window.Resources>
 
     <Grid Margin="10">
@@ -411,38 +414,19 @@
             Grid.Row="1"
             Margin="0,0,0,6"
             BorderBrush="#CCC"
-            DisplayMemberPath="DisplayText"
             FontFamily="Consolas"
             FontSize="12"
+            ItemsPanel="{StaticResource HistoryPanel}"
             ItemsSource="{Binding HistoryItems}"
-            SelectedItem="{Binding SelectedItem}"
-            Style="{StaticResource WrapPanelHorizontalListBox}" />
+            SelectedItem="{Binding SelectedItem}" />
 
-        <!--  标题栏  -->
-        <DockPanel Grid.Row="2" Margin="0,0,0,4">
-            <TextBlock
-                VerticalAlignment="Center"
-                FontSize="13"
-                FontWeight="SemiBold">
-                <Run Text="FileHash:" />
-                <Run Text="{Binding FileName, Mode=OneWay}" />
-            </TextBlock>
-            <TextBlock
-                Margin="16,0,0,0"
-                VerticalAlignment="Center"
-                FontSize="12"
-                Foreground="Gray">
-                <Run Text="Provider:" />
-                <Run Text="{Binding ProviderName, Mode=OneWay}" />
-            </TextBlock>
-        </DockPanel>
 
         <!--  操作列表  -->
         <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
             <ItemsControl ItemsSource="{Binding Operations}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <ContentControl Style="{StaticResource OperationItemStyle}" />
+                        <ContentControl Content="{Binding}" Style="{StaticResource OperationItemStyle}" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
