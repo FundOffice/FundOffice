@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.IO;
 using Vetting.Copilot.Data;
 using Vetting.Copilot.Models.Entities;
 using Vetting.Copilot.Models.Info;
@@ -18,6 +19,7 @@ public partial class DataCenterViewModel : ObservableObject
 
     // 列表项
     [ObservableProperty] public partial StaffVM? SelectedStaff { get; set; }
+    [ObservableProperty] public partial FinancialStatementVM? SelectedFinancialStatement { get; set; }
     [ObservableProperty] public partial object? CurrentItem { get; set; }
     public ObservableCollection<StaffVM> Staffs { get; } = [];
     public ObservableCollection<ShareholderVM> Shareholders { get; } = [];
@@ -35,7 +37,35 @@ public partial class DataCenterViewModel : ObservableObject
     [ObservableProperty] public partial FundInfoVM? GlobalSelectedAvailable { get; set; }
     [ObservableProperty] public partial FundInfoVM? GlobalSelectedRecommended { get; set; }
 
-    public DataCenterViewModel() => LoadAll();
+    // 已有附件文件（files/vetting/pred/）
+    public ObservableCollection<string> PredFileNames { get; } = [];
+    [ObservableProperty] public partial string? SelectedPredFile { get; set; }
+    public ObservableCollection<CommonFileVM> CommonFiles { get; } = [];
+
+    private static readonly string[] CommonFileNames = BuildCommonFileNames();
+
+    private static string[] BuildCommonFileNames()
+    {
+        var list = new List<string>
+        {
+            "营业执照正本", "营业执照副本",
+            "管理人登记证明", "会员证书",
+            "法定代表人身份证", "基金经理身份证",
+            "基金从业资格证",
+            "公司章程", "信用报告"
+        };
+        // 审计报告按年份，加最近 3 年
+        var year = DateTime.Now.Year;
+        for (int i = 0; i < 3; i++) list.Add($"审计报告_{year - i}");
+        return list.ToArray();
+    }
+
+    public DataCenterViewModel()
+    {
+        foreach (var n in CommonFileNames) CommonFiles.Add(new CommonFileVM { Name = n });
+        LoadAll();
+        LoadPredFiles();
+    }
 
     private void LoadAll()
     {
@@ -425,6 +455,8 @@ public partial class DataCenterViewModel : ObservableObject
 
         // 刷新 UI
         LoadAll();
+        Vetting.Copilot.PredFiles.CreatePlaceholders(CommonFiles.Select(c => c.Name));
+        LoadPredFiles();
         HandyControl.Controls.Growl.Success("模拟数据已生成");
     }
 
@@ -509,4 +541,78 @@ public partial class DataCenterViewModel : ObservableObject
         table.Insert(item);
         col.Add(wrap(item));
     }
+
+    // ── 已有附件文件 ─────────────────────────────────────
+
+    public void LoadPredFiles()
+    {
+        PredFileNames.Clear();
+        foreach (var n in Vetting.Copilot.PredFiles.ListNames())
+            PredFileNames.Add(n);
+        RefreshCommonStatus();
+    }
+
+    private void RefreshCommonStatus()
+    {
+        var names = PredFileNames;
+        foreach (var cf in CommonFiles)
+        {
+            cf.HasScan = names.Any(n => Path.GetFileNameWithoutExtension(n) == cf.Name);
+            cf.HasStamp = names.Any(n => Path.GetFileNameWithoutExtension(n) == cf.Name + "_用印");
+        }
+    }
+
+    /// <summary>复制外部文件到 pred 目录并刷新列表（覆盖同名）</summary>
+    public void ImportPredFiles(string[] paths)
+    {
+        foreach (var p in paths)
+        {
+            if (!File.Exists(p)) continue;
+            Vetting.Copilot.PredFiles.CopyIn(p);
+        }
+        LoadPredFiles();
+    }
+
+    /// <summary>把外部文件作为某个常用文件的扫描件/用印件导入，自动改名</summary>
+    public void ImportCommonFile(CommonFileVM cf, string zone, string sourcePath)
+    {
+        if (!File.Exists(sourcePath)) return;
+        var ext = Path.GetExtension(sourcePath);
+        var name = zone == "stamp" ? $"{cf.Name}_用印{ext}" : $"{cf.Name}{ext}";
+        Directory.CreateDirectory(Vetting.Copilot.PredFiles.Dir);
+        File.Copy(sourcePath, Path.Combine(Vetting.Copilot.PredFiles.Dir, name), overwrite: true);
+        LoadPredFiles();
+    }
+
+    [RelayCommand]
+    private void DeletePredFile()
+    {
+        if (SelectedPredFile == null) return;
+        var path = Path.Combine(Vetting.Copilot.PredFiles.Dir, SelectedPredFile);
+        try { if (File.Exists(path)) File.Delete(path); } catch { }
+        PredFileNames.Remove(SelectedPredFile);
+        SelectedPredFile = null;
+        RefreshCommonStatus();
+    }
+
+    [RelayCommand]
+    private void OpenPredFile()
+    {
+        if (SelectedPredFile == null) return;
+        var path = Path.Combine(Vetting.Copilot.PredFiles.Dir, SelectedPredFile);
+        if (File.Exists(path)) System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+    }
+
+    [RelayCommand]
+    private void RefreshPredFiles() => LoadPredFiles();
+}
+
+/// <summary>常用附件文件项，含扫描件/用印件两个拖拽区状态</summary>
+public partial class CommonFileVM : ObservableObject
+{
+    public required string Name { get; init; }
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(ScanText))] public partial bool HasScan { get; set; }
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(StampText))] public partial bool HasStamp { get; set; }
+    public string ScanText => HasScan ? "扫描件 ✓" : "拖入扫描件";
+    public string StampText => HasStamp ? "用印件 ✓" : "拖入用印件";
 }

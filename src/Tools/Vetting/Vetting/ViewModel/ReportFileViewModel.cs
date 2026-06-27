@@ -214,6 +214,10 @@ public partial class ReportFileViewModel : ObservableObject
             : [];
         if (jsonFiles.Length == 0) { Output.Add("没有找到解析结果 JSON（请先解析）"); return; }
 
+        // 收集所有 provider 的 files，按 Index 多数投票选 Map（跨 provider 合并）
+        var availableNames = new HashSet<string>(PredFiles.ListNames());
+        var fileVotes = new Dictionary<int, Dictionary<string, int>>();
+
         foreach (var jsonPath in jsonFiles)
         {
             var m = Regex.Match(Path.GetFileNameWithoutExtension(jsonPath), @"_by\[(.+)\]$");
@@ -225,6 +229,19 @@ public partial class ReportFileViewModel : ObservableObject
                 using var jsonDoc = JsonDocument.Parse(json);
                 var operators = OperatorParser.Parse(jsonDoc.RootElement.GetProperty("operations"));
                 Output.Add($"[{providerId}] 已解析 {operators.Count} 个操作");
+
+                // 收集 files 投票
+                if (jsonDoc.RootElement.TryGetProperty("files", out var filesEl))
+                {
+                    var (fs, _) = OperatorParser.ParseFiles(filesEl, availableNames);
+                    foreach (var f in fs)
+                    {
+                        if (string.IsNullOrEmpty(f.Map)) continue;
+                        if (!fileVotes.ContainsKey(f.Index)) fileVotes[f.Index] = new();
+                        fileVotes[f.Index].TryGetValue(f.Map!, out var c);
+                        fileVotes[f.Index][f.Map!] = c + 1;
+                    }
+                }
 
                 var resolver = await Task.Run(() => DataResolver.Load(_fileHash, providerId, recommendIds));
                 var outPath = Path.Combine(finalDir, $"{safeName}_filled_by[{providerId}]{ext}");
@@ -239,6 +256,11 @@ public partial class ReportFileViewModel : ObservableObject
                 Output.Add($"[{providerId}] 填充失败: {ex.Message}");
             }
         }
+
+        // 复制已映射的附件到 final：文件名 {Index}.{Map}（按 Index 多数投票选 Map）
+        var winners = fileVotes.Select(kv => new KeyValuePair<int, string>(
+            kv.Key, kv.Value.OrderByDescending(v => v.Value).First().Key));
+        PredFiles.CopyMappedFiles(finalDir, winners, onLog: msg => Output.Add(msg));
     }
 
     private static ITokenProvider CreateProvider(AIProviderItemViewModel vm) => vm.ProviderType switch

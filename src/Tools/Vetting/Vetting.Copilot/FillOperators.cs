@@ -113,6 +113,21 @@ public record UnknownTableOp : FillOperator
     public required DocLocation Te { get; init; }
 }
 
+/// <summary>
+/// 尽调所需附件文件（与 operations 平级的顶层 files 数组项）
+/// </summary>
+public record RequiredFile
+{
+    /// <summary>尽调文件中的序号（如资料清单行号、附件1/附件2 的数字），1-based</summary>
+    public int Index { get; init; }
+    /// <summary>原始文件要求（AI 从文档中提取的原文，如"营业执照正副本（盖公章）"）</summary>
+    public required string Raw { get; init; }
+    /// <summary>映射到的已有文件名（来自 user prompt 注入的 pred 文件名列表）；不匹配为 null</summary>
+    public string? Map { get; init; }
+    /// <summary>是否需要盖公章</summary>
+    public required bool Stamped { get; init; }
+}
+
 public static class OperatorParser
 {
     /// <summary>
@@ -168,6 +183,58 @@ public static class OperatorParser
     {
         var (ops, _) = ParseWithWarnings(operations);
         return ops;
+    }
+
+    /// <summary>
+    /// 从 AI 返回的 JSON files 数组解析为 RequiredFile 列表。
+    /// 单项解析失败时跳过并记录警告。map 字段会与注入的已有文件名列表比对，不在列表内的降级为 null 并告警。
+    /// </summary>
+    /// <param name="files">AI 返回的 files 数组</param>
+    /// <param name="availableNames">注入 user prompt 的已有文件名列表（来自 pred 目录）；为 null 时不校验</param>
+    public static (List<RequiredFile> Files, List<string> Warnings) ParseFiles(JsonElement files, IReadOnlySet<string>? availableNames = null)
+    {
+        var result = new List<RequiredFile>();
+        var warnings = new List<string>();
+        if (files.ValueKind != JsonValueKind.Array) return (result, warnings);
+
+        int idx = 0;
+        foreach (var f in files.EnumerateArray())
+        {
+            try
+            {
+                var raw = GetStringOrEmpty(f, "raw");
+                if (string.IsNullOrWhiteSpace(raw))
+                {
+                    warnings.Add($"files[{idx}]: raw 为空，跳过");
+                    idx++;
+                    continue;
+                }
+
+                string? map = null;
+                if (f.TryGetProperty("map", out var mapEl))
+                {
+                    map = mapEl.ValueKind == JsonValueKind.String ? mapEl.GetString() : null;
+                }
+                // 校验 map 是否在已有文件名列表中
+                if (!string.IsNullOrEmpty(map) && availableNames != null && !availableNames.Contains(map))
+                {
+                    warnings.Add($"files[{idx}]: map='{map}' 不在已有文件列表中，降级为 null");
+                    map = null;
+                }
+
+                var index = f.TryGetProperty("index", out var idxEl) && idxEl.ValueKind == JsonValueKind.Number
+                    ? idxEl.GetInt32() : idx + 1;
+
+                var stamped = f.TryGetProperty("stamped", out var s) && s.ValueKind == JsonValueKind.True;
+                result.Add(new RequiredFile { Index = index, Raw = raw, Map = map, Stamped = stamped });
+            }
+            catch (Exception ex)
+            {
+                warnings.Add($"files[{idx}]: 解析异常 {ex.Message}，跳过");
+            }
+            idx++;
+        }
+        return (result, warnings);
     }
 
     // ── Type a ──────────────────────────────────────────
@@ -357,7 +424,7 @@ public static class OperatorParser
     private static string? GetOptionalString(JsonElement el, string key) =>
         el.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() : null;
 
-    private static Dictionary<string, string> ParseStringDict(JsonElement el)
+    public static Dictionary<string, string> ParseStringDict(JsonElement el)
     {
         var dict = new Dictionary<string, string>();
         if (el.ValueKind != JsonValueKind.Object) return dict;
@@ -367,5 +434,84 @@ public static class OperatorParser
                 dict[prop.Name] = prop.Value.GetString() ?? "";
         }
         return dict;
+    }
+}
+
+/// <summary>
+/// 已有附件文件目录（files/vetting/pred/）读写助手。
+/// 文件名会注入 AI user prompt，供 AI 在 files[].map 中引用。
+/// </summary>
+public static class PredFiles
+{
+    public static string Dir => Path.Combine("files", "vetting", "pred");
+
+    /// <summary>读取 pred 目录下所有文件名（仅文件名，不含路径）</summary>
+    public static string[] ListNames()
+    {
+        return Directory.Exists(Dir)
+            ? new DirectoryInfo(Dir).GetFiles().Select(f => f.Name).OrderBy(n => n).ToArray()
+            : Array.Empty<string>();
+    }
+
+    /// <summary>构造注入 user prompt 的文本块。无文件时明示为空，提示 map 全填 null。</summary>
+    public static string BuildPromptSection()
+    {
+        var names = ListNames();
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine();
+        sb.AppendLine("\n## 已有附件文件列表（供 files[].map 引用）");
+        if (names.Length == 0)
+        {
+            sb.AppendLine("（暂无已有附件文件。files 中每个 map 字段填 null，但仍须列出文档要求的全部附件 raw。）");
+        }
+        else
+        {
+            sb.AppendLine("对每个 files 项，若能与下列某个文件对应，则在 map 中填该文件名（必须逐字一致）；否则 map 填 null。");
+            foreach (var n in names) sb.AppendLine($"- {n}");
+        }
+        return sb.ToString();
+    }
+
+    /// <summary>复制文件到 pred 目录（覆盖），返回目标路径</summary>
+    public static string CopyIn(string sourcePath)
+    {
+        Directory.CreateDirectory(Dir);
+        var dest = Path.Combine(Dir, Path.GetFileName(sourcePath));
+        File.Copy(sourcePath, dest, overwrite: true);
+        return dest;
+    }
+
+    /// <summary>
+    /// 为每个常用文件名创建空占位文件（扫描件 + 用印件），已存在的跳过。
+    /// 便于测试 map 引用与 fill 复制流程。
+    /// </summary>
+    public static void CreatePlaceholders(IEnumerable<string> names, string ext = ".pdf")
+    {
+        Directory.CreateDirectory(Dir);
+        foreach (var n in names)
+        {
+            foreach (var fn in new[] { n + ext, n + "_用印" + ext })
+            {
+                var p = Path.Combine(Dir, fn);
+                if (!File.Exists(p)) File.Create(p).Dispose();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 按 {Index}.{Map} 把 pred 中已映射的附件复制到 final 目录。
+    /// indexToMap: 附件序号 → pred 文件名。源文件缺失则记录告警跳过。
+    /// </summary>
+    public static void CopyMappedFiles(string finalDir, IEnumerable<KeyValuePair<int, string>> indexToMap, Action<string>? onLog = null)
+    {
+        Directory.CreateDirectory(finalDir);
+        foreach (var kv in indexToMap)
+        {
+            var src = Path.Combine(Dir, kv.Value);
+            if (!File.Exists(src)) { onLog?.Invoke($"附件 {kv.Key} 缺源文件: {kv.Value}"); continue; }
+            var dest = Path.Combine(finalDir, $"{kv.Key}.{kv.Value}");
+            try { File.Copy(src, dest, overwrite: true); onLog?.Invoke($"附件已复制: {dest}"); }
+            catch (Exception ex) { onLog?.Invoke($"附件 {kv.Key} 复制失败: {ex.Message}"); }
+        }
     }
 }

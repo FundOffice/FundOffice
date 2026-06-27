@@ -114,6 +114,51 @@ public partial class DataCenterWindow : Window
         vm.SaveGlobalRecommend();
     }
 
+    // ═══ 已有附件文件拖拽（从资源管理器拖入复制）═══
+
+    private void OnPredDragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void OnPredDrop(object sender, DragEventArgs e)
+    {
+        if (DataContext is not DataCenterViewModel vm) return;
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+        if (files == null || files.Length == 0) return;
+        vm.ImportPredFiles(files);
+        HandyControl.Controls.Growl.Success($"已导入 {files.Length} 个文件");
+        e.Handled = true;
+    }
+
+    // ═══ 常用文件拖拽（扫描件/用印件自动改名）═══
+
+    private void OnCommonDragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void OnCommonScanDrop(object sender, DragEventArgs e) => OnCommonDrop(sender, e, "scan");
+
+    private void OnCommonStampDrop(object sender, DragEventArgs e) => OnCommonDrop(sender, e, "stamp");
+
+    private void OnCommonDrop(object sender, DragEventArgs e, string zone)
+    {
+        if (DataContext is not DataCenterViewModel vm) return;
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+        if (files == null || files.Length == 0) return;
+        if (sender is FrameworkElement { Tag: CommonFileVM cf })
+        {
+            vm.ImportCommonFile(cf, zone, files[0]);
+            HandyControl.Controls.Growl.Success($"已保存 {cf.Name}{(zone == "stamp" ? "_用印" : "")}");
+        }
+        e.Handled = true;
+    }
+
     private static T? FindAncestor<T>(DependencyObject? obj) where T : DependencyObject
     {
         while (obj != null)

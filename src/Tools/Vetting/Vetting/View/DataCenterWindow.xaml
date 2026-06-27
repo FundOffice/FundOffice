@@ -806,6 +806,97 @@
                 </DockPanel>
             </TabItem>
 
+
+            <Separator/>
+
+
+
+            <TabItem Header="附件列表">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <TextBlock
+                            Margin="4"
+                            VerticalAlignment="Center"
+                            Text="从资源管理器拖拽文件到此复制/更新（同名覆盖）" />
+                        <Button
+                            Margin="4"
+                            Command="{Binding RefreshPredFilesCommand}"
+                            Content="刷新" />
+                        <Button
+                            Margin="4"
+                            Command="{Binding OpenPredFileCommand}"
+                            Content="打开" />
+                        <Button
+                            Margin="4"
+                            Command="{Binding DeletePredFileCommand}"
+                            Content="删除"
+                            Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
+
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <ListBox
+                            Grid.Row="0"
+                            AllowDrop="True"
+                            DragOver="OnPredDragOver"
+                            Drop="OnPredDrop"
+                            ItemsSource="{Binding PredFileNames}"
+                            SelectedItem="{Binding SelectedPredFile}" />
+
+                        <Expander
+                            Grid.Row="1"
+                            Margin="4"
+                            Header="常用文件（拖拽扫描件/用印件到对应区，自动改名）"
+                            IsExpanded="True">
+                            <ItemsControl ItemsSource="{Binding CommonFiles}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="4" Width="200">
+                                            <TextBlock Margin="0,0,0,4" FontWeight="SemiBold" Text="{Binding Name}" />
+                                            <UniformGrid Rows="1">
+                                                <Border
+                                                Margin="2"
+                                                Padding="6"
+                                                Background="{DynamicResource RegionBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1"
+                                                AllowDrop="True"
+                                                DragOver="OnCommonDragOver"
+                                                Drop="OnCommonScanDrop"
+                                                Tag="{Binding}">
+                                                    <TextBlock Text="{Binding ScanText}" />
+                                                </Border>
+                                                <Border
+                                                Margin="2"
+                                                Padding="6"
+                                                Background="{DynamicResource RegionBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1"
+                                                AllowDrop="True"
+                                                DragOver="OnCommonDragOver"
+                                                Drop="OnCommonStampDrop"
+                                                Tag="{Binding}">
+                                                    <TextBlock Text="{Binding StampText}" />
+                                                </Border>
+                                            </UniformGrid>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Expander>
+                    </Grid>
+                </DockPanel>
+            </TabItem>
+
             <Separator />
 
             <TabItem Background="Orange" Header="问答">
