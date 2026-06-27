@@ -18,6 +18,7 @@ public partial class QuestionAnswerTaskViewModel : ObservableObject
     public string ProviderName { get; }
     public string FileHash { get; }
     public string ProviderId { get; }
+    public bool IsFullMode { get; }
 
     [ObservableProperty] public partial string TaskName { get; set; } = "";
     [ObservableProperty] public partial TaskStatus Status { get; set; } = TaskStatus.Pending;
@@ -29,12 +30,13 @@ public partial class QuestionAnswerTaskViewModel : ObservableObject
     public ObservableCollection<string> Output { get; } = [];
     private readonly Stopwatch _sw = new();
 
-    public QuestionAnswerTaskViewModel(ITokenProvider provider, string providerName, string fileHash, string providerId)
+    public QuestionAnswerTaskViewModel(ITokenProvider provider, string providerName, string fileHash, string providerId, bool isFullMode = false)
     {
         Provider = provider;
         ProviderName = providerName;
         FileHash = fileHash;
         ProviderId = providerId;
+        IsFullMode = isFullMode;
         TaskName = providerName;
     }
 
@@ -57,11 +59,11 @@ public partial class QuestionAnswerTaskViewModel : ObservableObject
             }
 
             var qaList = db.QA.FindAll().ToArray();
-            var prompt = BuildPrompt(qaList, questions);
-
+            var prompt = CustomQuestionAnswerer.BuildPrompt(qaList, questions, IsFullMode);
+            var systemPrompt = CustomQuestionAnswerer.GetSystemPrompt(IsFullMode);
             var messages = new[]
             {
-                ChatMessage.System("你是一名尽职调查分析师，根据提供的历史问答资料，准确回答尽调问题。直接回答，不要废话。如果资料中没有相关信息，回答空字符串。"),
+                ChatMessage.System(systemPrompt),
                 ChatMessage.User(prompt)
             };
             var options = new ChatOptions
@@ -92,7 +94,7 @@ public partial class QuestionAnswerTaskViewModel : ObservableObject
             var root = doc.RootElement;
             var answersProp = root.TryGetProperty("answers", out var a) ? a : root;
 
-            int count = 0;
+            int count = 0, exactCount = 0, inferredCount = 0;
             foreach (var prop in answersProp.EnumerateObject())
             {
                 var key = prop.Name;
@@ -100,7 +102,14 @@ public partial class QuestionAnswerTaskViewModel : ObservableObject
                 var q = questions.FirstOrDefault(x => x.Index == idx);
                 if (q == null) continue;
                 var answer = prop.Value.GetString() ?? "";
-                if (answer.Contains("暂无相关信息")) answer = "";
+                var (processedAnswer, isInferred) = CustomQuestionAnswerer.ProcessAnswer(answer, IsFullMode);
+                answer = processedAnswer;
+
+                if (!string.IsNullOrWhiteSpace(answer))
+                {
+                    if (isInferred) inferredCount++;
+                    else exactCount++;
+                }
 
                 var existing = db.SpecialAnswers.FindOne(sa => sa.QuestionId == q.Id && sa.Identifier == ProviderName);
                 if (existing != null)
@@ -119,7 +128,7 @@ public partial class QuestionAnswerTaskViewModel : ObservableObject
                 count++;
             }
 
-            Output.Add($"回答完成，共 {count} 条");
+            Output.Add($"回答完成：精确 {exactCount} 条" + (IsFullMode ? $"，推断 {inferredCount} 条" : "") + $"，共 {count} 条");
             _sw.Stop(); Status = TaskStatus.Done; Elapsed = FormatElapsed(_sw.Elapsed);
             return count;
         }
@@ -130,25 +139,6 @@ public partial class QuestionAnswerTaskViewModel : ObservableObject
             Output.Add($"错误: {ex.Message}");
             return 0;
         }
-    }
-
-    private static string BuildPrompt(QA[] qaList, FileSpecialQuestion[] questions)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("## 历史问答资料");
-        foreach (var qa in qaList)
-        {
-            sb.AppendLine($"问: {qa.Question}");
-            sb.AppendLine($"答: {qa.Answer}");
-            sb.AppendLine();
-        }
-        sb.AppendLine("## 待回答问题");
-        foreach (var q in questions)
-            sb.AppendLine($"{{a{q.Index}}}: {q.Question}");
-        sb.AppendLine();
-        sb.AppendLine("请严格按以下 JSON 格式回答:");
-        sb.AppendLine("{\"answers\": {\"a1\": \"回答内容\", \"a2\": \"回答内容\"}}");
-        return sb.ToString();
     }
 
     private static string FormatElapsed(TimeSpan ts)

@@ -15,8 +15,7 @@
     <UserControl.Resources>
         <local:Int2VisibilityConverter x:Key="Int2VisibilityConverter" />
         <local:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter" />
-        <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
-
+        <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter" /> 
         <Style x:Key="SpinnerStyle" TargetType="Ellipse">
             <Setter Property="Width" Value="14" />
             <Setter Property="Height" Value="14" />
@@ -104,9 +103,11 @@
                 <!--  展开时显示 Output 和 ErrorMessage  -->
                 <TextBox
                     IsReadOnly="True"
+                    MaxHeight="200"
                     Text="{Binding Output, Mode=OneWay}"
                     TextWrapping="Wrap"
-                    Visibility="{Binding Output, Converter={StaticResource String2VisibilityConverter}}" />
+                    VerticalScrollBarVisibility="Auto"
+                    Visibility="{Binding Output, Converter={StaticResource StringToVisibilityConverter}}" />
             </StackPanel>
         </DataTemplate>
     </UserControl.Resources>
@@ -147,7 +148,10 @@
                         <Border>
                             <StackPanel>
                                 <DockPanel LastChildFill="False">
-                                    <DockPanel DockPanel.Dock="Right" IsEnabled="{Binding GenerateTemplatesCommand.IsRunning,Converter={StaticResource Boolean2BooleanReConverter}}">
+                                    <!-- 逐步模式：解析、生成、AI回答、查看问题、推荐产品 -->
+                                    <DockPanel DockPanel.Dock="Right"
+                                        IsEnabled="{Binding GenerateTemplatesCommand.IsRunning,Converter={StaticResource Boolean2BooleanReConverter}}"
+                                        Visibility="{Binding IsAutoMode, Converter={StaticResource Boolean2VisibilityReConverter}}">
                                         <Button
                                         Command="{Binding FillTemplateCommand}"
                                         Content="生成"
@@ -165,6 +169,13 @@
                                         Content="查看问题"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource ButtonDefault}" />
+                                        <Button
+                                        Margin="4,0"
+                                        Command="{Binding ViewParseResultCommand}"
+                                        Content="查看解析"
+                                        DockPanel.Dock="Right"
+                                        Style="{StaticResource ButtonInfo}"
+                                        Visibility="{Binding HasParseResult, Converter={StaticResource Boolean2VisibilityConverter}}" />
                                         <ToggleButton
                                         x:Name="RecommendToggle"
                                         Margin="4,0" BorderBrush="Orange"
@@ -173,11 +184,20 @@
                                         IsChecked="{Binding IsRecommendOpen}"
                                         Style="{StaticResource ToggleButtonPrimary}" />
                                     </DockPanel>
+                                    <!-- 自动模式：只显示自动运行 -->
+                                    <Button
+                                        DockPanel.Dock="Right"
+                                        Command="{Binding RunAutoCommand}"
+                                        Content="自动运行"
+                                        Style="{StaticResource ButtonSuccess}"
+                                        Visibility="{Binding IsAutoMode, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                    <!-- 逐步模式：解析按钮 -->
                                     <Button
                                         Command="{Binding GenerateTemplatesCommand}"
                                         Content="解析"
                                         DockPanel.Dock="Right"
-                                        Style="{StaticResource ButtonPrimary}" />
+                                        Style="{StaticResource ButtonPrimary}"
+                                        Visibility="{Binding IsAutoMode, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
                                     <TextBlock
                                         Margin="5,0"
@@ -304,9 +324,11 @@
                                                 </DockPanel>
                                                 <TextBox
                                                     IsReadOnly="True"
+                                                    MaxHeight="150"
                                                     Text="{Binding Output, Mode=OneWay}"
                                                     TextWrapping="Wrap"
-                                                    Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                                    VerticalScrollBarVisibility="Auto"
+                                                    Visibility="{Binding Output, Converter={StaticResource StringToVisibilityConverter}}" />
                                             </StackPanel>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
@@ -315,10 +337,12 @@
                                 <!--  填充输出日志  -->
                                 <TextBox
                                     IsReadOnly="True"
+                                    MaxHeight="150"
                                     Text="{Binding Output, Mode=OneWay}"
                                     TextWrapping="Wrap"
+                                    VerticalScrollBarVisibility="Auto"
                                     Margin="0,5,0,0"
-                                    Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                    Visibility="{Binding Output, Converter={StaticResource StringToVisibilityConverter}}" />
 
                             </StackPanel>
                         </Border>
