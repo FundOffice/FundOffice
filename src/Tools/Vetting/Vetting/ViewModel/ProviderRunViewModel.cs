@@ -294,7 +294,7 @@ public partial class ProviderRunViewModel : ObservableObject
         _sw.Restart();
         try
         {
-            var finalDir = Path.Combine("files", "vetting", VettingId, "final");
+            var finalDir = Path.Combine("files", "vetting", VettingId, "final", ProviderId);
             Directory.CreateDirectory(finalDir);
 
             var safeName = Path.GetFileNameWithoutExtension(FileName);
@@ -341,7 +341,7 @@ public partial class ProviderRunViewModel : ObservableObject
 
 
             var resolver = await Task.Run(() => DataResolver.Load(FileHash, ProviderId, recommanded));
-            var outPath = Path.Combine(finalDir, $"{safeName}_filled_by[{ProviderId}]{ext}");
+            var outPath = Path.Combine(finalDir, $"{FileName}");
             await Task.Run(() => FileRetry.Run(
                 () => DocOps.Fill(AbsolutePath, outPath, operators, resolver),
                 "填充文档",
@@ -382,6 +382,23 @@ public partial class ProviderRunViewModel : ObservableObject
             return;
         }
         Process.Start(new ProcessStartInfo(_logPath) { UseShellExecute = true });
+    }
+
+
+    [RelayCommand]
+    public void OpenFolder()
+    {
+        var finalDir = Path.Combine("files", "vetting", VettingId, "final", ProviderId);
+
+        try
+        {
+            Process.Start(new ProcessStartInfo("explorer.exe")
+            {
+                Arguments = finalDir,
+                UseShellExecute = true
+            });
+        }
+        catch { }
     }
 
     // ── 辅助方法 ──────────────────────────────────────
