@@ -861,11 +861,17 @@
 
                         <ListBox
                             Grid.Row="0"
-                            AllowDrop="True" 
+                            AllowDrop="True"
                             DragOver="OnPredDragOver"
                             Drop="OnPredDrop"
                             ItemsSource="{Binding PredFileNames}"
-                            SelectedItem="{Binding SelectedPredFile}" />
+                            SelectedItem="{Binding SelectedPredFile}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="2" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                        </ListBox>
 
                         <Expander
                             Grid.Row="1"

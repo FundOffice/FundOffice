@@ -85,6 +85,11 @@ public partial class DataCenterViewModel : ObservableObject
         LoadList(db.AUMs, AUMs, e => new AUMVM(e));
         LoadList(db.DrawdownRecords, DrawdownRecords, e => new DrawdownRecordVM(e));
         LoadList(db.FinancialStatements, FinancialStatements, e => new FinancialStatementVM(e));
+        // 财报按年份从新到旧排列
+        var sorted = FinancialStatements.OrderByDescending(f => f.Year).ToList();
+        FinancialStatements.Clear();
+        foreach (var f in sorted) FinancialStatements.Add(f);
+        SelectedFinancialStatement = FinancialStatements.FirstOrDefault();
         LoadList(db.QA, QAs, e => new QAVM(e));
 
         // 加载全局推荐产品
