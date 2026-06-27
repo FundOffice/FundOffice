@@ -14,14 +14,13 @@ public partial class App : Application
         base.OnStartup(e);
 
 #if RELEASE
-        using (var key = Registry.CurrentUser.CreateSubKey(@$"Software\Nexus"))       
+        using (var key = Registry.CurrentUser.CreateSubKey(@$"Software\Nexus"))
 #else
         using (var key = Registry.CurrentUser.CreateSubKey(@$"Software\Nexus\Debug"))
 #endif
         {
             if (key.GetValue("WorkingFolder") is string dir && Directory.Exists(dir))
                 Directory.SetCurrentDirectory(dir);
-
         }
     }
 }

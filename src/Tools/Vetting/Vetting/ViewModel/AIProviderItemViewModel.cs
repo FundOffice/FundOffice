@@ -24,7 +24,11 @@ public partial class AIProviderItemViewModel : ObservableObject
     [ObservableProperty] public partial string StatusMessage { get; set; } = "";
     [ObservableProperty] public partial bool IsBusy { get; set; }
 
-    public bool IsSelected { get; set; }
+    [ObservableProperty] public partial bool IsSelected { get; set; }
+
+    public event Action? IsSelectedChanged;
+
+    partial void OnIsSelectedChanged(bool value) => IsSelectedChanged?.Invoke();
 
     public ObservableCollection<string> AvailableModels { get; } = [];
 

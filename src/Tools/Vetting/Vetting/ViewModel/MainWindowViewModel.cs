@@ -16,10 +16,20 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable, IRecip
 {
     [ObservableProperty] public partial VettingReportViewModel? SelectedVetting { get; set; }
     [ObservableProperty] public partial string? SearchText { get; set; }
+
+    public const string AnswerModeStrict = "精确";
+    public const string AnswerModeFull = "完整";
+    public string[] AnswerModes { get; } = [AnswerModeStrict, AnswerModeFull];
+    [ObservableProperty] public partial string AnswerMode { get; set; } = AnswerModeStrict;
+
+    public const string RunModeStep = "逐步";
+    public const string RunModeAuto = "自动";
+    public string[] RunModes { get; } = [RunModeStep, RunModeAuto];
+    [ObservableProperty] public partial string RunMode { get; set; } = RunModeStep;
+
+    public ObservableCollection<AIProviderItemViewModel> Providers { get; } = [];
     public ObservableCollection<VettingReportViewModel> VettingList { get; } = [];
     public CollectionViewSource VettingView { get; }
-
-    public static ObservableCollection<AIProviderItemViewModel> GlobalProviders { get; } = [];
 
     private readonly VettingAppDbContext _db = new();
 
@@ -32,32 +42,49 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable, IRecip
                 e.Accepted = vm.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
         };
         WeakReferenceMessenger.Default.Register<AIProviderChanged>(this);
-        LoadProviders();
-        LoadFromDb();
-    }
 
-    private void LoadProviders()
-    {
-        var selected = GlobalProviders.Where(p => p.IsSelected).Select(p => p.Id).ToHashSet();
-        GlobalProviders.Clear();
+        // 从同一 _db 加载，不并发
+        var setting = _db.GetSettings();
+        AnswerMode = setting.AnswerMode;
+        RunMode = setting.RunMode;
+        var selectedIds = setting.SelectedProviderIds
+            .Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToHashSet();
         foreach (var config in _db.AIProviderConfigs.FindAll())
         {
             var vm = new AIProviderItemViewModel(config);
-            if (selected.Contains(config.Id)) vm.IsSelected = true;
-            GlobalProviders.Add(vm);
+            if (selectedIds.Contains(config.Id)) vm.IsSelected = true;
+            vm.IsSelectedChanged += () => SaveSelectedProviders();
+            Providers.Add(vm);
         }
-    }
 
-    private void LoadFromDb()
-    {
         foreach (var report in _db.Reports.FindAll())
-        {
-            var vm = CreateVm(report);
-            VettingList.Add(vm);
-        }
+            VettingList.Add(new VettingReportViewModel(report));
     }
 
-    private VettingReportViewModel CreateVm(VettingReport report) => new(report);
+    partial void OnAnswerModeChanged(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return;
+        var s = _db.GetSettings();
+        s.AnswerMode = value;
+        _db.AppSettings.Upsert(s);
+    }
+
+    partial void OnRunModeChanged(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return;
+        var s = _db.GetSettings();
+        s.RunMode = value;
+        _db.AppSettings.Upsert(s);
+        WeakReferenceMessenger.Default.Send(new RunModeChanged(value));
+    }
+
+    private void SaveSelectedProviders()
+    {
+        var ids = string.Join(",", Providers.Where(p => p.IsSelected).Select(p => p.Id));
+        var s = _db.GetSettings();
+        s.SelectedProviderIds = ids;
+        _db.AppSettings.Upsert(s);
+    }
 
     partial void OnSearchTextChanged(string? value) => VettingView.View.Refresh();
 
@@ -73,7 +100,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable, IRecip
         var id = Guid.NewGuid().ToString("N");
         var report = new VettingReport(id, "新建尽调", DateTime.Now);
         _db.Reports.Insert(report);
-        var vm = CreateVm(report);
+        var vm = new VettingReportViewModel(report);
         VettingList.Add(vm);
         SelectedVetting = vm;
     }
@@ -98,34 +125,34 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable, IRecip
     [RelayCommand]
     private void OpenDataCenter() => new DataCenterWindow { Owner = Application.Current.MainWindow, DataContext = new DataCenterViewModel() }.Show();
 
-     public void Receive(AIProviderChanged message)
+    public void Receive(AIProviderChanged message)
     {
         switch (message.Type)
         {
             case ChangedType.Add:
-                using (var db = new VettingAppDbContext())
+                if (_db.AIProviderConfigs.FindById(message.Id) is { } addConfig)
                 {
-                    if (db.AIProviderConfigs.FindById(message.Id) is AIProviderConfig config)
-                        GlobalProviders.Add(new AIProviderItemViewModel(config));
+                    var addVm = new AIProviderItemViewModel(addConfig);
+                    addVm.IsSelectedChanged += () => SaveSelectedProviders();
+                    Providers.Add(addVm);
                 }
                 break;
             case ChangedType.Update:
-                using (var db = new VettingAppDbContext())
+                if (_db.AIProviderConfigs.FindById(message.Id) is { } updateConfig)
                 {
-                    if (db.AIProviderConfigs.FindById(message.Id) is AIProviderConfig config)
+                    var idx = Providers.IndexOf(Providers.FirstOrDefault(p => p.Id == message.Id)!);
+                    if (idx >= 0)
                     {
-                        var idx = GlobalProviders.IndexOf(GlobalProviders.FirstOrDefault(p => p.Id == message.Id)!);
-                        if (idx >= 0) GlobalProviders[idx] = new AIProviderItemViewModel(config);
+                        var updateVm = new AIProviderItemViewModel(updateConfig);
+                        updateVm.IsSelected = Providers[idx].IsSelected;
+                        updateVm.IsSelectedChanged += () => SaveSelectedProviders();
+                        Providers[idx] = updateVm;
                     }
                 }
                 break;
             case ChangedType.Delete:
-                if (GlobalProviders.FirstOrDefault(p => p.Id == message.Id) is { } toDelete)
-                {
-                    GlobalProviders.Remove(toDelete);
-                }
-                break;
-            default:
+                if (Providers.FirstOrDefault(p => p.Id == message.Id) is { } toDelete)
+                    Providers.Remove(toDelete);
                 break;
         }
     }

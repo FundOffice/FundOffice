@@ -467,6 +467,7 @@ public static class PredFiles
         else
         {
             sb.AppendLine("对每个 files 项，若能与下列某个文件对应，则在 map 中填该文件名（必须逐字一致）；否则 map 填 null。");
+            sb.AppendLine("当 stamped=true 时，应优先映射用印版本（如存在）；stamped=false 时映射普通版本。");
             foreach (var n in names) sb.AppendLine($"- {n}");
         }
         return sb.ToString();
@@ -499,17 +500,18 @@ public static class PredFiles
     }
 
     /// <summary>
-    /// 按 {Index}.{Map} 把 pred 中已映射的附件复制到 final 目录。
+    /// 按 {Index}.{Map} 把 pred 中已映射的附件复制到 final/附件 子目录。
     /// indexToMap: 附件序号 → pred 文件名。源文件缺失则记录告警跳过。
     /// </summary>
     public static void CopyMappedFiles(string finalDir, IEnumerable<KeyValuePair<int, string>> indexToMap, Action<string>? onLog = null)
     {
-        Directory.CreateDirectory(finalDir);
+        var attachDir = Path.Combine(finalDir, "附件");
+        Directory.CreateDirectory(attachDir);
         foreach (var kv in indexToMap)
         {
             var src = Path.Combine(Dir, kv.Value);
             if (!File.Exists(src)) { onLog?.Invoke($"附件 {kv.Key} 缺源文件: {kv.Value}"); continue; }
-            var dest = Path.Combine(finalDir, $"{kv.Key}.{kv.Value}");
+            var dest = Path.Combine(attachDir, $"{kv.Key}.{kv.Value}");
             try { File.Copy(src, dest, overwrite: true); onLog?.Invoke($"附件已复制: {dest}"); }
             catch (Exception ex) { onLog?.Invoke($"附件 {kv.Key} 复制失败: {ex.Message}"); }
         }

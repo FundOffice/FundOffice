@@ -36,6 +36,53 @@
                 Foreground="White" />
 
             <Border
+                Margin="12,0,0,0"
+                Padding="8,2"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="5">
+                <DockPanel>
+                    <TextBlock
+                        Margin="0,0,6,0"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="Gray"
+                        Text="回答模式" />
+                    <ListBox ItemsPanel="{StaticResource UniformHorizontalItemsPanelTemplate}"
+                        VerticalAlignment="Center" Style="{StaticResource ListBox.Small}"
+                        ItemsSource="{Binding AnswerModes}"
+                        SelectedItem="{Binding AnswerMode}">
+                        <ListBox.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource ListBoxItemUnfocusedSelectionStyle}" TargetType="ListBoxItem"/>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <Border
+                Padding="8,2"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="5">
+                <DockPanel>
+                    <TextBlock
+                        Margin="0,0,6,0"
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="Gray"
+                        Text="运行模式" />
+                    <ListBox ItemsPanel="{StaticResource UniformHorizontalItemsPanelTemplate}"
+                        VerticalAlignment="Center" Style="{StaticResource ListBox.Small}"
+                        ItemsSource="{Binding RunModes}"
+                        SelectedItem="{Binding RunMode}">
+                        <ListBox.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource ListBoxItemUnfocusedSelectionStyle}" TargetType="ListBoxItem"/>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <Border
                 Margin="50,0,0,0"
                 BorderBrush="RoyalBlue"
                 BorderThickness="1"
@@ -50,7 +97,7 @@
                         VerticalAlignment="Center"
                         BorderThickness="0"
                         ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
-                        ItemsSource="{Binding Source={x:Static vm:MainWindowViewModel.GlobalProviders}}"
+                        ItemsSource="{Binding Providers}"
                         SelectionMode="Multiple"
                         Style="{StaticResource ListBoxCustom}">
 
@@ -86,8 +133,9 @@
                 ItemsSource="{Binding VettingView.View}"
                 SelectedItem="{Binding SelectedVetting}">
                 <ListBox.ItemContainerStyle>
-                    <Style BasedOn="{StaticResource ListBoxItemBaseStyle}" TargetType="ListBoxItem">
+                    <Style BasedOn="{StaticResource ListBoxItemUnfocusedSelectionStyle}" TargetType="ListBoxItem">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Height" Value="22" />
                     </Style>
                 </ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>

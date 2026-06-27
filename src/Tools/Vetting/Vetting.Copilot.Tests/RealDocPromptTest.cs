@@ -57,7 +57,7 @@ public class RealDocPromptTest
         var messages = new[]
         {
             FundOffice.Copilot.Models.ChatMessage.System(sysPrompt),
-            FundOffice.Copilot.Models.ChatMessage.User(structure)
+            FundOffice.Copilot.Models.ChatMessage.User(structure + PredFiles.BuildPromptSection())
         };
         var options = new FundOffice.Copilot.Models.ChatOptions
         {
