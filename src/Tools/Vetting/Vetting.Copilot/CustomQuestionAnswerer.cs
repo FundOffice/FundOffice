@@ -38,14 +38,14 @@ public class CustomQuestionAnswerer
     /// <summary>
     /// 从配置创建 ITokenProvider 实例
     /// </summary>
-    public static ITokenProvider CreateProvider(string name, string providerType, string apiKey, string baseUrl, string model)
+    public static ITokenProvider CreateProvider(string idf, string providerType, string apiKey, string baseUrl, string model)
     {
         return providerType switch
         {
             "Anthropic" => new AnthropicTokenProvider(
-                new AnthropicOptions { Identifier = name, ApiKey = apiKey, BaseUrl = baseUrl, Model = model }),
+                new AnthropicOptions { Identifier = idf, ApiKey = apiKey, BaseUrl = baseUrl, Model = model }),
             _ => new OpenAITokenProvider(
-                new OpenAIOptions { Identifier = name, ApiKey = apiKey, BaseUrl = baseUrl, Model = model }),
+                new OpenAIOptions { Identifier = idf, ApiKey = apiKey, BaseUrl = baseUrl, Model = model }),
         };
     }
 

@@ -11,6 +11,7 @@ public class VettingAppDbContext : VettingDbContext
 {
     public ILiteCollection<VettingReport> Reports => _db.GetCollection<VettingReport>();
     public ILiteCollection<AppSetting> AppSettings => _db.GetCollection<AppSetting>();
+    public ILiteCollection<ParsedJson> ParsedJsons => _db.GetCollection<ParsedJson>();
 
     public VettingAppDbContext() : base() { }
     public VettingAppDbContext(string dbPath) : base(dbPath) { }

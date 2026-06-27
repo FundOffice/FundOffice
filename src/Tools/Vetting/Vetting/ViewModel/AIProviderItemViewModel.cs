@@ -14,6 +14,8 @@ namespace Vetting.ViewModel;
 public partial class AIProviderItemViewModel : ObservableObject
 {
     public int Id { get; set; }
+    public string ProviderId => $"{Id.GetHashCode():x}";
+
     [ObservableProperty] public partial string Name { get; set; } = "";
     public string[] ProviderTypes { get; } = ["OpenAI", "Anthropic"];
     [ObservableProperty] public partial string ProviderType { get; set; } = "OpenAI";
@@ -28,7 +30,11 @@ public partial class AIProviderItemViewModel : ObservableObject
 
     public event Action? IsSelectedChanged;
 
-    partial void OnIsSelectedChanged(bool value) => IsSelectedChanged?.Invoke();
+    partial void OnIsSelectedChanged(bool value)
+    {
+        IsSelectedChanged?.Invoke();
+        WeakReferenceMessenger.Default.Send(new ProviderSelectionChanged(ProviderId, value));
+    }
 
     public ObservableCollection<string> AvailableModels { get; } = [];
 
@@ -120,7 +126,7 @@ public partial class AIProviderItemViewModel : ObservableObject
 
     private ITokenProvider CreateProvider(string? overrideModel = null) => ProviderType switch
     {
-        "Anthropic" => new AnthropicTokenProvider(new AnthropicOptions { Identifier = Name, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model }),
-        _ => new OpenAITokenProvider(new OpenAIOptions { Identifier = Name, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model }),
+        "Anthropic" => new AnthropicTokenProvider(new AnthropicOptions { Identifier = ProviderId, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model }),
+        _ => new OpenAITokenProvider(new OpenAIOptions { Identifier = ProviderId, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model }),
     };
 }

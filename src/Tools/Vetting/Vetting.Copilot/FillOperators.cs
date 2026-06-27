@@ -29,6 +29,11 @@ public record DocLocation
 }
 
 /// <summary>
+/// 属性映射项：prop 为 null 表示该列未映射（占位）
+/// </summary>
+public record PropItem(string? Prop, string Header);
+
+/// <summary>
 /// 填充操作基类
 /// </summary>
 public abstract record FillOperator;
@@ -65,7 +70,7 @@ public record RecommendOp : FillOperator
 public record ListExpandOp : FillOperator
 {
     public required string Entity { get; init; }
-    public required Dictionary<string, string> Properties { get; init; }
+    public required List<PropItem> Properties { get; init; }
     public required DocLocation Ts { get; init; }
     public required DocLocation Te { get; init; }
     public Dictionary<string, string>? Formats { get; init; }
@@ -78,7 +83,7 @@ public record ListExpandOp : FillOperator
 public record GridOp : FillOperator
 {
     public required string Entity { get; init; }
-    public required Dictionary<string, string> Properties { get; init; }
+    public required List<PropItem> Properties { get; init; }
     public required DocLocation Ts { get; init; }
     public required DocLocation Te { get; init; }
     /// <summary>true=Type d（一行一entity）, false=Type e（一列一entity）</summary>
@@ -108,7 +113,7 @@ public record UnknownTableOp : FillOperator
     /// <summary>表格用途描述（如"离职人员信息"、"实缴交易规模构成"），方便人工识别</summary>
     public required string Description { get; init; }
     /// <summary>列头文本 → 属性名占位（属性名用列头原文，后续追加 entity 时再映射）</summary>
-    public required Dictionary<string, string> Properties { get; init; }
+    public required List<PropItem> Properties { get; init; }
     public required DocLocation Ts { get; init; }
     public required DocLocation Te { get; init; }
 }
@@ -302,7 +307,7 @@ public static class OperatorParser
             warnings.Add($"操作 #{idx} (type=c): 缺少必要字段 (entity/properties/ts/te)，跳过");
             return null;
         }
-        var properties = ParseStringDict(propsEl);
+        var properties = ParsePropItems(propsEl);
         if (properties.Count == 0)
         {
             warnings.Add($"操作 #{idx} (type=c): properties 为空，跳过");
@@ -331,7 +336,7 @@ public static class OperatorParser
             warnings.Add($"操作 #{idx} (type={(entityPerRow ? "d" : "e")}): 缺少必要字段，跳过");
             return null;
         }
-        var properties = ParseStringDict(propsEl);
+        var properties = ParsePropItems(propsEl);
         if (properties.Count == 0)
         {
             warnings.Add($"操作 #{idx} (type={(entityPerRow ? "d" : "e")}): properties 为空，跳过");
@@ -384,7 +389,8 @@ public static class OperatorParser
             warnings.Add($"操作 #{idx} (type=g): 缺少 ts 或 te，跳过");
             return null;
         }
-        var properties = op.TryGetProperty("properties", out var propsEl) ? ParseStringDict(propsEl) : new Dictionary<string, string>();
+        var properties = op.TryGetProperty("properties", out var propsEl)
+            ? ParsePropItems(propsEl) : [];
         return new UnknownTableOp
         {
             Description = GetStringOrEmpty(op, "description"),
@@ -434,6 +440,35 @@ public static class OperatorParser
                 dict[prop.Name] = prop.Value.GetString() ?? "";
         }
         return dict;
+    }
+
+    /// <summary>
+    /// 解析 properties 字段，支持两种格式：
+    /// 新格式（数组）：[{"prop": "Name", "header": "股东名称"}, {"prop": null, "header": "出资方式"}]
+    /// 旧格式（字典）：{"Name": "股东名称", "Ratio": "持股比例"} — 自动转换，所有项都有 prop
+    /// </summary>
+    public static List<PropItem> ParsePropItems(JsonElement el)
+    {
+        var list = new List<PropItem>();
+        if (el.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in el.EnumerateArray())
+            {
+                var header = GetStringOrEmpty(item, "header");
+                if (string.IsNullOrEmpty(header)) continue;
+                var prop = GetOptionalString(item, "prop");
+                list.Add(new PropItem(prop, header));
+            }
+        }
+        else if (el.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var prop in el.EnumerateObject())
+            {
+                if (prop.Value.ValueKind == JsonValueKind.String)
+                    list.Add(new PropItem(prop.Name, prop.Value.GetString() ?? ""));
+            }
+        }
+        return list;
     }
 }
 

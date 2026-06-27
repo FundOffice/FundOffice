@@ -433,7 +433,6 @@ public static class DocOps
         // 填充数据
         // 重新获取行列表（可能已插入新行）
         rows = table.Elements<TableRow>().ToList();
-        var propKeys = op.Properties.Keys.ToArray();
 
         for (int i = 0; i < items.Length; i++)
         {
@@ -442,13 +441,15 @@ public static class DocOps
             if (row == null) continue;
 
             var cells = row.Elements<TableCell>().ToList();
-            for (int j = 0; j < propKeys.Length; j++)
+            for (int j = 0; j < op.Properties.Count; j++)
             {
+                var propName = op.Properties[j].Prop;
+                if (propName == null) continue; // 跳过未映射列
+
                 int colIdx = op.Ts.ColIndex + j;
                 var cell = cells.ElementAtOrDefault(colIdx);
                 if (cell == null) continue;
 
-                var propName = propKeys[j];
                 var value = items[i].TryGetValue(propName, out var v) ? v : "";
                 if (!string.IsNullOrEmpty(value) && op.Formats != null && op.Formats.TryGetValue(propName, out var fmt))
                     value = ResolveHelper.ToString(value, fmt);
@@ -467,7 +468,6 @@ public static class DocOps
 
         int offset = offsets.GetValueOrDefault(op.Ts.TableIndex);
         var rows = table.Elements<TableRow>().ToList();
-        var propKeys = op.Properties.Keys.ToArray();
 
         if (op.EntityPerRow)
         {
@@ -490,13 +490,15 @@ public static class DocOps
 
                 if (matched == null) continue;
 
-                for (int j = 0; j < propKeys.Length; j++)
+                for (int j = 0; j < op.Properties.Count; j++)
                 {
+                    var propName = op.Properties[j].Prop;
+                    if (propName == null) continue; // 跳过未映射列
+
                     int colIdx = op.Ts.ColIndex + j;
                     var cell = cells.ElementAtOrDefault(colIdx);
                     if (cell == null) continue;
 
-                    var propName = propKeys[j];
                     var value = matched.TryGetValue(propName, out var v) ? v : "";
                     if (!string.IsNullOrEmpty(value) && op.Formats != null && op.Formats.TryGetValue(propName, out var fmt))
                         value = ResolveHelper.ToString(value, fmt);
@@ -524,8 +526,10 @@ public static class DocOps
 
                 if (matched == null) continue;
 
-                for (int i = 0; i < propKeys.Length; i++)
+                for (int i = 0; i < op.Properties.Count; i++)
                 {
+                    var propName = op.Properties[i].Prop;
+                    if (propName == null) continue; // 跳过未映射行
                     int rowIdx = op.Ts.RowIndex + i + offset;
                     var row = rows.ElementAtOrDefault(rowIdx);
                     if (row == null) continue;
@@ -533,7 +537,6 @@ public static class DocOps
                     var cell = row.Elements<TableCell>().ElementAtOrDefault(ci);
                     if (cell == null) continue;
 
-                    var propName = propKeys[i];
                     var value = matched.TryGetValue(propName, out var v) ? v : "";
                     if (!string.IsNullOrEmpty(value) && op.Formats != null && op.Formats.TryGetValue(propName, out var fmt))
                         value = ResolveHelper.ToString(value, fmt);

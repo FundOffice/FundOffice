@@ -12,10 +12,10 @@
                 <ResourceDictionary Source="Themes/ListBoxItemStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- 全局 Converter -->
+            <!--  全局 Converter  -->
             <local:Int2VisibilityConverter x:Key="Int2VisibilityConverter" />
             <local:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter" />
-            <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter" /> 
+            <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

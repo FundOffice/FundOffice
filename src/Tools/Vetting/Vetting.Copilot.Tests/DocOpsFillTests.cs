@@ -330,7 +330,7 @@ public class DocOpsFillTests : IDisposable
             new ListExpandOp
             {
                 Entity = "shareholder",
-                Properties = new() { ["Name"] = "姓名", ["Ratio"] = "持股比例" },
+                Properties = [new PropItem("Name", "姓名"), new PropItem("Ratio", "持股比例")],
                 Ts = new DocLocation { TableIndex = 0, RowIndex = 1, ColIndex = 0 },
                 Te = new DocLocation { TableIndex = 0, RowIndex = 4, ColIndex = 1 },
             },
@@ -378,7 +378,7 @@ public class DocOpsFillTests : IDisposable
             new ListExpandOp
             {
                 Entity = "shareholder",
-                Properties = new() { ["Name"] = "姓名", ["Ratio"] = "持股比例" },
+                Properties = [new PropItem("Name", "姓名"), new PropItem("Ratio", "持股比例")],
                 Ts = new DocLocation { TableIndex = 0, RowIndex = 1, ColIndex = 0 },
                 Te = new DocLocation { TableIndex = 0, RowIndex = 2, ColIndex = 1 },
             },
@@ -442,14 +442,14 @@ public class DocOpsFillTests : IDisposable
             new ListExpandOp
             {
                 Entity = "executive",
-                Properties = new() { ["Name"] = "姓名", ["Title"] = "职务" },
+                Properties = [new PropItem("Name", "姓名"), new PropItem("Title", "职务")],
                 Ts = new DocLocation { TableIndex = 0, RowIndex = 1, ColIndex = 1 },
                 Te = new DocLocation { TableIndex = 0, RowIndex = 2, ColIndex = 2 },
             },
             new ListExpandOp
             {
                 Entity = "riskctrl",
-                Properties = new() { ["Name"] = "姓名", ["Title"] = "职务" },
+                Properties = [new PropItem("Name", "姓名"), new PropItem("Title", "职务")],
                 Ts = new DocLocation { TableIndex = 0, RowIndex = 3, ColIndex = 1 },
                 Te = new DocLocation { TableIndex = 0, RowIndex = 4, ColIndex = 2 },
             },
@@ -502,7 +502,7 @@ public class DocOpsFillTests : IDisposable
             new GridOp
             {
                 Entity = "financialstatement",
-                Properties = new() { ["TotalAssets"] = "总资产", ["TotalLiabilities"] = "总负债" },
+                Properties = [new PropItem("TotalAssets", "总资产"), new PropItem("TotalLiabilities", "总负债")],
                 Ts = new DocLocation { TableIndex = 0, RowIndex = 1, ColIndex = 1 },
                 Te = new DocLocation { TableIndex = 0, RowIndex = 2, ColIndex = 2 },
                 EntityPerRow = true,
@@ -553,7 +553,7 @@ public class DocOpsFillTests : IDisposable
             new GridOp
             {
                 Entity = "financialstatement",
-                Properties = new() { ["TotalAssets"] = "总资产", ["TotalLiabilities"] = "总负债" },
+                Properties = [new PropItem("TotalAssets", "总资产"), new PropItem("TotalLiabilities", "总负债")],
                 Ts = new DocLocation { TableIndex = 0, RowIndex = 1, ColIndex = 1 },
                 Te = new DocLocation { TableIndex = 0, RowIndex = 2, ColIndex = 2 },
                 EntityPerRow = false,

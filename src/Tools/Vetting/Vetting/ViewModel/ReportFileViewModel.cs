@@ -1,37 +1,28 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using FundOffice.Copilot.Providers;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Windows;
-using Vetting.Copilot.Data;
-using Vetting.Copilot.Models;
-using Vetting.Copilot.Models.Entities;
-using Vetting.Copilot.Models.Info;
 using Vetting.Copilot;
+using Vetting.Copilot.Data;
+using Vetting.Copilot.Models.Entities;
 using Vetting.Data;
 using Vetting.Entity;
 
 namespace Vetting.ViewModel;
 
-public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeChanged>
+public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeChanged>, IRecipient<ProviderSelectionChanged>
 {
-    public required string FileName { get; set; }
-    public required string AbsolutePath { get; set; }
+    public string FileName { get; set; }
+    public string AbsolutePath { get; set; }
     public string VettingId { get; set; } = "";
     [ObservableProperty] public partial bool IsExpanded { get; set; }
     [ObservableProperty] public partial bool IsRecommendOpen { get; set; }
     [ObservableProperty] public partial bool IsAutoMode { get; set; }
 
-    public ObservableCollection<VettingParseTaskViewModel> Tasks { get; } = [];
+    public ObservableCollection<ProviderRunViewModel> Providers { get; } = [];
     [ObservableProperty] public partial string Output { get; set; } = "";
-    [ObservableProperty] public partial bool HasParseResult { get; set; }
-    public ObservableCollection<QuestionAnswerTaskViewModel> AIStatuses { get; } = [];
 
     // 推荐产品（文件级，所有 provider 共用）
     public ObservableCollection<FundInfoVM> AvailableFunds { get; } = [];
@@ -41,16 +32,18 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
 
     private string _fileHash = "";
 
-    [SetsRequiredMembers]
-    public ReportFileViewModel(FileInfo fileInfo, string vettingId)
+    public ReportFileViewModel(FileInfo fileInfo, string vettingId,
+        AIProviderItemViewModel[] selectedProviders, string answerMode, string runMode)
     {
         FileName = fileInfo.Name;
         AbsolutePath = fileInfo.FullName;
         VettingId = vettingId;
         _fileHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(AbsolutePath))).ToLowerInvariant();
 
+
+        IsAutoMode = runMode == MainWindowViewModel.RunModeAuto;
         WeakReferenceMessenger.Default.Register<RunModeChanged>(this);
-        IsAutoMode = LoadRunMode() == MainWindowViewModel.RunModeAuto;
+        WeakReferenceMessenger.Default.Register<ProviderSelectionChanged>(this);
 
         using var db = new VettingDbContext();
         foreach (var f in db.FundInfos.FindAll())
@@ -66,12 +59,49 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
                 if (fund != null) RecommendedFunds.Add(fund);
             }
         }
+
+        // 在构造时创建 Providers
+        foreach (var p in selectedProviders)
+        {
+            var provider = CustomQuestionAnswerer.CreateProvider(p.ProviderId, p.ProviderType, p.ApiKey, p.BaseUrl, p.Model);
+            var vm = new ProviderRunViewModel(p.Name, p.ProviderId, provider, _fileHash, VettingId, FileName, AbsolutePath)
+            {
+                IsFullMode = answerMode == MainWindowViewModel.AnswerModeFull,
+            };
+            Providers.Add(vm);
+        }
     }
 
     private void Log(string message) => Output += message + Environment.NewLine;
 
     public void Receive(RunModeChanged message) =>
         IsAutoMode = message.RunMode == MainWindowViewModel.RunModeAuto;
+
+    public void Receive(ProviderSelectionChanged message)
+    {
+        var providerId = message.Identifier;
+        if (message.IsSelected)
+        {
+            // 添加新 provider
+            using var db = new VettingAppDbContext();
+            var config = db.AIProviderConfigs.Query().ToEnumerable().FirstOrDefault(c => $"{c.Id.GetHashCode():x}" == providerId);
+            if (config == null) return;
+
+            var provider = CustomQuestionAnswerer.CreateProvider(message.Identifier, config.ProviderType, config.ApiKey, config.BaseUrl, config.Model);
+            var vm = new ProviderRunViewModel(message.Identifier, config.Name, provider, _fileHash, VettingId, FileName, AbsolutePath)
+            {
+                IsFullMode = db.GetSettings().AnswerMode == MainWindowViewModel.AnswerModeFull,
+            };
+            Providers.Add(vm);
+        }
+        else
+        {
+            // 移除 provider
+            var existing = Providers.FirstOrDefault(p => p.ProviderId == providerId);
+            if (existing != null)
+                Providers.Remove(existing);
+        }
+    }
 
     // ── 推荐产品（文件级）──────────────────────────────
 
@@ -93,30 +123,6 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
 
     [RelayCommand]
     private void OpenFile() => Process.Start(new ProcessStartInfo(AbsolutePath) { UseShellExecute = true });
-
-    [RelayCommand]
-    private void ViewParseResult()
-    {
-        var tplDir = Path.Combine("files", "vetting", VettingId, "tpl");
-        var safeName = Path.GetFileNameWithoutExtension(FileName);
-        var jsonFiles = Directory.Exists(tplDir)
-            ? Directory.GetFiles(tplDir, $"{safeName}_by[*].json")
-            : [];
-
-        if (jsonFiles.Length == 0)
-        {
-            HandyControl.Controls.Growl.Warning("没有找到解析结果");
-            return;
-        }
-
-        // 打开第一个 provider 的解析结果（或用 TabControl 切换多个）
-        var first = jsonFiles[0];
-        var m = Regex.Match(Path.GetFileNameWithoutExtension(first), @"_by\[(.+)\]$");
-        var providerName = m.Success ? m.Groups[1].Value : "unknown";
-
-        var win = new View.ParseResultWindow(first, FileName, providerName) { Owner = Application.Current.MainWindow };
-        win.Show();
-    }
 
     // ── 自动运行（解析 → AI回答 → 填充）──────────────────
 
@@ -150,128 +156,28 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
         Log("═══ 自动模式完成 ═══");
     }
 
-    /// <summary>从数据库读取运行模式</summary>
-    private static string LoadRunMode()
-    {
-        using var db = new VettingAppDbContext();
-        return db.GetSettings().RunMode;
-    }
-
     // ── 解析（调用所有选中 provider）──────────────────
 
     [RelayCommand]
     private async Task GenerateTemplatesAsync()
     {
-        var sel = LoadSelectedProviders();
-        if (sel.Length == 0) { HandyControl.Controls.Growl.Warning("请先选择 AI 接口"); return; }
-
-        var structure = FileRetry.Run(() => DocOps.ParseDocument(AbsolutePath), "解析文档");
-        if (string.IsNullOrWhiteSpace(structure)) { HandyControl.Controls.Growl.Warning("无法解析文档"); return; }
+        if (Providers.Count == 0) { HandyControl.Controls.Growl.Warning("请先选择 AI 接口"); return; }
 
         IsExpanded = true;
-        var sysPrompt = await VettingParseTaskViewModel.LoadSysptAsync();
-        Tasks.Clear();
-        foreach (var provider in sel)
-        {
-            Tasks.Add(new VettingParseTaskViewModel
-            {
-                TaskName = provider.Name,
-                Provider = CreateProvider(provider),
-                VettingId = VettingId,
-                FileName = FileName
-            });
-        }
-
-        // 解析完成后立即填充模板（每个 provider 独立填一份），files 跨 provider 投票合并
-        var recommendIds = GetRecommendIds();
-        var fileVotes = new Dictionary<int, Dictionary<string, int>>();
-        // 注意：async lambda 的 ContinueWith 返回 Task<Task>，必须 Unwrap 才能让 WhenAll 等到 FillAsync 完成
-        var fillTasks = Tasks.Select(t => t.RunAsync(structure, sysPrompt));
-        await Task.WhenAll(fillTasks);
-
-        HasParseResult = true;
-
-        // 复制已映射的附件到 final：文件名 {Index}.{Map}（按 Index 多数投票选 Map）
-        CopyMappedFiles(fileVotes);
+        // 并行解析
+        await Task.WhenAll(Providers.Select(p => p.RunParseAsync()));
     }
 
-    // ── 查看问题（合并所有 provider 去重）──────────────
 
-    [RelayCommand]
-    private void ViewCustomQuestions()
-    {
-        // 若数据库无问题，尝试从 tpl 下所有 provider 的 JSON 解析入库
-        EnsureQuestionsFromJson();
-
-        var vm = new CustomQuestionsViewModel(_fileHash, FileName);
-        if (vm.Questions.Count == 0) { HandyControl.Controls.Growl.Warning("没有找到自定义问题"); return; }
-        var win = new View.CustomQuestionsWindow { DataContext = vm, Owner = Application.Current.MainWindow };
-        win.Show();
-    }
-
-    private void EnsureQuestionsFromJson()
-    {
-        using var db = new VettingDbContext();
-        if (db.FileSpecialQuestions.Find(q => q.FileHash == _fileHash).Any()) return;
-
-        var tplDir = Path.Combine("files", "vetting", VettingId, "tpl");
-        if (!Directory.Exists(tplDir)) return;
-
-        var safeName = Path.GetFileNameWithoutExtension(FileName);
-        var jsonFiles = Directory.GetFiles(tplDir, $"{safeName}_by[*].json");
-        foreach (var jsonPath in jsonFiles)
-        {
-            var m = Regex.Match(Path.GetFileNameWithoutExtension(jsonPath), @"_by\[(.+)\]$");
-            var providerId = m.Success ? m.Groups[1].Value : "unknown";
-            try
-            {
-                var json = File.ReadAllText(jsonPath);
-                using var jsonDoc = JsonDocument.Parse(json);
-                if (!jsonDoc.RootElement.TryGetProperty("operations", out var opsEl)) continue;
-                var (operators, _) = OperatorParser.ParseWithWarnings(opsEl);
-
-                int idx = 0;
-                foreach (var op in operators)
-                {
-                    if (op is not ParagraphOp paraOp) continue;
-                    if (string.IsNullOrWhiteSpace(paraOp.Question)) continue;
-                    db.FileSpecialQuestions.Insert(new FileSpecialQuestion
-                    {
-                        FileHash = _fileHash,
-                        Provider = providerId,
-                        Index = idx,
-                        Question = paraOp.Question,
-                    });
-                    idx++;
-                }
-            }
-            catch { }
-        }
-    }
 
     // ── AI 回答（一次调用所有 provider）────────────────
 
     [RelayCommand]
     private async Task AIAnswerCustomQuestionsAsync()
     {
-        var sel = LoadSelectedProviders();
-        if (sel.Length == 0) { HandyControl.Controls.Growl.Warning("请先选择 AI 接口"); return; }
-
-        EnsureQuestionsFromJson();
-
-        var isFullMode = LoadAnswerMode() == MainWindowViewModel.AnswerModeFull;
-
-        AIStatuses.Clear();
+        if (Providers.Count == 0) { HandyControl.Controls.Growl.Warning("请先解析文档"); return; }
         IsExpanded = true;
-        var tasks = sel.Select(p =>
-        {
-            var provider = CustomQuestionAnswerer.CreateProvider(p.Name, p.ProviderType, p.ApiKey, p.BaseUrl, p.Model);
-            var vm = new QuestionAnswerTaskViewModel(provider, p.Name, _fileHash, p.Name, isFullMode);
-            AIStatuses.Add(vm);
-            return vm.RunAsync(line => Log(line));
-        });
-        var counts = await Task.WhenAll(tasks);
-        Log($"AI 回答完成，共 {counts.Sum()} 条");
+        await Task.WhenAll(Providers.Select(p => p.RunAnswerAsync()));
     }
 
     // ── 填充（一次调用所有 provider 的 JSON）──────────
@@ -279,127 +185,21 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
     [RelayCommand]
     private async Task FillTemplateAsync()
     {
+        if (Providers.Count == 0) { HandyControl.Controls.Growl.Warning("请先解析文档"); return; }
         if (!IsAutoMode) Output = "";
         IsExpanded = true;
-
-        var recommendIds = GetRecommendIds();
-        var fileVotes = new Dictionary<int, Dictionary<string, int>>();
-
-        var tplDir = Path.Combine("files", "vetting", VettingId, "tpl");
-        var jsonFiles = Directory.Exists(tplDir)
-            ? Directory.GetFiles(tplDir, $"{Path.GetFileNameWithoutExtension(FileName)}_by[*].json")
-            : [];
-        if (jsonFiles.Length == 0) { Log("没有找到解析结果 JSON（请先解析）"); return; }
-
-        foreach (var jsonPath in jsonFiles)
-        {
-            var m = Regex.Match(Path.GetFileNameWithoutExtension(jsonPath), @"_by\[(.+)\]$");
-            var providerId = m.Success ? m.Groups[1].Value : "unknown";
-            await FillAsync(providerId, recommendIds, fileVotes);
-        }
-
-        CopyMappedFiles(fileVotes);
+        await Task.WhenAll(Providers.Select(p => p.RunFillAsync()));
     }
 
     /// <summary>推荐产品 Id：文件级优先，回退全局推荐</summary>
-    private int[] GetRecommendIds()
+    private static int[] GetRecommendIds(ObservableCollection<FundInfoVM> recommendedFunds)
     {
-        var ids = RecommendedFunds.Select(f => f.Entity.Id).ToArray();
+        var ids = recommendedFunds.Select(f => f.Entity.Id).ToArray();
         if (ids.Length > 0) return ids;
         using var db = new VettingDbContext();
         var rec = db.TemplateRecommends.FindOne(r => r.FileHash == "__global__");
         return rec?.FundIds != null
             ? rec.FundIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray()
             : [];
-    }
-
-    /// <summary>
-    /// 单个 provider 的填充：读取其 JSON → 解析操作 → 收集 files 投票 → 生成填充文档。
-    /// 多 provider 并发调用时，fileVotes 需加锁。
-    /// </summary>
-    private async Task FillAsync(string providerId, int[] recommendIds, Dictionary<int, Dictionary<string, int>> fileVotes)
-    {
-        var tplDir = Path.Combine("files", "vetting", VettingId, "tpl");
-        var finalDir = Path.Combine("files", "vetting", VettingId, "final");
-        Directory.CreateDirectory(finalDir);
-
-        var safeName = Path.GetFileNameWithoutExtension(FileName);
-        var ext = Path.GetExtension(FileName);
-        var jsonPath = Path.Combine(tplDir, $"{safeName}_by[{providerId}].json");
-        if (!File.Exists(jsonPath)) { Log($"[{providerId}] 无解析结果 JSON"); return; }
-
-        try
-        {
-            var json = await File.ReadAllTextAsync(jsonPath);
-            using var jsonDoc = JsonDocument.Parse(json);
-            var operators = OperatorParser.Parse(jsonDoc.RootElement.GetProperty("operations"));
-            Log($"[{providerId}] 已解析 {operators.Count} 个操作");
-
-            // 收集 files 投票（并发安全）
-            if (jsonDoc.RootElement.TryGetProperty("files", out var filesEl))
-            {
-                var availableNames = new HashSet<string>(PredFiles.ListNames());
-                var (fs, _) = OperatorParser.ParseFiles(filesEl, availableNames);
-                foreach (var f in fs)
-                {
-                    if (string.IsNullOrEmpty(f.Map)) continue;
-                    lock (fileVotes)
-                    {
-                        if (!fileVotes.ContainsKey(f.Index)) fileVotes[f.Index] = new();
-                        fileVotes[f.Index].TryGetValue(f.Map!, out var c);
-                        fileVotes[f.Index][f.Map!] = c + 1;
-                    }
-                }
-            }
-
-            var resolver = await Task.Run(() => DataResolver.Load(_fileHash, providerId, recommendIds));
-            var outPath = Path.Combine(finalDir, $"{safeName}_filled_by[{providerId}]{ext}");
-            await Task.Run(() => FileRetry.Run(
-                () => DocOps.Fill(AbsolutePath, outPath, operators, resolver),
-                "填充文档",
-                onRetry: msg => Log(msg)));
-            Log($"[{providerId}] 已生成: {outPath}");
-        }
-        catch (Exception ex)
-        {
-            Log($"[{providerId}] 填充失败: {ex.Message}");
-        }
-    }
-
-    /// <summary>按 Index 多数投票选 Map，把已映射附件复制到 final：{Index}.{Map}</summary>
-    private void CopyMappedFiles(Dictionary<int, Dictionary<string, int>> fileVotes)
-    {
-        var finalDir = Path.Combine("files", "vetting", VettingId, "final");
-        var winners = fileVotes.Select(kv => new KeyValuePair<int, string>(
-            kv.Key, kv.Value.OrderByDescending(v => v.Value).First().Key));
-        PredFiles.CopyMappedFiles(finalDir, winners, onLog: msg => Log(msg));
-    }
-
-    private static ITokenProvider CreateProvider(AIProviderItemViewModel vm) => vm.ProviderType switch
-    {
-        "Anthropic" => new AnthropicTokenProvider(
-            new FundOffice.Copilot.Configuration.AnthropicOptions { Identifier = vm.Name, ApiKey = vm.ApiKey, BaseUrl = vm.BaseUrl, Model = vm.Model }),
-        _ => new OpenAITokenProvider(
-            new FundOffice.Copilot.Configuration.OpenAIOptions { Identifier = vm.Name, ApiKey = vm.ApiKey, BaseUrl = vm.BaseUrl, Model = vm.Model }),
-    };
-
-    /// <summary>从数据库读取已选中的 provider</summary>
-    private static AIProviderItemViewModel[] LoadSelectedProviders()
-    {
-        using var db = new VettingAppDbContext();
-        var setting = db.GetSettings();
-        var selectedIds = setting.SelectedProviderIds
-            .Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToHashSet();
-        return db.AIProviderConfigs.FindAll()
-            .Where(c => selectedIds.Contains(c.Id))
-            .Select(c => new AIProviderItemViewModel(c))
-            .ToArray();
-    }
-
-    /// <summary>从数据库读取回答模式</summary>
-    private static string LoadAnswerMode()
-    {
-        using var db = new VettingAppDbContext();
-        return db.GetSettings().AnswerMode;
     }
 }

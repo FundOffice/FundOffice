@@ -63,12 +63,31 @@ public partial class VettingReportViewModel : ObservableObject
         var files = new DirectoryInfo(FolderPath).GetFiles()
             .Where(f => !f.Name.StartsWith("~$") && !f.Attributes.HasFlag(FileAttributes.Hidden))
             .ToArray();
+        // 获取全局参数
+        AIProviderItemViewModel[] selectedProviders;
+        string answerMode, runMode;
+        using (var db = new VettingAppDbContext())
+        {
+            var setting = db.GetSettings();
+            answerMode = setting.AnswerMode;
+            runMode = setting.RunMode;
+            var selectedIds = setting.SelectedProviderIds
+                .Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToHashSet();
+            selectedProviders = db.AIProviderConfigs.FindAll()
+                .Where(c => selectedIds.Contains(c.Id))
+                .Select(c => new AIProviderItemViewModel(c))
+                .ToArray();
+        }
         App.Current.Dispatcher.Invoke(() =>
         {
             OriginalFiles.Clear();
-            foreach (var f in files) OriginalFiles.Add(new ReportFileViewModel(f, Id));
+            foreach (var f in files)
+            { 
+                OriginalFiles.Add(new ReportFileViewModel(f, Id, selectedProviders, answerMode, runMode));
+            }
         });
     }
+
 
     private void ReloadFinalFiles()
     {

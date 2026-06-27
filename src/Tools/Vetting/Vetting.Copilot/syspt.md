@@ -10,8 +10,8 @@
   "operations": [
     {"type": "a", "entity": "manager", "property": "Name", "question": "公司全称", "location": {"table_index": 0, "row_index": 0, "col_index": 1}},
     {"type": "b", "fund_index": 1, "property": "Name", "question": "产品名称", "table": "要素表", "location": {"table_index": 3, "row_index": 0, "col_index": 1}},
-    {"type": "c", "entity": "shareholder", "properties": {"Name": "股东名称", "Ratio": "持股比例"}, "ts": {"table_index": 2, "row_index": 1, "col_index": 0}, "te": {"table_index": 2, "row_index": 5, "col_index": 1}},
-    {"type": "d", "entity": "financialstatement", "properties": {"TotalAssets": "总资产", "TotalLiabilities": "总负债"}, "filter_by": "Year", "ts": {"table_index": 4, "row_index": 1, "col_index": 1}, "te": {"table_index": 4, "row_index": 3, "col_index": 2}},
+    {"type": "c", "entity": "shareholder", "properties": [{"prop": "Name", "header": "股东名称"}, {"prop": "Ratio", "header": "持股比例"}], "ts": {"table_index": 2, "row_index": 1, "col_index": 0}, "te": {"table_index": 2, "row_index": 5, "col_index": 1}},
+    {"type": "d", "entity": "financialstatement", "properties": [{"prop": "TotalAssets", "header": "总资产"}, {"prop": "TotalLiabilities", "header": "总负债"}], "filter_by": "Year", "ts": {"table_index": 4, "row_index": 1, "col_index": 1}, "te": {"table_index": 4, "row_index": 3, "col_index": 2}},
     {"type": "z", "question": "请简述投资策略", "location": {"para_index": 12}}
   ],
   "files": [
@@ -66,10 +66,12 @@
 
 返回 JSON：
 ```json
-{"type": "c", "entity": "shareholder", "properties": {"Name": "股东名称", "Ratio": "持股比例"}, "ts": {"table_index": 2, "row_index": 1, "col_index": 0}, "te": {"table_index": 2, "row_index": 5, "col_index": 1}}
+{"type": "c", "entity": "shareholder", "properties": [{"prop": "Name", "header": "股东名称"}, {"prop": null, "header": "出资方式"}, {"prop": "Ratio", "header": "持股比例"}], "ts": {"table_index": 2, "row_index": 1, "col_index": 0}, "te": {"table_index": 2, "row_index": 5, "col_index": 2}}
 ```
 - `entity`: 列表实体名（fund / shareholder / department / strategy / award / executive / researcher / riskctrl / pm / contact / compliance / actualcontroller）
-- `properties`: 列头文本 → 属性名的映射
+- `properties`: **数组**，按列顺序逐列列出，**必须包含数据区域内所有列**。每项：
+  - `prop`: 属性名（PascalCase），无法映射的列填 `null`
+  - `header`: 该列的表头文本原文
 - `ts`: 数据区域左上角单元格（不包括表头行）
 - `te`: 数据区域右下角单元格
 
@@ -88,10 +90,12 @@
 
 返回 JSON：
 ```json
-{"type": "d", "entity": "financialstatement", "properties": {"TotalAssets": "总资产", "TotalLiabilities": "总负债"}, "filter_by": "Year", "ts": {"table_index": 4, "row_index": 1, "col_index": 1}, "te": {"table_index": 4, "row_index": 3, "col_index": 2}}
+{"type": "d", "entity": "financialstatement", "properties": [{"prop": "TotalAssets", "header": "总资产"}, {"prop": null, "header": "备注"}, {"prop": "TotalLiabilities", "header": "总负债"}], "filter_by": "Year", "ts": {"table_index": 4, "row_index": 1, "col_index": 1}, "te": {"table_index": 4, "row_index": 3, "col_index": 3}}
 ```
 - `entity`: 实体名
-- `properties`: 列头文本 → 属性名映射
+- `properties`: **数组**，按列顺序逐列列出，**必须包含数据区域内所有列**。每项：
+  - `prop`: 属性名（PascalCase），无法映射的列填 `null`
+  - `header`: 该列的表头文本原文
 - `filter_by`: 按此属性的值匹配行头（通常是 "Year"）。行头文本用于匹配 entity 实例的该属性值
 - `ts`/`te`: 数据区域（不包括行头列头）
 
@@ -103,11 +107,12 @@
 
 返回 JSON：
 ```json
-{"type": "e", "entity": "financialstatement", "properties": {"TotalAssets": "总资产", "TotalLiabilities": "总负债"}, "filter_by": "Year", "ts": {"table_index": 5, "row_index": 1, "col_index": 1}, "te": {"table_index": 5, "row_index": 2, "col_index": 3}}
+{"type": "e", "entity": "financialstatement", "properties": [{"prop": "TotalAssets", "header": "总资产"}, {"prop": null, "header": "备注"}, {"prop": "TotalLiabilities", "header": "总负债"}], "filter_by": "Year", "ts": {"table_index": 5, "row_index": 1, "col_index": 1}, "te": {"table_index": 5, "row_index": 3, "col_index": 3}}
 ```
 - 结构与 Type d 完全相同
 - 区别：Type d 按行匹配 entity，Type e 按列匹配 entity
 - `filter_by` 匹配的是列头文本而非行头文本
+- `properties`: **数组**，按行顺序逐行列出，**必须包含数据区域内所有行**。无法映射的行 `prop` 填 `null`
 
 **ts/te 说明**：
 
@@ -152,10 +157,10 @@ Type e 示例（列头是年份，行是属性，一列一 entity）：
 
 返回 JSON：
 ```json
-{"type": "g", "description": "近三年投研团队离职人员信息（姓名/离职日期/离职原因/联系方式）", "properties": {"Name": "姓名", "LeaveDate": "离职日期", "Reason": "离职原因", "Contact": "联系方式"}, "ts": {"table_index": 5, "row_index": 1, "col_index": 0}, "te": {"table_index": 5, "row_index": 5, "col_index": 3}}
+{"type": "g", "description": "近三年投研团队离职人员信息（姓名/离职日期/离职原因/联系方式）", "properties": [{"prop": "Name", "header": "姓名"}, {"prop": "LeaveDate", "header": "离职日期"}, {"prop": "Reason", "header": "离职原因"}, {"prop": "Contact", "header": "联系方式"}], "ts": {"table_index": 5, "row_index": 1, "col_index": 0}, "te": {"table_index": 5, "row_index": 5, "col_index": 3}}
 ```
 - `description`: 用自然语言描述这个表格是什么、填什么、行头列头含义，尽量详细，方便人工识别和后续追加 entity
-- `properties`: 列头文本 → 属性名占位（属性名用 PascalCase 命名，即使暂时没有对应实体也按语义命名，便于将来映射）
+- `properties`: **数组**，按列顺序逐列列出。每项 `prop` 用 PascalCase 命名，便于将来映射
 - `ts`/`te`: 数据区域（不包括表头行/列头列）
 
 **注意**：Type g 仅记录结构，Fill 时不会写入数据。它是占位符，确保表格不被遗漏，并在 JSON 中留下足够信息供后续开发。
