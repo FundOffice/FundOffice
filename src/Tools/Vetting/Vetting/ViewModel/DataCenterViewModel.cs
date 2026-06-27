@@ -184,6 +184,16 @@ public partial class DataCenterViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void DeleteFinancialStatement()
+    {
+        if (SelectedFinancialStatement == null) return;
+        using var db = new VettingDbContext();
+        db.DeleteEntity(typeof(FinancialStatement), SelectedFinancialStatement.Entity.Id);
+        FinancialStatements.Remove(SelectedFinancialStatement);
+        SelectedFinancialStatement = null;
+    }
+
+    [RelayCommand]
     private async Task GenerateMockAsync()
     {
         if (HandyControl.Controls.MessageBox.Show("生成模拟数据会覆盖现有数据，确定继续？", "确认", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes) return;
@@ -396,12 +406,12 @@ public partial class DataCenterViewModel : ObservableObject
                 db.DrawdownRecords.Insert(new DrawdownRecord { ProductName = pn, Date = dt, Amplitude = amp, Reason = reason, Countermeasures = counter, RecoveryDays = days });
 
             // 财报
-            foreach (var (year, ta, tl, oe, rev, cost, np) in new[] {
-                ("2022", "1280", "320", "960", "185", "98", "62"),
-                ("2023", "1520", "380", "1140", "245", "125", "88"),
-                ("2024", "1850", "420", "1430", "310", "155", "118")
+            foreach (var (year, ta, tl, oe, rev, cost, gp, op, tp, tax, np, ocf, icf, fcf, cash, alr, gm, nm) in new[] {
+                ("2022", "1280", "320", "960", "185", "98", "87", "62", "70", "8", "62", "58", "-30", "-10", "120", "25.0%", "47.0%", "33.5%"),
+                ("2023", "1520", "380", "1140", "245", "125", "120", "88", "98", "10", "88", "75", "-35", "5", "150", "25.0%", "49.0%", "35.9%"),
+                ("2024", "1850", "420", "1430", "310", "155", "155", "118", "130", "12", "118", "95", "-40", "20", "180", "22.7%", "50.0%", "38.1%")
             })
-                db.FinancialStatements.Insert(new FinancialStatement { Year = year, TotalAssets = ta, TotalLiabilities = tl, OwnersEquity = oe, Revenue = rev, Cost = cost, NetProfit = np });
+                db.FinancialStatements.Insert(new FinancialStatement { Year = year, TotalAssets = ta, TotalLiabilities = tl, OwnersEquity = oe, Revenue = rev, OperatingCost = cost, GrossProfit = gp, OperatingProfit = op, TotalProfit = tp, IncomeTax = tax, NetProfit = np, OperatingCashFlow = ocf, InvestingCashFlow = icf, FinancingCashFlow = fcf, CashEquivalents = cash, AssetLiabilityRatio = alr, GrossMargin = gm, NetMargin = nm });
 
             // 问答
             foreach (var (q, a) in new[] {
@@ -531,7 +541,13 @@ public partial class DataCenterViewModel : ObservableObject
             case "Award": AddAndSave(db.Awards, Awards, e => new AwardVM(e), new Award()); break;
             case "AUM": AddAndSave(db.AUMs, AUMs, e => new AUMVM(e), new AUM()); break;
             case "DrawdownRecord": AddAndSave(db.DrawdownRecords, DrawdownRecords, e => new DrawdownRecordVM(e), new DrawdownRecord()); break;
-            case "FinancialStatement": AddAndSave(db.FinancialStatements, FinancialStatements, e => new FinancialStatementVM(e), new FinancialStatement()); break;
+            case "FinancialStatement":
+                var newFs = new FinancialStatement();
+                db.FinancialStatements.Insert(newFs);
+                var fsVm = new FinancialStatementVM(newFs);
+                FinancialStatements.Add(fsVm);
+                SelectedFinancialStatement = fsVm;
+                break;
             case "QA": AddAndSave(db.QA, QAs, e => new QAVM(e), new QA()); break;
         }
     }

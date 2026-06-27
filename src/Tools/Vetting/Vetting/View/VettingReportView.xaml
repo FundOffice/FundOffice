@@ -143,30 +143,32 @@
                         <Border>
                             <StackPanel>
                                 <DockPanel LastChildFill="False">
-                                    <Button
+                                    <DockPanel DockPanel.Dock="Right" IsEnabled="{Binding GenerateTemplatesCommand.IsRunning,Converter={StaticResource Boolean2BooleanReConverter}}">
+                                        <Button
                                         Command="{Binding FillTemplateCommand}"
                                         Content="生成"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource ButtonSuccess}" />
-                                    <Button
+                                        <Button
                                         Margin="4,0"
                                         Command="{Binding AIAnswerCustomQuestionsCommand}"
                                         Content="AI回答"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource ButtonPrimary}" />
-                                    <Button
+                                        <Button
                                         Margin="4,0"
                                         Command="{Binding ViewCustomQuestionsCommand}"
                                         Content="查看问题"
                                         DockPanel.Dock="Right"
                                         Style="{StaticResource ButtonDefault}" />
-                                    <ToggleButton
+                                        <ToggleButton
                                         x:Name="RecommendToggle"
                                         Margin="4,0" BorderBrush="Orange"
                                         Content="推荐产品"
                                         DockPanel.Dock="Right" Background="Orange"
                                         IsChecked="{Binding IsRecommendOpen}"
                                         Style="{StaticResource ToggleButtonPrimary}" />
+                                    </DockPanel>
                                     <Button
                                         Command="{Binding GenerateTemplatesCommand}"
                                         Content="解析"

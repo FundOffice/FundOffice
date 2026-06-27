@@ -748,62 +748,82 @@
             </TabItem>
 
             <TabItem Header="财务报表">
-                <DockPanel>
-                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-                        <Button
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!--  上行：按钮 + 年份 ListBox 同一行  -->
+                    <DockPanel Grid.Row="0">
+                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                            <Button
+                                Margin="4"
+                                Command="{Binding AddItemCommand}"
+                                CommandParameter="FinancialStatement"
+                                Content="新增"
+                                Style="{StaticResource ButtonSuccess}" />
+                            <Button
+                                Margin="4"
+                                Command="{Binding DeleteFinancialStatementCommand}"
+                                Content="删除"
+                                Style="{StaticResource ButtonDanger}" />
+                            <Button
+                                Margin="4"
+                                Command="{Binding ClearItemsCommand}"
+                                CommandParameter="FinancialStatement"
+                                Content="清空"
+                                Style="{StaticResource ButtonDanger}" />
+                        </StackPanel>
+                        <ListBox
                             Margin="4"
-                            Command="{Binding AddItemCommand}"
-                            CommandParameter="FinancialStatement"
-                            Content="新增"
-                            Style="{StaticResource ButtonSuccess}" />
-                        <Button
-                            Margin="4"
-                            Command="{Binding DeleteItemCommand}"
-                            Content="删除"
-                            Style="{StaticResource ButtonDanger}" />
-                        <Button
-                            Margin="4"
-                            Command="{Binding ClearItemsCommand}"
-                            CommandParameter="FinancialStatement"
-                            Content="清空"
-                            Style="{StaticResource ButtonDanger}" />
-                    </StackPanel>
-                    <DataGrid
-                        AutoGenerateColumns="False"
-                        ItemsSource="{Binding FinancialStatements}"
-                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn
-                                Width="80"
-                                Binding="{Binding Year, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="年份" />
-                            <DataGridTextColumn
-                                Width="100"
-                                Binding="{Binding TotalAssets, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="总资产" />
-                            <DataGridTextColumn
-                                Width="100"
-                                Binding="{Binding TotalLiabilities, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="总负债" />
-                            <DataGridTextColumn
-                                Width="100"
-                                Binding="{Binding OwnersEquity, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="所有者权益" />
-                            <DataGridTextColumn
-                                Width="100"
-                                Binding="{Binding Revenue, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="营收" />
-                            <DataGridTextColumn
-                                Width="100"
-                                Binding="{Binding Cost, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="成本" />
-                            <DataGridTextColumn
-                                Width="100"
-                                Binding="{Binding NetProfit, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="净利润" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </DockPanel>
+                            ItemsSource="{Binding FinancialStatements}"
+                            SelectedItem="{Binding SelectedFinancialStatement}">
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBox.ItemContainerStyle>
+                                <Style BasedOn="{StaticResource ListBoxItemBaseStyle}" TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="8,2" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock FontWeight="SemiBold" Text="{Binding Year}" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+
+                    <!--  下行：内容  -->
+                    <ScrollViewer
+                        Grid.Row="1"
+                        Padding="8"
+                        VerticalScrollBarVisibility="Auto">
+                        <WrapPanel DataContext="{Binding SelectedFinancialStatement}" ItemWidth="320">
+                            <hc:TextBox hc:InfoElement.Title="年份" Text="{Binding Year, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="总资产" Text="{Binding TotalAssets, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="总负债" Text="{Binding TotalLiabilities, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="所有者权益" Text="{Binding OwnersEquity, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="营业收入" Text="{Binding Revenue, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="营业成本" Text="{Binding OperatingCost, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="毛利润" Text="{Binding GrossProfit, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="营业利润" Text="{Binding OperatingProfit, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="利润总额" Text="{Binding TotalProfit, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="所得税" Text="{Binding IncomeTax, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="净利润" Text="{Binding NetProfit, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="经营活动现金流" Text="{Binding OperatingCashFlow, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="投资活动现金流" Text="{Binding InvestingCashFlow, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="筹资活动现金流" Text="{Binding FinancingCashFlow, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="期末现金及等价物" Text="{Binding CashEquivalents, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="资产负债率" Text="{Binding AssetLiabilityRatio, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="毛利率" Text="{Binding GrossMargin, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="净利率" Text="{Binding NetMargin, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        </WrapPanel>
+                    </ScrollViewer>
+                </Grid>
             </TabItem>
 
 
@@ -841,7 +861,7 @@
 
                         <ListBox
                             Grid.Row="0"
-                            AllowDrop="True"
+                            AllowDrop="True" 
                             DragOver="OnPredDragOver"
                             Drop="OnPredDrop"
                             ItemsSource="{Binding PredFileNames}"

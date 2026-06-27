@@ -311,8 +311,19 @@ public partial class FinancialStatementVM : AutoSaveViewModel<FinancialStatement
     public string? TotalLiabilities { get => Entity.TotalLiabilities; set { Entity.TotalLiabilities = value; OnPropertyChanged(); } }
     public string? OwnersEquity { get => Entity.OwnersEquity; set { Entity.OwnersEquity = value; OnPropertyChanged(); } }
     public string? Revenue { get => Entity.Revenue; set { Entity.Revenue = value; OnPropertyChanged(); } }
-    public string? Cost { get => Entity.Cost; set { Entity.Cost = value; OnPropertyChanged(); } }
+    public string? OperatingCost { get => Entity.OperatingCost; set { Entity.OperatingCost = value; OnPropertyChanged(); } }
+    public string? GrossProfit { get => Entity.GrossProfit; set { Entity.GrossProfit = value; OnPropertyChanged(); } }
+    public string? OperatingProfit { get => Entity.OperatingProfit; set { Entity.OperatingProfit = value; OnPropertyChanged(); } }
+    public string? TotalProfit { get => Entity.TotalProfit; set { Entity.TotalProfit = value; OnPropertyChanged(); } }
+    public string? IncomeTax { get => Entity.IncomeTax; set { Entity.IncomeTax = value; OnPropertyChanged(); } }
     public string? NetProfit { get => Entity.NetProfit; set { Entity.NetProfit = value; OnPropertyChanged(); } }
+    public string? OperatingCashFlow { get => Entity.OperatingCashFlow; set { Entity.OperatingCashFlow = value; OnPropertyChanged(); } }
+    public string? InvestingCashFlow { get => Entity.InvestingCashFlow; set { Entity.InvestingCashFlow = value; OnPropertyChanged(); } }
+    public string? FinancingCashFlow { get => Entity.FinancingCashFlow; set { Entity.FinancingCashFlow = value; OnPropertyChanged(); } }
+    public string? CashEquivalents { get => Entity.CashEquivalents; set { Entity.CashEquivalents = value; OnPropertyChanged(); } }
+    public string? AssetLiabilityRatio { get => Entity.AssetLiabilityRatio; set { Entity.AssetLiabilityRatio = value; OnPropertyChanged(); } }
+    public string? GrossMargin { get => Entity.GrossMargin; set { Entity.GrossMargin = value; OnPropertyChanged(); } }
+    public string? NetMargin { get => Entity.NetMargin; set { Entity.NetMargin = value; OnPropertyChanged(); } }
 }
 
 public partial class QAVM : AutoSaveViewModel<QA>
