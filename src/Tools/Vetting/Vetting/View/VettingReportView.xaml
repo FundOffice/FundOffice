@@ -102,7 +102,11 @@
                 </DockPanel>
 
                 <!--  展开时显示 Output 和 ErrorMessage  -->
-                <ItemsControl ItemsSource="{Binding Output}" Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                <TextBox
+                    IsReadOnly="True"
+                    Text="{Binding Output, Mode=OneWay}"
+                    TextWrapping="Wrap"
+                    Visibility="{Binding Output, Converter={StaticResource String2VisibilityConverter}}" />
             </StackPanel>
         </DataTemplate>
     </UserControl.Resources>
@@ -298,17 +302,23 @@
                                                         Text="{Binding ErrorMessage}"
                                                         Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}" />
                                                 </DockPanel>
-                                                <ItemsControl ItemsSource="{Binding Output}" Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                                <TextBox
+                                                    IsReadOnly="True"
+                                                    Text="{Binding Output, Mode=OneWay}"
+                                                    TextWrapping="Wrap"
+                                                    Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}" />
                                             </StackPanel>
                                         </DataTemplate>
                                     </ListBox.ItemTemplate>
                                 </ListBox>
 
                                 <!--  填充输出日志  -->
-                                <ItemsControl
+                                <TextBox
+                                    IsReadOnly="True"
+                                    Text="{Binding Output, Mode=OneWay}"
+                                    TextWrapping="Wrap"
                                     Margin="0,5,0,0"
-                                    ItemsSource="{Binding Output}"
-                                    Visibility="{Binding Output.Count, Converter={StaticResource Int2VisibilityConverter}}" />
+                                    Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
                             </StackPanel>
                         </Border>
