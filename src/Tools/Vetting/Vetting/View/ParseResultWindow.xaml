@@ -3,12 +3,33 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:c="clr-namespace:Vetting.Entity"
+    xmlns:vc="clr-namespace:Vetting.Copilot;assembly=Vetting.Copilot"
     Title="解析结果"
     Width="800"
     Height="700"
     WindowStartupLocation="CenterOwner">
 
     <Window.Resources>
+
+        <DataTemplate DataType="{x:Type vc:PropItem}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    HorizontalAlignment="Right"
+                    Background="Transparent"
+                    Text="{Binding Header}" />
+                <TextBlock
+                    Grid.Column="1"
+                    Margin="15,0"
+                    Text="→" />
+                <TextBlock Grid.Column="2" Text="{Binding Prop}" />
+            </Grid>
+        </DataTemplate>
+
         <!--  标量属性模板 (ScalarOp)  -->
         <DataTemplate x:Key="type_a">
             <Border
@@ -30,7 +51,7 @@
                         <TextBlock
                             Margin="0,0,3,0"
                             Foreground="Gray"
-                            Text="实体:" />
+                            Text="映射:" />
                         <TextBlock Text="{Binding Entity}" />
                     </StackPanel>
                     <StackPanel
@@ -90,7 +111,7 @@
                             <TextBlock
                                 Margin="0,0,3,0"
                                 Foreground="Gray"
-                                Text="实体:" />
+                                Text="映射:" />
                             <TextBlock Text="{Binding Entity}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Visibility="{Binding HasLocation, Converter={StaticResource Boolean2VisibilityConverter}}">
@@ -104,19 +125,20 @@
                                 Text="{Binding LocationText}" />
                         </StackPanel>
                     </WrapPanel>
-                    <TextBox
-                        MaxHeight="160"
-                        Margin="0,4,0,0"
-                        Padding="4,2"
+
+                    <ListBox
                         Background="#F0FFF0"
                         BorderThickness="0"
-                        FontFamily="Consolas"
-                        FontSize="11"
-                        IsReadOnly="True"
-                        Text="{Binding PropertiesText, Mode=OneWay}"
-                        TextWrapping="Wrap"
-                        VerticalScrollBarVisibility="Auto"
-                        Visibility="{Binding HasPropertiesMap, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                        IsHitTestVisible="False"
+                        ItemsSource="{Binding PropertyMaps}"
+                        Style="{StaticResource ListBoxCustom}"
+                        Visibility="{Binding HasPropertiesMap, Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="3" IsItemsHost="True" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
                 </StackPanel>
             </Border>
         </DataTemplate>
@@ -144,7 +166,7 @@
                             <TextBlock
                                 Margin="0,0,3,0"
                                 Foreground="Gray"
-                                Text="实体:" />
+                                Text="映射:" />
                             <TextBlock Text="{Binding Entity}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Visibility="{Binding HasLocation, Converter={StaticResource Boolean2VisibilityConverter}}">
@@ -158,19 +180,20 @@
                                 Text="{Binding LocationText}" />
                         </StackPanel>
                     </WrapPanel>
-                    <TextBox
-                        MaxHeight="60"
-                        Margin="0,4,0,0"
-                        Padding="4,2"
+
+                    <ListBox
                         Background="#FFF5E6"
                         BorderThickness="0"
-                        FontFamily="Consolas"
-                        FontSize="11"
-                        IsReadOnly="True"
-                        Text="{Binding PropertiesText, Mode=OneWay}"
-                        TextWrapping="Wrap"
-                        VerticalScrollBarVisibility="Auto"
-                        Visibility="{Binding HasPropertiesMap, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                        IsHitTestVisible="False"
+                        ItemsSource="{Binding PropertyMaps}"
+                        Style="{StaticResource ListBoxCustom}"
+                        Visibility="{Binding HasPropertiesMap, Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="3" IsItemsHost="True" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
                 </StackPanel>
             </Border>
         </DataTemplate>
@@ -197,7 +220,7 @@
                         <TextBlock
                             Margin="0,0,3,0"
                             Foreground="Gray"
-                            Text="实体:" />
+                            Text="映射:" />
                         <TextBlock Text="{Binding Entity}" />
                     </StackPanel>
                     <StackPanel
@@ -256,7 +279,7 @@
                         <TextBlock
                             Margin="0,0,3,0"
                             Foreground="Gray"
-                            Text="实体:" />
+                            Text="映射:" />
                         <TextBlock Text="{Binding Entity}" />
                     </StackPanel>
                     <StackPanel
@@ -330,19 +353,19 @@
                                 Text="{Binding LocationText}" />
                         </StackPanel>
                     </WrapPanel>
-                    <TextBox
-                        MaxHeight="60"
-                        Margin="0,4,0,0"
-                        Padding="4,2"
+                    <ListBox
                         Background="#EFEFEF"
                         BorderThickness="0"
-                        FontFamily="Consolas"
-                        FontSize="11"
-                        IsReadOnly="True"
-                        Text="{Binding PropertiesText, Mode=OneWay}"
-                        TextWrapping="Wrap"
-                        VerticalScrollBarVisibility="Auto"
-                        Visibility="{Binding HasPropertiesMap, Converter={StaticResource Boolean2VisibilityConverter}}" />
+                        IsHitTestVisible="False"
+                        ItemsSource="{Binding PropertyMaps}"
+                        Style="{StaticResource ListBoxCustom}"
+                        Visibility="{Binding HasPropertiesMap, Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="3" IsItemsHost="True" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
                 </StackPanel>
             </Border>
         </DataTemplate>

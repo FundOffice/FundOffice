@@ -75,13 +75,14 @@ public partial class OperationItemViewModel : ObservableObject
     public string? Property { get; }
     public string? Question { get; }
     public string? LocationText { get; }
-    public string? PropertiesText { get; }
+
+    public IList<PropItem> PropertyMaps { get; set; } = [];
 
     public bool HasEntity => !string.IsNullOrEmpty(Entity);
     public bool HasProperty => !string.IsNullOrEmpty(Property);
     public bool HasQuestion => !string.IsNullOrEmpty(Question);
     public bool HasLocation => !string.IsNullOrEmpty(LocationText);
-    public bool HasPropertiesMap => !string.IsNullOrEmpty(PropertiesText);
+    public bool HasPropertiesMap => PropertyMaps?.Count > 0;
     public bool HasDescription => !string.IsNullOrEmpty(Description);
 
     public OperationItemViewModel(FillOperator op)
@@ -101,13 +102,13 @@ public partial class OperationItemViewModel : ObservableObject
             case ListExpandOp c:
                 Entity = c.Entity;
                 LocationText = FormatRange(c.Ts, c.Te);
-                PropertiesText = FormatPropItems(c.Properties, reverse: true);
+                PropertyMaps = c.Properties;
                 break;
 
             case GridOp d:
                 Entity = d.Entity;
                 LocationText = FormatRange(d.Ts, d.Te);
-                PropertiesText = FormatPropItems(d.Properties);
+                PropertyMaps = d.Properties;
                 break;
 
             case ParagraphOp z:
@@ -127,7 +128,7 @@ public partial class OperationItemViewModel : ObservableObject
             case UnknownTableOp g:
                 Description = g.Description;
                 LocationText = FormatRange(g.Ts, g.Te);
-                PropertiesText = FormatPropItems(g.Properties);
+                PropertyMaps = g.Properties;
                 break;
         }
     }
@@ -163,13 +164,8 @@ public partial class OperationItemViewModel : ObservableObject
     private static string FormatRange(DocLocation ts, DocLocation te)
         => $"T{ts.TableIndex}[{ts.RowIndex},{ts.ColIndex}] → [{te.RowIndex},{te.ColIndex}]";
 
-    private static string? FormatPropItems(List<PropItem> props, bool reverse = false)
-    {
-        var mapped = props.Where(p => p.Prop != null);
-        if (!mapped.Any()) return null;
-        var lines = reverse
-            ? mapped.Select(p => $"  {p.Header} → {p.Prop}")
-            : mapped.Select(p => $"  {p.Prop} → {p.Header}");
-        return string.Join("\n", lines);
-    }
+   
+
+
+
 }
