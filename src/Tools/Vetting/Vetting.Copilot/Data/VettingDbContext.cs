@@ -35,6 +35,8 @@ public class VettingDbContext : IDisposable
     public ILiteCollection<Staff> Staffs => _db.GetCollection<Staff>();
     public ILiteCollection<Strategy> Strategies => _db.GetCollection<Strategy>();
 
+    private static string _machine = GetDiskSerial();
+
     /// <summary>
     /// 默认构造：使用 data/vetting.db，密码基于磁盘序列号
     /// </summary>
@@ -61,7 +63,7 @@ public class VettingDbContext : IDisposable
 
     private static string ComputeDiskSerialMd5()
     {
-        var serial = GetDiskSerial();
+        var serial = _machine;
         return Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(serial))).ToLowerInvariant();
     }
 
@@ -71,7 +73,10 @@ public class VettingDbContext : IDisposable
         {
             var psi = new ProcessStartInfo("wmic", "diskdrive get serialnumber")
             {
-                RedirectStandardOutput = true, UseShellExecute = false, CreateNoWindow = true
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = Environment.SystemDirectory
             };
             using var p = Process.Start(psi);
             if (p == null) return Environment.MachineName;
