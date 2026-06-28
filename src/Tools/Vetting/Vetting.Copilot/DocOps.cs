@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -333,7 +333,7 @@ public static class DocOps
                         FillScalar(tables, paragraphs, scalar, resolver, tableOffsets);
                         break;
                     case RecommendOp rec:
-                        FillRecommend(tables, paragraphs, rec, resolver, tableOffsets);
+                        FillRecommend(tables, rec, resolver, tableOffsets);
                         break;
                     case ListExpandOp list:
                         FillListExpand(tables, list, resolver, tableOffsets);
@@ -346,7 +346,7 @@ public static class DocOps
                         break;
                     case UnknownTableOp unknown:
                         // Type g: 未知实体表格，无数据可填，记录日志供调试
-                        System.Diagnostics.Debug.WriteLine($"[Type g] 跳过未知表格 T[{unknown.Ts.TableIndex}]: {unknown.Description}");
+                        System.Diagnostics.Debug.WriteLine($"[Type g] 跳过未知表格 T[{unknown.Range.Table}]: {unknown.Description}");
                         break;
                 }
             }
@@ -363,53 +363,63 @@ public static class DocOps
     private static void FillScalar(List<Table> tables, List<Paragraph> paragraphs, ScalarOp op, DataResolver resolver, Dictionary<int, int> offsets)
     {
         var value = resolver.Resolve(op.Entity, op.Property, op.Format);
-        if (op.Location.IsCell)
+        if (op.Location.IsCell && op.Location.Table.HasValue && op.Location.Row.HasValue && op.Location.Col.HasValue)
         {
-            var cell = GetCell(tables, op.Location.TableIndex, op.Location.RowIndex + offsets.GetValueOrDefault(op.Location.TableIndex), op.Location.ColIndex);
+            var tableIdx = op.Location.Table.Value;
+            var rowIdx = op.Location.Row.Value + offsets.GetValueOrDefault(tableIdx);
+            var colIdx = op.Location.Col.Value;
+            var cell = GetCell(tables, tableIdx, rowIdx, colIdx);
             if (cell != null) SetCellContent(cell, value);
         }
-        else if (op.Location.IsParagraph)
+        else if (op.Location.IsParagraph && op.Location.Para.HasValue)
         {
-            var para = paragraphs.ElementAtOrDefault(op.Location.ParaIndex);
+            var para = paragraphs.ElementAtOrDefault(op.Location.Para.Value);
             if (para != null) SetParaContent(para, value);
         }
     }
 
-    private static void FillRecommend(List<Table> tables, List<Paragraph> paragraphs, RecommendOp op, DataResolver resolver, Dictionary<int, int> offsets)
+    private static void FillRecommend(List<Table> tables, RecommendOp op, DataResolver resolver, Dictionary<int, int> offsets)
     {
-        var value = resolver.ResolveRecommend(op.FundIndex, op.Property, op.Format);
-        if (string.IsNullOrEmpty(value)) return; // recommend 越界或属性为空，不填充
+        var tableIdx = op.Range.Table;
+        var offset = offsets.GetValueOrDefault(tableIdx);
 
-        if (op.Location.IsCell)
+        foreach (var prop in op.Props)
         {
-            var cell = GetCell(tables, op.Location.TableIndex, op.Location.RowIndex + offsets.GetValueOrDefault(op.Location.TableIndex), op.Location.ColIndex);
-            if (cell != null) SetCellContent(cell, value);
-        }
-        else if (op.Location.IsParagraph)
-        {
-            var para = paragraphs.ElementAtOrDefault(op.Location.ParaIndex);
-            if (para != null) SetParaContent(para, value);
+            if (prop.Prop == null) continue;
+
+            var rowIdx = prop.Row + offset;
+            var colIdx = prop.Col;
+            var cell = GetCell(tables, tableIdx, rowIdx, colIdx);
+            if (cell == null) continue;
+
+            var value = resolver.ResolveRecommendForFund(op.FundIndex, op.Range, prop.Prop, prop.Header);
+            if (!string.IsNullOrEmpty(value))
+                SetCellContent(cell, value);
         }
     }
 
     private static void FillListExpand(List<Table> tables, ListExpandOp op, DataResolver resolver, Dictionary<int, int> offsets)
     {
-        var table = tables.ElementAtOrDefault(op.Ts.TableIndex);
+        var tableIdx = op.Range.Table;
+        var table = tables.ElementAtOrDefault(tableIdx);
         if (table == null) return;
 
         var items = resolver.GetList(op.Entity);
         if (items.Length == 0) return;
 
         var rows = table.Elements<TableRow>().ToList();
-        int offset = offsets.GetValueOrDefault(op.Ts.TableIndex);
-        int availableRows = op.Te.RowIndex - op.Ts.RowIndex + 1;
+        int offset = offsets.GetValueOrDefault(tableIdx);
+        int startRow = op.Range.Start.Row ?? 0;
+        int endRow = op.Range.End.Row ?? 0;
+        int startCol = op.Range.Start.Col ?? 0;
+        int availableRows = endRow - startRow + 1;
 
         // 需要扩展行
         if (items.Length > availableRows)
         {
             int extraCount = items.Length - availableRows;
-            var templateRow = rows[op.Te.RowIndex];
-            var insertAfter = rows[op.Te.RowIndex];
+            var templateRow = rows[endRow];
+            var insertAfter = rows[endRow];
 
             for (int i = 0; i < extraCount; i++)
             {
@@ -427,7 +437,7 @@ public static class DocOps
                 insertAfter = (TableRow)insertAfter.InsertAfterSelf(newRow);
             }
 
-            offsets[op.Ts.TableIndex] = offset + extraCount;
+            offsets[tableIdx] = offset + extraCount;
         }
 
         // 填充数据
@@ -436,7 +446,7 @@ public static class DocOps
 
         for (int i = 0; i < items.Length; i++)
         {
-            int rowIdx = op.Ts.RowIndex + i + offset;
+            int rowIdx = startRow + i + offset;
             var row = rows.ElementAtOrDefault(rowIdx);
             if (row == null) continue;
 
@@ -446,7 +456,7 @@ public static class DocOps
                 var propName = op.Properties[j].Prop;
                 if (propName == null) continue; // 跳过未映射列
 
-                int colIdx = op.Ts.ColIndex + j;
+                int colIdx = startCol + j;
                 var cell = cells.ElementAtOrDefault(colIdx);
                 if (cell == null) continue;
 
@@ -460,25 +470,31 @@ public static class DocOps
 
     private static void FillGrid(List<Table> tables, GridOp op, DataResolver resolver, Dictionary<int, int> offsets)
     {
-        var table = tables.ElementAtOrDefault(op.Ts.TableIndex);
+        var tableIdx = op.Range.Table;
+        var table = tables.ElementAtOrDefault(tableIdx);
         if (table == null) return;
 
         var items = resolver.GetList(op.Entity);
         if (items.Length == 0) return;
 
-        int offset = offsets.GetValueOrDefault(op.Ts.TableIndex);
+        int offset = offsets.GetValueOrDefault(tableIdx);
         var rows = table.Elements<TableRow>().ToList();
+
+        int startRow = op.Range.Start.Row ?? 0;
+        int endRow = op.Range.End.Row ?? 0;
+        int startCol = op.Range.Start.Col ?? 0;
+        int endCol = op.Range.End.Col ?? 0;
 
         if (op.EntityPerRow)
         {
             // Type d: 一行一 entity，列头是属性
-            for (int ri = op.Ts.RowIndex; ri <= op.Te.RowIndex; ri++)
+            for (int ri = startRow; ri <= endRow; ri++)
             {
                 var row = rows.ElementAtOrDefault(ri + offset);
                 if (row == null) continue;
 
                 var cells = row.Elements<TableCell>().ToList();
-                var rowHeader = cells.ElementAtOrDefault(op.Ts.ColIndex - 1)?.InnerText?.Trim() ?? "";
+                var rowHeader = cells.ElementAtOrDefault(startCol - 1)?.InnerText?.Trim() ?? "";
 
                 Dictionary<string, string>? matched = null;
                 if (!string.IsNullOrEmpty(op.FilterBy))
@@ -486,7 +502,7 @@ public static class DocOps
                     matched = items.FirstOrDefault(item =>
                         item.TryGetValue(op.FilterBy, out var val) && val?.Trim() == rowHeader);
                 }
-                matched ??= items.ElementAtOrDefault(ri - op.Ts.RowIndex);
+                matched ??= items.ElementAtOrDefault(ri - startRow);
 
                 if (matched == null) continue;
 
@@ -495,7 +511,7 @@ public static class DocOps
                     var propName = op.Properties[j].Prop;
                     if (propName == null) continue; // 跳过未映射列
 
-                    int colIdx = op.Ts.ColIndex + j;
+                    int colIdx = startCol + j;
                     var cell = cells.ElementAtOrDefault(colIdx);
                     if (cell == null) continue;
 
@@ -509,9 +525,9 @@ public static class DocOps
         else
         {
             // Type e: 一列一 entity，行头是属性
-            var headerRow = rows.ElementAtOrDefault(op.Ts.RowIndex - 1 + offset);
+            var headerRow = rows.ElementAtOrDefault(startRow - 1 + offset);
 
-            for (int ci = op.Ts.ColIndex; ci <= op.Te.ColIndex; ci++)
+            for (int ci = startCol; ci <= endCol; ci++)
             {
                 var headerCells = headerRow?.Elements<TableCell>().ToList();
                 var colHeader = headerCells?.ElementAtOrDefault(ci)?.InnerText?.Trim() ?? "";
@@ -522,7 +538,7 @@ public static class DocOps
                     matched = items.FirstOrDefault(item =>
                         item.TryGetValue(op.FilterBy, out var val) && val?.Trim() == colHeader);
                 }
-                matched ??= items.ElementAtOrDefault(ci - op.Ts.ColIndex);
+                matched ??= items.ElementAtOrDefault(ci - startCol);
 
                 if (matched == null) continue;
 
@@ -530,7 +546,7 @@ public static class DocOps
                 {
                     var propName = op.Properties[i].Prop;
                     if (propName == null) continue; // 跳过未映射行
-                    int rowIdx = op.Ts.RowIndex + i + offset;
+                    int rowIdx = startRow + i + offset;
                     var row = rows.ElementAtOrDefault(rowIdx);
                     if (row == null) continue;
 
@@ -549,7 +565,7 @@ public static class DocOps
     private static void FillParagraph(List<Paragraph> paragraphs, ParagraphOp op, DataResolver resolver)
     {
         if (!op.Location.IsParagraph) return;
-        var para = paragraphs.ElementAtOrDefault(op.Location.ParaIndex);
+        var para = op.Location.Para.HasValue ? paragraphs.ElementAtOrDefault(op.Location.Para.Value) : null;
         if (para == null) return;
 
         string value;

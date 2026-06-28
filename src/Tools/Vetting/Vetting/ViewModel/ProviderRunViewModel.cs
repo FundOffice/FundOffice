@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FundOffice.Copilot.Models;
 using FundOffice.Copilot.Providers;
@@ -24,9 +24,8 @@ public partial class ProviderRunViewModel : ObservableObject
     public string ProviderName { get; }
     public string ProviderId { get; }
     public ITokenProvider Provider { get; }
-    public string FileHash { get; }
-    public string VettingId { get; }
     public string FileName { get; }
+    public string VettingId { get; }
     public string AbsolutePath { get; }
     public bool IsFullMode { get; set; }
 
@@ -50,16 +49,15 @@ public partial class ProviderRunViewModel : ObservableObject
     private readonly Stopwatch _sw = new();
 
     public ProviderRunViewModel(string providerName, string providerId, ITokenProvider provider,
-        string fileHash, string vettingId, string fileName, string absolutePath)
+        string fileName, string vettingId, string absolutePath)
     {
         ProviderName = providerName;
         ProviderId = providerId;
         Provider = provider;
-        FileHash = fileHash;
-        VettingId = vettingId;
         FileName = fileName;
+        VettingId = vettingId;
         AbsolutePath = absolutePath;
-        _logPath = Path.Combine("files", "vetting", "logs", $"{fileHash}_{providerId}.txt");
+        _logPath = Path.Combine("files", "vetting", "logs", $"{fileName}_{providerId}.txt");
     }
 
     private void Log(string message)
@@ -132,7 +130,7 @@ public partial class ProviderRunViewModel : ObservableObject
             {
                 db.ParsedJsons.Insert(new ParsedJson
                 {
-                    FileHash = FileHash,
+                    FileName = FileName,
                     Provider = ProviderId,
                     Time = DateTime.Now,
                     Json = json,
@@ -147,7 +145,7 @@ public partial class ProviderRunViewModel : ObservableObject
             int questionCount = 0;
             using (var db = new VettingDbContext())
             {
-                var oldQuestions = db.FileSpecialQuestions.Find(q => q.FileHash == FileHash && q.Provider == ProviderId).ToArray();
+                var oldQuestions = db.FileSpecialQuestions.Find(q => q.FileName == FileName && q.Provider == ProviderId).ToArray();
                 foreach (var old in oldQuestions)
                 {
                     var oldAnswers = db.SpecialAnswers.Find(a => a.QuestionId == old.Id).ToArray();
@@ -163,7 +161,7 @@ public partial class ProviderRunViewModel : ObservableObject
 
                     db.FileSpecialQuestions.Insert(new FileSpecialQuestion
                     {
-                        FileHash = FileHash,
+                        FileName = FileName,
                         Provider = ProviderId,
                         Index = idx,
                         Question = paraOp.Question,
@@ -193,7 +191,7 @@ public partial class ProviderRunViewModel : ObservableObject
         {
             using var db = new VettingDbContext();
             var questions = db.FileSpecialQuestions
-                .Find(q => q.FileHash == FileHash && q.Provider == ProviderId)
+                .Find(q => q.FileName == FileName && q.Provider == ProviderId)
                 .OrderBy(q => q.Index).ToArray();
 
             if (questions.Length == 0)
@@ -297,27 +295,23 @@ public partial class ProviderRunViewModel : ObservableObject
             var finalDir = Path.Combine("files", "vetting", VettingId, "final", ProviderId);
             Directory.CreateDirectory(finalDir);
 
-            var safeName = Path.GetFileNameWithoutExtension(FileName);
-            var ext = Path.GetExtension(FileName);
-            var fileHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(AbsolutePath))).ToLowerInvariant();
-
-
-            // 从数据库读取最新的解析 JSON
+            // 从数据库读取最新的解析 JSON 和推荐配置
             string? json = null;
             int[] recommanded;
             using (var db = new VettingAppDbContext())
             {
                 var record = db.ParsedJsons.Query()
-                    .Where(j => j.FileHash == FileHash && j.Provider == ProviderId)
+                    .Where(j => j.FileName == FileName && j.Provider == ProviderId)
                     .OrderByDescending(j => j.Time)
                     .FirstOrDefault();
                 json = record?.Json;
-                var existing = db.TemplateRecommends.FindOne(r => r.FileHash == fileHash);
+
+                var existing = db.TemplateRecommends.FindOne(r => r.FileName == FileName);
                 recommanded = existing?.FundIds?.Split(',').Select(x => int.TryParse(x, out var d) ? d : 0).Where(x => x > 0).ToArray() ?? [];
 
                 if (recommanded.Length == 0)
                 {
-                    var rec = db.TemplateRecommends.FindOne(r => r.FileHash == "__global__");
+                    var rec = db.TemplateRecommends.FindOne(r => r.FileName == "__global__");
                     recommanded = rec?.FundIds?.Split(',').Select(x => int.TryParse(x, out var d) ? d : 0).Where(x => x > 0).ToArray() ?? [];
                 }
             }
@@ -340,7 +334,7 @@ public partial class ProviderRunViewModel : ObservableObject
             }
 
 
-            var resolver = await Task.Run(() => DataResolver.Load(FileHash, ProviderId, recommanded));
+            var resolver = await Task.Run(() => DataResolver.Load(FileName, ProviderId, recommanded));
             var outPath = Path.Combine(finalDir, $"{FileName}");
             await Task.Run(() => FileRetry.Run(
                 () => DocOps.Fill(AbsolutePath, outPath, operators, resolver),
@@ -366,7 +360,7 @@ public partial class ProviderRunViewModel : ObservableObject
     [RelayCommand]
     public void ViewParseResult()
     {
-        var vm = new ParseResultViewModel(FileHash, ProviderId);
+        var vm = new ParseResultViewModel(FileName, ProviderId, VettingId);
         var win = new View.ParseResultWindow { Owner = Application.Current.MainWindow, DataContext = vm };
         win.Show();
     }

@@ -26,6 +26,12 @@ public partial class VettingReportViewModel : ObservableObject
     private FileSystemWatcher? _watcher;
     private FileSystemWatcher? _finalWatcher;
 
+    /// <summary>
+    /// 缓存 ReportFileViewModel，避免切换尽调时丢失 ProviderRunViewModel 状态
+    /// Key: "{VettingId}_{FileName}"
+    /// </summary>
+    private static readonly Dictionary<string, ReportFileViewModel> _fileCache = new();
+
     public VettingReportViewModel(VettingReport report)
     {
         Report = report;
@@ -80,10 +86,27 @@ public partial class VettingReportViewModel : ObservableObject
         }
         App.Current.Dispatcher.Invoke(() =>
         {
+            // 缓存当前的 ReportFileViewModel
+            foreach (var vm in OriginalFiles)
+            {
+                var cacheKey = $"{Id}_{vm.FileName}";
+                _fileCache[cacheKey] = vm;
+            }
+
             OriginalFiles.Clear();
             foreach (var f in files)
-            { 
-                OriginalFiles.Add(new ReportFileViewModel(f, Id, selectedProviders, answerMode, runMode));
+            {
+                var cacheKey = $"{Id}_{f.Name}";
+                if (_fileCache.TryGetValue(cacheKey, out var cached))
+                {
+                    // 从缓存恢复
+                    OriginalFiles.Add(cached);
+                }
+                else
+                {
+                    // 创建新的
+                    OriginalFiles.Add(new ReportFileViewModel(f, Id, selectedProviders, answerMode, runMode));
+                }
             }
         });
     }

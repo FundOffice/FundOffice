@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
@@ -30,16 +30,12 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
     [ObservableProperty] public partial FundInfoVM? SelectedAvailable { get; set; }
     [ObservableProperty] public partial FundInfoVM? SelectedRecommended { get; set; }
 
-    private string _fileHash = "";
-
     public ReportFileViewModel(FileInfo fileInfo, string vettingId,
         AIProviderItemViewModel[] selectedProviders, string answerMode, string runMode)
     {
         FileName = fileInfo.Name;
         AbsolutePath = fileInfo.FullName;
         VettingId = vettingId;
-        _fileHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(AbsolutePath))).ToLowerInvariant();
-
 
         IsAutoMode = runMode == MainWindowViewModel.RunModeAuto;
         WeakReferenceMessenger.Default.Register<RunModeChanged>(this);
@@ -49,7 +45,7 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
         foreach (var f in db.FundInfos.FindAll())
             AvailableFunds.Add(new FundInfoVM(f));
 
-        var rec = db.TemplateRecommends.FindOne(r => r.FileHash == _fileHash);
+        var rec = db.TemplateRecommends.FindOne(r => r.FileName == FileName);
         if (rec?.FundIds != null)
         {
             var ids = rec.FundIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
@@ -64,7 +60,7 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
         foreach (var p in selectedProviders)
         {
             var provider = CustomQuestionAnswerer.CreateProvider(p.ProviderId, p.ProviderType, p.ApiKey, p.BaseUrl, p.Model);
-            var vm = new ProviderRunViewModel(p.Name, p.ProviderId, provider, _fileHash, VettingId, FileName, AbsolutePath)
+            var vm = new ProviderRunViewModel(p.Name, p.ProviderId, provider, FileName, VettingId, AbsolutePath)
             {
                 IsFullMode = answerMode == MainWindowViewModel.AnswerModeFull,
             };
@@ -88,7 +84,7 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
             if (config == null) return;
 
             var provider = CustomQuestionAnswerer.CreateProvider(message.Identifier, config.ProviderType, config.ApiKey, config.BaseUrl, config.Model);
-            var vm = new ProviderRunViewModel(message.Identifier, config.Name, provider, _fileHash, VettingId, FileName, AbsolutePath)
+            var vm = new ProviderRunViewModel(message.Identifier, config.Name, provider, FileName, VettingId, AbsolutePath)
             {
                 IsFullMode = db.GetSettings().AnswerMode == MainWindowViewModel.AnswerModeFull,
             };
@@ -109,7 +105,7 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
     {
         using var db = new VettingDbContext();
         var ids = string.Join(",", RecommendedFunds.Select(f => f.Entity.Id));
-        var existing = db.TemplateRecommends.FindOne(r => r.FileHash == _fileHash);
+        var existing = db.TemplateRecommends.FindOne(r => r.FileName == FileName);
         if (existing != null)
         {
             existing.FundIds = ids;
@@ -117,7 +113,7 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
         }
         else if (RecommendedFunds.Count > 0)
         {
-            db.TemplateRecommends.Insert(new TemplateRecommend { FileHash = _fileHash, ProviderId = "", FundIds = ids });
+            db.TemplateRecommends.Insert(new TemplateRecommend { FileName = FileName, ProviderId = "", FundIds = ids });
         }
     }
 
@@ -197,7 +193,7 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
         var ids = recommendedFunds.Select(f => f.Entity.Id).ToArray();
         if (ids.Length > 0) return ids;
         using var db = new VettingDbContext();
-        var rec = db.TemplateRecommends.FindOne(r => r.FileHash == "__global__");
+        var rec = db.TemplateRecommends.FindOne(r => r.FileName == "__global__");
         return rec?.FundIds != null
             ? rec.FundIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray()
             : [];

@@ -1,4 +1,4 @@
-using FundOffice.Copilot.Configuration;
+﻿using FundOffice.Copilot.Configuration;
 using FundOffice.Copilot.Models;
 using FundOffice.Copilot.Providers;
 using System.Text;
@@ -53,7 +53,7 @@ public class CustomQuestionAnswerer
     /// 回答文件的散装问题（不写数据库，返回结果）
     /// </summary>
     public async Task<QuestionAnswerResult> AnswerAsync(
-        string fileHash,
+        string fileName,
         string providerId,
         bool isFullMode = false,
         Action<string>? output = null,
@@ -64,7 +64,7 @@ public class CustomQuestionAnswerer
         {
             using var db = new VettingDbContext();
             var questions = db.FileSpecialQuestions
-                .Find(q => q.FileHash == fileHash && q.Provider == providerId)
+                .Find(q => q.FileName == fileName && q.Provider == providerId)
                 .OrderBy(q => q.Index)
                 .ToArray();
             if (questions.Length == 0)
@@ -113,8 +113,8 @@ public class CustomQuestionAnswerer
                 answer = processedAnswer;
 
                 answers.Add((idx, q.Question ?? "", answer));
-                output?.Invoke($"{{{{{key}}}}}  {q.Question}\n    → {answer}");
-                logs.Add($"{{{{a{idx}}}}} → {answer}");
+                output?.Invoke($"{{{key}}}  {q.Question}\n    → {answer}");
+                logs.Add($"{{a{idx}}} → {answer}");
             }
 
             var exactCount = answers.Count(a => !string.IsNullOrEmpty(a.answer) && !a.answer.StartsWith("（ai）"));
@@ -140,19 +140,19 @@ public class CustomQuestionAnswerer
     /// 回答散装问题并保存到数据库
     /// </summary>
     public async Task<QuestionAnswerResult> AnswerAndSaveAsync(
-        string fileHash,
+        string fileName,
         string providerId,
         string providerName,
         bool isFullMode = false,
         Action<string>? output = null,
         CancellationToken ct = default)
     {
-        var result = await AnswerAsync(fileHash, providerId, isFullMode, output, ct);
+        var result = await AnswerAsync(fileName, providerId, isFullMode, output, ct);
         if (!result.Success || result.AnsweredCount == 0) return result;
 
         using var db = new VettingDbContext();
         var questions = db.FileSpecialQuestions
-            .Find(q => q.FileHash == fileHash && q.Provider == providerId)
+            .Find(q => q.FileName == fileName && q.Provider == providerId)
             .ToArray();
 
         foreach (var (index, _, answer) in result.Answers)
@@ -209,9 +209,9 @@ public class CustomQuestionAnswerer
             sb.AppendLine($"{{a{q.Index}}}: {q.Question}");
         sb.AppendLine();
         sb.AppendLine("请严格按以下 JSON 格式回答:");
-        sb.AppendLine("{\"answers\": {\"a1\": \"回答内容\", \"a2\": \"回答内容\"}}");
+        sb.AppendLine(@"{""answers"": {""a1"": ""回答内容"", ""a2"": ""回答内容""}}");
         if (isFullMode)
-            sb.AppendLine("如果某问题的回答不是来自上面的历史问答资料，而是你根据专业判断得出的，请在该回答开头加上【推断】标记。例如: \"【推断】这是推断的回答内容\"");
+            sb.AppendLine(@"如果某问题的回答不是来自上面的历史问答资料，而是你根据专业判断得出的，请在该回答开头加上【推断】标记。例如: ""【推断】这是推断的回答内容""");
         return sb.ToString();
     }
 }

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -17,6 +17,7 @@ public class VettingDbContext : IDisposable
     public ILiteCollection<SpecialAnswer> SpecialAnswers => _db.GetCollection<SpecialAnswer>();
     public ILiteCollection<QA> QA => _db.GetCollection<QA>();
     public ILiteCollection<TemplateRecommend> TemplateRecommends => _db.GetCollection<TemplateRecommend>();
+    public ILiteCollection<FundBinding> FundBindings => _db.GetCollection<FundBinding>();
 
     // 唯一项
     public ILiteCollection<Manager> Managers => _db.GetCollection<Manager>();

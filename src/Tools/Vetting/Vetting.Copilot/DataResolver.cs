@@ -1,3 +1,4 @@
+﻿using System.Text.Json;
 using Vetting.Copilot.Data;
 using Vetting.Copilot.Models.Entities;
 using Vetting.Copilot.Models.Info;
@@ -13,23 +14,29 @@ public class DataResolver
     private readonly Dictionary<string, Dictionary<string, string>[]> _lists;
     private readonly Dictionary<int, FundInfo> _recommendFunds;
     private readonly Dictionary<string, string> _answersByQuestion;
+    private readonly string? _fileName;
+    private readonly Dictionary<string, int> _fundBindings; // RangeKey → FundId
 
     public DataResolver(
         Dictionary<string, IResolve> scalars,
         Dictionary<string, Dictionary<string, string>[]> lists,
         Dictionary<int, FundInfo> recommendFunds,
-        Dictionary<string, string> answersByQuestion)
+        Dictionary<string, string> answersByQuestion,
+        string? fileName,
+        Dictionary<string, int> fundBindings)
     {
         _scalars = scalars;
         _lists = lists;
         _recommendFunds = recommendFunds;
+        _fileName = fileName;
         _answersByQuestion = answersByQuestion;
+        _fundBindings = fundBindings;
     }
 
     /// <summary>
     /// 从 LiteDB 加载所有数据并构造 DataResolver
     /// </summary>
-    public static DataResolver Load(string fileHash, string providerId, int[]? recommendIds = null)
+    public static DataResolver Load(string fileName, string providerId, int[]? recommendIds = null)
     {
         using var db = new VettingDbContext();
 
@@ -113,13 +120,20 @@ public class DataResolver
         for (int i = 0; i < recommendIds.Length; i++)
         {
             var fund = allFunds.FirstOrDefault(f => f.Id == recommendIds[i]);
-            if (fund != null) recommendFunds[i] = fund;
+            if (fund != null)
+                recommendFunds[i] = fund;
         }
+        // 加载表格绑定（从 FundBinding 表，按 FileName 过滤）
+        var fundBindings = new Dictionary<string, int>();
+        foreach (var b in db.FundBindings.Find(b => b.FileName == fileName))
+            fundBindings[b.Range ?? ""] = b.FundId;
+
+        // 加载自定义问题答案
 
         var answersByQuestion = new Dictionary<string, string>();
-        if (!string.IsNullOrEmpty(fileHash))
+        if (!string.IsNullOrEmpty(fileName))
         {
-            var questions = db.FileSpecialQuestions.Find(q => q.FileHash == fileHash && q.Provider == providerId).ToArray();
+            var questions = db.FileSpecialQuestions.Find(q => q.FileName == fileName && q.Provider == providerId).ToArray();
             var answers = db.SpecialAnswers.Query().ToEnumerable()
                 .Where(a => questions.Any(q => q.Id == a.QuestionId)).ToArray();
             foreach (var q in questions)
@@ -132,10 +146,43 @@ public class DataResolver
             }
         }
 
-        return new DataResolver(scalars, lists, recommendFunds, answersByQuestion);
+        return new DataResolver(scalars, lists, recommendFunds, answersByQuestion, fileName, fundBindings);
     }
 
     /// <summary>
+
+    /// 为 Type b 解析属性，查找优先级：FundBinding → file 级推荐 → global 推荐
+    /// </summary>
+    public string ResolveRecommendForFund(int fundIndex, Range range, string property, string? header = null, string? format = null)
+    {
+        // 1. 优先查找 FundBinding
+        var key = range.ToKey();
+        if (_fundBindings.TryGetValue(key, out var boundFundId))
+        {
+            var fund = FindFundById(boundFundId);
+            if (fund != null)
+            {
+                var value = fund.Resolve(property);
+                return ResolveHelper.ToString(value, format);
+            }
+        }
+
+        // 2. Fallback: 按 fundIndex 从推荐列表取
+        return ResolveRecommend(fundIndex, property, format);
+    }
+
+    /// <summary>
+    /// 按 FundId 在推荐列表和数据库中查找基金
+    /// </summary>
+    private FundInfo? FindFundById(int fundId)
+    {
+        foreach (var f in _recommendFunds.Values)
+            if (f.Id == fundId) return f;
+
+        using var db = new VettingDbContext();
+        return db.FundInfos.FindById(fundId);
+    }
+
     /// 解析单值实体属性（Type a / Type z with entity）
     /// </summary>
     public string Resolve(string entity, string property, string? format = null)
@@ -146,7 +193,7 @@ public class DataResolver
     }
 
     /// <summary>
-    /// 解析推荐产品属性（Type b）
+    /// 解析推荐产品属性（Type b，按 fundIndex）
     /// </summary>
     public string ResolveRecommend(int fundIndex, string property, string? format = null)
     {
@@ -194,7 +241,7 @@ public class DataResolver
 
     private static int[] LoadGlobalRecommendIds(VettingDbContext db)
     {
-        var rec = db.TemplateRecommends.FindOne(r => r.FileHash == "__global__");
+        var rec = db.TemplateRecommends.FindOne(r => r.FileName == "__global__");
         if (rec?.FundIds == null) return [];
         return rec.FundIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
     }

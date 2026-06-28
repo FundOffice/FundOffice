@@ -1,31 +1,56 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace Vetting.Copilot;
 
 /// <summary>
-/// 文档坐标
+/// 单个位置（表格单元格或段落）
 /// </summary>
-public record DocLocation
+public record Location
 {
-    public int TableIndex { get; init; } = -1;
-    public int RowIndex { get; init; }
-    public int ColIndex { get; init; }
-    public int ParaIndex { get; init; } = -1;
+    // Table cell
+    public int? Table { get; init; }   // table_index, null for paragraph
+    public int? Row { get; init; }     // row_index, null for paragraph
+    public int? Col { get; init; }     // col_index, null for paragraph
 
-    public bool IsCell => TableIndex >= 0;
-    public bool IsParagraph => ParaIndex >= 0 && TableIndex < 0;
+    // Paragraph
+    public int? Para { get; init; }    // para_index, null for table cell
 
-    public static DocLocation FromJson(JsonElement el)
+    public bool IsCell => Table.HasValue && Row.HasValue && Col.HasValue;
+    public bool IsParagraph => Para.HasValue && !Table.HasValue;
+
+    public static Location FromJson(JsonElement el)
     {
-        int Get(string key) => el.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetInt32() : -1;
-        return new DocLocation
+        return new Location
         {
-            TableIndex = Get("table_index"),
-            RowIndex = Get("row_index"),
-            ColIndex = Get("col_index"),
-            ParaIndex = Get("para_index"),
+            Table = el.TryGetProperty("table", out var t) && t.ValueKind == JsonValueKind.Number ? t.GetInt32() : null,
+            Row = el.TryGetProperty("row", out var r) && r.ValueKind == JsonValueKind.Number ? r.GetInt32() : null,
+            Col = el.TryGetProperty("col", out var c) && c.ValueKind == JsonValueKind.Number ? c.GetInt32() : null,
+            Para = el.TryGetProperty("para", out var p) && p.ValueKind == JsonValueKind.Number ? p.GetInt32() : null,
         };
     }
+}
+
+/// <summary>
+/// 表格范围（含 table_index + start/end）
+/// </summary>
+public record Range
+{
+    public required int Table { get; init; }
+    public required Location Start { get; init; }
+    public required Location End { get; init; }
+
+    public static Range FromJson(JsonElement el)
+    {
+        return new Range
+        {
+            Table = el.TryGetProperty("table", out var t) && t.ValueKind == JsonValueKind.Number ? t.GetInt32() : 0,
+            Start = el.TryGetProperty("start", out var s) ? Location.FromJson(s) : new Location(),
+            End = el.TryGetProperty("end", out var e) ? Location.FromJson(e) : new Location(),
+        };
+    }
+
+    /// <summary>生成绑定键: {Table}_{StartRow}_{StartCol}_{EndRow}_{EndCol}</summary>
+    public string ToKey() => $"{Table}_{Start.Row ?? 0}_{Start.Col ?? 0}_{End.Row ?? 0}_{End.Col ?? 0}";
 }
 
 /// <summary>
@@ -43,25 +68,33 @@ public abstract record FillOperator;
 /// </summary>
 public record ScalarOp : FillOperator
 {
+    public required Location Location { get; init; }
     public required string Entity { get; init; }
     public required string Property { get; init; }
     public required string Question { get; init; }
-    public required DocLocation Location { get; init; }
     public string? Format { get; init; }
 }
 
 /// <summary>
-/// Type b: 推荐产品 LQRA
+/// Type b: 推荐产品表格（合并多个属性）
 /// </summary>
 public record RecommendOp : FillOperator
 {
-    /// <summary>AI 解析顺序排列的产品索引（0-based），与输入 recommend 数组对应</summary>
-    public required int FundIndex { get; init; }
-    public required string Property { get; init; }
-    public required string Question { get; init; }
-    public required string Table { get; init; }
-    public required DocLocation Location { get; init; }
-    public string? Format { get; init; }
+    public required Range Range { get; init; }
+    public required int FundIndex { get; init; }     // 推荐产品索引（从 0 开始）
+    public required string Table { get; init; }      // 表格描述
+    public required List<RecommendPropItem> Props { get; init; }
+}
+
+/// <summary>
+/// Type b 的属性项（绝对 row/col）
+/// </summary>
+public record RecommendPropItem
+{
+    public required int Row { get; init; }
+    public required int Col { get; init; }
+    public string? Prop { get; init; }
+    public required string Header { get; init; }
 }
 
 /// <summary>
@@ -69,10 +102,9 @@ public record RecommendOp : FillOperator
 /// </summary>
 public record ListExpandOp : FillOperator
 {
+    public required Range Range { get; init; }
     public required string Entity { get; init; }
     public required List<PropItem> Properties { get; init; }
-    public required DocLocation Ts { get; init; }
-    public required DocLocation Te { get; init; }
     public Dictionary<string, string>? Formats { get; init; }
 }
 
@@ -82,10 +114,9 @@ public record ListExpandOp : FillOperator
 /// </summary>
 public record GridOp : FillOperator
 {
+    public required Range Range { get; init; }
     public required string Entity { get; init; }
     public required List<PropItem> Properties { get; init; }
-    public required DocLocation Ts { get; init; }
-    public required DocLocation Te { get; init; }
     /// <summary>true=Type d（一行一entity）, false=Type e（一列一entity）</summary>
     public required bool EntityPerRow { get; init; }
     /// <summary>按此属性匹配行头/列头（通常 "Year"）</summary>
@@ -98,8 +129,8 @@ public record GridOp : FillOperator
 /// </summary>
 public record ParagraphOp : FillOperator
 {
+    public required Location Location { get; init; }
     public required string Question { get; init; }
-    public required DocLocation Location { get; init; }
     public string? Entity { get; init; }
     public string? Property { get; init; }
     public string? Format { get; init; }
@@ -112,10 +143,8 @@ public record UnknownTableOp : FillOperator
 {
     /// <summary>表格用途描述（如"离职人员信息"、"实缴交易规模构成"），方便人工识别</summary>
     public required string Description { get; init; }
-    /// <summary>列头文本 → 属性名占位（属性名用列头原文，后续追加 entity 时再映射）</summary>
+    public required Range Range { get; init; }
     public required List<PropItem> Properties { get; init; }
-    public required DocLocation Ts { get; init; }
-    public required DocLocation Te { get; init; }
 }
 
 /// <summary>
@@ -252,18 +281,20 @@ public static class OperatorParser
             warnings.Add($"操作 #{idx} (type=a): 缺少 entity 或 property，跳过");
             return null;
         }
-        var location = op.TryGetProperty("location", out var loc) ? DocLocation.FromJson(loc) : new DocLocation();
+
+        var location = op.TryGetProperty("location", out var loc) ? Location.FromJson(loc) : new Location();
         if (!location.IsCell && !location.IsParagraph)
         {
             warnings.Add($"操作 #{idx} (type=a): location 无效，跳过");
             return null;
         }
+
         return new ScalarOp
         {
+            Location = location,
             Entity = entity,
             Property = property,
             Question = GetStringOrEmpty(op, "question"),
-            Location = location,
             Format = GetOptionalString(op, "format"),
         };
     }
@@ -272,26 +303,51 @@ public static class OperatorParser
 
     private static RecommendOp? TryParseRecommend(JsonElement op, List<string> warnings, int idx)
     {
-        if (!TryGetInt(op, "fund_index", out var fundIndex) ||
-            !TryGetString(op, "property", out var property))
+        if (!op.TryGetProperty("range", out var rangeEl))
         {
-            warnings.Add($"操作 #{idx} (type=b): 缺少 fund_index 或 property，跳过");
+            warnings.Add($"操作 #{idx} (type=b): 缺少 range，跳过");
             return null;
         }
-        var location = op.TryGetProperty("location", out var loc) ? DocLocation.FromJson(loc) : new DocLocation();
-        if (!location.IsCell && !location.IsParagraph)
+
+        var range = Range.FromJson(rangeEl);
+        var table = GetStringOrEmpty(op, "table");
+        var fundIndex = TryGetInt(op, "fund_index", out var fi) ? fi : 0;
+
+        if (!op.TryGetProperty("props", out var propsEl) || propsEl.ValueKind != JsonValueKind.Array)
         {
-            warnings.Add($"操作 #{idx} (type=b): location 无效，跳过");
+            warnings.Add($"操作 #{idx} (type=b): 缺少 props 数组，跳过");
             return null;
         }
+
+        var props = new List<RecommendPropItem>();
+        foreach (var p in propsEl.EnumerateArray())
+        {
+            if (!TryGetInt(p, "row", out var row) || !TryGetInt(p, "col", out var col))
+            {
+                warnings.Add($"操作 #{idx} (type=b): props 项缺少 row 或 col，跳过该项");
+                continue;
+            }
+            props.Add(new RecommendPropItem
+            {
+                Row = row,
+                Col = col,
+                Prop = GetOptionalString(p, "prop"),
+                Header = GetStringOrEmpty(p, "header"),
+            });
+        }
+
+        if (props.Count == 0)
+        {
+            warnings.Add($"操作 #{idx} (type=b): props 为空，跳过");
+            return null;
+        }
+
         return new RecommendOp
         {
+            Range = range,
             FundIndex = fundIndex,
-            Property = property,
-            Question = GetStringOrEmpty(op, "question"),
-            Table = GetStringOrEmpty(op, "table"),
-            Location = location,
-            Format = GetOptionalString(op, "format"),
+            Table = table,
+            Props = props,
         };
     }
 
@@ -299,26 +355,38 @@ public static class OperatorParser
 
     private static ListExpandOp? TryParseListExpand(JsonElement op, List<string> warnings, int idx)
     {
-        if (!TryGetString(op, "entity", out var entity) ||
-            !op.TryGetProperty("properties", out var propsEl) ||
-            !op.TryGetProperty("ts", out var tsEl) ||
-            !op.TryGetProperty("te", out var teEl))
+        if (!TryGetString(op, "entity", out var entity))
         {
-            warnings.Add($"操作 #{idx} (type=c): 缺少必要字段 (entity/properties/ts/te)，跳过");
+            warnings.Add($"操作 #{idx} (type=c): 缺少 entity，跳过");
             return null;
         }
+
+        if (!op.TryGetProperty("range", out var rangeEl))
+        {
+            warnings.Add($"操作 #{idx} (type=c): 缺少 range，跳过");
+            return null;
+        }
+
+        var range = Range.FromJson(rangeEl);
+
+        if (!op.TryGetProperty("properties", out var propsEl))
+        {
+            warnings.Add($"操作 #{idx} (type=c): 缺少 properties，跳过");
+            return null;
+        }
+
         var properties = ParsePropItems(propsEl);
         if (properties.Count == 0)
         {
             warnings.Add($"操作 #{idx} (type=c): properties 为空，跳过");
             return null;
         }
+
         return new ListExpandOp
         {
+            Range = range,
             Entity = entity,
             Properties = properties,
-            Ts = DocLocation.FromJson(tsEl),
-            Te = DocLocation.FromJson(teEl),
             Formats = op.TryGetProperty("formats", out var fmts) && fmts.ValueKind == JsonValueKind.Object
                 ? ParseStringDict(fmts) : null,
         };
@@ -328,26 +396,38 @@ public static class OperatorParser
 
     private static GridOp? TryParseGrid(JsonElement op, bool entityPerRow, List<string> warnings, int idx)
     {
-        if (!TryGetString(op, "entity", out var entity) ||
-            !op.TryGetProperty("properties", out var propsEl) ||
-            !op.TryGetProperty("ts", out var tsEl) ||
-            !op.TryGetProperty("te", out var teEl))
+        if (!TryGetString(op, "entity", out var entity))
         {
-            warnings.Add($"操作 #{idx} (type={(entityPerRow ? "d" : "e")}): 缺少必要字段，跳过");
+            warnings.Add($"操作 #{idx} (type={(entityPerRow ? "d" : "e")}): 缺少 entity，跳过");
             return null;
         }
+
+        if (!op.TryGetProperty("range", out var rangeEl))
+        {
+            warnings.Add($"操作 #{idx} (type={(entityPerRow ? "d" : "e")}): 缺少 range，跳过");
+            return null;
+        }
+
+        var range = Range.FromJson(rangeEl);
+
+        if (!op.TryGetProperty("properties", out var propsEl))
+        {
+            warnings.Add($"操作 #{idx} (type={(entityPerRow ? "d" : "e")}): 缺少 properties，跳过");
+            return null;
+        }
+
         var properties = ParsePropItems(propsEl);
         if (properties.Count == 0)
         {
             warnings.Add($"操作 #{idx} (type={(entityPerRow ? "d" : "e")}): properties 为空，跳过");
             return null;
         }
+
         return new GridOp
         {
+            Range = range,
             Entity = entity,
             Properties = properties,
-            Ts = DocLocation.FromJson(tsEl),
-            Te = DocLocation.FromJson(teEl),
             EntityPerRow = entityPerRow,
             FilterBy = GetOptionalString(op, "filter_by"),
             Formats = op.TryGetProperty("formats", out var fmts) && fmts.ValueKind == JsonValueKind.Object
@@ -359,20 +439,21 @@ public static class OperatorParser
 
     private static ParagraphOp? TryParseParagraph(JsonElement op, List<string> warnings, int idx)
     {
-        var location = op.TryGetProperty("location", out var loc) ? DocLocation.FromJson(loc) : new DocLocation();
+        var location = op.TryGetProperty("location", out var loc) ? Location.FromJson(loc) : new Location();
         if (!location.IsParagraph)
         {
             // Type z 也可能在表格中（entity+property），检查 cell
             if (!location.IsCell)
             {
-                warnings.Add($"操作 #{idx} (type=z): location 无效（无 para_index），跳过");
+                warnings.Add($"操作 #{idx} (type=z): location 无效（无 para），跳过");
                 return null;
             }
         }
+
         return new ParagraphOp
         {
-            Question = GetStringOrEmpty(op, "question"),
             Location = location,
+            Question = GetStringOrEmpty(op, "question"),
             Entity = GetOptionalString(op, "entity"),
             Property = GetOptionalString(op, "property"),
             Format = GetOptionalString(op, "format"),
@@ -383,20 +464,21 @@ public static class OperatorParser
 
     private static UnknownTableOp? TryParseUnknown(JsonElement op, List<string> warnings, int idx)
     {
-        if (!op.TryGetProperty("ts", out var tsEl) ||
-            !op.TryGetProperty("te", out var teEl))
+        if (!op.TryGetProperty("range", out var rangeEl))
         {
-            warnings.Add($"操作 #{idx} (type=g): 缺少 ts 或 te，跳过");
+            warnings.Add($"操作 #{idx} (type=g): 缺少 range，跳过");
             return null;
         }
+
+        var range = Range.FromJson(rangeEl);
         var properties = op.TryGetProperty("properties", out var propsEl)
             ? ParsePropItems(propsEl) : [];
+
         return new UnknownTableOp
         {
             Description = GetStringOrEmpty(op, "description"),
+            Range = range,
             Properties = properties,
-            Ts = DocLocation.FromJson(tsEl),
-            Te = DocLocation.FromJson(teEl),
         };
     }
 
