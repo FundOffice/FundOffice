@@ -309,6 +309,7 @@ public partial class DataCenterViewModel : ObservableObject
             db.DrawdownRecords.DeleteAll();
             db.FinancialStatements.DeleteAll();
             db.QA.DeleteAll();
+            db.ProductLines.DeleteAll();
 
             // 人员
             var roles = new[] { StaffRole.高管, StaffRole.投资经理, StaffRole.投研, StaffRole.风控, StaffRole.合规, StaffRole.运营, StaffRole.投研|StaffRole.投资经理 };
@@ -323,30 +324,33 @@ public partial class DataCenterViewModel : ObservableObject
                 "复旦大学法学硕士，持有法律职业资格证，8年基金合规管理经验。"
             };
             var staffData2 = new[] {
-                ("王明", "总经理", EducationLevel.MBA, StaffRole.高管, 1, "公司管理、战略规划", "1980"),
-                ("刘洋", "投资总监", EducationLevel.硕士, StaffRole.投资经理|StaffRole.高管, 1, "价值投资、消费行业", "1983"),
-                ("陈静", "研究总监", EducationLevel.博士, StaffRole.投研, 2, "TMT、半导体", "1985"),
-                ("赵强", "风控总监", EducationLevel.硕士, StaffRole.风控, 3, "信用风险、市场风险", "1982"),
-                ("周慧", "合规经理", EducationLevel.硕士, StaffRole.合规, 4, "基金合规、信息披露", "1988"),
-                (RandName(), "高级研究员", EducationLevel.博士, StaffRole.投研, 2, "医药行业、创新药", "1990"),
-                (RandName(), "交易主管", EducationLevel.本科, StaffRole.运营, 4, "交易执行、算法交易", "1992"),
-                (RandName(), "投资经理", EducationLevel.硕士, StaffRole.投资经理, 1, "量化对冲、CTA策略", "1987"),
-                (RandName(), "行业研究员", EducationLevel.硕士, StaffRole.投研, 2, "新能源、光伏", "1991"),
-                (RandName(), "风控经理", EducationLevel.本科, StaffRole.风控, 3, "操作风险、合规审查", "1993"),
-                (RandName(), "研究员", EducationLevel.硕士, StaffRole.投研, 2, "大金融、银行保险", "1994"),
-                (RandName(), "投资经理", EducationLevel.MBA, StaffRole.投资经理, 1, "宏观策略、大类资产配置", "1986"),
-                (RandName(), "运营专员", EducationLevel.本科, StaffRole.运营, 4, "基金估值、信息披露", "1995"),
-                (RandName(), "合规专员", EducationLevel.本科, StaffRole.合规, 4, "反洗钱、投资者适当性", "1993"),
-                (RandName(), "研究员", EducationLevel.博士, StaffRole.投研, 2, "先进制造、军工", "1989"),
+                ("王明", "总经理", EducationLevel.MBA, StaffRole.高管, 1, "公司管理、战略规划", "1980", "全面负责公司经营管理与战略规划", "投资部", new DateTime(2018,6,15), (DateTime?)null, (string?)null, (string?)"否"),
+                ("刘洋", "投资总监", EducationLevel.硕士, StaffRole.投资经理|StaffRole.高管, 1, "价值投资、消费行业", "1983", "负责投资策略制定与投资经理团队管理", "投资部", new DateTime(2018,8,1), null, null, "否"),
+                ("陈静", "研究总监", EducationLevel.博士, StaffRole.投研, 2, "TMT、半导体", "1985", "负责研究团队管理及TMT行业研究", "研究部", new DateTime(2019,3,1), null, null, "否"),
+                ("赵强", "风控总监", EducationLevel.硕士, StaffRole.风控, 3, "信用风险、市场风险", "1982", "负责公司全面风险管理体系的建设与运作", "风控部", new DateTime(2018,9,1), null, null, "否"),
+                ("周慧", "合规经理", EducationLevel.硕士, StaffRole.合规, 4, "基金合规、信息披露", "1988", "负责基金合规审查、信息披露及反洗钱工作", "运营部", new DateTime(2019,1,15), null, null, "否"),
+                (RandName(), "高级研究员", EducationLevel.博士, StaffRole.投研, 2, "医药行业、创新药", "1990", "负责医药行业深度研究及创新药标的挖掘", "研究部", new DateTime(2020,7,1), null, null, "否"),
+                (RandName(), "交易主管", EducationLevel.本科, StaffRole.运营, 4, "交易执行、算法交易", "1992", "负责交易执行、算法交易策略实施", "运营部", new DateTime(2019,5,1), null, null, "否"),
+                (RandName(), "投资经理", EducationLevel.硕士, StaffRole.投资经理, 1, "量化对冲、CTA策略", "1987", "负责量化对冲及CTA策略投资管理", "投资部", new DateTime(2020,3,1), null, null, "否"),
+                (RandName(), "行业研究员", EducationLevel.硕士, StaffRole.投研, 2, "新能源、光伏", "1991", "负责新能源行业研究及光伏产业链跟踪", "研究部", new DateTime(2021,4,1), null, null, "否"),
+                (RandName(), "风控经理", EducationLevel.本科, StaffRole.风控, 3, "操作风险、合规审查", "1993", "负责操作风险监控及交易合规审查", "风控部", new DateTime(2020,9,1), null, null, "否"),
+                (RandName(), "研究员", EducationLevel.硕士, StaffRole.投研, 2, "大金融、银行保险", "1994", "负责大金融行业研究，覆盖银行、保险、券商", "研究部", new DateTime(2022,1,1), null, null, "否"),
+                (RandName(), "投资经理", EducationLevel.MBA, StaffRole.投资经理, 1, "宏观策略、大类资产配置", "1986", "负责宏观策略研究及大类资产配置", "投资部", new DateTime(2019,10,1), null, null, "否"),
+                (RandName(), "运营专员", EducationLevel.本科, StaffRole.运营, 4, "基金估值、信息披露", "1995", "负责基金估值核算及定期信息披露", "运营部", new DateTime(2023,3,1), null, null, "否"),
+                (RandName(), "合规专员", EducationLevel.本科, StaffRole.合规, 4, "反洗钱、投资者适当性", "1993", "负责反洗钱监测及投资者适当性管理", "运营部", new DateTime(2022,6,1), null, null, "否"),
+                (RandName(), "研究员", EducationLevel.博士, StaffRole.投研, 2, "先进制造、军工", "1989", "负责先进制造及军工行业深度研究", "研究部", new DateTime(2021,8,1), null, null, "否"),
+                (RandName(), "投资经理", EducationLevel.硕士, StaffRole.投资经理, 1, "固收策略、信用分析", "1984", "负责固收增强策略投资管理", "投资部", new DateTime(2019,6,1), new DateTime(2025,2,28), "个人原因离职", "否"),
+                (RandName(), "研究员", EducationLevel.硕士, StaffRole.投研, 2, "消费行业", "1992", "负责消费行业研究", "研究部", new DateTime(2022,9,1), new DateTime(2024,12,31), "职业发展", "否"),
             };
-            foreach (var (name, title, edu, role, deptId, spec, birthYear) in staffData2)
+            foreach (var (name, title, edu, role, deptId, spec, birthYear, duty, dept, join, leave, leaveReason, partTime) in staffData2)
                 db.Staffs.Insert(new Staff
                 {
                     Name = name, Title = title, Education = edu, Role = role, DepartmentId = deptId,
                     Years = r.Next(3, 18).ToString(), BirthDate = RandBirth(int.Parse(birthYear), int.Parse(birthYear) + 3),
                     Specialty = spec, ResearchFocus = spec, MobilePhone = RandPhone(), Telephone = $"021-{r.Next(5000,6000)}{r.Next(1000,9999)}",
                     Email = $"{name}@dingfeng-am.com", Profile = profiles[r.Next(profiles.Length)],
-                    IdNumber = $"310115{r.Next(1970,2000)}{r.Next(1,13):D2}{r.Next(1,29):D2}{r.Next(1000,9999)}"
+                    IdNumber = $"310115{r.Next(1970,2000)}{r.Next(1,13):D2}{r.Next(1,29):D2}{r.Next(1000,9999)}",
+                    Duty = duty, Department = dept, JoinDate = join, LeaveDate = leave, LeaveReason = leaveReason, HasPartTimeJob = partTime
                 });
 
             // 股东
@@ -367,12 +371,12 @@ public partial class DataCenterViewModel : ObservableObject
                 db.Departments.Insert(new Department { Name = name, Head = head, MainFunction = func });
 
             // 策略
-            foreach (var (name, type, scale, cap, factor, capRisk, repl, style, turn, hold, weight, ws) in new[] {
-                ("主观多头", "股票多头", "5.2", "20亿", "基本面+行业景气度", "容量充足，当前规模远低于容量上限", "策略可复制性较强，依赖核心投研团队", "偏成长风格，重仓消费和科技", "年化换手率约300%", "平均持仓3-6个月", "前十大重仓占比约55%", "预警-8%，止损-15%"),
-                ("量化对冲", "市场中性", "3.8", "10亿", "多因子模型（价值/动量/质量/波动率）", "策略容量有限，超额收益随规模增长递减", "模型标准化程度高，可复制性强", "市场中性，无明显风格暴露", "年化换手率约800%", "持仓周期1-4周", "行业中性，个股权重上限2%", "预警-3%，止损-5%"),
-                ("固收增强", "债券+", "8.5", "30亿", "信用分析+利率择时+转债增强", "容量充足，固收策略规模效应明显", "策略标准化，可高度复制", "偏稳健，以高等级信用债为主", "年化换手率约150%", "债券持仓1-3年，股票部分3-6个月", "债券80%+股票20%", "预警-2%，止损-3%")
+            foreach (var (name, type, scale, cap, factor, capRisk, repl, style, turn, hold, weight, ws, stockType, conc, mktImpact, hedge, riskExp) in new[] {
+                ("主观多头", "股票多头", "5.2", "20亿", "基本面+行业景气度", "容量充足，当前规模远低于容量上限", "策略可复制性较强，依赖核心投研团队", "偏成长风格，重仓消费和科技", "年化换手率约300%", "平均持仓3-6个月", "前十大重仓占比约55%", "预警-8%，止损-15%", "以沪深300成分股为主，兼顾科创板优质标的", "前十大重仓集中度约55%，行业相对集中", "单票仓位上限20%，大额交易采用TWAP拆分以降低冲击", "股指期货对冲Beta风险，期权保护性看跌", "主要承担个股Alpha风险和行业集中度风险"),
+                ("量化对冲", "市场中性", "3.8", "10亿", "多因子模型（价值/动量/质量/波动率）", "策略容量有限，超额收益随规模增长递减", "模型标准化程度高，可复制性强", "市场中性，无明显风格暴露", "年化换手率约800%", "持仓周期1-4周", "行业中性，个股权重上限2%", "预警-3%，止损-5%", "全市场选股，侧重中小盘成长股", "行业中性，个股权重上限2%，高度分散", "日均交易约占日均成交量的0.5%，冲击可控", "股指期货完全对冲市场Beta", "无明显市场敞口，主要承担模型因子风险和流动性风险"),
+                ("固收增强", "债券+", "8.5", "30亿", "信用分析+利率择时+转债增强", "容量充足，固收策略规模效应明显", "策略标准化，可高度复制", "偏稳健，以高等级信用债为主", "年化换手率约150%", "债券持仓1-3年，股票部分3-6个月", "债券80%+股票20%", "预警-2%，止损-3%", "以高等级信用债为主，可转债及少量股票增厚收益", "前五大债券持仓集中度约35%，适度集中", "债券部分流动性良好，股票部分仓位较小冲击有限", "国债期货对冲利率风险，股指期货对冲权益部分Beta", "主要承担信用风险和利率风险，权益部分承担个股Alpha风险")
             })
-                db.Strategies.Insert(new Strategy { Name = name, Type = type, Scale = scale, Manager = "刘洋", Capacity = cap, FactorPool = factor, CapacityAndRisk = capRisk, Replicated = repl, StyleExposure = style, Turnover = turn, HoldingPeriod = hold, WeightAllocation = weight, WarningStoploss = ws });
+                db.Strategies.Insert(new Strategy { Name = name, Type = type, Scale = scale, Manager = "刘洋", Capacity = cap, FactorPool = factor, CapacityAndRisk = capRisk, Replicated = repl, StyleExposure = style, Turnover = turn, HoldingPeriod = hold, WeightAllocation = weight, WarningStoploss = ws, StockType = stockType, Concentration = conc, MarketImpact = mktImpact, HedgeTool = hedge, RiskExposure = riskExp });
 
             // 产品
             foreach (var (n, c, t, s, nav, ret, dd, rk, dur, freq, cust, mfee, sfee, scope, est, sharpe, cumRet, vol) in new[] {
@@ -468,6 +472,16 @@ public partial class DataCenterViewModel : ObservableObject
                 ("其他负面舆情信息？", "经全面排查，未发现其他负面舆情信息。公司经营正常，团队稳定，无劳动纠纷、无重大诉讼。")
             })
                 db.QA.Insert(new QA { Question = q, Answer = a });
+
+            // 产品线
+            foreach (var (n, st, ss, rp, mgr, fc, sc, ts, cap) in new[] {
+                ("主观多头产品线", "股票多头", "基本面价值投资", "鼎丰价值优选1号", "刘洋", "4", "20.5", "18.2", "30亿"),
+                ("量化对冲产品线", "市场中性", "多因子量化对冲", "鼎丰量化对冲1号", "刘洋", "2", "7.6", "6.8", "15亿"),
+                ("固收增强产品线", "债券+", "信用债+转债增强", "鼎丰固收增强1号", "刘洋", "2", "16.5", "14.0", "40亿"),
+                ("CTA策略产品线", "管理期货", "趋势跟踪CTA", "鼎丰CTA趋势1号", "刘洋", "1", "2.5", "2.2", "8亿"),
+                ("宏观策略产品线", "宏观策略", "全球宏观配置", "鼎丰宏观策略1号", "刘洋", "1", "6.0", "5.5", "15亿")
+            })
+                db.ProductLines.Insert(new ProductLine { Name = n, StrategyType = st, SpecificStrategy = ss, RepresentProduct = rp, Manager = mgr, FundCount = fc, Scale = sc, TradingScale = ts, Capacity = cap });
         });
 
         // 刷新 UI
