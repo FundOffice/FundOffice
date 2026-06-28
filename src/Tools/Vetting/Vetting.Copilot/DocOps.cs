@@ -11,10 +11,43 @@ namespace Vetting.Copilot;
 /// </summary>
 public static class DocOps
 {
+    /// <summary>
+    /// 以只读方式打开 Word 文档。若文件被占用（如 Word 正在编辑），自动复制到临时文件后打开。
+    /// 返回 (doc, tempPath)：tempPath 非 null 时需在 doc Dispose 后删除。
+    /// </summary>
+    private static (WordprocessingDocument doc, string? tempPath) OpenReadOnly(string filePath)
+    {
+        try
+        {
+            var doc = WordprocessingDocument.Open(filePath, false, new OpenSettings { AutoSave = false });
+            return (doc, null);
+        }
+        catch (IOException)
+        {
+            // 文件被占用，复制到临时文件后打开
+            var tempPath = Path.Combine(Path.GetTempPath(), $"vetting_{Guid.NewGuid():N}{Path.GetExtension(filePath)}");
+            File.Copy(filePath, tempPath, overwrite: true);
+            var doc = WordprocessingDocument.Open(tempPath, false, new OpenSettings { AutoSave = false });
+            return (doc, tempPath);
+        }
+    }
+
+    /// <summary>释放只读文档，并删除临时文件（若有）</summary>
+    private static void DisposeReadOnly(WordprocessingDocument doc, string? tempPath)
+    {
+        doc.Dispose();
+        if (tempPath != null)
+        {
+            try { File.Delete(tempPath); } catch { }
+        }
+    }
+
     /// <summary>分析文档结构：章节标题列表、表格类型检测</summary>
     public static string AnalyzeStructure(string filePath)
     {
-        using var doc = WordprocessingDocument.Open(filePath, false);
+        var (doc, tempPath) = OpenReadOnly(filePath);
+        try
+        {
         var body = doc.MainDocumentPart!.Document.Body!;
         var sb = new System.Text.StringBuilder();
 
@@ -53,12 +86,16 @@ public static class DocOps
             sb.AppendLine($"  {kv.Key}: {kv.Value}");
 
         return sb.ToString();
+        }
+        finally { DisposeReadOnly(doc, tempPath); }
     }
 
     /// <summary>解析完整文档内容（段落和表格按文档顺序，含索引和内容）</summary>
     public static string ParseDocument(string filePath)
     {
-        using var doc = WordprocessingDocument.Open(filePath, false);
+        var (doc, tempPath) = OpenReadOnly(filePath);
+        try
+        {
         var body = doc.MainDocumentPart!.Document.Body!;
         var sb = new System.Text.StringBuilder();
 
@@ -96,12 +133,16 @@ public static class DocOps
             }
         }
         return sb.ToString();
+        }
+        finally { DisposeReadOnly(doc, tempPath); }
     }
 
     /// <summary>读取文档段落（含索引、样式标记、空段落标记）。可选 start/end 分段读取</summary>
     public static string ReadParagraphs(string filePath, int? start = null, int? end = null)
     {
-        using var doc = WordprocessingDocument.Open(filePath, false);
+        var (doc, tempPath) = OpenReadOnly(filePath);
+        try
+        {
         var body = doc.MainDocumentPart!.Document.Body!;
         var paragraphs = body.Elements<Paragraph>().ToList();
 
@@ -123,12 +164,16 @@ public static class DocOps
                 : $"P[{i}] {prefix}{(string.IsNullOrWhiteSpace(text) ? "(EMPTY)" : text)}");
         }
         return sb.ToString();
+        }
+        finally { DisposeReadOnly(doc, tempPath); }
     }
 
     /// <summary>读取指定表格的结构和内容（含表头检测）。可选 startRow/endRow 分行读取</summary>
     public static string ReadTable(string filePath, int tableIndex, int? startRow = null, int? endRow = null)
     {
-        using var doc = WordprocessingDocument.Open(filePath, false);
+        var (doc, tempPath) = OpenReadOnly(filePath);
+        try
+        {
         var body = doc.MainDocumentPart!.Document.Body!;
         var tables = body.Elements<Table>().ToList();
         if (tableIndex < 0 || tableIndex >= tables.Count)
@@ -162,6 +207,8 @@ public static class DocOps
             }
         }
         return sb.ToString();
+        }
+        finally { DisposeReadOnly(doc, tempPath); }
     }
 
     /// <summary>读取已打开的表格元素的结构和内容（含表头检测）</summary>
@@ -212,15 +259,17 @@ public static class DocOps
     /// <summary>获取文档表格数量</summary>
     public static int GetTableCount(string filePath)
     {
-        using var doc = WordprocessingDocument.Open(filePath, false);
-        return doc.MainDocumentPart!.Document.Body!.Elements<Table>().Count();
+        var (doc, tempPath) = OpenReadOnly(filePath);
+        try { return doc.MainDocumentPart!.Document.Body!.Elements<Table>().Count(); }
+        finally { DisposeReadOnly(doc, tempPath); }
     }
 
     /// <summary>获取文档段落数量</summary>
     public static int GetParagraphCount(string filePath)
     {
-        using var doc = WordprocessingDocument.Open(filePath, false);
-        return doc.MainDocumentPart!.Document.Body!.Elements<Paragraph>().Count();
+        var (doc, tempPath) = OpenReadOnly(filePath);
+        try { return doc.MainDocumentPart!.Document.Body!.Elements<Paragraph>().Count(); }
+        finally { DisposeReadOnly(doc, tempPath); }
     }
 
     /// <summary>设置表格单元格文本</summary>
@@ -683,3 +732,4 @@ public static class DocOps
 
     #endregion
 }
+

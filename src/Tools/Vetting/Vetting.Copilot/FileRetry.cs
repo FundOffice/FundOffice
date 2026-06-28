@@ -1,4 +1,4 @@
-namespace Vetting.Copilot;
+﻿namespace Vetting.Copilot;
 
 public static class FileRetry
 {
@@ -7,9 +7,16 @@ public static class FileRetry
         for (int i = 0; ; i++)
         {
             try { return action(); }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException && i < maxRetries)
+            catch (IOException ex) when (i < maxRetries)
             {
-                onRetry?.Invoke($"{description} 失败，{delayMs * (i + 1) / 1000}秒后重试 ({i + 1}/{maxRetries}): {ex.Message}");
+                var waitSec = delayMs * (i + 1) / 1000.0;
+                onRetry?.Invoke($"{description} 失败，{waitSec:F1}秒后重试 ({i + 1}/{maxRetries}): {ex.Message}");
+                System.Threading.Thread.Sleep(delayMs * (i + 1));
+            }
+            catch (UnauthorizedAccessException ex) when (i < maxRetries)
+            {
+                var waitSec = delayMs * (i + 1) / 1000.0;
+                onRetry?.Invoke($"{description} 失败，{waitSec:F1}秒后重试 ({i + 1}/{maxRetries}): {ex.Message}");
                 System.Threading.Thread.Sleep(delayMs * (i + 1));
             }
         }
