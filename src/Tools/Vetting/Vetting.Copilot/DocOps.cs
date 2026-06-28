@@ -641,7 +641,7 @@ public static class DocOps
         if (op.Entity != null && op.Property != null)
             value = resolver.Resolve(op.Entity, op.Property, op.Format);
         else
-            value = resolver.GetAnswerByQuestion(op.Question);
+            value = resolver.ResolvePlaceholders(resolver.GetAnswerByQuestion(op.Question));
 
         if (!string.IsNullOrEmpty(value))
             SetParaContent(para, value);

@@ -15,6 +15,14 @@ public class DictEntity : IResolve
         _props.TryGetValue(propertyName, out var v) ? v : null;
 }
 
+public class ObjectEntity : IResolve
+{
+    private readonly Dictionary<string, object?> _props;
+    public ObjectEntity(Dictionary<string, object?> props) => _props = props;
+    public object? Resolve(string propertyName) =>
+        _props.TryGetValue(propertyName, out var v) ? v : null;
+}
+
 public static class TestData
 {
     public static DataResolver Resolver(
@@ -553,5 +561,70 @@ public class DocOpsFillTests : IDisposable
         foreach (var c in cells)
             row.AppendChild(TestDocBuilder.MakeCell(c));
         table.AppendChild(row);
+    }
+
+    [Fact]
+    public void ResolvePlaceholders_ScalarEntity()
+    {
+        var resolver = TestData.Resolver(scalars: new()
+        {
+            ["manager.Name"] = "某某基金管理有限公司",
+        });
+        var result = resolver.ResolvePlaceholders("公司名称：{{manager.Name}}，欢迎咨询。");
+        Assert.Equal("公司名称：某某基金管理有限公司，欢迎咨询。", result);
+    }
+
+    [Fact]
+    public void ResolvePlaceholders_FundById()
+    {
+        var fund = new FundInfo { Id = 42, Name = "优选成长基金", Code = "001234" };
+        var resolver = new DataResolver(
+            scalars: new Dictionary<string, IResolve>(),
+            lists: new(),
+            recommendFunds: new Dictionary<int, FundInfo> { [0] = fund },
+            answersByQuestion: new(),
+            fileName: null,
+            fundBindings: new());
+        var result = resolver.ResolvePlaceholders("推荐产品：{{fund#42.Name}}（{{fund#42.Code}}）");
+        Assert.Equal("推荐产品：优选成长基金（001234）", result);
+    }
+
+    [Fact]
+    public void ResolvePlaceholders_WithFormat()
+    {
+        var resolver = new DataResolver(
+            scalars: new Dictionary<string, IResolve>
+            {
+                ["manager"] = new ObjectEntity(new() { ["EstablishDate"] = new DateTime(2020, 3, 15) }),
+            },
+            lists: new(),
+            recommendFunds: new(),
+            answersByQuestion: new(),
+            fileName: null,
+            fundBindings: new());
+        var result = resolver.ResolvePlaceholders("成立日期：{{manager.EstablishDate:yyyy}}年");
+        Assert.Equal("成立日期：2020年", result);
+    }
+
+    [Fact]
+    public void FillParagraph_WithPlaceholders_ResolvesValues()
+    {
+        var src = TempFile("src.docx");
+        TestDocBuilder.Create(src, paragraphs: ["基金简介：", ""]);
+
+        var resolver = TestData.Resolver(
+            scalars: new() { ["manager.Name"] = "某某基金" },
+            answers: new() { ["基金简介："] = "本基金由{{manager.Name}}管理。" });
+
+        var ops = new List<FillOperator>
+        {
+            new ParagraphOp { Question = "基金简介：", Location = new Location { Para = 1 } },
+        };
+
+        var outPath = TempFile("out.docx");
+        DocOps.Fill(src, outPath, ops, resolver);
+
+        var result = DocOps.ReadParagraphs(outPath);
+        Assert.Contains("本基金由某某基金管理。", result);
     }
 }

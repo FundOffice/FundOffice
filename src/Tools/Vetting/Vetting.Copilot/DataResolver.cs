@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.RegularExpressions;
 using Vetting.Copilot.Data;
 using Vetting.Copilot.Models.Entities;
 using Vetting.Copilot.Models.Info;
@@ -267,5 +268,107 @@ public class DataResolver
         var rec = db.TemplateRecommends.FindOne(r => r.FileName == "__global__");
         if (rec?.FundIds == null) return [];
         return rec.FundIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
+    }
+
+    // entity#id 占位符查找映射：entity name → (db, id) => IResolve?
+    private static readonly Dictionary<string, Func<VettingDbContext, int, IResolve?>> EntityByIdResolvers = new()
+    {
+        ["fund"] = (db, id) => db.FundInfos.FindById(id),
+        ["staff"] = (db, id) => db.Staffs.FindById(id),
+        ["executive"] = (db, id) => db.Staffs.FindById(id),
+        ["researcher"] = (db, id) => db.Staffs.FindById(id),
+        ["riskctrl"] = (db, id) => db.Staffs.FindById(id),
+        ["pm"] = (db, id) => db.Staffs.FindById(id),
+        ["contact"] = (db, id) => db.Staffs.FindById(id),
+        ["compliance"] = (db, id) => db.Staffs.FindById(id),
+        ["shareholder"] = (db, id) => db.Shareholders.FindById(id),
+        ["actualcontroller"] = (db, id) => db.Shareholders.FindById(id),
+        ["department"] = (db, id) => db.Departments.FindById(id),
+        ["strategy"] = (db, id) => db.Strategies.FindById(id),
+        ["award"] = (db, id) => db.Awards.FindById(id),
+        ["financialstatement"] = (db, id) => db.FinancialStatements.FindById(id),
+        ["drawdownrecord"] = (db, id) => db.DrawdownRecords.FindById(id),
+        ["aum"] = (db, id) => db.AUMs.FindById(id),
+        ["productline"] = (db, id) => db.ProductLines.FindById(id),
+    };
+
+    private static readonly Regex PlaceholderRegex = new(@"\{\{(.+?)\}\}", RegexOptions.Compiled);
+
+    /// <summary>
+    /// 解析文本中的 {{...}} 占位符。
+    /// 支持：{{entity.property}}、{{entity#id.property}}、{{entity.property:format}}
+    /// </summary>
+    public string ResolvePlaceholders(string text)
+    {
+        if (string.IsNullOrEmpty(text) || !text.Contains("{{")) return text;
+
+        return PlaceholderRegex.Replace(text, match =>
+        {
+            var inner = match.Groups[1].Value;
+            try
+            {
+                return inner.Contains('#') ? ResolveById(inner) : ResolveByScalar(inner);
+            }
+            catch
+            {
+                return match.Value; // 解析失败保留原样
+            }
+        });
+    }
+
+    private string ResolveByScalar(string inner)
+    {
+        var (property, format) = SplitFormat(inner);
+        var dot = property.IndexOf('.');
+        if (dot <= 0) return $"{{{{{inner}}}}}";
+
+        var entity = property[..dot];
+        var prop = property[(dot + 1)..];
+
+        if (!_scalars.TryGetValue(entity, out var obj)) return $"{{{{{inner}}}}}";
+        var value = obj.Resolve(prop);
+        return ResolveHelper.ToString(value, format);
+    }
+
+    private string ResolveById(string inner)
+    {
+        var (property, format) = SplitFormat(inner);
+        var hashIdx = property.IndexOf('#');
+        var dotIdx = property.IndexOf('.', hashIdx + 1);
+        if (hashIdx < 0 || dotIdx < 0) return $"{{{{{inner}}}}}";
+
+        var entity = property[..hashIdx];
+        var idStr = property[(hashIdx + 1)..dotIdx];
+        var prop = property[(dotIdx + 1)..];
+
+        if (!int.TryParse(idStr, out var id)) return $"{{{{{inner}}}}}";
+
+        IResolve? obj = null;
+
+        // 优先从 _recommendFunds 查找（与 FindFundById 一致）
+        if (entity == "fund")
+            obj = _recommendFunds.Values.FirstOrDefault(f => f.Id == id);
+
+        // fallback: LiteDB 按 Id 查找
+        obj ??= ResolveFromDb(entity, id);
+        if (obj == null) return $"{{{{{inner}}}}}";
+
+        var value = obj.Resolve(prop);
+        return ResolveHelper.ToString(value, format);
+    }
+
+    private static IResolve? ResolveFromDb(string entity, int id)
+    {
+        if (!EntityByIdResolvers.TryGetValue(entity, out var resolver)) return null;
+        using var db = new VettingDbContext();
+        return resolver(db, id);
+    }
+
+    private static (string property, string? format) SplitFormat(string inner)
+    {
+        var colonIdx = inner.LastIndexOf(':');
+        if (colonIdx > 0 && colonIdx < inner.Length - 1)
+            return (inner[..colonIdx], inner[(colonIdx + 1)..]);
+        return (inner, null);
     }
 }
