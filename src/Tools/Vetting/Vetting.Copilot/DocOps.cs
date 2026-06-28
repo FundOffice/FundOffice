@@ -411,15 +411,14 @@ public static class DocOps
         int offset = offsets.GetValueOrDefault(tableIdx);
         int startRow = op.Range.Start.Row ?? 0;
         int endRow = op.Range.End.Row ?? 0;
-        int startCol = op.Range.Start.Col ?? 0;
         int availableRows = endRow - startRow + 1;
 
         // 需要扩展行
         if (items.Length > availableRows)
         {
             int extraCount = items.Length - availableRows;
-            var templateRow = rows[endRow];
-            var insertAfter = rows[endRow];
+            var templateRow = rows[endRow + offset];
+            var insertAfter = rows[endRow + offset];
 
             for (int i = 0; i < extraCount; i++)
             {
@@ -443,10 +442,13 @@ public static class DocOps
         // 填充数据
         // 重新获取行列表（可能已插入新行）
         rows = table.Elements<TableRow>().ToList();
+        int currentOffset = offsets.GetValueOrDefault(tableIdx);
 
         for (int i = 0; i < items.Length; i++)
         {
-            int rowIdx = startRow + i + offset;
+            // 使用 properties 中第一项的 Row 作为基准绝对行号，加上数据条目偏移 i 和行插入偏移
+            int baseRow = op.Properties.FirstOrDefault()?.Row ?? startRow;
+            int rowIdx = baseRow + i + currentOffset;
             var row = rows.ElementAtOrDefault(rowIdx);
             if (row == null) continue;
 
@@ -456,7 +458,8 @@ public static class DocOps
                 var propName = op.Properties[j].Prop;
                 if (propName == null) continue; // 跳过未映射列
 
-                int colIdx = startCol + j;
+                // 使用绝对列号（从 properties 中的 col 字段）
+                int colIdx = op.Properties[j].Col ?? (op.Range.Start.Col ?? 0) + j;
                 var cell = cells.ElementAtOrDefault(colIdx);
                 if (cell == null) continue;
 
@@ -480,10 +483,10 @@ public static class DocOps
         int offset = offsets.GetValueOrDefault(tableIdx);
         var rows = table.Elements<TableRow>().ToList();
 
-        int startRow = op.Range.Start.Row ?? 0;
-        int endRow = op.Range.End.Row ?? 0;
-        int startCol = op.Range.Start.Col ?? 0;
-        int endCol = op.Range.End.Col ?? 0;
+        int startRow = op.Properties.FirstOrDefault()?.Row ?? op.Range.Start.Row ?? 0;
+        int endRow = op.Properties.LastOrDefault()?.Row ?? op.Range.End.Row ?? 0;
+        int startCol = op.Properties.FirstOrDefault()?.Col ?? op.Range.Start.Col ?? 0;
+        int endCol = op.Properties.LastOrDefault()?.Col ?? op.Range.End.Col ?? 0;
 
         if (op.EntityPerRow)
         {
@@ -494,7 +497,9 @@ public static class DocOps
                 if (row == null) continue;
 
                 var cells = row.Elements<TableCell>().ToList();
-                var rowHeader = cells.ElementAtOrDefault(startCol - 1)?.InnerText?.Trim() ?? "";
+                // 行头列：第一个属性列的左边一列
+                int firstPropCol = op.Properties.FirstOrDefault()?.Col ?? startCol;
+                var rowHeader = cells.ElementAtOrDefault(firstPropCol - 1)?.InnerText?.Trim() ?? "";
 
                 Dictionary<string, string>? matched = null;
                 if (!string.IsNullOrEmpty(op.FilterBy))
@@ -511,7 +516,8 @@ public static class DocOps
                     var propName = op.Properties[j].Prop;
                     if (propName == null) continue; // 跳过未映射列
 
-                    int colIdx = startCol + j;
+                    // 使用绝对列号（从 properties 中的 col 字段）
+                    int colIdx = op.Properties[j].Col ?? startCol + j;
                     var cell = cells.ElementAtOrDefault(colIdx);
                     if (cell == null) continue;
 
@@ -525,9 +531,24 @@ public static class DocOps
         else
         {
             // Type e: 一列一 entity，行头是属性
-            var headerRow = rows.ElementAtOrDefault(startRow - 1 + offset);
+            // 列头行：第一个属性行的上面一行
+            int firstPropRow = op.Properties.FirstOrDefault()?.Row ?? startRow;
+            var headerRow = rows.ElementAtOrDefault(firstPropRow - 1 + offset);
 
-            for (int ci = startCol; ci <= endCol; ci++)
+            // 从 properties 中获取所有需要填充的列号
+            var distinctCols = op.Properties
+                .Where(p => p.Col.HasValue)
+                .Select(p => p.Col!.Value)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
+            // 如果 properties 没有提供 col，回退到 range 的列范围
+            if (distinctCols.Count == 0)
+            {
+                for (int c = startCol; c <= endCol; c++) distinctCols.Add(c);
+            }
+
+            foreach (var ci in distinctCols)
             {
                 var headerCells = headerRow?.Elements<TableCell>().ToList();
                 var colHeader = headerCells?.ElementAtOrDefault(ci)?.InnerText?.Trim() ?? "";
@@ -546,7 +567,8 @@ public static class DocOps
                 {
                     var propName = op.Properties[i].Prop;
                     if (propName == null) continue; // 跳过未映射行
-                    int rowIdx = startRow + i + offset;
+                    // 使用绝对行号（从 properties 中的 row 字段）+ 偏移
+                    int rowIdx = (op.Properties[i].Row ?? startRow + i) + offset;
                     var row = rows.ElementAtOrDefault(rowIdx);
                     if (row == null) continue;
 

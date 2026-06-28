@@ -56,7 +56,7 @@ public record Range
 /// <summary>
 /// 属性映射项：prop 为 null 表示该列未映射（占位）
 /// </summary>
-public record PropItem(string? Prop, string Header);
+public record PropItem(string? Prop, string Header, int? Row = null, int? Col = null);
 
 /// <summary>
 /// 填充操作基类
@@ -539,7 +539,9 @@ public static class OperatorParser
                 var header = GetStringOrEmpty(item, "header");
                 if (string.IsNullOrEmpty(header)) continue;
                 var prop = GetOptionalString(item, "prop");
-                list.Add(new PropItem(prop, header));
+                var row = item.TryGetProperty("row", out var rEl) && rEl.ValueKind == JsonValueKind.Number ? (int?)rEl.GetInt32() : null;
+                var col = item.TryGetProperty("col", out var cEl) && cEl.ValueKind == JsonValueKind.Number ? (int?)cEl.GetInt32() : null;
+                list.Add(new PropItem(prop, header, row, col));
             }
         }
         else if (el.ValueKind == JsonValueKind.Object)
