@@ -13,24 +13,24 @@ public partial class CustomQuestionsViewModel : ObservableObject
     public ObservableCollection<QuestionItem> Questions { get; } = [];
     public string WindowTitle { get; }
 
-    private readonly string _fileHash = "";
+    private readonly string _fileName = "";
 
     public CustomQuestionsViewModel() { WindowTitle = "自定义问题"; }
 
     /// <summary>
     /// 文件级构造：合并所有 provider 的问题，按 question 文本去重显示
     /// </summary>
-    public CustomQuestionsViewModel(string fileHash, string fileName)
+    public CustomQuestionsViewModel(string fileName, string displayName)
     {
-        _fileHash = fileHash;
-        WindowTitle = $"自定义问题 — {fileName}";
+        _fileName = fileName;
+        WindowTitle = $"自定义问题 — {displayName}";
         LoadMerged();
     }
 
     private void LoadMerged()
     {
         using var db = new VettingDbContext();
-        var allQs = db.FileSpecialQuestions.Find(x => x.FileHash == _fileHash).ToArray();
+        var allQs = db.FileSpecialQuestions.Find(x => x.FileName == _fileName).ToArray();
         // 按 Question 文本去重，每组取 Index 最小的为主，收集所有 questionId
         var grouped = allQs
             .Where(q => !string.IsNullOrWhiteSpace(q.Question))
@@ -51,7 +51,7 @@ public partial class CustomQuestionsViewModel : ObservableObject
             Questions.Add(item);
         }
     }
- 
+
 
     public partial class QuestionItem : ObservableObject
     {

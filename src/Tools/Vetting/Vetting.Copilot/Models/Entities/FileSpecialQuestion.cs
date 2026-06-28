@@ -6,7 +6,8 @@ namespace Vetting.Copilot.Models.Entities;
 public class FileSpecialQuestion
 {
     public int Id { get; set; }
-    public string? FileHash { get; set; }
+    /// <summary>文件名</summary>
+    public string? FileName { get; set; }
     public string? Provider { get; set; }
     public int Index { get; set; }
     public string? Question { get; set; }

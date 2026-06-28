@@ -4,7 +4,8 @@ public class ConversationRecord
 {
     public int Id { get; set; }
     public string? SourcePath { get; set; }
-    public string? FileHash { get; set; }
+    /// <summary>文件名</summary>
+    public string? FileName { get; set; }
     public string? OutputPath { get; set; }
     public string? MessagesJson { get; set; }
     public int CompletedTurns { get; set; }

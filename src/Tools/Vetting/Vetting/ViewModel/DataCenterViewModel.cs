@@ -93,7 +93,7 @@ public partial class DataCenterViewModel : ObservableObject
         LoadList(db.QA, QAs, e => new QAVM(e));
 
         // 加载全局推荐产品
-        var rec = db.TemplateRecommends.FindOne(r => r.FileHash == "__global__");
+        var rec = db.TemplateRecommends.FindOne(r => r.FileName == "__global__");
         if (rec?.FundIds != null)
         {
             var ids = rec.FundIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse);
@@ -478,7 +478,7 @@ public partial class DataCenterViewModel : ObservableObject
     public void SaveGlobalRecommend()
     {
         using var db = new VettingDbContext();
-        var existing = db.TemplateRecommends.FindOne(r => r.FileHash == "__global__");
+        var existing = db.TemplateRecommends.FindOne(r => r.FileName == "__global__");
         var ids = string.Join(",", GlobalRecommendedFunds.Select(f => f.Entity.Id));
         if (existing != null)
         {
@@ -487,7 +487,7 @@ public partial class DataCenterViewModel : ObservableObject
         }
         else if (GlobalRecommendedFunds.Count > 0)
         {
-            db.TemplateRecommends.Insert(new TemplateRecommend { FileHash = "__global__", FundIds = ids });
+            db.TemplateRecommends.Insert(new TemplateRecommend { FileName = "__global__", FundIds = ids });
         }
     }
 

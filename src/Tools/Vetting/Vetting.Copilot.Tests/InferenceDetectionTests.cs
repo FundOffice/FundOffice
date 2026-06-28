@@ -23,11 +23,11 @@ public class InferenceDetectionTests(ITestOutputHelper _out)
     /// </summary>
     private static FileSpecialQuestion[] BuildQuestions() =>
     [
-        new() { Id = 1, FileHash = "", Provider = "test", Index = 0, Question = "公司的注册资本是多少" },
-        new() { Id = 2, FileHash = "", Provider = "test", Index = 1, Question = "法定代表人是谁" },
-        new() { Id = 3, FileHash = "", Provider = "test", Index = 2, Question = "公司成立日期是哪天" },
-        new() { Id = 4, FileHash = "", Provider = "test", Index = 3, Question = "基金管理人登记证明编号是多少" },
-        new() { Id = 5, FileHash = "", Provider = "test", Index = 4, Question = "公司有多少员工" },
+        new() { Id = 1, FileName = "", Provider = "test", Index = 0, Question = "公司的注册资本是多少" },
+        new() { Id = 2, FileName = "", Provider = "test", Index = 1, Question = "法定代表人是谁" },
+        new() { Id = 3, FileName = "", Provider = "test", Index = 2, Question = "公司成立日期是哪天" },
+        new() { Id = 4, FileName = "", Provider = "test", Index = 3, Question = "基金管理人登记证明编号是多少" },
+        new() { Id = 5, FileName = "", Provider = "test", Index = 4, Question = "公司有多少员工" },
     ];
 
     /// <summary>
