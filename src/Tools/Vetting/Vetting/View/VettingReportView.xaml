@@ -220,34 +220,5 @@
         </GroupBox>
 
 
-        <Separator Margin="0,20" />
-
-        <GroupBox
-            Header="报告列表"
-            Style="{StaticResource GroupBoxTab}"
-            Visibility="{Binding FinalFiles.Count, Converter={StaticResource Int2VisibilityConverter}}">
-            <ListBox ItemsSource="{Binding FinalFiles}">
-                <ListBox.ItemContainerStyle>
-                    <Style BasedOn="{StaticResource ListBoxItemCustom}" TargetType="ListBoxItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="Margin" Value="4,4" />
-                    </Style>
-                </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <DockPanel>
-                            <Button
-                                Command="{Binding OpenFileCommand}"
-                                Content="打开"
-                                DockPanel.Dock="Right"
-                                Style="{StaticResource ButtonInfo.Small}" />
-                            <TextBlock VerticalAlignment="Center" Text="{Binding FileName}" />
-                        </DockPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-        </GroupBox>
-
-
     </StackPanel>
 </UserControl>

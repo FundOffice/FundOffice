@@ -16,15 +16,12 @@ public partial class VettingReportViewModel : ObservableObject
     public string Id => Report.Id;
     public string FolderPath => Path.Combine("files", "vetting", Id);
     public string TplPath => Path.Combine("files", "vetting", Id, "tpl");
-    public string FinalPath => Path.Combine("files", "vetting", Id, "final");
     public DateTime CreateTime => Report.CreateTime;
     [ObservableProperty] public partial string Name { get; set; }
     [ObservableProperty] public partial string NameEdit { get; set; }
     public ObservableCollection<ReportFileViewModel> OriginalFiles { get; } = [];
-    public ObservableCollection<FinalFileViewModel> FinalFiles { get; } = [];
 
     private FileSystemWatcher? _watcher;
-    private FileSystemWatcher? _finalWatcher;
 
     /// <summary>
     /// 缓存 ReportFileViewModel，避免切换尽调时丢失 ProviderRunViewModel 状态
@@ -48,20 +45,11 @@ public partial class VettingReportViewModel : ObservableObject
         _watcher.Deleted += (_, _) => ReloadFiles();
         _watcher.Renamed += (_, _) => ReloadFiles();
         _watcher.EnableRaisingEvents = true;
-
-        Directory.CreateDirectory(FinalPath);
-        ReloadFinalFiles();
-        _finalWatcher = new FileSystemWatcher(FinalPath) { NotifyFilter = NotifyFilters.FileName | NotifyFilters.Size };
-        _finalWatcher.Created += (_, _) => ReloadFinalFiles();
-        _finalWatcher.Deleted += (_, _) => ReloadFinalFiles();
-        _finalWatcher.Renamed += (_, _) => ReloadFinalFiles();
-        _finalWatcher.EnableRaisingEvents = true;
     }
 
     public void StopWatching()
     {
         if (_watcher is { } w) { w.EnableRaisingEvents = false; w.Dispose(); _watcher = null; }
-        if (_finalWatcher is { } fw) { fw.EnableRaisingEvents = false; fw.Dispose(); _finalWatcher = null; }
     }
 
     private void ReloadFiles()
@@ -108,20 +96,6 @@ public partial class VettingReportViewModel : ObservableObject
                     OriginalFiles.Add(new ReportFileViewModel(f, Id, selectedProviders, answerMode, runMode));
                 }
             }
-        });
-    }
-
-
-    private void ReloadFinalFiles()
-    {
-        if (!Directory.Exists(FinalPath)) return;
-        var files = new DirectoryInfo(FinalPath).GetFiles()
-            .Where(f => !f.Name.StartsWith("~$") && !f.Attributes.HasFlag(FileAttributes.Hidden))
-            .ToArray();
-        App.Current.Dispatcher.Invoke(() =>
-        {
-            FinalFiles.Clear();
-            foreach (var f in files) FinalFiles.Add(new FinalFileViewModel(f, Id));
         });
     }
 
