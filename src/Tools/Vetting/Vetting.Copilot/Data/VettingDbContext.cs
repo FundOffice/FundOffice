@@ -32,29 +32,21 @@ public class VettingDbContext : IDisposable
     public ILiteCollection<DrawdownRecord> DrawdownRecords => _db.GetCollection<DrawdownRecord>();
     public ILiteCollection<FinancialStatement> FinancialStatements => _db.GetCollection<FinancialStatement>();
     public ILiteCollection<FundInfo> FundInfos => _db.GetCollection<FundInfo>();
+    public ILiteCollection<ProductLine> ProductLines => _db.GetCollection<ProductLine>();
     public ILiteCollection<Shareholder> Shareholders => _db.GetCollection<Shareholder>();
     public ILiteCollection<Staff> Staffs => _db.GetCollection<Staff>();
     public ILiteCollection<Strategy> Strategies => _db.GetCollection<Strategy>();
 
     private static string _machine = GetDiskSerial();
 
-    /// <summary>
-    /// 默认构造：使用 data/vetting.db，密码基于磁盘序列号
-    /// </summary>
     public VettingDbContext() : this("data/vetting.db") { }
 
-    /// <summary>
-    /// 指定数据库路径构造（用于测试）
-    /// </summary>
     public VettingDbContext(string dbPath)
     {
         var password = ComputeDiskSerialMd5();
         _db = new LiteDatabase($"Filename={dbPath};Password={password};Connection=Shared");
     }
 
-    /// <summary>
-    /// 无密码构造（仅测试用）
-    /// </summary>
     public VettingDbContext(string dbPath, bool noPassword)
     {
         _db = noPassword

@@ -1,4 +1,4 @@
-<Window
+﻿<Window
     x:Class="Vetting.View.DataCenterWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -229,6 +229,12 @@
                             </ItemsControl>
                             <hc:TextBox hc:InfoElement.Title="从业年限" Text="{Binding Years, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
                             <hc:DatePicker hc:InfoElement.Title="出生年月" SelectedDate="{Binding BirthDate, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="工作职责" Text="{Binding Duty, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="部门" Text="{Binding Department, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:DatePicker hc:InfoElement.Title="入职时间" SelectedDate="{Binding JoinDate, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:DatePicker hc:InfoElement.Title="离职时间" SelectedDate="{Binding LeaveDate, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="离职原因" Text="{Binding LeaveReason, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="是否兼职" Text="{Binding HasPartTimeJob, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
 
                             <hc:TextBox hc:InfoElement.Title="擅长领域" Text="{Binding Specialty, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
                             <hc:TextBox hc:InfoElement.Title="投研重点" Text="{Binding ResearchFocus, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
@@ -648,6 +654,40 @@
                                 Width="150"
                                 Binding="{Binding Evaluator, UpdateSourceTrigger=PropertyChanged, Delay=200}"
                                 Header="评价机构" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="产品线">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button
+                            Margin="4"
+                            Command="{Binding AddItemCommand}"
+                            CommandParameter="ProductLine"
+                            Content="新增"
+                            Style="{StaticResource ButtonSuccess}" />
+                        <Button
+                            Margin="4"
+                            Command="{Binding DeleteProductLineCommand}"
+                            Content="删除"
+                            Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        ItemsSource="{Binding ProductLines}"
+                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="120" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="产品线名称" />
+                            <DataGridTextColumn Width="100" Binding="{Binding StrategyType, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="策略类型" />
+                            <DataGridTextColumn Width="120" Binding="{Binding SpecificStrategy, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="具体策略" />
+                            <DataGridTextColumn Width="120" Binding="{Binding RepresentProduct, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="代表产品" />
+                            <DataGridTextColumn Width="100" Binding="{Binding Manager, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="投资经理" />
+                            <DataGridTextColumn Width="80" Binding="{Binding FundCount, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="产品只数" />
+                            <DataGridTextColumn Width="100" Binding="{Binding Scale, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="管理规模(万)" />
+                            <DataGridTextColumn Width="100" Binding="{Binding TradingScale, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="交易层规模(万)" />
+                            <DataGridTextColumn Width="100" Binding="{Binding Capacity, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="容量上限(万)" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>

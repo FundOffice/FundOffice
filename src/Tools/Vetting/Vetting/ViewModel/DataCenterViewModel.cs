@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -31,6 +31,7 @@ public partial class DataCenterViewModel : ObservableObject
     public ObservableCollection<DrawdownRecordVM> DrawdownRecords { get; } = [];
     public ObservableCollection<FinancialStatementVM> FinancialStatements { get; } = [];
     public ObservableCollection<QAVM> QAs { get; } = [];
+    public ObservableCollection<ProductLineVM> ProductLines { get; } = [];
 
     // 全局推荐产品
     public ObservableCollection<FundInfoVM> GlobalRecommendedFunds { get; } = [];
@@ -91,6 +92,7 @@ public partial class DataCenterViewModel : ObservableObject
         foreach (var f in sorted) FinancialStatements.Add(f);
         SelectedFinancialStatement = FinancialStatements.FirstOrDefault();
         LoadList(db.QA, QAs, e => new QAVM(e));
+        LoadList(db.ProductLines, ProductLines, e => new ProductLineVM(e));
 
         // 加载全局推荐产品
         var rec = db.TemplateRecommends.FindOne(r => r.FileName == "__global__");
@@ -554,6 +556,7 @@ public partial class DataCenterViewModel : ObservableObject
                 SelectedFinancialStatement = fsVm;
                 break;
             case "QA": AddAndSave(db.QA, QAs, e => new QAVM(e), new QA()); break;
+            case "ProductLine": AddAndSave(db.ProductLines, ProductLines, e => new ProductLineVM(e), new ProductLine()); break;
         }
     }
 
@@ -603,6 +606,17 @@ public partial class DataCenterViewModel : ObservableObject
         Directory.CreateDirectory(Vetting.Copilot.PredFiles.Dir);
         File.Copy(sourcePath, Path.Combine(Vetting.Copilot.PredFiles.Dir, name), overwrite: true);
         LoadPredFiles();
+    }
+
+    [RelayCommand]
+    private void DeleteProductLine()
+    {
+        var sel = CurrentItem as ProductLineVM;
+        if (sel == null) return;
+        using var db = new VettingDbContext();
+        db.ProductLines.Delete(sel.Entity.Id);
+        ProductLines.Remove(sel);
+        CurrentItem = null;
     }
 
     [RelayCommand]

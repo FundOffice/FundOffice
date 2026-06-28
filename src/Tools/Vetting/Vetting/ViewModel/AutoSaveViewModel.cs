@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
 using Vetting.Copilot.Data;
@@ -145,7 +145,14 @@ public partial class StaffVM : AutoSaveViewModel<Staff>
     public string? MobilePhone { get => Entity.MobilePhone; set { Entity.MobilePhone = value; OnPropertyChanged(); } }
     public string? Telephone { get => Entity.Telephone; set { Entity.Telephone = value; OnPropertyChanged(); } }
     public string? Email { get => Entity.Email; set { Entity.Email = value; OnPropertyChanged(); } }
+    public string? Duty { get => Entity.Duty; set { Entity.Duty = value; OnPropertyChanged(); } }
+    public string? Department { get => Entity.Department; set { Entity.Department = value; OnPropertyChanged(); } }
     public int? DepartmentId { get => Entity.DepartmentId; set { Entity.DepartmentId = value; OnPropertyChanged(); WeakReferenceMessenger.Default.Send(new StaffChangedMessage()); } }
+    public DateTime? JoinDate { get => Entity.JoinDate; set { Entity.JoinDate = value; OnPropertyChanged(); } }
+    public DateTime? LeaveDate { get => Entity.LeaveDate; set { Entity.LeaveDate = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasLeft)); } }
+    public string? LeaveReason { get => Entity.LeaveReason; set { Entity.LeaveReason = value; OnPropertyChanged(); } }
+    public string? HasPartTimeJob { get => Entity.HasPartTimeJob; set { Entity.HasPartTimeJob = value; OnPropertyChanged(); } }
+    public bool HasLeft => Entity.HasLeft;
 
     public ObservableCollection<StaffRoleVM> Roles { get; } =
         Enum.GetValues<StaffRole>().Select(r => new StaffRoleVM(r)).ToArray().ToObservable();
@@ -245,13 +252,18 @@ public partial class StrategyVM : AutoSaveViewModel<Strategy>
     public string? Capacity { get => Entity.Capacity; set { Entity.Capacity = value; OnPropertyChanged(); } }
     public string? SameStrategyCount { get => Entity.SameStrategyCount; set { Entity.SameStrategyCount = value; OnPropertyChanged(); } }
     public string? FactorPool { get => Entity.FactorPool; set { Entity.FactorPool = value; OnPropertyChanged(); } }
-    public string? CapacityAndRisk { get => Entity.CapacityAndRisk; set { Entity.CapacityAndRisk = value; OnPropertyChanged(); } }
-    public string? Replicated { get => Entity.Replicated; set { Entity.Replicated = value; OnPropertyChanged(); } }
-    public string? StyleExposure { get => Entity.StyleExposure; set { Entity.StyleExposure = value; OnPropertyChanged(); } }
     public string? Turnover { get => Entity.Turnover; set { Entity.Turnover = value; OnPropertyChanged(); } }
     public string? HoldingPeriod { get => Entity.HoldingPeriod; set { Entity.HoldingPeriod = value; OnPropertyChanged(); } }
     public string? WeightAllocation { get => Entity.WeightAllocation; set { Entity.WeightAllocation = value; OnPropertyChanged(); } }
     public string? WarningStoploss { get => Entity.WarningStoploss; set { Entity.WarningStoploss = value; OnPropertyChanged(); } }
+    public string? StockType { get => Entity.StockType; set { Entity.StockType = value; OnPropertyChanged(); } }
+    public string? Concentration { get => Entity.Concentration; set { Entity.Concentration = value; OnPropertyChanged(); } }
+    public string? MarketImpact { get => Entity.MarketImpact; set { Entity.MarketImpact = value; OnPropertyChanged(); } }
+    public string? HedgeTool { get => Entity.HedgeTool; set { Entity.HedgeTool = value; OnPropertyChanged(); } }
+    public string? RiskExposure { get => Entity.RiskExposure; set { Entity.RiskExposure = value; OnPropertyChanged(); } }
+    public string? Replicated { get => Entity.Replicated; set { Entity.Replicated = value; OnPropertyChanged(); } }
+    public string? StyleExposure { get => Entity.StyleExposure; set { Entity.StyleExposure = value; OnPropertyChanged(); } }
+    public string? CapacityAndRisk { get => Entity.CapacityAndRisk; set { Entity.CapacityAndRisk = value; OnPropertyChanged(); } }
 }
 
 public partial class FundInfoVM : AutoSaveViewModel<FundInfo>
@@ -332,4 +344,18 @@ public partial class QAVM : AutoSaveViewModel<QA>
     public int Source { get => Entity.Source; set { Entity.Source = value; OnPropertyChanged(); } }
     public string? Question { get => Entity.Question; set { Entity.Question = value; OnPropertyChanged(); } }
     public string? Answer { get => Entity.Answer; set { Entity.Answer = value; OnPropertyChanged(); } }
+}
+
+public partial class ProductLineVM : AutoSaveViewModel<ProductLine>
+{
+    public ProductLineVM(ProductLine entity) : base(entity) { EndInit(); }
+    public string? Name { get => Entity.Name; set { Entity.Name = value; OnPropertyChanged(); } }
+    public string? StrategyType { get => Entity.StrategyType; set { Entity.StrategyType = value; OnPropertyChanged(); } }
+    public string? SpecificStrategy { get => Entity.SpecificStrategy; set { Entity.SpecificStrategy = value; OnPropertyChanged(); } }
+    public string? RepresentProduct { get => Entity.RepresentProduct; set { Entity.RepresentProduct = value; OnPropertyChanged(); } }
+    public string? Manager { get => Entity.Manager; set { Entity.Manager = value; OnPropertyChanged(); } }
+    public string? FundCount { get => Entity.FundCount; set { Entity.FundCount = value; OnPropertyChanged(); } }
+    public string? Scale { get => Entity.Scale; set { Entity.Scale = value; OnPropertyChanged(); } }
+    public string? TradingScale { get => Entity.TradingScale; set { Entity.TradingScale = value; OnPropertyChanged(); } }
+    public string? Capacity { get => Entity.Capacity; set { Entity.Capacity = value; OnPropertyChanged(); } }
 }

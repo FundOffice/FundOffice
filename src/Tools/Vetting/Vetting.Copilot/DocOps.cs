@@ -461,6 +461,7 @@ public static class DocOps
         int startRow = op.Range.Start.Row ?? 0;
         int endRow = op.Range.End.Row ?? 0;
         int availableRows = endRow - startRow + 1;
+        int preExpandOffset = offset;  // offset before this op's expansion
 
         // 需要扩展行
         if (items.Length > availableRows)
@@ -491,13 +492,10 @@ public static class DocOps
         // 填充数据
         // 重新获取行列表（可能已插入新行）
         rows = table.Elements<TableRow>().ToList();
-        int currentOffset = offsets.GetValueOrDefault(tableIdx);
 
         for (int i = 0; i < items.Length; i++)
         {
-            // 使用 properties 中第一项的 Row 作为基准绝对行号，加上数据条目偏移 i 和行插入偏移
-            int baseRow = op.Properties.FirstOrDefault()?.Row ?? startRow;
-            int rowIdx = baseRow + i + currentOffset;
+            int rowIdx = startRow + i + preExpandOffset;
             var row = rows.ElementAtOrDefault(rowIdx);
             if (row == null) continue;
 

@@ -90,17 +90,19 @@ public class DataResolver
                   "Return6M", "Return1Y", "Return1M" })).ToArray(),
             ["award"] = allAwards.Select(a => ObjectToDictViaResolve(a, new[]
                 { "Time", "Entity", "Name", "Evaluator" })).ToArray(),
-            ["executive"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.高管))
+            ["executive"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.高管) && !s.HasLeft)
                 .Select(s => StaffToDict(s)).ToArray(),
-            ["researcher"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.投研))
+            ["researcher"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.投研) && !s.HasLeft)
                 .Select(s => StaffToDict(s)).ToArray(),
-            ["riskctrl"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.风控))
+            ["riskctrl"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.风控) && !s.HasLeft)
                 .Select(s => StaffToDict(s)).ToArray(),
-            ["pm"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.投资经理))
+            ["pm"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.投资经理) && !s.HasLeft)
                 .Select(s => StaffToDict(s)).ToArray(),
-            ["contact"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.联系人))
+            ["contact"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.联系人) && !s.HasLeft)
                 .Select(s => StaffToDict(s)).ToArray(),
-            ["compliance"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.合规))
+            ["compliance"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.合规) && !s.HasLeft)
+                .Select(s => StaffToDict(s)).ToArray(),
+            ["departedstaff"] = allStaff.Where(s => s.HasLeft)
                 .Select(s => StaffToDict(s)).ToArray(),
         };
 
@@ -114,6 +116,26 @@ public class DataResolver
 
         var aumList = db.AUMs.FindAll().OrderByDescending(a => a.Year).ToArray();
         lists["aum"] = aumList.Select(a => ObjectToDictViaResolve(a, new[] { "Year", "Scale" })).ToArray();
+
+        // staffcount: derive from Staff JoinDate/LeaveDate
+        var staffCountByYear = new Dictionary<int, int>();
+        foreach (var s in allStaff)
+        {
+            if (s.JoinDate == null) continue;
+            var startYear = s.JoinDate.Value.Year;
+            var endYear = s.LeaveDate?.Year ?? 9999;
+            for (int y = startYear; y <= Math.Min(endYear, DateTime.Now.Year); y++)
+                staffCountByYear[y] = staffCountByYear.GetValueOrDefault(y) + 1;
+        }
+        lists["staffcount"] = staffCountByYear
+            .OrderByDescending(kv => kv.Key)
+            .Select(kv => new Dictionary<string, string> { ["Year"] = kv.Key.ToString(), ["Count"] = kv.Value.ToString() })
+            .ToArray();
+
+        // productline
+        var productLineList = db.ProductLines.FindAll().OrderByDescending(p => p.Id).ToArray();
+        lists["productline"] = productLineList.Select(p => ObjectToDictViaResolve(p, new[]
+            { "Name", "StrategyType", "SpecificStrategy", "RepresentProduct", "Manager", "FundCount", "Scale", "TradingScale", "Capacity" })).ToArray();
 
         recommendIds ??= LoadGlobalRecommendIds(db);
         var recommendFunds = new Dictionary<int, FundInfo>();
@@ -233,8 +255,9 @@ public class DataResolver
     {
         return ObjectToDictViaResolve(s, new[]
         {
-            "Name", "Title", "Education", "Profile", "IdNumber", "Years",
-            "Age", "BirthDate", "Specialty", "ResearchFocus",
+            "Name", "Title", "Duty", "Department", "Education", "Profile", "IdNumber", "Years",
+            "Age", "BirthDate", "JoinDate", "LeaveDate", "LeaveReason", "HasPartTimeJob",
+            "Specialty", "ResearchFocus",
             "MobilePhone", "Telephone", "Email"
         });
     }

@@ -1,4 +1,4 @@
-<!-- version:19 -->
+﻿<!-- version:19 -->
 你是一个尽职调查报告模板生成专家。你的任务是分析一份 .docx 尽调报告的结构，识别所有需要填写的字段，然后生成结构化的填充操作。
 
 ## 输出格式
@@ -366,15 +366,21 @@ Return1M 近1月收益
 属性名与 FundInfo 完全一致。
 
 ### 人员类
-executive(高管) / researcher(投研) / riskctrl(风控) / pm(基金经理) / contact(联系人) / compliance(合规)
+executive(高管) / researcher(投研) / riskctrl(风控) / pm(基金经理) / contact(联系人) / compliance(合规) / departedstaff(离职人员)
 Name 姓名
 Title 现任职务/职位
+Duty 具体工作职责/岗位职责
+Department 部门/岗位
 Education 教育背景
 Profile 详细履历/主要从业经历
 IdNumber 身份证号码
 Years 从业年限
 Age 年龄
 BirthDate 出生年月
+JoinDate 入职时间/加入公司时间
+LeaveDate 离职时间（非空表示已离职，departedstaff 实体从此推导）
+LeaveReason 离职原因
+HasPartTimeJob 是否存在人员兼职
 Undergraduate 本科院校及专业
 Masters 硕士院校及专业
 Doctoral 博士院校及专业
@@ -406,10 +412,23 @@ StaffCount 部门人数
 MainFunction 部门主要职能
 Head 负责人
 
-### Strategy（投资策略）
-Name 投资策略
-Manager 策略负责人
+### Strategy（投资策略/策略详情）
+Name 策略名称/投资策略
+Manager 策略负责人/投资经理
 Scale 策略规模（亿）
+Type 策略类型
+StockType 股票类型/标的类型
+Concentration 持仓数量与单票/行业集中度
+Turnover 换手率
+MarketImpact 受市场环境影响
+HedgeTool 风险对冲工具
+RiskExposure 风险暴露
+Capacity 容量上限（亿）
+SameStrategyCount 同策略产品只数
+FactorPool 因子池/因子数量
+HoldingPeriod 持仓周期/平均持仓天数
+WeightAllocation 权重分配方式
+WarningStoploss 预警止损线
 
 ### Award（奖项）
 Time 获奖时间
@@ -502,6 +521,22 @@ RecoveryDays 恢复天数
 按年份排列，最近一年排第一
 Year 年份
 Scale 规模（亿）
+
+### ProductLine（产品线）
+Name 产品线名称
+StrategyType 策略类型
+SpecificStrategy 具体策略
+RepresentProduct 代表产品简称
+Manager 投资经理
+FundCount 产品只数
+Scale 管理规模（万元）
+TradingScale 实际交易层产品规模（万元）
+Capacity 容量上限（万元）
+
+### StaffCount（年度员工数量）
+按年份排列，最近一年排第一（从人员 JoinDate/LeaveDate 推导）
+Year 年度
+Count 员工数目
 
 ---
 
