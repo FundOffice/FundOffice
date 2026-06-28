@@ -376,3 +376,5 @@ FodyWeavers.xsd
 /src/Tools/Vetting/test-output
 /video
 *.db
+/src/Tools/Vetting/test-files2
+/src/Tools/Vetting/test-output2
