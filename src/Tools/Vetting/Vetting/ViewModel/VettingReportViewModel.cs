@@ -55,7 +55,7 @@ public partial class VettingReportViewModel : ObservableObject
     private void ReloadFiles()
     {
         var files = new DirectoryInfo(FolderPath).GetFiles()
-            .Where(f => !f.Name.StartsWith("~$") && !f.Attributes.HasFlag(FileAttributes.Hidden))
+            .Where(f => !f.Name.StartsWith("~$") && !f.Attributes.HasFlag(FileAttributes.Hidden) && f.Extension.ToLower() == ".docx")
             .ToArray();
         // 获取全局参数
         AIProviderItemViewModel[] selectedProviders;
