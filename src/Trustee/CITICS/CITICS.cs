@@ -604,7 +604,7 @@ public partial class CITICS : TrusteeApiBase
                 TokenTime = DateTime.Now;
                 SaveConfig();
             }
-
+            else Logg.Error($"GetToken {obj?.Msg}");
 
             return obj?.Data?.Token;
         }
