@@ -112,7 +112,16 @@ public static class TemplateQualityChecker
         var txt = t.InnerText;
         if (txt.Contains('\u25a1') || txt.Contains('\u2610') || txt.Contains('\u2611') || txt.Contains('\u2612')) return true;
         var firstRow = t.Elements<TableRow>().FirstOrDefault()?.InnerText ?? "";
-        return firstRow.Contains("资料清单") || firstRow.Contains("附件清单") || firstRow.Contains("是否已提供") || firstRow.Contains("是否适用");
+        if (firstRow.Contains("资料清单") || firstRow.Contains("附件清单") || firstRow.Contains("是否已提供") || firstRow.Contains("是否适用")) return true;
+
+        // 单行标题表：只有 1 行（分区标题，无实际填写内容）
+        if (t.Elements<TableRow>().Count() <= 1) return true;
+
+        // 静态参考/映射表：策略分类标准、风控要求
+        if (firstRow.Contains("一级分类") && firstRow.Contains("二级分类")) return true;
+        if (firstRow.Contains("风控项目") || firstRow.Contains("风控要求")) return true;
+
+        return false;
     }
 
     private static void CheckBounds(FillOperator op, int tableCount, int paraCount, List<string> warnings)
