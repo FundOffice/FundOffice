@@ -682,19 +682,9 @@ public static class DocOps
 
         string value;
         if (op.Entity != null && op.Property != null)
-        {
             value = resolver.Resolve(op.Entity, op.Property, op.Format);
-            // 如果实体属性解析结果为空，回退到自定义问题答案（可能包含 [img#N] 等占位符）
-            if (string.IsNullOrEmpty(value) && !string.IsNullOrEmpty(op.Question))
-                value = resolver.GetAnswerByQuestion(op.Question);
-            System.Diagnostics.Debug.WriteLine($"[FillParagraph] Entity={op.Entity}.{op.Property} → '{value}'");
-        }
         else
-        {
-            value = resolver.GetAnswerByQuestion(op.Question);
-            System.Diagnostics.Debug.WriteLine($"[FillParagraph] Question='{op.Question}' → '{value}'");
-            value = resolver.ResolvePlaceholders(value);
-        }
+            value = resolver.ResolvePlaceholders(resolver.GetAnswerByQuestion(op.Question));
 
         if (!string.IsNullOrEmpty(value))
         {
