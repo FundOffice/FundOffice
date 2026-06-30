@@ -77,7 +77,7 @@
 
         <Separator Margin="10" DockPanel.Dock="Top" />
 
-        <hc:UniformSpacingPanel
+        <hc:UniformSpacingPanel Visibility="{Binding .,Converter={StaticResource Object2VisibilityConverter}}"
             DataContext="{Binding SelectedProvider}"
             Orientation="Vertical"
             Spacing="8">
