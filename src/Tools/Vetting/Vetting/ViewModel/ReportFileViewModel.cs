@@ -84,7 +84,7 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
             if (config == null) return;
 
             var provider = CustomQuestionAnswerer.CreateProvider(message.Identifier, config.ProviderType, config.ApiKey, config.BaseUrl, config.Model, config.ApiVersion);
-            var vm = new ProviderRunViewModel(message.Identifier, config.Name, provider, FileName, VettingId, AbsolutePath)
+            var vm = new ProviderRunViewModel(config.Name, message.Identifier, provider, FileName, VettingId, AbsolutePath)
             {
                 IsFullMode = db.GetSettings().AnswerMode == MainWindowViewModel.AnswerModeFull,
             };
