@@ -924,9 +924,7 @@
             </TabItem>
 
 
-            <Separator />
-
-
+            <TabItem IsHitTestVisible="False" />
 
             <TabItem Header="附件列表">
                 <DockPanel>
@@ -1023,7 +1021,8 @@
                 </DockPanel>
             </TabItem>
 
-            <Separator />
+            <TabItem IsHitTestVisible="False" />
+
 
             <TabItem Background="Orange" Header="问答">
                 <DockPanel>
