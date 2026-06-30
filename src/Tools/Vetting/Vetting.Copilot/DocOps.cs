@@ -423,7 +423,14 @@ public static class DocOps
         else if (op.Location.IsParagraph && op.Location.Para.HasValue)
         {
             var para = paragraphs.ElementAtOrDefault(op.Location.Para.Value);
-            if (para != null) SetParaContent(para, value);
+            if (para != null)
+            {
+                // 目标段落已有内容（如问题文本），在其后插入新段落写入答案，避免覆盖
+                // 但如果段落少于6个字，视为空段落，直接覆盖
+                if (!string.IsNullOrWhiteSpace(para.InnerText) && para.InnerText.Length >= 6)
+                    para = InsertParagraphAfter(para);
+                SetParaContent(para, value);
+            }
         }
     }
 
@@ -644,7 +651,13 @@ public static class DocOps
             value = resolver.ResolvePlaceholders(resolver.GetAnswerByQuestion(op.Question));
 
         if (!string.IsNullOrEmpty(value))
+        {
+            // 目标段落已有内容（如问题文本），在其后插入新段落写入答案，避免覆盖
+            // 但如果段落少于6个字，视为空段落，直接覆盖
+            if (!string.IsNullOrWhiteSpace(para.InnerText) && para.InnerText.Length >= 6)
+                para = InsertParagraphAfter(para);
             SetParaContent(para, value);
+        }
     }
 
     private static TableCell? GetCell(List<Table> tables, int tableIndex, int rowIndex, int colIndex)
@@ -706,6 +719,14 @@ public static class DocOps
         {
             para.AppendChild(new Run(new Text(text) { Space = SpaceProcessingModeValues.Preserve }));
         }
+    }
+
+    private static Paragraph InsertParagraphAfter(Paragraph target)
+    {
+        // 不继承样式：避免继承编号/缩进导致答案段落格式异常
+        var newPara = new Paragraph();
+        target.InsertAfterSelf(newPara);
+        return newPara;
     }
 
     private static void SetParaContent(Paragraph para, string text)

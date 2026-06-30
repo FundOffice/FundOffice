@@ -533,6 +533,118 @@ public class DocOpsFillTests : IDisposable
     }
 
     [Fact]
+    public void TypeF_ParagraphOp_InsertsNewParaWhenTargetNotEmpty()
+    {
+        // 问题段落后面没有空行，AI 误将 Type z 定位到问题段落本身
+        // 问题文本超过6个字，应插入新段落保留问题
+        var src = TempFile("src.docx");
+        TestDocBuilder.Create(src, paragraphs: ["请简述投资策略："]);
+
+        var resolver = TestData.Resolver(answers: new()
+        {
+            ["请简述投资策略："] = "本基金采用量化多因子策略",
+        });
+
+        var ops = new List<FillOperator>
+        {
+            new ParagraphOp { Question = "请简述投资策略：", Location = new Location { Para = 0 } },
+        };
+
+        var outPath = TempFile("out.docx");
+        DocOps.Fill(src, outPath, ops, resolver);
+
+        var result = DocOps.ReadParagraphs(outPath);
+        // 问题文本必须保留（超过6个字）
+        Assert.Contains("请简述投资策略：", result);
+        // 答案也必须出现
+        Assert.Contains("本基金采用量化多因子策略", result);
+    }
+
+    [Fact]
+    public void TypeF_ParagraphOp_OverwritesShortParagraph()
+    {
+        // 段落少于6个字，视为空段落，直接覆盖
+        var src = TempFile("src.docx");
+        TestDocBuilder.Create(src, paragraphs: ["简介："]);  // 3个字
+
+        var resolver = TestData.Resolver(answers: new()
+        {
+            ["简介："] = "某基金管理有限公司成立于2020年",
+        });
+
+        var ops = new List<FillOperator>
+        {
+            new ParagraphOp { Question = "简介：", Location = new Location { Para = 0 } },
+        };
+
+        var outPath = TempFile("out.docx");
+        DocOps.Fill(src, outPath, ops, resolver);
+
+        var result = DocOps.ReadParagraphs(outPath);
+        // 原短文本被覆盖，不再出现
+        Assert.DoesNotContain("简介：", result);
+        // 答案直接写入该段落
+        Assert.Contains("某基金管理有限公司成立于2020年", result);
+    }
+
+    [Fact]
+    public void TypeA_ScalarOp_InsertsNewParaWhenTargetNotEmpty()
+    {
+        // Type a 段落定位：目标段落已有内容时，应插入新段落写入
+        // 问题文本超过6个字，应插入新段落保留问题
+        var src = TempFile("src.docx");
+        TestDocBuilder.Create(src, paragraphs: ["公司简介描述："]);  // 7个字，超过6字阈值
+
+        var resolver = TestData.Resolver(scalars: new()
+        {
+            ["manager.Description"] = "某基金管理有限公司成立于2020年",
+        });
+
+        var ops = new List<FillOperator>
+        {
+            new ScalarOp { Entity = "manager", Property = "Description", Question = "公司简介",
+                Location = new Location { Para = 0 } },
+        };
+
+        var outPath = TempFile("out.docx");
+        DocOps.Fill(src, outPath, ops, resolver);
+
+        var result = DocOps.ReadParagraphs(outPath);
+        // 问题文本必须保留（超过6个字）
+        Assert.Contains("公司简介描述：", result);
+        // 答案也必须出现
+        Assert.Contains("某基金管理有限公司成立于2020年", result);
+    }
+
+    [Fact]
+    public void TypeA_ScalarOp_OverwritesShortParagraph()
+    {
+        // 段落少于6个字，视为空段落，直接覆盖
+        var src = TempFile("src.docx");
+        TestDocBuilder.Create(src, paragraphs: ["名称："]);  // 3个字
+
+        var resolver = TestData.Resolver(scalars: new()
+        {
+            ["manager.Name"] = "测试基金管理有限公司",
+        });
+
+        var ops = new List<FillOperator>
+        {
+            new ScalarOp { Entity = "manager", Property = "Name", Question = "名称",
+                Location = new Location { Para = 0 } },
+        };
+
+        var outPath = TempFile("out.docx");
+        DocOps.Fill(src, outPath, ops, resolver);
+
+        var result = DocOps.ReadParagraphs(outPath);
+        // 原短文本被覆盖，不再出现
+        Assert.DoesNotContain("名称：", result);
+        // 答案直接写入该段落
+        Assert.Contains("测试基金管理有限公司", result);
+    }
+
+    [Fact]
     public void ParseDocument_DetectsTableStructure()
     {
         var src = TempFile("struct.docx");
