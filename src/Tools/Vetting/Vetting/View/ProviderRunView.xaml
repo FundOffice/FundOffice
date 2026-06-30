@@ -31,6 +31,16 @@
                     Foreground="Gray"
                     Text="{Binding Tip}" />
 
+                <Button
+                    Margin="2,0"
+                    Padding="4,2"
+                    Command="{Binding RunParseCommand}"
+                    Content="解析"
+                    FontSize="14"
+                    Style="{StaticResource ButtonPrimary}"
+                    ToolTip="查看解析结果" />
+
+
                 <!--  查看解析结果  -->
                 <Button
                     Margin="2,0"
