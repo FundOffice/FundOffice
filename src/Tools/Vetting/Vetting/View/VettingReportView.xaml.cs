@@ -22,8 +22,60 @@ public partial class VettingReportView : UserControl
         var files = (string[])e.Data.GetData(DataFormats.FileDrop);
         Directory.CreateDirectory(vm.FolderPath);
         foreach (var file in files)
+        {
             if (File.Exists(file))
+            {
                 File.Copy(file, Path.Combine(vm.FolderPath, Path.GetFileName(file)), overwrite: true);
+
+                // 自动设置尽调名称（仅在默认名称时）
+                if (vm.Name == "新建尽调")
+                {
+                    var extractedName = ExtractCompanyName(Path.GetFileNameWithoutExtension(file));
+                    if (!string.IsNullOrEmpty(extractedName))
+                    {
+                        vm.Name = extractedName;
+                        vm.NameEdit = extractedName;
+                        vm.SaveToDb();
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 从文件名中提取公司名称
+    /// 支持格式：xx期货、xx证券、xx基金、xx公司等
+    /// </summary>
+    private static string? ExtractCompanyName(string fileName)
+    {
+        var keywords = new[] { "期货", "证券", "基金", "资管", "投资", "公司" };
+        foreach (var keyword in keywords)
+        {
+            var index = fileName.IndexOf(keyword);
+            if (index > 0)
+            {
+                // 向前查找公司名称起始位置（处理前缀如"【尽调】xxx期货"）
+                var start = 0;
+                var prefixes = new[] { "【", "(", "（", "_", "-", " " };
+                for (int i = index - 1; i >= 0; i--)
+                {
+                    if (prefixes.Contains(fileName[i].ToString()))
+                    {
+                        start = i + 1;
+                        break;
+                    }
+                }
+                // 提取完整的公司名称（包含关键词）
+                var length = index + keyword.Length - start;
+                if (length > 0 && start < fileName.Length)
+                {
+                    var name = fileName.Substring(start, length);
+                    if (name.Length >= 2)
+                        return name;
+                }
+            }
+        }
+        return null;
     }
 
     // ── 推荐产品拖拽 ──
