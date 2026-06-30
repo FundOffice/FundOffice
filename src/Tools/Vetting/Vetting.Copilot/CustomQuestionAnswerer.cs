@@ -60,7 +60,6 @@ public class CustomQuestionAnswerer
     public async Task<QuestionAnswerResult> AnswerAsync(
         string fileName,
         string providerId,
-        bool isFullMode = false,
         Action<string>? output = null,
         CancellationToken ct = default)
     {
@@ -79,9 +78,9 @@ public class CustomQuestionAnswerer
             }
 
             var qaList = db.QA.FindAll().ToArray();
-            var prompt = PromptService.BuildQAPrompt(qaList, questions, isFullMode);
+            var prompt = PromptService.BuildQAPrompt(qaList, questions);
 
-            var systemPrompt = PromptService.GetQASystemPrompt(isFullMode);
+            var systemPrompt = PromptService.GetQASystemPrompt();
             var messages = new[]
             {
                 ChatMessage.System(systemPrompt),
@@ -115,7 +114,7 @@ public class CustomQuestionAnswerer
                 var q = questions.FirstOrDefault(x => x.Index == idx);
                 if (q == null) continue;
                 var answer = prop.Value.GetString() ?? "";
-                var (processedAnswer, isInferred) = PromptService.ProcessAnswer(answer, isFullMode);
+                var (processedAnswer, isInferred) = PromptService.ProcessAnswer(answer);
                 answer = processedAnswer;
 
                 answers.Add((idx, q.Question ?? "", answer));
@@ -125,7 +124,7 @@ public class CustomQuestionAnswerer
 
             var exactCount = answers.Count(a => !string.IsNullOrEmpty(a.answer) && !a.answer.StartsWith("（ai）"));
             var inferredCount = answers.Count(a => a.answer.StartsWith("（ai）"));
-            logs.Add($"精确 {exactCount} 条" + (isFullMode ? $"，推断 {inferredCount} 条" : "") + $"，共 {answers.Count} 条");
+            logs.Add($"精确 {exactCount} 条，推断 {inferredCount} 条，共 {answers.Count} 条");
 
             return new QuestionAnswerResult
             {
@@ -149,11 +148,10 @@ public class CustomQuestionAnswerer
         string fileName,
         string providerId,
         string providerName,
-        bool isFullMode = false,
         Action<string>? output = null,
         CancellationToken ct = default)
     {
-        var result = await AnswerAsync(fileName, providerId, isFullMode, output, ct);
+        var result = await AnswerAsync(fileName, providerId, output, ct);
         if (!result.Success || result.AnsweredCount == 0) return result;
 
         using var db = new VettingDbContext();

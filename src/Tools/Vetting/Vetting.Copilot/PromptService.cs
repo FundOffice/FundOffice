@@ -43,13 +43,12 @@ public static class PromptService
 
     #region QA Prompt (回答阶段)
 
-    /// <summary>散装问题的系统提示词</summary>
-    public static string GetQASystemPrompt(bool isFullMode) => isFullMode
-        ? "你是一名尽调报告填写者。优先根据提供的历史问答资料精确回答问题；如果资料中没有相关信息，请以该公司运营的实际情况为背景，用肯定的语气给出合理的推断回答，并在该回答开头加上【推断】标记。回答要像直接填写尽调表格一样简洁明确，不要出现「根据资料」「资料显示」等引用性表述。"
-        : "你是一名尽职调查分析师，根据提供的历史问答资料，准确回答尽调问题。直接回答，不要废话。如果资料中没有相关信息，回答\"\"(空字符串)。";
+    /// <summary>散装问题的系统提示词（始终使用完整模式，允许推断）</summary>
+    public static string GetQASystemPrompt() =>
+        "你是一名尽调报告填写者。优先根据提供的历史问答资料精确回答问题；如果资料中没有相关信息，请以该公司运营的实际情况为背景，用肯定的语气给出合理的推断回答，并在该回答开头加上【推断】标记。回答要像直接填写尽调表格一样简洁明确，不要出现「根据资料」「资料显示」等引用性表述。";
 
-    /// <summary>构建散装问题的用户提示词</summary>
-    public static string BuildQAPrompt(QA[] qaList, FileSpecialQuestion[] questions, bool isFullMode)
+    /// <summary>构建散装问题的用户提示词（始终使用完整模式，允许推断）</summary>
+    public static string BuildQAPrompt(QA[] qaList, FileSpecialQuestion[] questions)
     {
         var sb = new StringBuilder();
         sb.AppendLine("## 历史问答资料");
@@ -74,13 +73,12 @@ public static class PromptService
         sb.AppendLine();
         sb.AppendLine("请严格按以下 JSON 格式回答:");
         sb.AppendLine(@"{""answers"": {""a1"": ""回答内容"", ""a2"": ""回答内容""}}");
-        if (isFullMode)
-            sb.AppendLine(@"如果某问题的回答不是来自上面的历史问答资料，而是你根据专业判断得出的，请在该回答开头加上【推断】标记。例如: ""【推断】这是推断的回答内容""");
+        sb.AppendLine(@"如果某问题的回答不是来自上面的历史问答资料，而是你根据专业判断得出的，请在该回答开头加上【推断】标记。例如: ""【推断】这是推断的回答内容""");
         return sb.ToString();
     }
 
-    /// <summary>处理 AI 返回的答案：检测【推断】标记，full 模式加（ai）前缀，strict 模式置空</summary>
-    public static (string answer, bool isInferred) ProcessAnswer(string answer, bool isFullMode)
+    /// <summary>处理 AI 返回的答案：检测【推断】标记，加（ai）前缀标记推断内容</summary>
+    public static (string answer, bool isInferred) ProcessAnswer(string answer)
     {
         if (answer.Contains("暂无相关信息")) answer = "";
         if (string.IsNullOrWhiteSpace(answer)) return (answer, false);
@@ -89,8 +87,7 @@ public static class PromptService
         if (isInferred)
         {
             answer = answer["【推断】".Length..];
-            if (isFullMode) answer = $"（ai）{answer}";
-            else answer = "";
+            answer = $"（ai）{answer}";
         }
         return (answer, isInferred);
     }

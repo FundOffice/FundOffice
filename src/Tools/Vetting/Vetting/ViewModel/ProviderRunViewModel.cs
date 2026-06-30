@@ -221,8 +221,8 @@ public partial class ProviderRunViewModel : ObservableObject
             }
 
             var qaList = db.QA.FindAll().ToArray();
-            var prompt = PromptService.BuildQAPrompt(qaList, questions, IsFullMode);
-            var systemPrompt = PromptService.GetQASystemPrompt(IsFullMode);
+            var prompt = PromptService.BuildQAPrompt(qaList, questions);
+            var systemPrompt = PromptService.GetQASystemPrompt();
             var messages = new[]
             {
                 ChatMessage.System(systemPrompt),
@@ -269,7 +269,7 @@ public partial class ProviderRunViewModel : ObservableObject
                 var q = questions.FirstOrDefault(x => x.Index == idx);
                 if (q == null) continue;
                 var answer = prop.Value.GetString() ?? "";
-                var (processedAnswer, isInferred) = PromptService.ProcessAnswer(answer, IsFullMode);
+                var (processedAnswer, isInferred) = PromptService.ProcessAnswer(answer);
                 answer = processedAnswer;
 
                 if (!string.IsNullOrWhiteSpace(answer))
@@ -293,7 +293,7 @@ public partial class ProviderRunViewModel : ObservableObject
                 count++;
             }
 
-            var tip = $"精确 {exactCount} 条" + (IsFullMode ? $"，推断 {inferredCount} 条" : "") + $"，共 {count} 条";
+            var tip = $"精确 {exactCount} 条，推断 {inferredCount} 条，共 {count} 条";
             _logger.LogInformation("回答完成：{Tip}", tip);
             _sw.Stop(); AnswerStatus = TaskStatus.Done; Elapsed = FormatElapsed(_sw.Elapsed);
             Tip = tip;
@@ -358,7 +358,7 @@ public partial class ProviderRunViewModel : ObservableObject
             }
 
 
-            var resolver = await Task.Run(() => DataResolver.Load(FileName, ProviderId, recommanded));
+            var resolver = await Task.Run(() => DataResolver.Load(FileName, ProviderId, recommanded, excludeInferred: !IsFullMode));
             var outPath = Path.Combine(finalDir, $"{FileName}");
             await Task.Run(() => FileRetry.Run(
                 () => DocOps.Fill(AbsolutePath, outPath, operators, resolver, _logger),

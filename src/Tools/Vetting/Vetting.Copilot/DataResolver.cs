@@ -37,7 +37,7 @@ public class DataResolver
     /// <summary>
     /// 从 LiteDB 加载所有数据并构造 DataResolver
     /// </summary>
-    public static DataResolver Load(string fileName, string providerId, int[]? recommendIds = null)
+    public static DataResolver Load(string fileName, string providerId, int[]? recommendIds = null, bool excludeInferred = false)
     {
         using var db = new VettingDbContext();
 
@@ -165,7 +165,13 @@ public class DataResolver
                     .OrderByDescending(a => a.Identifier == "manual" ? 1 : 0)
                     .FirstOrDefault();
                 if (!string.IsNullOrEmpty(q.Question))
-                    answersByQuestion[q.Question] = best?.Value ?? "";
+                {
+                    var value = best?.Value ?? "";
+                    // 精确模式下排除 AI 推断的回答
+                    if (excludeInferred && value.StartsWith("（ai）"))
+                        value = "";
+                    answersByQuestion[q.Question] = value;
+                }
             }
         }
 
