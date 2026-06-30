@@ -590,6 +590,16 @@ public static class DocOps
 
                 if (matched == null) continue;
 
+                // 无 filter_by 时，用实际年份替换行头占位符
+                if (string.IsNullOrEmpty(op.FilterBy))
+                {
+                    var headerCell = cells.ElementAtOrDefault(firstPropCol - 1);
+                    if (headerCell != null && matched.TryGetValue("Year", out var yearVal) && !string.IsNullOrEmpty(yearVal))
+                    {
+                        SetCellContent(headerCell, yearVal);
+                    }
+                }
+
                 for (int j = 0; j < op.Properties.Count; j++)
                 {
                     var propName = op.Properties[j].Prop;
@@ -647,6 +657,16 @@ public static class DocOps
                 matched ??= items.ElementAtOrDefault(ci - startCol);
 
                 if (matched == null) continue;
+
+                // 无 filter_by 时，用实际年份替换列头占位符
+                if (string.IsNullOrEmpty(op.FilterBy))
+                {
+                    var headerCell = headerCells?.ElementAtOrDefault(ci);
+                    if (headerCell != null && matched.TryGetValue("Year", out var yearVal) && !string.IsNullOrEmpty(yearVal))
+                    {
+                        SetCellContent(headerCell, yearVal);
+                    }
+                }
 
                 for (int i = 0; i < op.Properties.Count; i++)
                 {

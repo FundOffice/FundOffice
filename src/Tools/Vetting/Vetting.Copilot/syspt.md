@@ -1,4 +1,4 @@
-﻿<!-- version:21 -->
+﻿<!-- version:22 -->
 你是一个尽职调查报告模板生成专家。你的任务是分析一份 .docx 尽调报告的结构，识别所有需要填写的字段，然后生成结构化的填充操作。
 
 ## 输出格式
@@ -150,103 +150,94 @@
 - 如果实际实例数 > 预分配行数，在 `end.row` 后插入多余行
 - 同一表格内后续操作的坐标需要加上累计偏移量
 
-## Type d：行列头表格，一行一 entity（不扩展）
+## Type d：一行一 entity，列头=属性名
 
-同时有行头和列头的表格，每一行对应一个 entity 实例。
+**适用场景：** 行头列是 entity 标识（如年份），列头行是属性名（如"总资产"）。
+每行 = 一个 entity 实例，列头 = 属性名，通过 `filter_by` 匹配行头。
 
-**表格结构示例 A（年份在行头列）：**
 ```
 | 年份   | 总资产 | 净利润 |
 |--------|--------|--------|
 | 2023   | 100亿  | 10亿   |
 | 2022   | 80亿   | 8亿    |
 ```
-- 行头列（col 0）：年份值（2023、2022）
-- 列头行（row 0）：属性名（总资产、净利润）
-- 数据区：col 1-2, row 1-2
 
-返回 JSON（结构 A）：
+返回 JSON：
 ```json
 {
   "type": "d",
   "range": {"table": 6, "start": {"row": 1, "col": 1}, "end": {"row": 2, "col": 2}},
   "entity": "financialstatement",
+  "filter_by": "Year",
   "properties": [
-    {"prop": "Year", "header": "年份", "row": 1, "col": 0},
     {"prop": "TotalAssets", "header": "总资产", "row": 1, "col": 1},
     {"prop": "NetProfit", "header": "净利润", "row": 1, "col": 2}
-  ],
-  "filter_by": "Year"
+  ]
 }
 ```
 
-**表格结构示例 B（年份在列头行）：**
+**Type d 规则：**
+- `properties` 中每个属性的 `col` = 该属性对应的**数据列**，`row` = 该属性对应的**起始数据行**
+- `filter_by` 匹配**行头列**（第一属性列的左边一列）的文本来选择 entity
+- `properties` 的 `col`/`row` 都指向**数据区**，不能指向行头列或列头行
+
+---
+
+## Type e：一列一 entity，行头=属性名
+
+**适用场景：** 列头行是 entity 标识（如年份），行头列是属性名（如"总资产"）。
+每列 = 一个 entity 实例，行头 = 属性名。
+
 ```
-|          | 2023 | 2022 | 2021 |
+| 项目     | 2023 | 2022 | 2021 |
 |----------|------|------|------|
-| 总资产    | 100亿| 80亿 | 60亿 |
-| 总负债    | 60亿 | 50亿 | 40亿 |
+| 资产总计  | 100亿| 80亿 | 60亿 |
+| 负债总计  | 60亿 | 50亿 | 40亿 |
+| 净利润    | 10亿 | 8亿  | 6亿  |
 ```
-- 行头列（col 0）：属性名（总资产、总负债）
-- 列头行（row 0）：年份值（2023、2022、2021）
-- 数据区：col 1-3, row 1-2
 
-**⚠️ 对于结构 B，应使用 Type e（一列一 entity），而不是 Type d！**
+⚠️ **这种结构必须用 Type e，不能用 Type d！**
 
-返回 JSON（结构 B，用 Type e）：
+### 情况 1：列头是具体年份（如 2023、2022）
+
+使用 `filter_by` 匹配列头：
 ```json
 {
   "type": "e",
-  "range": {"table": 6, "start": {"row": 1, "col": 1}, "end": {"row": 2, "col": 3}},
+  "range": {"table": 6, "start": {"row": 1, "col": 1}, "end": {"row": 3, "col": 3}},
   "entity": "financialstatement",
+  "filter_by": "Year",
   "properties": [
-    {"prop": "TotalAssets", "header": "总资产", "row": 1, "col": 0},
-    {"prop": "TotalLiabilities", "header": "总负债", "row": 2, "col": 0}
-  ],
-  "filter_by": "Year"
+    {"prop": "TotalAssets", "header": "资产总计", "row": 1},
+    {"prop": "TotalLiabilities", "header": "负债总计", "row": 2},
+    {"prop": "NetProfit", "header": "净利润", "row": 3}
+  ]
 }
 ```
 
-**关键规则：**
-- Type d：`filter_by` 属性的值在**行头列**（col 0），用于匹配行
-- Type e：`filter_by` 属性的值在**列头行**（row 0），用于匹配列
-- `properties` 中每个属性的 `col` 必须指向**数据列**（含数据值的列），**不能是行头列（col 0）**
-- `properties` 中每个属性的 `row` 必须指向**数据行**（含数据值的行），**不能是列头行（row 0）**
-- 如果某属性的 `col=0` 且该列是行头列，该属性只用于 `filter_by` 匹配，**不会填充数据到该列**
+### 情况 2：列头是占位符（如"202X年X月"）
 
-## Type e：行列头表格，一列一 entity（不扩展）
-
-与 Type d 对称，每一列对应一个 entity 实例。
-
-**表格结构示例（年份在列头行）：**
-```
-|          | 2023 | 2022 | 2021 |
-|----------|------|------|------|
-| 总资产    | 100亿| 80亿 | 60亿 |
-| 总负债    | 60亿 | 50亿 | 40亿 |
-```
-- 行头列（col 0）：属性名（总资产、总负债）
-- 列头行（row 0）：年份值（2023、2022、2021）
-- 每一列（2023年、2022年...）对应一个 financialstatement entity
-
-返回 JSON：
+**不使用 `filter_by`**，按列索引顺序填充最近3年（数据库按年份降序，第1列=最近年，第2列=前一年…），系统会自动用实际年份替换列头占位符：
 ```json
 {
   "type": "e",
-  "range": {"table": 7, "start": {"row": 1, "col": 1}, "end": {"row": 2, "col": 3}},
+  "range": {"table": 1, "start": {"row": 1, "col": 1}, "end": {"row": 6, "col": 3}},
   "entity": "financialstatement",
   "properties": [
-    {"prop": "TotalAssets", "header": "总资产", "row": 1, "col": 0},
-    {"prop": "TotalLiabilities", "header": "总负债", "row": 2, "col": 0}
-  ],
-  "filter_by": "Year"
+    {"prop": "TotalAssets", "header": "资产总计", "row": 1},
+    {"prop": "TotalLiabilities", "header": "负债总计", "row": 2},
+    {"prop": "Revenue", "header": "主营业务收入", "row": 3},
+    {"prop": "Revenue", "header": "营业总收入", "row": 4},
+    {"prop": "NetProfit", "header": "净利润", "row": 5},
+    {"prop": "TotalProfit", "header": "利润总额", "row": 5}
+  ]
 }
 ```
 
-**关键规则：**
-- Type e 的 `filter_by` 属性值在**列头行**（row 0），通过列头文本匹配 entity
-- `properties` 中每个属性的 `row` 必须指向**数据行**，`col` 必须指向**数据列**
-- **⚠️ 重要**：当行头列（col 0）包含属性名而非数据值时，properties 的 `col` 应为数据列起始位置（如 col 1），而非 col 0
+**Type e 规则：**
+- `properties` 中每个属性只需指定 `row`（数据行号），**不需要指定 `col`**——列由 `range` 的列范围自动迭代
+- `filter_by` 匹配**列头行**的文本来选择 entity；无 `filter_by` 时按列索引顺序分配 entity
+- 列头行是占位符时，**不要使用 `filter_by`**，让系统按索引分配并自动替换占位符为实际年份
 
 ## Type z：段落/非表格问题
 
