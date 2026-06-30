@@ -635,12 +635,11 @@ public static class DocOps
                 .Distinct()
                 .OrderBy(c => c)
                 .ToList();
-            // 如果 properties 没有提供有效的数据列，回退到 range 的列范围
+            // 如果 properties 没有提供有效的数据列，无法安全推导数据区边界（range.start 可能含行头列），跳过
             if (distinctCols.Count == 0)
             {
-                int rangeStartCol = op.Range.Start.Col ?? 0;
-                int rangeEndCol = op.Range.End.Col ?? 0;
-                for (int c = rangeStartCol; c <= rangeEndCol; c++) distinctCols.Add(c);
+                System.Diagnostics.Debug.WriteLine($"[跳过] Type e T[{tableIdx}] properties 无有效 col，无法定位数据列（可能缺少 col 字段或全部 col=0）");
+                return;
             }
 
             foreach (var ci in distinctCols)

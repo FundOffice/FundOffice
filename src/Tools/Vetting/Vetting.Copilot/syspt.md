@@ -177,8 +177,11 @@
 ```
 
 **Type d 规则：**
-- `properties` 中每个属性的 `col` = 该属性对应的**数据列**，`row` = 该属性对应的**起始数据行**
-- `filter_by` 匹配**行头列**（第一属性列的左边一列）的文本来选择 entity
+- `range`：`start` 到 `end` 定义数据区域边界（绝对坐标），`start.col` / `end.col` = 数据列范围，`start.row` / `end.row` = 数据行范围
+- `properties` 驱动实际迭代（与 Type c 不同，Type c 由 range 驱动）：迭代行 = `properties[0].row` 到 `properties[last].row`，迭代列 = `properties[0].col` 到 `properties[last].col`
+- 每个属性的 `col` = 该属性所在列的**绝对列号**（同列共享），`row` = 起始数据行的**绝对行号**
+- **必须为数据区域内所有列输出属性**（不能像 Type c 那样用 null 占位跳过列）
+- `filter_by` 匹配**行头列**（第一属性列的左边一列）的文本来选择 entity；无 `filter_by` 时按行索引顺序分配 entity
 - `properties` 的 `col`/`row` 都指向**数据区**，不能指向行头列或列头行
 
 ---
@@ -215,7 +218,7 @@
 }
 ```
 
-### 情况 2：列头是占位符（如"202X年X月"）
+### 情况 2：列头是占位符（如"202X年X月"）或者空白
 
 **不使用 `filter_by`**，按列索引顺序填充最近3年（数据库按年份降序，第1列=最近年，第2列=前一年…），系统会自动用实际年份替换列头占位符：
 ```json
@@ -235,7 +238,10 @@
 ```
 
 **Type e 规则：**
-- `properties` 中每个属性只需指定 `row`（数据行号），**不需要指定 `col`**——列由 `range` 的列范围自动迭代
+- `range`：`start` 到 `end` 定义数据区域边界（绝对坐标），`start.row` / `end.row` = 数据行范围，`start.col` / `end.col` = 数据列范围
+- `properties` 驱动实际迭代（与 Type c 不同，Type c 由 range 驱动）：迭代行 = `properties[0].row` 到 `properties[last].row`，列由 `range` 的列范围自动迭代
+- 每个属性的 `row` = 该属性所在行的**绝对行号**（同行共享），`col` 可省略
+- **必须为数据区域内所有行输出属性**（不能像 Type c 那样用 null 占位跳过行）
 - `filter_by` 匹配**列头行**的文本来选择 entity；无 `filter_by` 时按列索引顺序分配 entity
 - 列头行是占位符时，**不要使用 `filter_by`**，让系统按索引分配并自动替换占位符为实际年份
 
