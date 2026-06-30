@@ -152,23 +152,91 @@
             <TabItem Header="投资">
                 <ScrollViewer Padding="8" VerticalScrollBarVisibility="Auto">
                     <WrapPanel ItemWidth="320">
-                        <hc:TextBox hc:InfoElement.Title="投资目标" Text="{Binding InvestmentInfoVM.Target, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="投资理念" Text="{Binding InvestmentInfoVM.Philosophy, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="研究" Text="{Binding InvestmentInfoVM.Research, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="决策" Text="{Binding InvestmentInfoVM.Decision, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="交易" Text="{Binding InvestmentInfoVM.Trading, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="评估" Text="{Binding InvestmentInfoVM.Evaluation, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="风控" Text="{Binding InvestmentInfoVM.RiskControl, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="组合调整" Text="{Binding InvestmentInfoVM.PortfolioAdjust, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="建仓" Text="{Binding InvestmentInfoVM.PositionBuilding, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="委员会职责" Text="{Binding InvestmentInfoVM.CommitteeRole, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="研究权限" Text="{Binding InvestmentInfoVM.ResearchAuthority, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="系统与数据" Text="{Binding InvestmentInfoVM.SystemAndData, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="数据存储" Text="{Binding InvestmentInfoVM.DataStorage, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="交易控制" Text="{Binding InvestmentInfoVM.TradingControl, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="交易纠错" Text="{Binding InvestmentInfoVM.TradingErrorFix, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="异常交易" Text="{Binding InvestmentInfoVM.AbnormalTrading, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="账户公平" Text="{Binding InvestmentInfoVM.AccountFairness, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="投资目标"
+                            Text="{Binding InvestmentInfoVM.Target, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="投资理念"
+                            Text="{Binding InvestmentInfoVM.Philosophy, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="研究"
+                            Text="{Binding InvestmentInfoVM.Research, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="决策"
+                            Text="{Binding InvestmentInfoVM.Decision, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="交易"
+                            Text="{Binding InvestmentInfoVM.Trading, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="评估"
+                            Text="{Binding InvestmentInfoVM.Evaluation, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="风控"
+                            Text="{Binding InvestmentInfoVM.RiskControl, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="组合调整"
+                            Text="{Binding InvestmentInfoVM.PortfolioAdjust, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="建仓"
+                            Text="{Binding InvestmentInfoVM.PositionBuilding, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="委员会职责"
+                            Text="{Binding InvestmentInfoVM.CommitteeRole, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="研究权限"
+                            Text="{Binding InvestmentInfoVM.ResearchAuthority, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="系统与数据"
+                            Text="{Binding InvestmentInfoVM.SystemAndData, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="数据存储"
+                            Text="{Binding InvestmentInfoVM.DataStorage, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="交易控制"
+                            Text="{Binding InvestmentInfoVM.TradingControl, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="交易纠错"
+                            Text="{Binding InvestmentInfoVM.TradingErrorFix, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="异常交易"
+                            Text="{Binding InvestmentInfoVM.AbnormalTrading, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="账户公平"
+                            Text="{Binding InvestmentInfoVM.AccountFairness, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
                     </WrapPanel>
                 </ScrollViewer>
             </TabItem>
@@ -176,22 +244,86 @@
             <TabItem Header="风控体系">
                 <ScrollViewer Padding="8" VerticalScrollBarVisibility="Auto">
                     <WrapPanel ItemWidth="320">
-                        <hc:TextBox hc:InfoElement.Title="体系概述" Text="{Binding RiskControlVM.SystemIntro, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="决策机制" Text="{Binding RiskControlVM.DecisionMechanism, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="风管委员会" Text="{Binding RiskControlVM.RiskMgmtCommittee, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="回撤控制" Text="{Binding RiskControlVM.DrawdownControl, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="系统性风险应对" Text="{Binding RiskControlVM.SystemicRiskResponse, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="交易监控" Text="{Binding RiskControlVM.TradingMonitoring, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="风险措施" Text="{Binding RiskControlVM.RiskMeasures, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="人工vs系统" Text="{Binding RiskControlVM.ManualVsSystem, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="风险度量" Text="{Binding RiskControlVM.RiskMeasurement, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="最大回撤容忍" Text="{Binding RiskControlVM.MaxDrawdownTolerance, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="尾部风险" Text="{Binding RiskControlVM.TailRisk, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="风险准备金" Text="{Binding RiskControlVM.RiskReserve, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="流动性管理" Text="{Binding RiskControlVM.LiquidityMgmt, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="内幕交易防范" Text="{Binding RiskControlVM.InsiderTradingPrevention, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="员工交易监控" Text="{Binding RiskControlVM.EmployeeTradingMonitor, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        <hc:TextBox hc:InfoElement.Title="产品公平性" Text="{Binding RiskControlVM.ProductFairness, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="体系概述"
+                            Text="{Binding RiskControlVM.SystemIntro, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="决策机制"
+                            Text="{Binding RiskControlVM.DecisionMechanism, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="风管委员会"
+                            Text="{Binding RiskControlVM.RiskMgmtCommittee, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="回撤控制"
+                            Text="{Binding RiskControlVM.DrawdownControl, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="系统性风险应对"
+                            Text="{Binding RiskControlVM.SystemicRiskResponse, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="交易监控"
+                            Text="{Binding RiskControlVM.TradingMonitoring, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="风险措施"
+                            Text="{Binding RiskControlVM.RiskMeasures, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="人工vs系统"
+                            Text="{Binding RiskControlVM.ManualVsSystem, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="风险度量"
+                            Text="{Binding RiskControlVM.RiskMeasurement, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="最大回撤容忍"
+                            Text="{Binding RiskControlVM.MaxDrawdownTolerance, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="尾部风险"
+                            Text="{Binding RiskControlVM.TailRisk, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="风险准备金"
+                            Text="{Binding RiskControlVM.RiskReserve, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="流动性管理"
+                            Text="{Binding RiskControlVM.LiquidityMgmt, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="内幕交易防范"
+                            Text="{Binding RiskControlVM.InsiderTradingPrevention, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="员工交易监控"
+                            Text="{Binding RiskControlVM.EmployeeTradingMonitor, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
+                        <hc:TextBox
+                            Padding="5"
+                            hc:InfoElement.Title="产品公平性"
+                            Text="{Binding RiskControlVM.ProductFairness, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                            TextWrapping="Wrap" />
                     </WrapPanel>
                 </ScrollViewer>
             </TabItem>
@@ -443,10 +575,17 @@
                                 Width="120"
                                 Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}"
                                 Header="策略名称" />
-                            <DataGridTextColumn
-                                Width="90"
-                                Binding="{Binding Manager, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="策略负责人" />
+                            <DataGridTemplateColumn Width="120" Header="策略负责人">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ComboBox
+                                            DisplayMemberPath="Name"
+                                            ItemsSource="{Binding DataContext.Staffs, ElementName=Tabs}"
+                                            SelectedValue="{Binding Manager, UpdateSourceTrigger=PropertyChanged}"
+                                            SelectedValuePath="Name" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTextColumn
                                 Width="80"
                                 Binding="{Binding Scale, UpdateSourceTrigger=PropertyChanged, Delay=200}"
@@ -1104,7 +1243,7 @@
                             Style="{StaticResource ButtonSuccess}" />
                         <Button
                             Margin="4"
-                            Command="{Binding DeleteItemCommand}"
+                            Command="{Binding DeleteQACommand}"
                             Content="删除"
                             Style="{StaticResource ButtonDanger}" />
                         <Button
@@ -1114,25 +1253,55 @@
                             Content="清空"
                             Style="{StaticResource ButtonDanger}" />
                     </StackPanel>
-                    <DataGrid
-                        AutoGenerateColumns="False"
+                    <ListBox
+                        Width="260"
+                        DockPanel.Dock="Left"
                         ItemsSource="{Binding QAs}"
-                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn
-                                Width="60"
-                                Binding="{Binding Source, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="来源" />
-                            <DataGridTextColumn
-                                Width="*"
-                                Binding="{Binding Question, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="问题" />
-                            <DataGridTextColumn
-                                Width="*"
-                                Binding="{Binding Answer, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="回答" />
-                        </DataGrid.Columns>
-                    </DataGrid>
+                        SelectedItem="{Binding SelectedQA}">
+                        <ListBox.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource ListBoxItemBaseStyle}" TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Question}" TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="3*" />
+                        </Grid.RowDefinitions>
+
+                        <DockPanel Grid.Row="0" Margin="4">
+                            <TextBlock
+                                DockPanel.Dock="Top"
+                                FontWeight="SemiBold"
+                                Text="问题" />
+                            <hc:TextBox
+                                AcceptsReturn="True"
+                                DataContext="{Binding SelectedQA}"
+                                Text="{Binding Question, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                TextWrapping="Wrap"
+                                VerticalScrollBarVisibility="Auto" />
+                        </DockPanel>
+
+                        <DockPanel Grid.Row="1" Margin="4">
+                            <TextBlock
+                                DockPanel.Dock="Top"
+                                FontWeight="SemiBold"
+                                Text="回答" />
+                            <hc:TextBox
+                                Padding="10"
+                                AcceptsReturn="True"
+                                DataContext="{Binding SelectedQA}"
+                                Text="{Binding Answer, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                TextWrapping="Wrap"
+                                VerticalScrollBarVisibility="Auto" />
+                        </DockPanel>
+                    </Grid>
                 </DockPanel>
             </TabItem>
 

@@ -24,6 +24,7 @@ public partial class DataCenterViewModel : ObservableObject
     [ObservableProperty] public partial StaffVM? SelectedStaff { get; set; }
     [ObservableProperty] public partial FinancialStatementVM? SelectedFinancialStatement { get; set; }
     [ObservableProperty] public partial PhotoVM? SelectedPhoto { get; set; }
+    [ObservableProperty] public partial QAVM? SelectedQA { get; set; }
     [ObservableProperty] public partial object? CurrentItem { get; set; }
     public ObservableCollection<StaffVM> Staffs { get; } = [];
     public ObservableCollection<ShareholderVM> Shareholders { get; } = [];
@@ -211,6 +212,16 @@ public partial class DataCenterViewModel : ObservableObject
         db.DeleteEntity(typeof(FinancialStatement), SelectedFinancialStatement.Entity.Id);
         FinancialStatements.Remove(SelectedFinancialStatement);
         SelectedFinancialStatement = null;
+    }
+
+    [RelayCommand]
+    private void DeleteQA()
+    {
+        if (SelectedQA == null) return;
+        using var db = new VettingDbContext();
+        db.DeleteEntity(typeof(QA), SelectedQA.Entity.Id);
+        QAs.Remove(SelectedQA);
+        SelectedQA = null;
     }
 
     [RelayCommand]
