@@ -376,4 +376,49 @@ public class DataResolver
             return (inner[..colonIdx], inner[(colonIdx + 1)..]);
         return (inner, null);
     }
+
+    // ═══ 图片占位符处理 ═══
+
+    private static readonly Regex ImagePlaceholderRegex = new(@"\[img#(\d+)\]", RegexOptions.Compiled);
+
+    /// <summary>检查文本是否包含图片占位符</summary>
+    public static bool HasImagePlaceholders(string text)
+    {
+        return !string.IsNullOrEmpty(text) && ImagePlaceholderRegex.IsMatch(text);
+    }
+
+    /// <summary>提取文本中所有图片 ID</summary>
+    public static List<int> ExtractImageIds(string text)
+    {
+        if (string.IsNullOrEmpty(text) || !text.Contains("[img#")) return [];
+
+        var ids = new List<int>();
+        foreach (Match match in ImagePlaceholderRegex.Matches(text))
+        {
+            if (int.TryParse(match.Groups[1].Value, out var id))
+                ids.Add(id);
+        }
+        return ids;
+    }
+
+    /// <summary>获取图片元数据</summary>
+    public static PhotoMap? GetPhotoById(int id)
+    {
+        using var db = new VettingDbContext();
+        return db.PhotoMaps.FindById(id);
+    }
+
+    /// <summary>获取图片流</summary>
+    public static Stream? GetPhotoStream(string fileId)
+    {
+        using var db = new VettingDbContext();
+        return db.GetPhotoStream(fileId);
+    }
+
+    /// <summary>移除文本中的图片占位符（用于文本填充时）</summary>
+    public static string RemoveImagePlaceholders(string text)
+    {
+        if (string.IsNullOrEmpty(text) || !text.Contains("[img#")) return text;
+        return ImagePlaceholderRegex.Replace(text, "");
+    }
 }

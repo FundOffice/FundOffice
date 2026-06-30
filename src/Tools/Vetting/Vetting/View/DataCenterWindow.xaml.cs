@@ -159,6 +159,26 @@ public partial class DataCenterWindow : Window
         e.Handled = true;
     }
 
+    // ═══ 图片拖拽导入 ═══
+
+    private void OnPhotoDragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void OnPhotoDrop(object sender, DragEventArgs e)
+    {
+        if (DataContext is not DataCenterViewModel vm) return;
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+
+        var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+        if (files == null || files.Length == 0) return;
+
+        vm.ImportPhotoFiles(files);
+        e.Handled = true;
+    }
+
     private static T? FindAncestor<T>(DependencyObject? obj) where T : DependencyObject
     {
         while (obj != null)

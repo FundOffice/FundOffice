@@ -359,3 +359,32 @@ public partial class ProductLineVM : AutoSaveViewModel<ProductLine>
     public string? TradingScale { get => Entity.TradingScale; set { Entity.TradingScale = value; OnPropertyChanged(); } }
     public string? Capacity { get => Entity.Capacity; set { Entity.Capacity = value; OnPropertyChanged(); } }
 }
+
+public partial class PhotoVM : AutoSaveViewModel<PhotoMap>
+{
+    public PhotoVM(PhotoMap entity) : base(entity) { EndInit(); }
+
+    public string? FileName { get => Entity.FileName; set { Entity.FileName = value; OnPropertyChanged(); } }
+    public string? Description { get => Entity.Description; set { Entity.Description = value; OnPropertyChanged(); } }
+
+    /// <summary>格式化的文件大小显示</summary>
+    public string SizeDisplay => FormatSize(Entity.Size);
+
+    /// <summary>格式化的上传时间显示</summary>
+    public string CreatedAtDisplay => Entity.CreatedAt.ToString("yyyy-MM-dd HH:mm");
+
+    /// <summary>用于 QA 答案中引用的标签</summary>
+    public string ReferenceTag => $"[img#{Entity.Id}]";
+
+    /// <summary>图片尺寸显示（如 "1920x1080"）</summary>
+    public string DimensionsDisplay => Entity.Width > 0 && Entity.Height > 0
+        ? $"{Entity.Width}×{Entity.Height}"
+        : "-";
+
+    private static string FormatSize(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        return $"{bytes / (1024.0 * 1024.0):F2} MB";
+    }
+}

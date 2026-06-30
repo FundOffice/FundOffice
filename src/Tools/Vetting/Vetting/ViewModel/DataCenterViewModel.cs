@@ -23,6 +23,7 @@ public partial class DataCenterViewModel : ObservableObject
     // 列表项
     [ObservableProperty] public partial StaffVM? SelectedStaff { get; set; }
     [ObservableProperty] public partial FinancialStatementVM? SelectedFinancialStatement { get; set; }
+    [ObservableProperty] public partial PhotoVM? SelectedPhoto { get; set; }
     [ObservableProperty] public partial object? CurrentItem { get; set; }
     public ObservableCollection<StaffVM> Staffs { get; } = [];
     public ObservableCollection<ShareholderVM> Shareholders { get; } = [];
@@ -35,6 +36,7 @@ public partial class DataCenterViewModel : ObservableObject
     public ObservableCollection<FinancialStatementVM> FinancialStatements { get; } = [];
     public ObservableCollection<QAVM> QAs { get; } = [];
     public ObservableCollection<ProductLineVM> ProductLines { get; } = [];
+    public ObservableCollection<PhotoVM> Photos { get; } = [];
 
     // 全局推荐产品
     public ObservableCollection<FundInfoVM> GlobalRecommendedFunds { get; } = [];
@@ -100,6 +102,7 @@ public partial class DataCenterViewModel : ObservableObject
         SelectedFinancialStatement = FinancialStatements.FirstOrDefault();
         LoadList(db.QA, QAs, e => new QAVM(e));
         LoadList(db.ProductLines, ProductLines, e => new ProductLineVM(e));
+        LoadList(db.PhotoMaps, Photos, e => new PhotoVM(e));
 
         // 加载全局推荐产品
         GlobalRecommendedFunds.Clear();
@@ -169,6 +172,7 @@ public partial class DataCenterViewModel : ObservableObject
             nameof(DrawdownRecordVM) => DrawdownRecords,
             nameof(FinancialStatementVM) => FinancialStatements,
             nameof(QAVM) => QAs,
+            nameof(PhotoVM) => Photos,
             _ => null
         };
     }
@@ -185,6 +189,7 @@ public partial class DataCenterViewModel : ObservableObject
         "DrawdownRecord" => DrawdownRecords,
         "FinancialStatement" => FinancialStatements,
         "QA" => QAs,
+        "PhotoMap" => Photos,
         _ => null
     };
 
@@ -586,6 +591,74 @@ public partial class DataCenterViewModel : ObservableObject
     {
         table.Insert(item);
         col.Add(wrap(item));
+    }
+
+    // ── 图片操作 ─────────────────────────────────────
+
+    [RelayCommand]
+    private void AddPhoto()
+    {
+        var dlg = new OpenFileDialog
+        {
+            Filter = "图片文件|*.png;*.jpg;*.jpeg;*.gif;*.bmp;*.webp|所有文件|*.*",
+            Title = "选择图片",
+            Multiselect = true
+        };
+
+        if (dlg.ShowDialog() != true) return;
+
+        using var db = new VettingDbContext();
+        foreach (var path in dlg.FileNames)
+        {
+            try
+            {
+                var photo = db.UploadPhoto(path);
+                var vm = new PhotoVM(photo);
+                Photos.Add(vm);
+            }
+            catch (Exception ex)
+            {
+                HandyControl.Controls.Growl.Error($"导入失败 {Path.GetFileName(path)}: {ex.Message}");
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void DeletePhoto()
+    {
+        if (SelectedPhoto == null) return;
+        using var db = new VettingDbContext();
+        db.DeletePhoto(SelectedPhoto.Entity.Id);
+        Photos.Remove(SelectedPhoto);
+        SelectedPhoto = null;
+    }
+
+    /// <summary>拖拽导入图片文件</summary>
+    public void ImportPhotoFiles(string[] paths)
+    {
+        var imageExts = new[] { ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp" };
+        using var db = new VettingDbContext();
+        var imported = 0;
+        foreach (var path in paths)
+        {
+            if (!File.Exists(path)) continue;
+            var ext = Path.GetExtension(path).ToLowerInvariant();
+            if (!imageExts.Contains(ext)) continue;
+
+            try
+            {
+                var photo = db.UploadPhoto(path);
+                var vm = new PhotoVM(photo);
+                Photos.Add(vm);
+                imported++;
+            }
+            catch (Exception ex)
+            {
+                HandyControl.Controls.Growl.Error($"导入失败 {Path.GetFileName(path)}: {ex.Message}");
+            }
+        }
+        if (imported > 0)
+            HandyControl.Controls.Growl.Success($"已导入 {imported} 张图片");
     }
 
     // ── 已有附件文件 ─────────────────────────────────────

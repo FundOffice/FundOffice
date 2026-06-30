@@ -1,7 +1,12 @@
 ﻿using System.Text.Json;
+using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
+using A = DocumentFormat.OpenXml.Drawing;
+using DW = DocumentFormat.OpenXml.Drawing.Wordprocessing;
+using PIC = DocumentFormat.OpenXml.Drawing.Pictures;
+using Vetting.Copilot.Data;
 using Vetting.Copilot.Models.Info;
 
 namespace Vetting.Copilot;
@@ -404,6 +409,10 @@ public static class DocOps
                 System.Diagnostics.Debug.WriteLine($"DocOps.Fill error ({op}): {ex}");
             }
         }
+
+        // 处理图片占位符
+        ProcessImagePlaceholders(doc.MainDocumentPart, body);
+
         doc.MainDocumentPart.Document.Save();
     }
 
@@ -747,6 +756,243 @@ public static class DocOps
         {
             para.AppendChild(new Run(new Text(text) { Space = SpaceProcessingModeValues.Preserve }));
         }
+    }
+
+    #endregion
+
+    #region Image Processing
+
+    /// <summary>匹配 [img#id] 格式的正则表达式</summary>
+    private static readonly Regex ImagePlaceholderRegex = new(@"\[img#(\d+)\]", RegexOptions.Compiled);
+
+    /// <summary>
+    /// 处理文档中的图片占位符 [img#id]，在原位置替换为实际图片
+    /// </summary>
+    private static void ProcessImagePlaceholders(MainDocumentPart mainPart, Body body)
+    {
+        // 预加载所有图片元数据
+        var photoCache = new Dictionary<int, PhotoMap>();
+        using (var db = new VettingDbContext())
+        {
+            foreach (var photo in db.PhotoMaps.FindAll())
+                photoCache[photo.Id] = photo;
+        }
+
+        // 遍历所有段落
+        foreach (var para in body.Elements<Paragraph>())
+        {
+            ProcessParagraphImages(mainPart, para, photoCache);
+        }
+
+        // 处理表格单元格中的段落
+        foreach (var table in body.Elements<Table>())
+        {
+            foreach (var row in table.Elements<TableRow>())
+            {
+                foreach (var cell in row.Elements<TableCell>())
+                {
+                    foreach (var para in cell.Elements<Paragraph>())
+                    {
+                        ProcessParagraphImages(mainPart, para, photoCache);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 处理单个段落中的图片占位符
+    /// </summary>
+    private static void ProcessParagraphImages(MainDocumentPart mainPart, Paragraph para, Dictionary<int, PhotoMap> photoCache)
+    {
+        // 收集需要处理的 Run（从后往前处理，避免索引问题）
+        var runs = para.Elements<Run>().ToList();
+        if (runs.Count == 0) return;
+
+        // 从后往前处理，这样插入不会影响前面的索引
+        for (int i = runs.Count - 1; i >= 0; i--)
+        {
+            var run = runs[i];
+            var text = run.InnerText;
+            if (!DataResolver.HasImagePlaceholders(text)) continue;
+
+            ProcessRunImages(mainPart, para, run, photoCache);
+        }
+    }
+
+    /// <summary>
+    /// 处理单个 Run 中的图片占位符，将占位符替换为图片
+    /// </summary>
+    private static void ProcessRunImages(MainDocumentPart mainPart, Paragraph para, Run run, Dictionary<int, PhotoMap> photoCache)
+    {
+        var text = run.InnerText;
+        if (string.IsNullOrEmpty(text)) return;
+
+        // 保留原 Run 的格式
+        var runProps = run.RunProperties?.CloneNode(true) as RunProperties;
+
+        // 查找所有图片占位符
+        var matches = ImagePlaceholderRegex.Matches(text);
+        if (matches.Count == 0) return;
+
+        // 从后往前替换，这样位置不会变
+        var elementsToInsert = new List<(int index, int length, OpenXmlElement element)>();
+
+        for (int m = matches.Count - 1; m >= 0; m--)
+        {
+            var match = matches[m];
+            if (!int.TryParse(match.Groups[1].Value, out var imgId)) continue;
+            if (!photoCache.TryGetValue(imgId, out var photo)) continue;
+
+            var drawing = CreateImageDrawing(mainPart, photo);
+            if (drawing == null) continue;
+
+            // 创建图片 Run
+            var imgRun = new Run();
+            imgRun.AppendChild(drawing);
+            elementsToInsert.Add((match.Index, match.Length, imgRun));
+        }
+
+        if (elementsToInsert.Count == 0) return;
+
+        // 清空原 Run 内容
+        run.RemoveAllChildren<Text>();
+
+        // 按原位置重新构建内容
+        int lastEnd = 0;
+        var sortedElements = elementsToInsert.OrderBy(e => e.index).ToList();
+
+        foreach (var (index, length, element) in sortedElements)
+        {
+            // 添加占位符前的文本
+            if (index > lastEnd)
+            {
+                var beforeText = text[lastEnd..index];
+                if (!string.IsNullOrEmpty(beforeText))
+                {
+                    var textRun = new Run();
+                    if (runProps != null) textRun.RunProperties = runProps.CloneNode(true) as RunProperties;
+                    textRun.AppendChild(new Text(beforeText) { Space = SpaceProcessingModeValues.Preserve });
+                    run.InsertBeforeSelf(textRun);
+                }
+            }
+
+            // 插入图片（在原 Run 之前）
+            run.InsertBeforeSelf(element);
+
+            lastEnd = index + length;
+        }
+
+        // 添加最后剩余的文本
+        if (lastEnd < text.Length)
+        {
+            var afterText = text[lastEnd..];
+            if (!string.IsNullOrEmpty(afterText))
+            {
+                var textRun = new Run();
+                if (runProps != null) textRun.RunProperties = runProps.CloneNode(true) as RunProperties;
+                textRun.AppendChild(new Text(afterText) { Space = SpaceProcessingModeValues.Preserve });
+                run.InsertBeforeSelf(textRun);
+            }
+        }
+
+        // 移除原 Run（已被替换）
+        run.Remove();
+    }
+
+    /// <summary>
+    /// 创建 OpenXML Drawing 元素，插入图片到文档
+    /// </summary>
+    private static Drawing? CreateImageDrawing(MainDocumentPart mainPart, PhotoMap photo)
+    {
+        if (photo.FileId == null) return null;
+
+        // 从 FileStorage 读取图片
+        using var db = new VettingDbContext();
+        using var stream = db.GetPhotoStream(photo.FileId);
+        if (stream == null) return null;
+
+        // 确定 ImagePartType
+        var imagePartType = photo.ContentType switch
+        {
+            "image/png" => ImagePartType.Png,
+            "image/jpeg" => ImagePartType.Jpeg,
+            "image/gif" => ImagePartType.Gif,
+            "image/bmp" => ImagePartType.Bmp,
+            "image/webp" => ImagePartType.Png, // WebP 作为 PNG 存储
+            _ => ImagePartType.Png
+        };
+
+        // 添加图片部件
+        var imagePart = mainPart.AddImagePart(imagePartType);
+        stream.Position = 0;
+        imagePart.FeedData(stream);
+
+        // 获取关系 ID
+        var relId = mainPart.GetIdOfPart(imagePart);
+
+        // 计算尺寸：最大宽度 500pt，按比例计算高度
+        // EMU (English Metric Unit): 1 inch = 914400 EMU, 1 point = 914400/72 = 12700 EMU
+        const long maxWidthPt = 500L;
+        const long emuPerPt = 12700L;
+        long maxWidthEmu = maxWidthPt * emuPerPt;
+
+        long widthEmu, heightEmu;
+        if (photo.Width > 0 && photo.Height > 0)
+        {
+            // 按比例计算
+            if (photo.Width > maxWidthPt)
+            {
+                var scale = (double)maxWidthPt / photo.Width;
+                widthEmu = maxWidthEmu;
+                heightEmu = (long)(photo.Height * scale * emuPerPt);
+            }
+            else
+            {
+                widthEmu = photo.Width * emuPerPt;
+                heightEmu = photo.Height * emuPerPt;
+            }
+        }
+        else
+        {
+            // 默认尺寸
+            widthEmu = maxWidthEmu;
+            heightEmu = 300L * emuPerPt; // 300pt 高度
+        }
+
+        // 构建 Drawing 元素
+        var drawing = new Drawing(
+            new DW.Inline(
+                new DW.Extent { Cx = widthEmu, Cy = heightEmu },
+                new DW.DocProperties { Id = (UInt32Value)1U, Name = $"Photo_{photo.Id}" },
+                new DW.NonVisualGraphicFrameDrawingProperties(
+                    new A.GraphicFrameLocks { NoChangeAspect = true }
+                ),
+                new A.Graphic(
+                    new A.GraphicData(
+                        new PIC.Picture(
+                            new PIC.NonVisualPictureProperties(
+                                new PIC.NonVisualDrawingProperties { Id = (UInt32Value)0U, Name = photo.FileName ?? "image" },
+                                new PIC.NonVisualPictureDrawingProperties()
+                            ),
+                            new PIC.BlipFill(
+                                new A.Blip { Embed = relId },
+                                new A.Stretch(new A.FillRectangle())
+                            ),
+                            new PIC.ShapeProperties(
+                                new A.Transform2D(
+                                    new A.Offset { X = 0L, Y = 0L },
+                                    new A.Extents { Cx = widthEmu, Cy = heightEmu }
+                                ),
+                                new A.PresetGeometry(new A.AdjustValueList()) { Preset = A.ShapeTypeValues.Rectangle }
+                            )
+                        )
+                    ) { Uri = "http://schemas.openxmlformats.org/drawingml/2006/picture" }
+                )
+            )
+        );
+
+        return drawing;
     }
 
     #endregion

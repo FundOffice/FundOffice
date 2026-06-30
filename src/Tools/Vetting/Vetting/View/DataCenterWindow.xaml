@@ -1067,6 +1067,74 @@
                 </DockPanel>
             </TabItem>
 
+            <TabItem IsHitTestVisible="False" />
+
+            <TabItem Header="图片">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button
+                            Margin="4"
+                            Command="{Binding AddPhotoCommand}"
+                            Content="添加图片"
+                            Style="{StaticResource ButtonSuccess}" />
+                        <Button
+                            Margin="4"
+                            Command="{Binding DeletePhotoCommand}"
+                            Content="删除"
+                            Style="{StaticResource ButtonDanger}" />
+                        <TextBlock
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            Text="拖拽图片文件到列表导入" />
+                    </StackPanel>
+
+                    <DataGrid
+                        x:Name="PhotoGrid"
+                        AllowDrop="True"
+                        AutoGenerateColumns="False"
+                        DragOver="OnPhotoDragOver"
+                        Drop="OnPhotoDrop"
+                        ItemsSource="{Binding Photos}"
+                        SelectedItem="{Binding SelectedPhoto}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="50"
+                                Binding="{Binding Entity.Id}"
+                                Header="ID"
+                                IsReadOnly="True" />
+                            <DataGridTextColumn
+                                Width="200"
+                                Binding="{Binding FileName, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="文件名" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding SizeDisplay}"
+                                Header="大小"
+                                IsReadOnly="True" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding DimensionsDisplay}"
+                                Header="尺寸"
+                                IsReadOnly="True" />
+                            <DataGridTextColumn
+                                Width="140"
+                                Binding="{Binding CreatedAtDisplay}"
+                                Header="上传时间"
+                                IsReadOnly="True" />
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding Description, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="描述" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding ReferenceTag}"
+                                Header="引用标签"
+                                IsReadOnly="True" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
         </TabControl>
 
     </DockPanel>

@@ -37,6 +37,10 @@ public class VettingDbContext : IDisposable
     public ILiteCollection<Staff> Staffs => _db.GetCollection<Staff>();
     public ILiteCollection<Strategy> Strategies => _db.GetCollection<Strategy>();
 
+    // 图片
+    public ILiteCollection<PhotoMap> PhotoMaps => _db.GetCollection<PhotoMap>();
+    public ILiteStorage<string> PhotoStorage => _db.FileStorage;
+
     private static string _machine = GetDiskSerial();
 
     public VettingDbContext() : this("data/vetting.db") { }
@@ -101,4 +105,83 @@ public class VettingDbContext : IDisposable
     }
 
     public void DropCollection(string name) => _db.DropCollection(name);
+
+    // ── 图片操作 ─────────────────────────────────────
+
+    /// <summary>上传图片并创建 PhotoMap 记录</summary>
+    public PhotoMap UploadPhoto(string filePath, string? description = null)
+    {
+        var fileInfo = new FileInfo(filePath);
+        var fileId = Guid.NewGuid().ToString();
+        var contentType = GetContentType(filePath);
+
+        // 读取图片尺寸
+        var (width, height) = GetImageDimensions(filePath);
+
+        // 上传到 FileStorage
+        using var stream = File.OpenRead(filePath);
+        _db.FileStorage.Upload(fileId, fileInfo.Name, stream);
+
+        // 创建 PhotoMap 记录
+        var photo = new PhotoMap
+        {
+            FileName = fileInfo.Name,
+            FileId = fileId,
+            ContentType = contentType,
+            Size = fileInfo.Length,
+            CreatedAt = DateTime.Now,
+            Description = description,
+            Width = width,
+            Height = height
+        };
+
+        PhotoMaps.Insert(photo);
+        return photo;
+    }
+
+    /// <summary>从 FileStorage 获取图片流</summary>
+    public Stream? GetPhotoStream(string fileId)
+    {
+        var file = _db.FileStorage.FindById(fileId);
+        return file?.OpenRead();
+    }
+
+    /// <summary>删除图片及其 PhotoMap 记录</summary>
+    public void DeletePhoto(int photoId)
+    {
+        var photo = PhotoMaps.FindById(photoId);
+        if (photo?.FileId != null)
+        {
+            _db.FileStorage.Delete(photo.FileId);
+        }
+        PhotoMaps.Delete(photoId);
+    }
+
+    private static string GetContentType(string filePath)
+    {
+        var ext = Path.GetExtension(filePath).ToLowerInvariant();
+        return ext switch
+        {
+            ".png" => "image/png",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".gif" => "image/gif",
+            ".bmp" => "image/bmp",
+            ".webp" => "image/webp",
+            _ => "application/octet-stream"
+        };
+    }
+
+    private static (int width, int height) GetImageDimensions(string filePath)
+    {
+        try
+        {
+            using var stream = File.OpenRead(filePath);
+            using var image = System.Drawing.Image.FromStream(stream, useEmbeddedColorManagement: false, validateImageData: false);
+            return (image.Width, image.Height);
+        }
+        catch
+        {
+            return (0, 0);
+        }
+    }
 }
