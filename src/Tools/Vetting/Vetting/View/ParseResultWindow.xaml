@@ -512,15 +512,25 @@
             Text="历史解析结果" />
 
         <!--  历史列表  -->
-        <ListBox
+        <DockPanel
             Grid.Row="1"
             Margin="0,0,0,6"
-            BorderBrush="#CCC"
-            FontFamily="Consolas"
-            FontSize="12"
-            ItemsPanel="{StaticResource HistoryPanel}"
-            ItemsSource="{Binding HistoryItems}"
-            SelectedItem="{Binding SelectedItem}" />
+            LastChildFill="True">
+            <Button
+                Margin="4,0,0,0"
+                Padding="4,2"
+                Command="{Binding DeleteSelectedCommand}"
+                Content="删除"
+                DockPanel.Dock="Right"
+                Style="{StaticResource ButtonDanger}" />
+            <ListBox
+                BorderBrush="#CCC"
+                FontFamily="Consolas"
+                FontSize="12"
+                ItemsPanel="{StaticResource HistoryPanel}"
+                ItemsSource="{Binding HistoryItems}"
+                SelectedItem="{Binding SelectedItem}" />
+        </DockPanel>
 
 
         <!--  操作列表  -->

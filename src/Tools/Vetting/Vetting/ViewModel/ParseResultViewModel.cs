@@ -60,8 +60,11 @@ public partial class ParseResultViewModel : ObservableObject
         set
         {
             if (!SetProperty(ref _selectedItem, value)) return;
+            DeleteSelectedCommand.NotifyCanExecuteChanged();
             if (value != null)
                 LoadOperations(value);
+            else
+                Operations.Clear();
         }
     }
 
@@ -105,6 +108,33 @@ public partial class ParseResultViewModel : ObservableObject
         var binding = db.FundBindings.FindOne(b => b.FileName == FileName && b.Range == rangeKey);
         return binding?.FundId;
     }
+
+    /// <summary>删除选中的历史解析结果</summary>
+    [RelayCommand(CanExecute = nameof(HasSelectedItem))]
+    public void DeleteSelected()
+    {
+        if (_selectedItem == null) return;
+
+        if (HandyControl.Controls.MessageBox.Show(
+            $"确认删除 {_selectedItem.Time:MM-dd HH:mm:ss} 的解析结果？",
+            "确认删除",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question) != System.Windows.MessageBoxResult.Yes) return;
+
+        using var db = new VettingAppDbContext();
+        db.ParsedJsons.Delete(_selectedItem.Id);
+
+        var idx = HistoryItems.IndexOf(_selectedItem);
+        HistoryItems.Remove(_selectedItem);
+
+        // 自动选中相邻项
+        if (HistoryItems.Count > 0)
+            SelectedItem = HistoryItems[Math.Min(idx, HistoryItems.Count - 1)];
+        else
+            SelectedItem = null;
+    }
+
+    private bool HasSelectedItem => _selectedItem != null;
 
     /// <summary>绑定基金到指定 RangeKey，保存到数据库</summary>
     [RelayCommand]
