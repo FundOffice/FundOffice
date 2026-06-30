@@ -80,7 +80,8 @@ public class CustomQuestionAnswerer
             var qaList = db.QA.FindAll().ToArray();
             var prompt = PromptService.BuildQAPrompt(qaList, questions);
 
-            var systemPrompt = PromptService.GetQASystemPrompt();
+            var infoSection = PromptService.BuildInfoPrompt(db);
+            var systemPrompt = PromptService.GetQASystemPrompt(infoSection);
             var messages = new[]
             {
                 ChatMessage.System(systemPrompt),

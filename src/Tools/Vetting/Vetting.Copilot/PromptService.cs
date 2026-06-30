@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using Vetting.Copilot.Data;
@@ -44,8 +45,80 @@ public static class PromptService
     #region QA Prompt (回答阶段)
 
     /// <summary>散装问题的系统提示词（始终使用完整模式，允许推断）</summary>
-    public static string GetQASystemPrompt() =>
-        "你是一名尽调报告填写者。优先根据提供的历史问答资料精确回答问题；如果资料中没有相关信息，请以该公司运营的实际情况为背景，用肯定的语气给出合理的推断回答，并在该回答开头加上【推断】标记。回答要像直接填写尽调表格一样简洁明确，不要出现「根据资料」「资料显示」等引用性表述。";
+    public static string GetQASystemPrompt(string? infoSection = null)
+    {
+        var sb = new StringBuilder();
+        sb.Append("你是一名尽调报告填写者。优先根据提供的历史问答资料和公司信息精确回答问题；如果资料中没有相关信息，请以该公司运营的实际情况为背景，用肯定的语气给出合理的推断回答，并在该回答开头加上【推断】标记。回答要像直接填写尽调表格一样简洁明确，不要出现「根据资料」「资料显示」等引用性表述。");
+        if (!string.IsNullOrEmpty(infoSection))
+        {
+            sb.AppendLine();
+            sb.AppendLine();
+            sb.Append(infoSection);
+        }
+        return sb.ToString();
+    }
+
+    /// <summary>从数据库加载 InvestmentInfo、RiskControl、Strategy（排除 Manager）、ProductLine 构建提示词段落</summary>
+    public static string BuildInfoPrompt(VettingDbContext db)
+    {
+        var sb = new StringBuilder();
+        var empty = true;
+
+        var sections = new (string title, Array items, PropertyInfo[] props)[]
+        {
+            LoadSection("投资信息", db.InvestmentInfos.FindAll().ToArray(), Array.Empty<string>()),
+            LoadSection("风险控制", db.RiskControls.FindAll().ToArray(), Array.Empty<string>()),
+            LoadSection("策略", db.Strategies.FindAll().ToArray(), new[] { nameof(Strategy.Manager) }),
+            LoadSection("产品线", db.ProductLines.FindAll().ToArray(), Array.Empty<string>()),
+        };
+
+        foreach (var (title, items, props) in sections)
+        {
+            if (items.Length == 0) continue;
+            if (empty) { sb.AppendLine("## 公司信息"); empty = false; }
+            sb.AppendLine($"### {title}");
+
+            if (items.Length == 1)
+            {
+                var item = items.GetValue(0)!;
+                foreach (var p in props)
+                {
+                    var val = (string?)p.GetValue(item);
+                    if (!string.IsNullOrWhiteSpace(val))
+                        sb.AppendLine($"- {p.Name}: {val}");
+                }
+            }
+            else
+            {
+                for (int i = 0; i < items.Length; i++)
+                {
+                    var item = items.GetValue(i)!;
+                    var nameProp = item.GetType().GetProperty("Name");
+                    var name = nameProp != null ? (string?)nameProp.GetValue(item) : null;
+                    sb.AppendLine($"**{name ?? "条目"}**");
+                    foreach (var p in props)
+                    {
+                        if (p.Name == "Name") continue;
+                        var val = (string?)p.GetValue(item);
+                        if (!string.IsNullOrWhiteSpace(val))
+                            sb.AppendLine($"- {p.Name}: {val}");
+                    }
+                }
+            }
+            sb.AppendLine();
+        }
+
+        return empty ? "" : sb.ToString();
+
+        static (string title, Array items, PropertyInfo[] props) LoadSection<T>(string title, T[] items, string[] excludeProps)
+        {
+            var props = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.PropertyType == typeof(string))
+                .Where(p => p.Name != "Id" && !excludeProps.Contains(p.Name))
+                .ToArray();
+            return (title, items, props);
+        }
+    }
 
     /// <summary>构建散装问题的用户提示词（始终使用完整模式，允许推断）</summary>
     public static string BuildQAPrompt(QA[] qaList, FileSpecialQuestion[] questions)
