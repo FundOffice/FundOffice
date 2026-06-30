@@ -76,7 +76,7 @@ public class IntegrationTests
         var providers = LoadProviders();
         Assert.True(providers.Count > 0, "No AI providers configured");
         var provider = CreateProvider(providers[0]);
-        var sysPrompt = await TemplateGenerator.LoadSysptAsync();
+        var sysPrompt = await PromptService.LoadSysptAsync();
 
         Directory.CreateDirectory(OutputDir);
         var results = new List<QualityCheckResult>();
@@ -181,7 +181,7 @@ public class IntegrationTests
         var providers = LoadProviders();
         Assert.True(providers.Count > 0, "No AI providers configured");
         var provider = CreateProvider(providers[0]);
-        var sysPrompt = await TemplateGenerator.LoadSysptAsync();
+        var sysPrompt = await PromptService.LoadSysptAsync();
 
         var target = Path.Combine(TestFilesDir, "附件二：私募管理人调查问卷.docx");
         Assert.True(File.Exists(target), $"Test file not found: {target}");
@@ -210,7 +210,7 @@ public class IntegrationTests
         var providers = LoadProviders();
         Assert.True(providers.Count > 0, "No AI providers configured");
         var provider = CreateProvider(providers[0]);
-        var sysPrompt = await TemplateGenerator.LoadSysptAsync();
+        var sysPrompt = await PromptService.LoadSysptAsync();
 
         Directory.CreateDirectory(Output2Dir);
         var results = new List<QualityCheckResult>();

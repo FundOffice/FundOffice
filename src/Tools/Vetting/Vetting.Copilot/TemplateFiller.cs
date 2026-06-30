@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Vetting.Copilot.Data;
 
 namespace Vetting.Copilot;
@@ -29,7 +30,8 @@ public class TemplateFiller
         string fileHash,
         string providerId,
         int[]? recommendIds = null,
-        Action<string>? progress = null)
+        Action<string>? progress = null,
+        ILogger? logger = null)
     {
         var logs = new List<string>();
         try
@@ -52,7 +54,7 @@ public class TemplateFiller
             var outDir = Path.GetDirectoryName(outputPath)!;
             Directory.CreateDirectory(outDir);
 
-            FileRetry.Run(() => DocOps.Fill(sourcePath, outputPath, operators, resolver), "填充文档", onRetry: m => { logs.Add(m); progress?.Invoke(m); });
+            FileRetry.Run(() => DocOps.Fill(sourcePath, outputPath, operators, resolver, logger), "填充文档", onRetry: m => { logs.Add(m); progress?.Invoke(m); });
 
             var logMsg = $"已生成: {outputPath}";
             logs.Add(logMsg);
