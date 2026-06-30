@@ -55,7 +55,35 @@
         <Style BasedOn="{StaticResource DataGrid.Small}" TargetType="DataGrid" />
     </Window.Resources>
 
-    <hc:SimplePanel>
+    <DockPanel>
+
+
+
+        <hc:UniformSpacingPanel
+            Margin="10"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Bottom"
+            DockPanel.Dock="Bottom"
+            Orientation="Horizontal"
+            Spacing="5">
+            <Button
+                Command="{Binding ImportDataCommand}"
+                Content="导入数据"
+                Style="{StaticResource ButtonPrimary}" />
+            <Button
+                Command="{Binding ExportDataCommand}"
+                Content="导出数据"
+                Style="{StaticResource ButtonPrimary}" />
+            <Button
+                Command="{Binding ClearAllDataCommand}"
+                Content="清空数据"
+                Style="{StaticResource ButtonDanger}" />
+            <Button
+                Command="{Binding GenerateMockCommand}"
+                Content="Mock"
+                Style="{StaticResource ButtonDanger}" />
+        </hc:UniformSpacingPanel>
+
         <TabControl
             x:Name="Tabs"
             Margin="5"
@@ -1042,14 +1070,5 @@
 
         </TabControl>
 
-
-        <Button
-            Margin="10"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Bottom"
-            Command="{Binding GenerateMockCommand}"
-            Content="Mock"
-            Style="{StaticResource ButtonDanger}" />
-
-    </hc:SimplePanel>
+    </DockPanel>
 </Window>

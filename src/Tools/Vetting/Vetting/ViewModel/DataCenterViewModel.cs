@@ -2,6 +2,9 @@
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.Win32;
 using Vetting.Copilot.Data;
 using Vetting.Copilot.Models.Entities;
 using Vetting.Copilot.Models.Info;
@@ -75,6 +78,10 @@ public partial class DataCenterViewModel : ObservableObject
         CreditStandingVM = new CreditStandingViewModel(LoadOrInit(db.CreditStandings));
         InvestmentInfoVM = new InvestmentInfoViewModel(LoadOrInit(db.InvestmentInfos));
         RiskControlVM = new RiskControlViewModel(LoadOrInit(db.RiskControls));
+        OnPropertyChanged(nameof(ManagerVM));
+        OnPropertyChanged(nameof(CreditStandingVM));
+        OnPropertyChanged(nameof(InvestmentInfoVM));
+        OnPropertyChanged(nameof(RiskControlVM));
 
         LoadList(db.Staffs, Staffs, e => { var vm = new StaffVM(e); vm.InitRoles(); return vm; });
         AllStaff = Staffs;
@@ -95,6 +102,7 @@ public partial class DataCenterViewModel : ObservableObject
         LoadList(db.ProductLines, ProductLines, e => new ProductLineVM(e));
 
         // 加载全局推荐产品
+        GlobalRecommendedFunds.Clear();
         var rec = db.TemplateRecommends.FindOne(r => r.FileName == "__global__");
         if (rec?.FundIds != null)
         {
@@ -654,6 +662,177 @@ public partial class DataCenterViewModel : ObservableObject
 
     [RelayCommand]
     private void RefreshPredFiles() => LoadPredFiles();
+
+    // ── 导入 / 导出 / 清空 ─────────────────────────────────────
+
+    private static readonly JsonSerializerOptions _jsonOpts = new()
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
+    [RelayCommand]
+    private async Task ExportDataAsync()
+    {
+        var dlg = new SaveFileDialog
+        {
+            FileName = "vetting_data.json",
+            Filter = "JSON|*.json",
+            Title = "导出数据"
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        try
+        {
+            var data = await Task.Run(() =>
+            {
+                using var db = new VettingDbContext();
+                return new
+                {
+                    Manager = db.Managers.FindById(1),
+                    CreditStanding = db.CreditStandings.FindById(1),
+                    InvestmentInfo = db.InvestmentInfos.FindById(1),
+                    RiskControl = db.RiskControls.FindById(1),
+                    Staffs = db.Staffs.FindAll().ToList(),
+                    Shareholders = db.Shareholders.FindAll().ToList(),
+                    Departments = db.Departments.FindAll().ToList(),
+                    Strategies = db.Strategies.FindAll().ToList(),
+                    FundInfos = db.FundInfos.FindAll().ToList(),
+                    Awards = db.Awards.FindAll().ToList(),
+                    AUMs = db.AUMs.FindAll().ToList(),
+                    DrawdownRecords = db.DrawdownRecords.FindAll().ToList(),
+                    FinancialStatements = db.FinancialStatements.FindAll().ToList(),
+                    QA = db.QA.FindAll().ToList(),
+                    ProductLines = db.ProductLines.FindAll().ToList(),
+                    GlobalRecommendedFundIds = db.TemplateRecommends.FindOne(r => r.FileName == "__global__")?.FundIds ?? ""
+                };
+            });
+            var json = JsonSerializer.Serialize(data, _jsonOpts);
+            await File.WriteAllTextAsync(dlg.FileName, json);
+            HandyControl.Controls.Growl.Success("数据已导出");
+        }
+        catch (Exception ex)
+        {
+            HandyControl.Controls.Growl.Error($"导出失败：{ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task ImportDataAsync()
+    {
+        var dlg = new OpenFileDialog
+        {
+            Filter = "JSON|*.json",
+            Title = "导入数据"
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        if (HandyControl.Controls.MessageBox.Show("导入数据会覆盖现有数据，确定继续？", "确认",
+            System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes) return;
+
+        try
+        {
+            var json = await File.ReadAllTextAsync(dlg.FileName);
+
+            await Task.Run(() =>
+            {
+                using var db = new VettingDbContext();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                // 单例
+                if (root.TryGetProperty("Manager", out var mEl))
+                {
+                    var m = JsonSerializer.Deserialize<Manager>(mEl.GetRawText(), _jsonOpts);
+                    if (m != null) { m.Id = 1; db.UpsertEntity(m); }
+                }
+                if (root.TryGetProperty("CreditStanding", out var csEl))
+                {
+                    var cs = JsonSerializer.Deserialize<CreditStanding>(csEl.GetRawText(), _jsonOpts);
+                    if (cs != null) { cs.Id = 1; db.UpsertEntity(cs); }
+                }
+                if (root.TryGetProperty("InvestmentInfo", out var iiEl))
+                {
+                    var ii = JsonSerializer.Deserialize<InvestmentInfo>(iiEl.GetRawText(), _jsonOpts);
+                    if (ii != null) { ii.Id = 1; db.UpsertEntity(ii); }
+                }
+                if (root.TryGetProperty("RiskControl", out var rcEl))
+                {
+                    var rc = JsonSerializer.Deserialize<RiskControl>(rcEl.GetRawText(), _jsonOpts);
+                    if (rc != null) { rc.Id = 1; db.UpsertEntity(rc); }
+                }
+
+                // 列表：先清空再逐条插入
+                void ImportList<T>(string propName, string collectionName) where T : class
+                {
+                    if (!root.TryGetProperty(propName, out var arr)) return;
+                    var items = JsonSerializer.Deserialize<List<T>>(arr.GetRawText(), _jsonOpts);
+                    if (items == null) return;
+                    db.DropCollection(collectionName);
+                    foreach (var item in items) db.UpsertEntity(item);
+                }
+
+                ImportList<Staff>("Staffs", "Staff");
+                ImportList<Shareholder>("Shareholders", "Shareholder");
+                ImportList<Department>("Departments", "Department");
+                ImportList<Strategy>("Strategies", "Strategy");
+                ImportList<FundInfo>("FundInfos", "FundInfo");
+                ImportList<Award>("Awards", "Award");
+                ImportList<AUM>("AUMs", "AUM");
+                ImportList<DrawdownRecord>("DrawdownRecords", "DrawdownRecord");
+                ImportList<FinancialStatement>("FinancialStatements", "FinancialStatement");
+                ImportList<QA>("QA", "QA");
+                ImportList<ProductLine>("ProductLines", "ProductLine");
+
+                // 全局推荐产品
+                if (root.TryGetProperty("GlobalRecommendedFundIds", out var fundIdsEl))
+                {
+                    var fundIds = fundIdsEl.GetString() ?? "";
+                    db.DropCollection("TemplateRecommend");
+                    if (!string.IsNullOrEmpty(fundIds))
+                        db.TemplateRecommends.Insert(new TemplateRecommend { FileName = "__global__", FundIds = fundIds });
+                }
+            });
+
+            LoadAll();
+            HandyControl.Controls.Growl.Success("数据已导入");
+        }
+        catch (Exception ex)
+        {
+            HandyControl.Controls.Growl.Error($"导入失败：{ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task ClearAllDataAsync()
+    {
+        if (HandyControl.Controls.MessageBox.Show("确认清空所有数据？此操作不可恢复！", "确认",
+            System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning) != System.Windows.MessageBoxResult.Yes) return;
+
+        await Task.Run(() =>
+        {
+            using var db = new VettingDbContext();
+            db.DropCollection(nameof(Manager));
+            db.DropCollection(nameof(CreditStanding));
+            db.DropCollection(nameof(InvestmentInfo));
+            db.DropCollection(nameof(RiskControl));
+            db.DropCollection(nameof(Staff));
+            db.DropCollection(nameof(Shareholder));
+            db.DropCollection(nameof(Department));
+            db.DropCollection(nameof(Strategy));
+            db.DropCollection(nameof(FundInfo));
+            db.DropCollection(nameof(Award));
+            db.DropCollection(nameof(AUM));
+            db.DropCollection(nameof(DrawdownRecord));
+            db.DropCollection(nameof(FinancialStatement));
+            db.DropCollection(nameof(QA));
+            db.DropCollection(nameof(ProductLine));
+            db.DropCollection(nameof(TemplateRecommend));
+        });
+
+        LoadAll();
+        HandyControl.Controls.Growl.Success("数据已清空");
+    }
 }
 
 /// <summary>常用附件文件项，含扫描件/用印件两个拖拽区状态</summary>
