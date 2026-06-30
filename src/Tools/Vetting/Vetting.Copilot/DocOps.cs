@@ -696,11 +696,26 @@ public static class DocOps
 
     private static void FillParagraph(List<Paragraph> paragraphs, ParagraphOp op, DataResolver resolver, List<Table>? tables = null, Dictionary<int, int>? tableOffsets = null)
     {
+        // 优先：QA 表中 question 完全一致的手动答案
         string value;
-        if (op.Entity != null && op.Property != null)
+        if (!string.IsNullOrEmpty(op.Question))
+        {
+            var qaAnswer = resolver.GetAnswerByQuestion(op.Question);
+            if (!string.IsNullOrEmpty(qaAnswer))
+                value = qaAnswer;
+            else if (op.Entity != null && op.Property != null)
+                value = resolver.Resolve(op.Entity, op.Property, op.Format);
+            else
+                value = "";
+        }
+        else if (op.Entity != null && op.Property != null)
+        {
             value = resolver.Resolve(op.Entity, op.Property, op.Format);
+        }
         else
-            value = resolver.ResolvePlaceholders(resolver.GetAnswerByQuestion(op.Question));
+        {
+            return;
+        }
 
         if (string.IsNullOrEmpty(value)) return;
 

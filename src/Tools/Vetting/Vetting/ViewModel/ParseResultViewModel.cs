@@ -219,6 +219,40 @@ public partial class OperationItemViewModel : ObservableObject
 
     public ObservableCollection<FundInfoVM> FilteredFunds { get; } = [];
 
+    [ObservableProperty]
+    public partial string ManualAnswer { get; set; }
+
+    // ── Type z 展开状态 ──
+    [ObservableProperty]
+    public partial bool IsExpanded { get; set; }
+
+    [RelayCommand]
+    private void ToggleExpand() => IsExpanded = !IsExpanded;
+
+    [RelayCommand]
+    private void SaveQA()
+    {
+        if (string.IsNullOrEmpty(Question) || string.IsNullOrWhiteSpace(ManualAnswer)) return;
+
+        using var db = new VettingDbContext();
+        var existing = db.QA.FindOne(q => q.Question == Question);
+        if (existing != null)
+        {
+            existing.Answer = ManualAnswer;
+            db.QA.Update(existing);
+        }
+        else
+        {
+            db.QA.Insert(new Vetting.Copilot.Models.Info.QA
+            {
+                Question = Question,
+                Answer = ManualAnswer,
+                Source = 1, // 手动输入
+            });
+        }
+
+        HandyControl.Controls.Growl.Success("QA 已保存");
+    }
 
     partial void OnSearchTextChanged(string? value) => FilterFunds();
 
@@ -268,6 +302,14 @@ public partial class OperationItemViewModel : ObservableObject
                 Entity = z.Entity;
                 Property = z.Property;
                 LocationText = FormatLocation(z.Location);
+                // 从数据库加载已有的 QA 答案
+                if (!string.IsNullOrEmpty(z.Question))
+                {
+                    using var db = new VettingDbContext();
+                    var existing = db.QA.FindOne(q => q.Question == z.Question);
+                    if (existing != null)
+                        ManualAnswer = existing.Answer ?? "";
+                }
                 break;
 
             case RecommendOp b:

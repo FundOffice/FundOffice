@@ -152,8 +152,10 @@ public class DataResolver
             fundBindings[b.Range ?? ""] = b.FundId;
 
         // 加载自定义问题答案
-
+        // 优先级：QA 表（manual 最高） > SpecialAnswers（per-file）
         var answersByQuestion = new Dictionary<string, string>();
+
+        // 1) 先加载 SpecialAnswers（per-file），作为基础层
         if (!string.IsNullOrEmpty(fileName))
         {
             var questions = db.FileSpecialQuestions.Find(q => q.FileName == fileName && q.Provider == providerId).ToArray();
@@ -173,6 +175,13 @@ public class DataResolver
                     answersByQuestion[q.Question] = value;
                 }
             }
+        }
+
+        // 2) QA 表手动答案覆盖（question 完全一致时优先级最高）
+        foreach (var qa in db.QA.FindAll().ToArray())
+        {
+            if (!string.IsNullOrEmpty(qa.Question) && !string.IsNullOrEmpty(qa.Answer))
+                answersByQuestion[qa.Question] = qa.Answer;
         }
 
         return new DataResolver(scalars, lists, recommendFunds, answersByQuestion, fileName, fundBindings);

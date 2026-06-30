@@ -234,53 +234,85 @@
                 BorderBrush="#9C27B0"
                 BorderThickness="1"
                 CornerRadius="3">
-                <WrapPanel Orientation="Horizontal">
-                    <TextBlock
-                        Margin="0,0,8,0"
-                        FontWeight="SemiBold"
-                        Foreground="#9C27B0"
-                        Text="type z" />
-                    <StackPanel
-                        Margin="0,0,10,0"
-                        Orientation="Horizontal"
-                        Visibility="{Binding HasEntity, Converter={StaticResource Boolean2VisibilityConverter}}">
-                        <TextBlock
-                            Margin="0,0,3,0"
-                            Foreground="Gray"
-                            Text="映射:" />
-                        <TextBlock Text="{Binding Entity}" />
+                <StackPanel>
+                    <DockPanel>
+                        <Button
+                            Margin="0,0,4,0"
+                            Padding="6,2"
+                            Command="{Binding ToggleExpandCommand}"
+                            Content="▼"
+                            DockPanel.Dock="Right"
+                            Style="{StaticResource ButtonPrimary.Small}"
+                            Visibility="{Binding HasQuestion, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                        <Button
+                            Margin="5,0"
+                            Padding="10,3"
+                            Command="{Binding SaveQACommand}"
+                            Content="保存"
+                            DockPanel.Dock="Right"
+                            Style="{StaticResource ButtonPrimary.Small}"
+                            Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                        <WrapPanel VerticalAlignment="Center" Orientation="Horizontal">
+                            <TextBlock
+                                Margin="0,0,8,0"
+                                FontWeight="SemiBold"
+                                Foreground="#9C27B0"
+                                Text="type z" />
+                            <StackPanel
+                                Margin="0,0,10,0"
+                                Orientation="Horizontal"
+                                Visibility="{Binding HasEntity, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <TextBlock
+                                    Margin="0,0,3,0"
+                                    Foreground="Gray"
+                                    Text="映射:" />
+                                <TextBlock Text="{Binding Entity}" />
+                            </StackPanel>
+                            <StackPanel
+                                Margin="0,0,10,0"
+                                Orientation="Horizontal"
+                                Visibility="{Binding HasProperty, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <TextBlock
+                                    Margin="0,0,3,0"
+                                    Foreground="Gray"
+                                    Text="属性:" />
+                                <TextBlock Text="{Binding Property}" />
+                            </StackPanel>
+                            <StackPanel
+                                Margin="0,0,10,0"
+                                Orientation="Horizontal"
+                                Visibility="{Binding HasQuestion, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <TextBlock
+                                    Margin="0,0,3,0"
+                                    Foreground="Gray"
+                                    Text="问题:" />
+                                <TextBlock Text="{Binding Question}" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding HasLocation, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <TextBlock
+                                    Margin="0,0,3,0"
+                                    Foreground="Gray"
+                                    Text="位置:" />
+                                <TextBlock
+                                    FontFamily="Consolas"
+                                    FontSize="11"
+                                    Text="{Binding LocationText}" />
+                            </StackPanel>
+                        </WrapPanel>
+                    </DockPanel>
+
+                    <!--  展开区域：TextBox + 保存按钮  -->
+                    <StackPanel Margin="0,5,0,0" Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <TextBox
+                            MinHeight="60"
+                            Margin="0,0,0,5"
+                            AcceptsReturn="True"
+                            Text="{Binding ManualAnswer, UpdateSourceTrigger=PropertyChanged}" />
+
                     </StackPanel>
-                    <StackPanel
-                        Margin="0,0,10,0"
-                        Orientation="Horizontal"
-                        Visibility="{Binding HasProperty, Converter={StaticResource Boolean2VisibilityConverter}}">
-                        <TextBlock
-                            Margin="0,0,3,0"
-                            Foreground="Gray"
-                            Text="属性:" />
-                        <TextBlock Text="{Binding Property}" />
-                    </StackPanel>
-                    <StackPanel
-                        Margin="0,0,10,0"
-                        Orientation="Horizontal"
-                        Visibility="{Binding HasQuestion, Converter={StaticResource Boolean2VisibilityConverter}}">
-                        <TextBlock
-                            Margin="0,0,3,0"
-                            Foreground="Gray"
-                            Text="问题:" />
-                        <TextBlock Text="{Binding Question}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Visibility="{Binding HasLocation, Converter={StaticResource Boolean2VisibilityConverter}}">
-                        <TextBlock
-                            Margin="0,0,3,0"
-                            Foreground="Gray"
-                            Text="位置:" />
-                        <TextBlock
-                            FontFamily="Consolas"
-                            FontSize="11"
-                            Text="{Binding LocationText}" />
-                    </StackPanel>
-                </WrapPanel>
+                </StackPanel>
             </Border>
         </DataTemplate>
 
