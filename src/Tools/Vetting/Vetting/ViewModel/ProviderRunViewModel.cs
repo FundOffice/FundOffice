@@ -92,8 +92,13 @@ public partial class ProviderRunViewModel : ObservableObject
         _sw.Restart();
         try
         {
+            // 记录解析前的文档结构
             var structure = FileRetry.Run(() => DocOps.ParseDocument(AbsolutePath), "解析文档");
             if (string.IsNullOrWhiteSpace(structure)) { Fail("无法解析文档"); return; }
+
+            // 记录文档结构到日志
+            Log("=== 文档结构 ===");
+            Log(structure);
 
             var sysPrompt = await TemplateGenerator.LoadSysptAsync();
             var messages = new[]
@@ -150,6 +155,13 @@ public partial class ProviderRunViewModel : ObservableObject
             // 解析并收集警告
             var (operators, warnings) = OperatorParser.ParseWithWarnings(opsEl);
             foreach (var w in warnings) Log($"⚠ {w}");
+
+            // 记录解析结果到日志
+            Log("=== 解析结果 ===");
+            foreach (var op in operators)
+            {
+                Log(FormatOperator(op));
+            }
 
             // 提取 Type z 的 question 保存为 FileSpecialQuestion
             int questionCount = 0;
@@ -421,4 +433,21 @@ public partial class ProviderRunViewModel : ObservableObject
 
     private static string FormatElapsed(TimeSpan ts)
         => ts.TotalMinutes >= 1 ? $"{ts.Minutes}m{ts.Seconds:D2}s" : $"{ts.TotalSeconds:F1}s";
+
+    private static string FormatOperator(FillOperator op)
+    {
+        return op switch
+        {
+            ScalarOp s => s.Location.IsParagraph
+                ? $"[a] {s.Entity}.{s.Property} → P[{s.Location.Para}]"
+                : $"[a] {s.Entity}.{s.Property} → T[{s.Location.Table}][{s.Location.Row},{s.Location.Col}]",
+            RecommendOp r => $"[b] fund#{r.FundIndex} T[{r.Range.Table}] props={r.Props.Count}",
+            ListExpandOp c => $"[c] {c.Entity} T[{c.Range.Table}] rows={c.Range.Start.Row}..{c.Range.End.Row} props={c.Properties.Count}",
+            GridOp g when g.EntityPerRow => $"[d] {g.Entity} T[{g.Range.Table}] rows={g.Range.Start.Row}..{g.Range.End.Row} cols={g.Range.Start.Col}..{g.Range.End.Col} filter_by={g.FilterBy} props={g.Properties.Count}\n    {string.Join("\n    ", g.Properties.Select(p => $"prop={p.Prop} row={p.Row} col={p.Col}"))}",
+            GridOp g => $"[e] {g.Entity} T[{g.Range.Table}] rows={g.Range.Start.Row}..{g.Range.End.Row} cols={g.Range.Start.Col}..{g.Range.End.Col} filter_by={g.FilterBy} props={g.Properties.Count}\n    {string.Join("\n    ", g.Properties.Select(p => $"prop={p.Prop} row={p.Row} col={p.Col}"))}",
+            ParagraphOp z => $"[z] \"{z.Question}\" → P[{z.Location.Para}]",
+            UnknownTableOp u => $"[g] T[{u.Range.Table}] {u.Description}",
+            _ => $"[?] {op.GetType().Name}"
+        };
+    }
 }
