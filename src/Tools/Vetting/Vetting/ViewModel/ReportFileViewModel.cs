@@ -59,7 +59,7 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
         // 在构造时创建 Providers
         foreach (var p in selectedProviders)
         {
-            var provider = CustomQuestionAnswerer.CreateProvider(p.ProviderId, p.ProviderType, p.ApiKey, p.BaseUrl, p.Model);
+            var provider = CustomQuestionAnswerer.CreateProvider(p.ProviderId, p.ProviderType, p.ApiKey, p.BaseUrl, p.Model, p.ApiVersion);
             var vm = new ProviderRunViewModel(p.Name, p.ProviderId, provider, FileName, VettingId, AbsolutePath)
             {
                 IsFullMode = answerMode == MainWindowViewModel.AnswerModeFull,
@@ -83,7 +83,7 @@ public partial class ReportFileViewModel : ObservableObject, IRecipient<RunModeC
             var config = db.AIProviderConfigs.Query().ToEnumerable().FirstOrDefault(c => $"{c.Id.GetHashCode():x}" == providerId);
             if (config == null) return;
 
-            var provider = CustomQuestionAnswerer.CreateProvider(message.Identifier, config.ProviderType, config.ApiKey, config.BaseUrl, config.Model);
+            var provider = CustomQuestionAnswerer.CreateProvider(message.Identifier, config.ProviderType, config.ApiKey, config.BaseUrl, config.Model, config.ApiVersion);
             var vm = new ProviderRunViewModel(message.Identifier, config.Name, provider, FileName, VettingId, AbsolutePath)
             {
                 IsFullMode = db.GetSettings().AnswerMode == MainWindowViewModel.AnswerModeFull,

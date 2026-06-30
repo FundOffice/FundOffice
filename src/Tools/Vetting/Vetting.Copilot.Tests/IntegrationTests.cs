@@ -10,7 +10,7 @@ using Xunit.Abstractions;
 
 namespace Vetting.Copilot.Tests;
 
-public record ProviderConfig(string Name, string ProviderType, string ApiKey, string BaseUrl, string Model);
+public record ProviderConfig(string Name, string ProviderType, string ApiKey, string BaseUrl, string Model, OpenAIApiVersion? ApiVersion = null);
 
 public class IntegrationTests
 {
@@ -36,8 +36,13 @@ public class IntegrationTests
     {
         "Anthropic" => new AnthropicTokenProvider(new AnthropicOptions
         { Identifier = c.Name, ApiKey = c.ApiKey, BaseUrl = c.BaseUrl, Model = c.Model }),
-        _ => new OpenAITokenProvider(new OpenAIOptions
-        { Identifier = c.Name, ApiKey = c.ApiKey, BaseUrl = c.BaseUrl, Model = c.Model }),
+        _ => (c.ApiVersion ?? OpenAIApiVersion.ChatCompletions) switch
+        {
+            OpenAIApiVersion.Responses => new OpenAIResponsesProvider(new OpenAIOptions
+            { Identifier = c.Name, ApiKey = c.ApiKey, BaseUrl = c.BaseUrl, Model = c.Model, ApiVersion = OpenAIApiVersion.Responses }),
+            _ => new OpenAITokenProvider(new OpenAIOptions
+            { Identifier = c.Name, ApiKey = c.ApiKey, BaseUrl = c.BaseUrl, Model = c.Model }),
+        },
     };
 
     private static string[] GetTestFiles() =>

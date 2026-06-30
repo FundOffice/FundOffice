@@ -17,7 +17,8 @@ namespace FundOffice.Copilot.Configuration;
 /// 请求级选项（如切换模型）通过 ChatOptions 在每次调用时传入。
 ///
 /// BaseUrl 兼容所有 OpenAI 格式的第三方代理：
-///   最终请求 URL = BaseUrl.TrimEnd('/') + "/v1/chat/completions"
+///   ChatCompletions: 最终请求 URL = BaseUrl.TrimEnd('/') + "/v1/chat/completions"
+///   Responses:       最终请求 URL = BaseUrl.TrimEnd('/') + "/v1/responses"
 /// </summary>
 public sealed class OpenAIOptions
 {
@@ -31,4 +32,23 @@ public sealed class OpenAIOptions
 
     /// <summary>API 基础地址（必填）。兼容所有 OpenAI 格式的第三方代理。</summary>
     public string BaseUrl { get; set; } = "https://api.openai.com";
+
+    /// <summary>
+    /// API 版本。决定使用哪个端点和请求/响应格式。
+    ///   ChatCompletions — POST /v1/chat/completions（默认，兼容所有第三方代理）
+    ///   Responses       — POST /v1/responses（OpenAI 新一代 API，支持服务端对话状态等新特性）
+    /// </summary>
+    public OpenAIApiVersion ApiVersion { get; set; } = OpenAIApiVersion.ChatCompletions;
+}
+
+/// <summary>
+/// OpenAI API 版本枚举。
+/// </summary>
+public enum OpenAIApiVersion
+{
+    /// <summary>Chat Completions API：POST /v1/chat/completions（默认，兼容第三方代理）</summary>
+    ChatCompletions,
+
+    /// <summary>Responses API：POST /v1/responses（OpenAI 新一代 API）</summary>
+    Responses
 }

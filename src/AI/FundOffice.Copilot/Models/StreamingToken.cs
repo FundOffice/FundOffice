@@ -27,6 +27,13 @@ public abstract record StreamingToken;
 public sealed record TextDelta(string Text) : StreamingToken;
 
 /// <summary>
+/// 推理增量（o 系列模型的思维链）。Responses API 特有。
+/// 将所有 ReasoningDelta.Text 拼接即得到完整的推理过程。
+/// 非推理模型不会产生此事件，调用方可按需处理或忽略。
+/// </summary>
+public sealed record ReasoningDelta(string Text) : StreamingToken;
+
+/// <summary>
 /// 工具调用增量。
 ///
 /// 流式传输中，一个工具调用的参数会分多个 delta 片段到达。

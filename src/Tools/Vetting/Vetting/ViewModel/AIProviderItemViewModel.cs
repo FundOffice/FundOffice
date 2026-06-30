@@ -26,6 +26,9 @@ public partial class AIProviderItemViewModel : ObservableObject
     [ObservableProperty] public partial string StatusMessage { get; set; } = "";
     [ObservableProperty] public partial bool IsBusy { get; set; }
 
+    public OpenAIApiVersion[] ApiVersions { get; } = [OpenAIApiVersion.ChatCompletions, OpenAIApiVersion.Responses];
+    [ObservableProperty] public partial OpenAIApiVersion ApiVersion { get; set; } = OpenAIApiVersion.ChatCompletions;
+
     [ObservableProperty] public partial bool IsSelected { get; set; }
 
     public event Action? IsSelectedChanged;
@@ -48,6 +51,7 @@ public partial class AIProviderItemViewModel : ObservableObject
         ApiKey = config.ApiKey;
         BaseUrl = config.BaseUrl;
         Model = config.Model;
+        ApiVersion = config.ApiVersion;
     }
 
     partial void OnProviderTypeChanged(string value)
@@ -106,7 +110,7 @@ public partial class AIProviderItemViewModel : ObservableObject
     private void Save(Window window)
     {
         using var db = new VettingDbContext();
-        AIProviderConfig entity = new(Id, Name, ProviderType, ApiKey, BaseUrl, Model);
+        AIProviderConfig entity = new(Id, Name, ProviderType, ApiKey, BaseUrl, Model, ApiVersion);
         db.AIProviderConfigs.Upsert(entity);
         StatusMessage = "已保存";
 
@@ -127,6 +131,10 @@ public partial class AIProviderItemViewModel : ObservableObject
     private ITokenProvider CreateProvider(string? overrideModel = null) => ProviderType switch
     {
         "Anthropic" => new AnthropicTokenProvider(new AnthropicOptions { Identifier = ProviderId, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model }),
-        _ => new OpenAITokenProvider(new OpenAIOptions { Identifier = ProviderId, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model }),
+        _ => ApiVersion switch
+        {
+            OpenAIApiVersion.Responses => new OpenAIResponsesProvider(new OpenAIOptions { Identifier = ProviderId, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model, ApiVersion = ApiVersion }),
+            _ => new OpenAITokenProvider(new OpenAIOptions { Identifier = ProviderId, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model, ApiVersion = ApiVersion }),
+        },
     };
 }

@@ -115,8 +115,31 @@
                     ItemsSource="{Binding ProviderTypes}"
                     SelectedItem="{Binding ProviderType}" />
 
-
             </DockPanel>
+
+            <DockPanel LastChildFill="False">
+                <DockPanel.Style>
+                    <Style TargetType="DockPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ProviderType}" Value="OpenAI">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DockPanel.Style>
+
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="API 版本" />
+
+                <ListBox
+                    Margin="10,0,0,0"
+                    ItemsPanel="{StaticResource UniformHorizontalItemsPanelTemplate}"
+                    ItemsSource="{Binding ApiVersions}"
+                    SelectedItem="{Binding ApiVersion}" />
+            </DockPanel>
+
 
             <hc:PasswordBox
                 hc:InfoElement.Title="API Key"
