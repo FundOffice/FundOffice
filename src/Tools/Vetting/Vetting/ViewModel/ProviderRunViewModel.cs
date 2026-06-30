@@ -89,6 +89,7 @@ public partial class ProviderRunViewModel : ObservableObject
     public async Task RunParseAsync()
     {
         ParseStatus = TaskStatus.Running;
+        ErrorMessage = null;
         _sw.Restart();
         try
         {
@@ -208,6 +209,7 @@ public partial class ProviderRunViewModel : ObservableObject
     public async Task RunAnswerAsync()
     {
         AnswerStatus = TaskStatus.Running;
+        ErrorMessage = null;
         _sw.Restart();
         try
         {
@@ -311,6 +313,7 @@ public partial class ProviderRunViewModel : ObservableObject
     public async Task RunFillAsync()
     {
         FillStatus = TaskStatus.Running;
+        ErrorMessage = null;
         _sw.Restart();
         try
         {
