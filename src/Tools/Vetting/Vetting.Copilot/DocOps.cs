@@ -551,6 +551,19 @@ public static class DocOps
         int startCol = op.Properties.FirstOrDefault()?.Col ?? op.Range.Start.Col ?? 0;
         int endCol = op.Properties.LastOrDefault()?.Col ?? op.Range.End.Col ?? 0;
 
+        // 检测 Type d 坐标错误：所有 properties 的 col 都为 0（行头列）
+        // 这是 AI 解析错误，跳过该操作避免覆盖行头
+        // 注意：Type e 的 properties col=0 是正常的（指向行头列用于定位属性），不影响填充
+        if (op.EntityPerRow)
+        {
+            var allColZero = op.Properties.All(p => p.Col == 0);
+            if (allColZero && op.Properties.Count > 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"[跳过] Type d T[{tableIdx}] 所有 properties 的 col=0（行头列），请检查 AI 解析结果");
+                return;
+            }
+        }
+
         if (op.EntityPerRow)
         {
             // Type d: 一行一 entity，列头是属性
@@ -579,6 +592,10 @@ public static class DocOps
                     var propName = op.Properties[j].Prop;
                     if (propName == null) continue; // 跳过未映射列
 
+                    // 跳过用于 FilterBy 的属性列（行头列，只用于匹配行，不填充）
+                    if (!string.IsNullOrEmpty(op.FilterBy) && propName == op.FilterBy)
+                        continue;
+
                     // 使用绝对列号（从 properties 中的 col 字段）
                     int colIdx = op.Properties[j].Col ?? startCol + j;
                     var cell = cells.ElementAtOrDefault(colIdx);
@@ -600,15 +617,17 @@ public static class DocOps
 
             // 从 properties 中获取所有需要填充的列号
             var distinctCols = op.Properties
-                .Where(p => p.Col.HasValue)
+                .Where(p => p.Col.HasValue && p.Col > 0)  // 排除 col=0（行头列）
                 .Select(p => p.Col!.Value)
                 .Distinct()
                 .OrderBy(c => c)
                 .ToList();
-            // 如果 properties 没有提供 col，回退到 range 的列范围
+            // 如果 properties 没有提供有效的数据列，回退到 range 的列范围
             if (distinctCols.Count == 0)
             {
-                for (int c = startCol; c <= endCol; c++) distinctCols.Add(c);
+                int rangeStartCol = op.Range.Start.Col ?? 0;
+                int rangeEndCol = op.Range.End.Col ?? 0;
+                for (int c = rangeStartCol; c <= rangeEndCol; c++) distinctCols.Add(c);
             }
 
             foreach (var ci in distinctCols)
@@ -630,6 +649,11 @@ public static class DocOps
                 {
                     var propName = op.Properties[i].Prop;
                     if (propName == null) continue; // 跳过未映射行
+
+                    // 跳过用于 FilterBy 的属性（列头对应的属性，只用于匹配列，不填充）
+                    if (!string.IsNullOrEmpty(op.FilterBy) && propName == op.FilterBy)
+                        continue;
+
                     // 使用绝对行号（从 properties 中的 row 字段）+ 偏移
                     int rowIdx = (op.Properties[i].Row ?? startRow + i) + offset;
                     var row = rows.ElementAtOrDefault(rowIdx);

@@ -510,6 +510,67 @@ public class DocOpsFillTests : IDisposable
     }
 
     [Fact]
+    public void TypeD_GridOp_PreservesRowHeaderWhenFilterByIncluded()
+    {
+        // 表格结构：
+        // |        | 总资产 | 总负债 |
+        // | 2023   |        |        |
+        // | 2022   |        |        |
+        // Year 属性在 col 0（行头列），用于 FilterBy 匹配，不应被覆盖
+        var src = TempFile("src.docx");
+        TestDocBuilder.Create(src,
+            tables: [TestDocBuilder.GridTable(
+                ["总资产", "总负债"],
+                ["2023", "2022"],
+                new string?[2, 2])]);
+
+        var resolver = TestData.Resolver(lists: new()
+        {
+            ["financialstatement"] = new[]
+            {
+                new Dictionary<string, string> { ["Year"] = "2023", ["TotalAssets"] = "100亿", ["TotalLiabilities"] = "60亿" },
+                new Dictionary<string, string> { ["Year"] = "2022", ["TotalAssets"] = "80亿", ["TotalLiabilities"] = "50亿" },
+            },
+        });
+
+        // properties 包含 Year（行头列 col 0），验证行头不被覆盖
+        var ops = new List<FillOperator>
+        {
+            new GridOp
+            {
+                Entity = "financialstatement",
+                Properties = [
+                    new PropItem("Year", "年份", 1, 0),  // col 0 = 行头，用于 FilterBy
+                    new PropItem("TotalAssets", "总资产", 1, 1),
+                    new PropItem("TotalLiabilities", "总负债", 1, 2)
+                ],
+                Range = new Range { Table = 0, Start = new Location { Row = 1, Col = 0 }, End = new Location { Row = 2, Col = 2 } },
+                EntityPerRow = true,
+                FilterBy = "Year",
+            },
+        };
+
+        var outPath = TempFile("out.docx");
+        DocOps.Fill(src, outPath, ops, resolver);
+
+        using var doc = WordprocessingDocument.Open(outPath, false);
+        var resultTable = doc.MainDocumentPart!.Document.Body!.Elements<Table>().First();
+        var rows = resultTable.Elements<TableRow>().ToList();
+
+        // 验证行头保留（2023 和 2022 未被覆盖）
+        var row1Cells = rows[1].Elements<TableCell>().ToList();
+        var row2Cells = rows[2].Elements<TableCell>().ToList();
+        Assert.Equal("2023", row1Cells[0].InnerText.Trim());
+        Assert.Equal("2022", row2Cells[0].InnerText.Trim());
+
+        // 验证数据正确填充
+        Assert.Contains("100亿", row1Cells[1].InnerText);
+        Assert.Contains("60亿", row1Cells[2].InnerText);
+        Assert.Contains("80亿", row2Cells[1].InnerText);
+        Assert.Contains("50亿", row2Cells[2].InnerText);
+    }
+
+    [Fact]
     public void TypeF_ParagraphOp_FillsParagraph()
     {
         var src = TempFile("src.docx");
