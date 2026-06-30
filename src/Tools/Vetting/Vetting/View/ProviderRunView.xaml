@@ -22,6 +22,7 @@
             <StackPanel
                 VerticalAlignment="Center"
                 DockPanel.Dock="Right"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource Boolean2BooleanReConverter}}"
                 Orientation="Horizontal">
                 <TextBlock
                     Margin="8,0"

@@ -30,9 +30,19 @@ public partial class ProviderRunViewModel : ObservableObject
     public bool IsFullMode { get; set; }
 
     // ── 三阶段状态 ──
-    [ObservableProperty] public partial TaskStatus ParseStatus { get; set; } = TaskStatus.Pending;
-    [ObservableProperty] public partial TaskStatus AnswerStatus { get; set; } = TaskStatus.Pending;
-    [ObservableProperty] public partial TaskStatus FillStatus { get; set; } = TaskStatus.Pending;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsBusy))]
+    public partial TaskStatus ParseStatus { get; set; } = TaskStatus.Pending;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsBusy))]
+    public partial TaskStatus AnswerStatus { get; set; } = TaskStatus.Pending;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsBusy))]
+    public partial TaskStatus FillStatus { get; set; } = TaskStatus.Pending;
+
+    public bool IsBusy => ParseStatus == TaskStatus.Running
+                       || AnswerStatus == TaskStatus.Running
+                       || FillStatus == TaskStatus.Running;
 
     // ── 共享进度 ──
     [ObservableProperty][NotifyPropertyChangedFor(nameof(UsageText))] public partial int Usage { get; set; }
