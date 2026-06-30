@@ -48,12 +48,14 @@
                         FontSize="12"
                         Foreground="Gray"
                         Text="回答模式" />
-                    <ListBox ItemsPanel="{StaticResource UniformHorizontalItemsPanelTemplate}"
-                        VerticalAlignment="Center" Style="{StaticResource ListBox.Small}"
+                    <ListBox
+                        VerticalAlignment="Center"
+                        ItemsPanel="{StaticResource UniformHorizontalItemsPanelTemplate}"
                         ItemsSource="{Binding AnswerModes}"
-                        SelectedItem="{Binding AnswerMode}">
+                        SelectedItem="{Binding AnswerMode}"
+                        Style="{StaticResource ListBox.Small}">
                         <ListBox.ItemContainerStyle>
-                            <Style BasedOn="{StaticResource ListBoxItemUnfocusedSelectionStyle}" TargetType="ListBoxItem"/>
+                            <Style BasedOn="{StaticResource ListBoxItemUnfocusedSelectionStyle}" TargetType="ListBoxItem" />
                         </ListBox.ItemContainerStyle>
                     </ListBox>
                 </DockPanel>
@@ -63,7 +65,8 @@
                 Padding="8,2"
                 BorderBrush="Gray"
                 BorderThickness="1"
-                CornerRadius="5">
+                CornerRadius="5"
+                IsEnabled="False">
                 <DockPanel>
                     <TextBlock
                         Margin="0,0,6,0"
@@ -71,12 +74,14 @@
                         FontSize="12"
                         Foreground="Gray"
                         Text="运行模式" />
-                    <ListBox ItemsPanel="{StaticResource UniformHorizontalItemsPanelTemplate}"
-                        VerticalAlignment="Center" Style="{StaticResource ListBox.Small}"
+                    <ListBox
+                        VerticalAlignment="Center"
+                        ItemsPanel="{StaticResource UniformHorizontalItemsPanelTemplate}"
                         ItemsSource="{Binding RunModes}"
-                        SelectedItem="{Binding RunMode}">
+                        SelectedItem="{Binding RunMode}"
+                        Style="{StaticResource ListBox.Small}">
                         <ListBox.ItemContainerStyle>
-                            <Style BasedOn="{StaticResource ListBoxItemUnfocusedSelectionStyle}" TargetType="ListBoxItem"/>
+                            <Style BasedOn="{StaticResource ListBoxItemUnfocusedSelectionStyle}" TargetType="ListBoxItem" />
                         </ListBox.ItemContainerStyle>
                     </ListBox>
                 </DockPanel>
