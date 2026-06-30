@@ -16,7 +16,7 @@ public partial class AIProviderItemViewModel : ObservableObject
     public int Id { get; set; }
     public string ProviderId => $"{Id.GetHashCode():x}";
 
-    [ObservableProperty] public partial string Name { get; set; } = "";
+    [ObservableProperty] public partial string Name { get; set; } = "新AI";
     public string[] ProviderTypes { get; } = ["OpenAI", "Anthropic"];
     [ObservableProperty] public partial string ProviderType { get; set; } = "OpenAI";
     [ObservableProperty] public partial string ApiKey { get; set; } = "";
