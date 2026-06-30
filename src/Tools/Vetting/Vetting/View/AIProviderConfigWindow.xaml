@@ -28,9 +28,18 @@
                     <TextBlock VerticalAlignment="Center" Text="AI 接口列表" />
 
                     <Button
-                        Margin="10,0"
+                        Margin="10,0,5,0"
                         Command="{Binding AddProviderCommand}"
                         Content="添加"
+                        Style="{StaticResource ButtonPrimary.Small}" />
+                    <Button
+                        Margin="10,0,5,0"
+                        Command="{Binding ExportConfigCommand}"
+                        Content="导出"
+                        Style="{StaticResource ButtonPrimary.Small}" />
+                    <Button
+                        Command="{Binding ImportConfigCommand}"
+                        Content="导入"
                         Style="{StaticResource ButtonPrimary.Small}" />
                 </DockPanel>
             </GroupBox.Header>
@@ -77,10 +86,11 @@
 
         <Separator Margin="10" DockPanel.Dock="Top" />
 
-        <hc:UniformSpacingPanel Visibility="{Binding .,Converter={StaticResource Object2VisibilityConverter}}"
+        <hc:UniformSpacingPanel
             DataContext="{Binding SelectedProvider}"
             Orientation="Vertical"
-            Spacing="8">
+            Spacing="8"
+            Visibility="{Binding ., Converter={StaticResource Object2VisibilityConverter}}">
 
             <DockPanel LastChildFill="False">
 
