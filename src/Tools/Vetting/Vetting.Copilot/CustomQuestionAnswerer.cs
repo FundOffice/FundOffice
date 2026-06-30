@@ -203,12 +203,21 @@ public class CustomQuestionAnswerer
     {
         var sb = new StringBuilder();
         sb.AppendLine("## 历史问答资料");
+
+        // 检测是否包含占位符
+        bool hasPlaceholders = false;
         foreach (var qa in qaList)
         {
             sb.AppendLine($"问: {qa.Question}");
             sb.AppendLine($"答: {qa.Answer}");
             sb.AppendLine();
+            if (!hasPlaceholders && (qa.Answer.Contains("{{") || qa.Answer.Contains("[img#")))
+                hasPlaceholders = true;
         }
+
+        if (hasPlaceholders)
+            sb.AppendLine("⚠️ 注意: 上述资料中包含 `{{xx.}}` 模板占位符或 `[img#N]` 图片占位符，回答时必须原样保留这些占位符，不得替换、修改或省略。");
+
         sb.AppendLine("## 待回答问题");
         foreach (var q in questions)
             sb.AppendLine($"{{a{q.Index}}}: {q.Question}");
