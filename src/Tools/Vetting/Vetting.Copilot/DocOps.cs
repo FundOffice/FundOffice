@@ -411,6 +411,9 @@ public static class DocOps
         }
 
         // 处理图片占位符
+        var imgCount = ImagePlaceholderRegex.Matches(body.InnerText).Count;
+        if (imgCount > 0)
+            System.Diagnostics.Debug.WriteLine($"[图片处理] 发现 {imgCount} 个图片占位符");
         ProcessImagePlaceholders(doc.MainDocumentPart, body);
 
         doc.MainDocumentPart.Document.Save();
@@ -866,10 +869,18 @@ public static class DocOps
         {
             var match = matches[m];
             if (!int.TryParse(match.Groups[1].Value, out var imgId)) continue;
-            if (!photoCache.TryGetValue(imgId, out var photo)) continue;
+            if (!photoCache.TryGetValue(imgId, out var photo))
+            {
+                System.Diagnostics.Debug.WriteLine($"[img#{imgId}] PhotoMap 不存在，跳过");
+                continue;
+            }
 
             var drawing = CreateImageDrawing(mainPart, photo);
-            if (drawing == null) continue;
+            if (drawing == null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[img#{imgId}] CreateImageDrawing 返回 null，跳过");
+                continue;
+            }
 
             // 创建图片 Run
             var imgRun = new Run();
@@ -929,12 +940,12 @@ public static class DocOps
     /// </summary>
     private static Drawing? CreateImageDrawing(MainDocumentPart mainPart, PhotoMap photo)
     {
-        if (photo.FileId == null) return null;
+        if (photo.FileId == null) { System.Diagnostics.Debug.WriteLine($"[img#{photo.Id}] FileId 为 null"); return null; }
 
         // 从 FileStorage 读取图片
         using var db = new VettingDbContext();
         using var stream = db.GetPhotoStream(photo.FileId);
-        if (stream == null) return null;
+        if (stream == null) { System.Diagnostics.Debug.WriteLine($"[img#{photo.Id}] GetPhotoStream 返回 null (FileId={photo.FileId})"); return null; }
 
         // 确定 ImagePartType
         var imagePartType = photo.ContentType switch
