@@ -1021,54 +1021,6 @@
                 </DockPanel>
             </TabItem>
 
-            <TabItem IsHitTestVisible="False" />
-
-
-            <TabItem Background="Orange" Header="问答">
-                <DockPanel>
-                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-                        <Button
-                            Margin="4"
-                            Command="{Binding AddItemCommand}"
-                            CommandParameter="QA"
-                            Content="新增"
-                            Style="{StaticResource ButtonSuccess}" />
-                        <Button
-                            Margin="4"
-                            Command="{Binding DeleteItemCommand}"
-                            Content="删除"
-                            Style="{StaticResource ButtonDanger}" />
-                        <Button
-                            Margin="4"
-                            Command="{Binding ClearItemsCommand}"
-                            CommandParameter="QA"
-                            Content="清空"
-                            Style="{StaticResource ButtonDanger}" />
-                    </StackPanel>
-                    <DataGrid
-                        AutoGenerateColumns="False"
-                        ItemsSource="{Binding QAs}"
-                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn
-                                Width="60"
-                                Binding="{Binding Source, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="来源" />
-                            <DataGridTextColumn
-                                Width="*"
-                                Binding="{Binding Question, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="问题" />
-                            <DataGridTextColumn
-                                Width="*"
-                                Binding="{Binding Answer, UpdateSourceTrigger=PropertyChanged, Delay=200}"
-                                Header="回答" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </DockPanel>
-            </TabItem>
-
-            <TabItem IsHitTestVisible="False" />
-
             <TabItem Header="图片">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
@@ -1134,6 +1086,57 @@
                     </DataGrid>
                 </DockPanel>
             </TabItem>
+
+            <TabItem IsHitTestVisible="False" />
+
+
+            <TabItem
+                Foreground="Orange"
+                Header="问答"
+                TextElement.FontWeight="Black">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button
+                            Margin="4"
+                            Command="{Binding AddItemCommand}"
+                            CommandParameter="QA"
+                            Content="新增"
+                            Style="{StaticResource ButtonSuccess}" />
+                        <Button
+                            Margin="4"
+                            Command="{Binding DeleteItemCommand}"
+                            Content="删除"
+                            Style="{StaticResource ButtonDanger}" />
+                        <Button
+                            Margin="4"
+                            Command="{Binding ClearItemsCommand}"
+                            CommandParameter="QA"
+                            Content="清空"
+                            Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
+                    <DataGrid
+                        AutoGenerateColumns="False"
+                        ItemsSource="{Binding QAs}"
+                        SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Width="60"
+                                Binding="{Binding Source, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="来源" />
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding Question, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="问题" />
+                            <DataGridTextColumn
+                                Width="*"
+                                Binding="{Binding Answer, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="回答" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+
 
         </TabControl>
 
