@@ -84,7 +84,7 @@ public sealed class OpenAITokenProvider : TokenProviderBase
         Stream stream;
         try
         {
-            var body = OpenAiRequestBuilder.BuildRequestBody(messages, tools, options, _model, stream: true);
+            var body = OpenAIRequestBuilder.BuildRequestBody(messages, tools, options, _model, stream: true);
 
             using var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/v1/chat/completions");
             request.Content = new ByteArrayContent(body);
@@ -105,7 +105,7 @@ public sealed class OpenAITokenProvider : TokenProviderBase
         {
             await foreach (var (eventType, data) in SseParser.ParseAsync(stream, cancellationToken))
             {
-                foreach (var token in OpenAiStreamMapper.MapLine(data))
+                foreach (var token in OpenAIStreamMapper.MapLine(data))
                     yield return token;
             }
         }
@@ -122,7 +122,7 @@ public sealed class OpenAITokenProvider : TokenProviderBase
     {
         try
         {
-            var body = OpenAiRequestBuilder.BuildRequestBody(messages, tools, options, _model, stream: false);
+            var body = OpenAIRequestBuilder.BuildRequestBody(messages, tools, options, _model, stream: false);
 
             using var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/v1/chat/completions");
             request.Content = new ByteArrayContent(body);
@@ -134,7 +134,7 @@ public sealed class OpenAITokenProvider : TokenProviderBase
 
             var json = await response.Content.ReadAsStringAsync(cancellationToken);
             using var doc = JsonDocument.Parse(json);
-            return OpenAiRequestBuilder.ParseCompletion(doc.RootElement);
+            return OpenAIRequestBuilder.ParseCompletion(doc.RootElement);
         }
         catch (HttpRequestException ex) { throw ErrorMapper.WrapNetworkError(ex, ProviderName); }
         catch (JsonException ex) { throw ErrorMapper.WrapJsonError(ex, ProviderName); }

@@ -7,7 +7,7 @@ namespace FundOffice.Copilot.Internal;
 /// <summary>
 /// HTTP 错误响应和网络异常 -> TokenProviderException 的统一转换器。
 ///
-/// 两个 Provider（OpenAiTokenProvider、AnthropicTokenProvider）共享此逻辑，
+/// 两个 Provider（OpenAITokenProvider、AnthropicTokenProvider）共享此逻辑，
 /// 避免在每个 Provider 中重复错误处理代码。
 ///
 /// 错误分类策略：

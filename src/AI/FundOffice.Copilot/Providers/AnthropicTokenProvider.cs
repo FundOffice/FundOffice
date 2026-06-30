@@ -72,7 +72,7 @@ public sealed class AnthropicTokenProvider : TokenProviderBase
         _idf = options.Identifier;
     }
 
-    /// <summary>流式调用。详见 OpenAiTokenProvider 同名方法的生命周期说明。</summary>
+    /// <summary>流式调用。详见 OpenAITokenProvider 同名方法的生命周期说明。</summary>
     public override async IAsyncEnumerable<StreamingToken> ChatCompletionStreamAsync(
         IReadOnlyList<ChatMessage> messages,
         IReadOnlyList<ToolDefinition>? tools = null,

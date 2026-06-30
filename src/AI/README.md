@@ -26,7 +26,7 @@ using FundOffice.Copilot.Configuration;
 using FundOffice.Copilot.Providers;
 
 // OpenAI（也兼容 OpenRouter 等第三方代理）
-var openai = new OpenAiTokenProvider(new OpenAIOptions
+var openai = new OpenAITokenProvider(new OpenAIOptions
 {
     ApiKey = "sk-xxx",
     Model = "gpt-4o",                          // 必填
@@ -43,14 +43,14 @@ var anthropic = new AnthropicTokenProvider(new AnthropicOptions
 
 // 使用自定义 HttpClient（可选，用于代理、超时等）
 var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-var provider = new OpenAiTokenProvider(options, httpClient);
+var provider = new OpenAITokenProvider(options, httpClient);
 ```
 
 ### 使用兼容端点
 
 ```csharp
 // 第三方 OpenAI 兼容代理
-var provider = new OpenAiTokenProvider(new OpenAIOptions
+var provider = new OpenAITokenProvider(new OpenAIOptions
 {
     ApiKey = "your-key",
     Model = "deepseek-v4-pro",
@@ -76,7 +76,7 @@ var provider2 = new AnthropicTokenProvider(new AnthropicOptions
 using FundOffice.Copilot.Models;
 using FundOffice.Copilot.Providers;
 
-ITokenProvider provider = new OpenAiTokenProvider(new OpenAIOptions
+ITokenProvider provider = new OpenAITokenProvider(new OpenAIOptions
 {
     ApiKey = "sk-xxx",
     Model = "gpt-4o"
@@ -190,7 +190,7 @@ using System.Text.Json;
 using FundOffice.Copilot.Models;
 using FundOffice.Copilot.Providers;
 
-ITokenProvider provider = new OpenAiTokenProvider(new OpenAIOptions
+ITokenProvider provider = new OpenAITokenProvider(new OpenAIOptions
 {
     ApiKey = "sk-xxx",
     Model = "gpt-4o"
@@ -527,13 +527,13 @@ FundOffice.Copilot/
     ITokenProvider.cs               # 核心接口：两个方法
     TokenProviderBase.cs            # 抽象基类，非流式默认聚合流式
     TokenProviderException.cs       # 统一异常 + TokenProviderErrorKind 枚举
-    OpenAiTokenProvider.cs          # OpenAI 实现（构造后不再持有 Options 引用）
+    OpenAITokenProvider.cs          # OpenAI 实现（构造后不再持有 Options 引用）
     AnthropicTokenProvider.cs       # Anthropic 实现（构造后不再持有 Options 引用）
 
   Internal/                         # 内部实现，不对外暴露
     SseParser.cs                    # SSE 流解析（OpenAI + Anthropic 通用）
-    OpenAiRequestBuilder.cs         # 构建 OpenAI JSON 请求 / 解析响应
-    OpenAiStreamMapper.cs           # OpenAI SSE → StreamingToken
+    OpenAIRequestBuilder.cs         # 构建 OpenAI JSON 请求 / 解析响应
+    OpenAIStreamMapper.cs           # OpenAI SSE → StreamingToken
     AnthropicRequestBuilder.cs      # 构建 Anthropic JSON 请求 / 解析响应
     AnthropicStreamMapper.cs        # Anthropic SSE → StreamingToken（实例类，支持并发）
     ErrorMapper.cs                  # HTTP 错误 → TokenProviderException 统一转换

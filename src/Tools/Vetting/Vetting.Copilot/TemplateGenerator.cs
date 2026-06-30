@@ -91,6 +91,7 @@ public class TemplateGenerator
             };
 
             var sb = new StringBuilder();
+            var reasoningSb = new StringBuilder();
             int usage = 0;
             await foreach (var token in _provider.ChatCompletionStreamAsync(messages, options: options, cancellationToken: ct))
             {
@@ -98,7 +99,11 @@ public class TemplateGenerator
                 {
                     case TextDelta td:
                         sb.Append(td.Text);
-                        usage = sb.Length / 4;
+                        usage = (sb.Length + reasoningSb.Length) / 4;
+                        break;
+                    case ReasoningDelta rd:
+                        reasoningSb.Append(rd.Text);
+                        usage = (sb.Length + reasoningSb.Length) / 4;
                         break;
                     case UsageUpdate u:
                         usage = (u.PromptTokens ?? 0) + (u.CompletionTokens ?? 0);

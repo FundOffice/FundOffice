@@ -7,7 +7,7 @@ namespace FundOffice.Copilot.Internal;
 /// <summary>
 /// OpenAI Responses API 请求体构建器 + 响应体解析器。
 ///
-/// 与 <see cref="OpenAiRequestBuilder"/> 对称，但面向 Responses API（POST /v1/responses）。
+/// 与 <see cref="OpenAIRequestBuilder"/> 对称，但面向 Responses API（POST /v1/responses）。
 ///
 /// 全部使用 Utf8JsonWriter 手写 JSON，不依赖匿名对象或反射序列化。
 ///
@@ -52,7 +52,7 @@ namespace FundOffice.Copilot.Internal;
 ///   - 响应中 choices → output，message → output items
 ///   - finish_reason → status（"completed"/"incomplete"）
 /// </summary>
-internal static class OpenAiResponsesRequestBuilder
+internal static class OpenAIResponsesRequestBuilder
 {
     private static readonly JsonSerializerOptions s_jsonOptions = new()
     {

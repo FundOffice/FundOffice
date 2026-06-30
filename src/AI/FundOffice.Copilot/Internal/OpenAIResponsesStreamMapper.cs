@@ -6,7 +6,7 @@ namespace FundOffice.Copilot.Internal;
 /// <summary>
 /// OpenAI Responses API 流式响应 SSE 事件 → StreamingToken 映射器。
 ///
-/// 与 <see cref="OpenAiStreamMapper"/> 对称，但处理 Responses API 的 SSE 事件格式。
+/// 与 <see cref="OpenAIStreamMapper"/> 对称，但处理 Responses API 的 SSE 事件格式。
 ///
 /// Responses API 的 SSE 事件通过 event: 行指定事件类型，data: 行包含 JSON 载荷。
 /// 事件类型（type 字段）决定如何解析 data JSON：
@@ -41,7 +41,7 @@ namespace FundOffice.Copilot.Internal;
 ///
 /// 注意：SseParser 已经解析了 event: 行，通过 eventType 参数传入。
 /// </summary>
-internal static class OpenAiResponsesStreamMapper
+internal static class OpenAIResponsesStreamMapper
 {
     /// <summary>
     /// 将一条 SSE 事件解析为零个或多个 StreamingToken。
@@ -147,7 +147,7 @@ internal static class OpenAiResponsesStreamMapper
                     {
                         // status → FinishReason
                         var status = ExtractString(response, "status");
-                        var finishReason = OpenAiResponsesRequestBuilder.NormalizeStatus(status);
+                        var finishReason = OpenAIResponsesRequestBuilder.NormalizeStatus(status);
 
                         // 如果有 function_call 输出项，finishReason 应为 "tool_calls"
                         if (response.TryGetProperty("output", out var output) && output.ValueKind == JsonValueKind.Array)

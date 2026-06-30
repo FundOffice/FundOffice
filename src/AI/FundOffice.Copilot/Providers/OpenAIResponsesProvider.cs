@@ -96,7 +96,7 @@ public sealed class OpenAIResponsesProvider : TokenProviderBase
         Stream stream;
         try
         {
-            var body = OpenAiResponsesRequestBuilder.BuildRequestBody(messages, tools, options, _model, stream: true);
+            var body = OpenAIResponsesRequestBuilder.BuildRequestBody(messages, tools, options, _model, stream: true);
 
             using var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/v1/responses");
             request.Content = new ByteArrayContent(body);
@@ -117,7 +117,7 @@ public sealed class OpenAIResponsesProvider : TokenProviderBase
         {
             await foreach (var (eventType, data) in SseParser.ParseAsync(stream, cancellationToken))
             {
-                foreach (var token in OpenAiResponsesStreamMapper.MapEvent(eventType, data))
+                foreach (var token in OpenAIResponsesStreamMapper.MapEvent(eventType, data))
                     yield return token;
             }
         }
@@ -134,7 +134,7 @@ public sealed class OpenAIResponsesProvider : TokenProviderBase
     {
         try
         {
-            var body = OpenAiResponsesRequestBuilder.BuildRequestBody(messages, tools, options, _model, stream: false);
+            var body = OpenAIResponsesRequestBuilder.BuildRequestBody(messages, tools, options, _model, stream: false);
 
             using var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/v1/responses");
             request.Content = new ByteArrayContent(body);
@@ -146,7 +146,7 @@ public sealed class OpenAIResponsesProvider : TokenProviderBase
 
             var json = await response.Content.ReadAsStringAsync(cancellationToken);
             using var doc = JsonDocument.Parse(json);
-            return OpenAiResponsesRequestBuilder.ParseResponse(doc.RootElement);
+            return OpenAIResponsesRequestBuilder.ParseResponse(doc.RootElement);
         }
         catch (HttpRequestException ex) { throw ErrorMapper.WrapNetworkError(ex, ProviderName); }
         catch (JsonException ex) { throw ErrorMapper.WrapJsonError(ex, ProviderName); }

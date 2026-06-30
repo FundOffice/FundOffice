@@ -58,6 +58,10 @@ public abstract class TokenProviderBase : ITokenProvider
                     textBuilder.Append(td.Text);
                     break;
 
+                case ReasoningDelta:
+                    // 推理内容不进入结果（ChatResult 无此字段），忽略
+                    break;
+
                 case ToolCallDelta tcd:
                     // 首次见到此 Id 时创建累积器
                     if (!toolCalls.TryGetValue(tcd.Id, out var acc))

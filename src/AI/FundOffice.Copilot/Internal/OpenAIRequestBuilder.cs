@@ -40,7 +40,7 @@ namespace FundOffice.Copilot.Internal;
 /// }
 /// </code>
 /// </summary>
-internal static class OpenAiRequestBuilder
+internal static class OpenAIRequestBuilder
 {
     private static readonly JsonSerializerOptions s_jsonOptions = new()
     {

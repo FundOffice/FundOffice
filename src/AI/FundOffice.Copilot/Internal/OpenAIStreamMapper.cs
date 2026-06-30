@@ -25,7 +25,7 @@ namespace FundOffice.Copilot.Internal;
 /// 注意：一个 SSE data 行可能同时包含文本增量和工具调用增量，
 /// 所以 MapLine 返回 IEnumerable 而非单个 token。
 /// </summary>
-internal static class OpenAiStreamMapper
+internal static class OpenAIStreamMapper
 {
     /// <summary>
     /// 将一条 SSE data 行解析为零个或多个 StreamingToken。
@@ -79,7 +79,7 @@ internal static class OpenAiStreamMapper
             // 结束原因（最后一个有 choices 的消息中可能出现）
             if (choice.TryGetProperty("finish_reason", out var fr) && fr.ValueKind == JsonValueKind.String)
             {
-                var finishReason = OpenAiRequestBuilder.NormalizeFinishReason(fr.GetString());
+                var finishReason = OpenAIRequestBuilder.NormalizeFinishReason(fr.GetString());
                 if (finishReason is not null)
                     yield return new StreamComplete(finishReason);
             }
@@ -94,6 +94,14 @@ internal static class OpenAiStreamMapper
                 var text = content.GetString();
                 if (!string.IsNullOrEmpty(text))
                     yield return new TextDelta(text);
+            }
+
+            // 推理内容增量（DeepSeek 等推理模型的思维链）
+            if (delta.TryGetProperty("reasoning_content", out var reasoning) && reasoning.ValueKind == JsonValueKind.String)
+            {
+                var text = reasoning.GetString();
+                if (!string.IsNullOrEmpty(text))
+                    yield return new ReasoningDelta(text);
             }
 
             // 工具调用增量

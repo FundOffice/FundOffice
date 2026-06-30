@@ -116,13 +116,18 @@ public partial class ProviderRunViewModel : ObservableObject
             };
 
             var sb = new StringBuilder();
+            var reasoningSb = new StringBuilder();
             await foreach (var token in Provider.ChatCompletionStreamAsync(messages, options: options))
             {
                 switch (token)
                 {
                     case TextDelta td:
                         sb.Append(td.Text);
-                        Usage = sb.Length / 4;
+                        Usage = (sb.Length + reasoningSb.Length) / 4;
+                        break;
+                    case ReasoningDelta rd:
+                        reasoningSb.Append(rd.Text);
+                        Usage = (sb.Length + reasoningSb.Length) / 4;
                         break;
                     case UsageUpdate u:
                         Usage = (u.PromptTokens ?? 0) + (u.CompletionTokens ?? 0);
@@ -243,13 +248,18 @@ public partial class ProviderRunViewModel : ObservableObject
             };
 
             var sb = new StringBuilder();
+            var reasoningSb = new StringBuilder();
             await foreach (var token in Provider.ChatCompletionStreamAsync(messages, options: options))
             {
                 switch (token)
                 {
                     case TextDelta td:
                         sb.Append(td.Text);
-                        Usage = sb.Length / 4;
+                        Usage = (sb.Length + reasoningSb.Length) / 4;
+                        break;
+                    case ReasoningDelta rd:
+                        reasoningSb.Append(rd.Text);
+                        Usage = (sb.Length + reasoningSb.Length) / 4;
                         break;
                     case UsageUpdate u:
                         Usage = (u.PromptTokens ?? 0) + (u.CompletionTokens ?? 0);

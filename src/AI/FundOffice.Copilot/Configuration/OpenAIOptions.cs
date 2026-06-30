@@ -5,7 +5,7 @@ namespace FundOffice.Copilot.Configuration;
 ///
 /// 使用示例：
 /// <code>
-/// var provider = new OpenAiTokenProvider(new OpenAIOptions
+/// var provider = new OpenAITokenProvider(new OpenAIOptions
 /// {
 ///     ApiKey = "sk-xxx",
 ///     Model = "gpt-4o",

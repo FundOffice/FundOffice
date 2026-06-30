@@ -99,6 +99,7 @@ public class CustomQuestionAnswerer
             await foreach (var token in _provider.ChatCompletionStreamAsync(messages, options: options, cancellationToken: ct))
             {
                 if (token is TextDelta td) sb.Append(td.Text);
+                // ReasoningDelta 故意忽略：推理内容不进入结果 JSON
             }
 
             var json = sb.ToString().Trim();
