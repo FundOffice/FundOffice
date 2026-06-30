@@ -93,6 +93,10 @@ public partial class ProviderRunViewModel : ObservableObject
         _sw.Restart();
         try
         {
+            // 清空日志文件
+            Logs.Clear();
+            try { File.WriteAllText(_logPath, ""); } catch { }
+
             // 记录解析前的文档结构
             var structure = FileRetry.Run(() => DocOps.ParseDocument(AbsolutePath), "解析文档");
             if (string.IsNullOrWhiteSpace(structure)) { Fail("无法解析文档"); return; }
@@ -458,7 +462,9 @@ public partial class ProviderRunViewModel : ObservableObject
             ListExpandOp c => $"[c] {c.Entity} T[{c.Range.Table}] rows={c.Range.Start.Row}..{c.Range.End.Row} props={c.Properties.Count}",
             GridOp g when g.EntityPerRow => $"[d] {g.Entity} T[{g.Range.Table}] rows={g.Range.Start.Row}..{g.Range.End.Row} cols={g.Range.Start.Col}..{g.Range.End.Col} filter_by={g.FilterBy} props={g.Properties.Count}\n    {string.Join("\n    ", g.Properties.Select(p => $"prop={p.Prop} row={p.Row} col={p.Col}"))}",
             GridOp g => $"[e] {g.Entity} T[{g.Range.Table}] rows={g.Range.Start.Row}..{g.Range.End.Row} cols={g.Range.Start.Col}..{g.Range.End.Col} filter_by={g.FilterBy} props={g.Properties.Count}\n    {string.Join("\n    ", g.Properties.Select(p => $"prop={p.Prop} row={p.Row} col={p.Col}"))}",
-            ParagraphOp z => $"[z] \"{z.Question}\" → P[{z.Location.Para}]",
+            ParagraphOp z => z.Location.IsCell
+                ? $"[z] \"{z.Question}\" → T[{z.Location.Table}][{z.Location.Row},{z.Location.Col}]"
+                : $"[z] \"{z.Question}\" → P[{z.Location.Para}]",
             UnknownTableOp u => $"[g] T[{u.Range.Table}] {u.Description}",
             _ => $"[?] {op.GetType().Name}"
         };

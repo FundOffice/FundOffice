@@ -396,7 +396,7 @@ public static class DocOps
                         FillGrid(tables, grid, resolver, tableOffsets);
                         break;
                     case ParagraphOp para:
-                        FillParagraph(paragraphs, para, resolver);
+                        FillParagraph(paragraphs, para, resolver, tables, tableOffsets);
                         break;
                     case UnknownTableOp unknown:
                         // Type g: 未知实体表格，无数据可填，记录日志供调试
@@ -694,26 +694,37 @@ public static class DocOps
         }
     }
 
-    private static void FillParagraph(List<Paragraph> paragraphs, ParagraphOp op, DataResolver resolver)
+    private static void FillParagraph(List<Paragraph> paragraphs, ParagraphOp op, DataResolver resolver, List<Table>? tables = null, Dictionary<int, int>? tableOffsets = null)
     {
-        if (!op.Location.IsParagraph) return;
-        var para = op.Location.Para.HasValue ? paragraphs.ElementAtOrDefault(op.Location.Para.Value) : null;
-        if (para == null) return;
-
         string value;
         if (op.Entity != null && op.Property != null)
             value = resolver.Resolve(op.Entity, op.Property, op.Format);
         else
             value = resolver.ResolvePlaceholders(resolver.GetAnswerByQuestion(op.Question));
 
-        if (!string.IsNullOrEmpty(value))
+        if (string.IsNullOrEmpty(value)) return;
+
+        // Type z 在表格单元格中（entity+property 映射到表格内的答案格）
+        if (op.Location.IsCell && tables != null
+            && op.Location.Table.HasValue && op.Location.Row.HasValue && op.Location.Col.HasValue)
         {
-            // 目标段落已有内容（如问题文本），在其后插入新段落写入答案，避免覆盖
-            // 但如果段落少于6个字，视为空段落，直接覆盖
-            if (!string.IsNullOrWhiteSpace(para.InnerText) && para.InnerText.Length >= 6)
-                para = InsertParagraphAfter(para);
-            SetParaContent(para, value);
+            var tableIdx = op.Location.Table.Value;
+            var rowIdx = op.Location.Row.Value + (tableOffsets?.GetValueOrDefault(tableIdx) ?? 0);
+            var cell = GetCell(tables, tableIdx, rowIdx, op.Location.Col.Value);
+            if (cell != null) SetCellContent(cell, value);
+            return;
         }
+
+        // Type z 在段落中
+        if (!op.Location.IsParagraph) return;
+        var para = op.Location.Para.HasValue ? paragraphs.ElementAtOrDefault(op.Location.Para.Value) : null;
+        if (para == null) return;
+
+        // 目标段落已有内容（如问题文本），在其后插入新段落写入答案，避免覆盖
+        // 但如果段落少于6个字，视为空段落，直接覆盖
+        if (!string.IsNullOrWhiteSpace(para.InnerText) && para.InnerText.Length >= 6)
+            para = InsertParagraphAfter(para);
+        SetParaContent(para, value);
     }
 
     private static TableCell? GetCell(List<Table> tables, int tableIndex, int rowIndex, int colIndex)
