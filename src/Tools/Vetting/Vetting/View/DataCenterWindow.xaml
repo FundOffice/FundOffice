@@ -169,91 +169,6 @@
             </TabItem>
 
             <!--  ═══ 列表项 ═══  -->
-
-            <TabItem Header="人员">
-                <DockPanel>
-                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-                        <Button
-                            Margin="4"
-                            Command="{Binding AddItemCommand}"
-                            CommandParameter="Staff"
-                            Content="新增"
-                            Style="{StaticResource ButtonSuccess}" />
-                        <Button
-                            Margin="4"
-                            Command="{Binding DeleteStaffCommand}"
-                            Content="删除"
-                            Style="{StaticResource ButtonDanger}" />
-                    </StackPanel>
-                    <ListBox
-                        Width="200"
-                        DockPanel.Dock="Left"
-                        ItemsSource="{Binding Staffs}"
-                        SelectedItem="{Binding SelectedStaff}">
-                        <ListBox.ItemContainerStyle>
-                            <Style BasedOn="{StaticResource ListBoxItemBaseStyle}" TargetType="ListBoxItem">
-                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <DockPanel>
-                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Title}" />
-                                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
-                                </DockPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                    <ScrollViewer Padding="8" VerticalScrollBarVisibility="Auto">
-                        <WrapPanel DataContext="{Binding SelectedStaff}" ItemWidth="320">
-                            <hc:TextBox hc:InfoElement.Title="姓名" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:TextBox hc:InfoElement.Title="职务" Text="{Binding Title, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:ComboBox
-                                hc:InfoElement.Title="学历"
-                                ItemsSource="{Binding Source={StaticResource EducationLevels}}"
-                                SelectedItem="{Binding Education}" />
-                            <ItemsControl hc:InfoElement.Title="角色" ItemsSource="{Binding Roles}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <CheckBox
-                                            Margin="2,0"
-                                            Content="{Binding DisplayName}"
-                                            IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <hc:TextBox hc:InfoElement.Title="从业年限" Text="{Binding Years, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:DatePicker hc:InfoElement.Title="出生年月" SelectedDate="{Binding BirthDate, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:TextBox hc:InfoElement.Title="工作职责" Text="{Binding Duty, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:TextBox hc:InfoElement.Title="部门" Text="{Binding Department, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:DatePicker hc:InfoElement.Title="入职时间" SelectedDate="{Binding JoinDate, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:DatePicker hc:InfoElement.Title="离职时间" SelectedDate="{Binding LeaveDate, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:TextBox hc:InfoElement.Title="离职原因" Text="{Binding LeaveReason, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:TextBox hc:InfoElement.Title="是否兼职" Text="{Binding HasPartTimeJob, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-
-                            <hc:TextBox hc:InfoElement.Title="擅长领域" Text="{Binding Specialty, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:TextBox hc:InfoElement.Title="投研重点" Text="{Binding ResearchFocus, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:TextBox hc:InfoElement.Title="手机" Text="{Binding MobilePhone, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:TextBox hc:InfoElement.Title="固定电话" Text="{Binding Telephone, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:TextBox hc:InfoElement.Title="邮箱" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:TextBox hc:InfoElement.Title="身份证号" Text="{Binding IdNumber, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                            <hc:ComboBox
-                                hc:InfoElement.Title="所属部门"
-                                DisplayMemberPath="Name"
-                                ItemsSource="{Binding DataContext.Departments, ElementName=Tabs}"
-                                SelectedValue="{Binding DepartmentId}"
-                                SelectedValuePath="Entity.Id" />
-                            <hc:TextBox hc:InfoElement.Title="详细履历" Text="{Binding Profile, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
-                        </WrapPanel>
-                    </ScrollViewer>
-                </DockPanel>
-            </TabItem>
-
             <TabItem Header="股东">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
@@ -325,6 +240,7 @@
                 </DockPanel>
             </TabItem>
 
+
             <TabItem Header="部门">
                 <DockPanel>
                     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
@@ -382,6 +298,92 @@
                     </DataGrid>
                 </DockPanel>
             </TabItem>
+
+            <TabItem Header="人员">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                        <Button
+                            Margin="4"
+                            Command="{Binding AddItemCommand}"
+                            CommandParameter="Staff"
+                            Content="新增"
+                            Style="{StaticResource ButtonSuccess}" />
+                        <Button
+                            Margin="4"
+                            Command="{Binding DeleteStaffCommand}"
+                            Content="删除"
+                            Style="{StaticResource ButtonDanger}" />
+                    </StackPanel>
+                    <ListBox
+                        Width="200"
+                        DockPanel.Dock="Left"
+                        ItemsSource="{Binding Staffs}"
+                        SelectedItem="{Binding SelectedStaff}">
+                        <ListBox.ItemContainerStyle>
+                            <Style BasedOn="{StaticResource ListBoxItemBaseStyle}" TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel>
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Title}" />
+                                    <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <ScrollViewer Padding="8" VerticalScrollBarVisibility="Auto">
+                        <WrapPanel DataContext="{Binding SelectedStaff}" ItemWidth="320">
+                            <hc:TextBox hc:InfoElement.Title="姓名" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="职务" Text="{Binding Title, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:ComboBox
+                                hc:InfoElement.Title="学历"
+                                ItemsSource="{Binding Source={StaticResource EducationLevels}}"
+                                SelectedItem="{Binding Education}" />
+                            <ItemsControl hc:InfoElement.Title="角色" ItemsSource="{Binding Roles}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox
+                                            Margin="2,0"
+                                            Content="{Binding DisplayName}"
+                                            IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <hc:TextBox hc:InfoElement.Title="从业年限" Text="{Binding Years, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:DatePicker hc:InfoElement.Title="出生年月" SelectedDate="{Binding BirthDate, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="工作职责" Text="{Binding Duty, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:DatePicker hc:InfoElement.Title="入职时间" SelectedDate="{Binding JoinDate, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:DatePicker hc:InfoElement.Title="离职时间" SelectedDate="{Binding LeaveDate, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="离职原因" Text="{Binding LeaveReason, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="是否兼职" Text="{Binding HasPartTimeJob, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+
+                            <hc:TextBox hc:InfoElement.Title="擅长领域" Text="{Binding Specialty, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="投研重点" Text="{Binding ResearchFocus, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="手机" Text="{Binding MobilePhone, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="固定电话" Text="{Binding Telephone, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="邮箱" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:TextBox hc:InfoElement.Title="身份证号" Text="{Binding IdNumber, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                            <hc:ComboBox
+                                hc:InfoElement.Title="部门"
+                                DisplayMemberPath="Name"
+                                ItemsSource="{Binding DataContext.Departments, ElementName=Tabs}"
+                                SelectedValue="{Binding DepartmentId}"
+                                SelectedValuePath="Entity.Id" />
+                            <hc:TextBox hc:InfoElement.Title="详细履历" Text="{Binding Profile, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                        </WrapPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
+
+
+
 
             <TabItem Header="策略">
                 <DockPanel>
@@ -679,15 +681,42 @@
                         ItemsSource="{Binding ProductLines}"
                         SelectedItem="{Binding CurrentItem, Mode=OneWayToSource}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Width="120" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="产品线名称" />
-                            <DataGridTextColumn Width="100" Binding="{Binding StrategyType, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="策略类型" />
-                            <DataGridTextColumn Width="120" Binding="{Binding SpecificStrategy, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="具体策略" />
-                            <DataGridTextColumn Width="120" Binding="{Binding RepresentProduct, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="代表产品" />
-                            <DataGridTextColumn Width="100" Binding="{Binding Manager, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="投资经理" />
-                            <DataGridTextColumn Width="80" Binding="{Binding FundCount, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="产品只数" />
-                            <DataGridTextColumn Width="100" Binding="{Binding Scale, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="管理规模(万)" />
-                            <DataGridTextColumn Width="100" Binding="{Binding TradingScale, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="交易层规模(万)" />
-                            <DataGridTextColumn Width="100" Binding="{Binding Capacity, UpdateSourceTrigger=PropertyChanged, Delay=200}" Header="容量上限(万)" />
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="产品线名称" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding StrategyType, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="策略类型" />
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding SpecificStrategy, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="具体策略" />
+                            <DataGridTextColumn
+                                Width="120"
+                                Binding="{Binding RepresentProduct, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="代表产品" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding Manager, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="投资经理" />
+                            <DataGridTextColumn
+                                Width="80"
+                                Binding="{Binding FundCount, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="产品只数" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding Scale, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="管理规模(万)" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding TradingScale, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="交易层规模(万)" />
+                            <DataGridTextColumn
+                                Width="100"
+                                Binding="{Binding Capacity, UpdateSourceTrigger=PropertyChanged, Delay=200}"
+                                Header="容量上限(万)" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -867,7 +896,7 @@
             </TabItem>
 
 
-            <Separator/>
+            <Separator />
 
 
 
@@ -926,31 +955,34 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <StackPanel Margin="4" Width="200">
-                                            <TextBlock Margin="0,0,0,4" FontWeight="SemiBold" Text="{Binding Name}" />
+                                        <StackPanel Width="200" Margin="4">
+                                            <TextBlock
+                                                Margin="0,0,0,4"
+                                                FontWeight="SemiBold"
+                                                Text="{Binding Name}" />
                                             <UniformGrid Rows="1">
                                                 <Border
-                                                Margin="2"
-                                                Padding="6"
-                                                Background="{DynamicResource RegionBrush}"
-                                                BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="1"
-                                                AllowDrop="True"
-                                                DragOver="OnCommonDragOver"
-                                                Drop="OnCommonScanDrop"
-                                                Tag="{Binding}">
+                                                    Margin="2"
+                                                    Padding="6"
+                                                    AllowDrop="True"
+                                                    Background="{DynamicResource RegionBrush}"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1"
+                                                    DragOver="OnCommonDragOver"
+                                                    Drop="OnCommonScanDrop"
+                                                    Tag="{Binding}">
                                                     <TextBlock Text="{Binding ScanText}" />
                                                 </Border>
                                                 <Border
-                                                Margin="2"
-                                                Padding="6"
-                                                Background="{DynamicResource RegionBrush}"
-                                                BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="1"
-                                                AllowDrop="True"
-                                                DragOver="OnCommonDragOver"
-                                                Drop="OnCommonStampDrop"
-                                                Tag="{Binding}">
+                                                    Margin="2"
+                                                    Padding="6"
+                                                    AllowDrop="True"
+                                                    Background="{DynamicResource RegionBrush}"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1"
+                                                    DragOver="OnCommonDragOver"
+                                                    Drop="OnCommonStampDrop"
+                                                    Tag="{Binding}">
                                                     <TextBlock Text="{Binding StampText}" />
                                                 </Border>
                                             </UniformGrid>

@@ -92,19 +92,19 @@ public class DataResolver
             ["award"] = allAwards.Select(a => ObjectToDictViaResolve(a, new[]
                 { "Time", "Entity", "Name", "Evaluator" })).ToArray(),
             ["executive"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.高管) && !s.HasLeft)
-                .Select(s => StaffToDict(s)).ToArray(),
+                .Select(s => StaffToDict(s, allDepts)).ToArray(),
             ["researcher"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.投研) && !s.HasLeft)
-                .Select(s => StaffToDict(s)).ToArray(),
+                .Select(s => StaffToDict(s, allDepts)).ToArray(),
             ["riskctrl"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.风控) && !s.HasLeft)
-                .Select(s => StaffToDict(s)).ToArray(),
+                .Select(s => StaffToDict(s, allDepts)).ToArray(),
             ["pm"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.投资经理) && !s.HasLeft)
-                .Select(s => StaffToDict(s)).ToArray(),
+                .Select(s => StaffToDict(s, allDepts)).ToArray(),
             ["contact"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.联系人) && !s.HasLeft)
-                .Select(s => StaffToDict(s)).ToArray(),
+                .Select(s => StaffToDict(s, allDepts)).ToArray(),
             ["compliance"] = allStaff.Where(s => s.Role.HasFlag(StaffRole.合规) && !s.HasLeft)
-                .Select(s => StaffToDict(s)).ToArray(),
+                .Select(s => StaffToDict(s, allDepts)).ToArray(),
             ["departedstaff"] = allStaff.Where(s => s.HasLeft)
-                .Select(s => StaffToDict(s)).ToArray(),
+                .Select(s => StaffToDict(s, allDepts)).ToArray(),
         };
 
         var fsList = db.FinancialStatements.FindAll().OrderByDescending(f => f.Year).ToArray();
@@ -252,15 +252,20 @@ public class DataResolver
         return dict;
     }
 
-    private static Dictionary<string, string> StaffToDict(Staff s)
+    private static Dictionary<string, string> StaffToDict(Staff s, Department[] allDepts)
     {
-        return ObjectToDictViaResolve(s, new[]
+        var dict = ObjectToDictViaResolve(s, new[]
         {
-            "Name", "Title", "Duty", "Department", "Education", "Profile", "IdNumber", "Years",
+            "Name", "Title", "Duty", "Education", "Profile", "IdNumber", "Years",
             "Age", "BirthDate", "JoinDate", "LeaveDate", "LeaveReason", "HasPartTimeJob",
             "Specialty", "ResearchFocus",
             "MobilePhone", "Telephone", "Email"
         });
+        // Department 通过 DepartmentId 查找，而非 Staff.Department 字符串
+        dict["Department"] = s.DepartmentId.HasValue
+            ? allDepts.FirstOrDefault(d => d.Id == s.DepartmentId.Value)?.Name ?? ""
+            : "";
+        return dict;
     }
 
     private static int[] LoadGlobalRecommendIds(VettingDbContext db)
