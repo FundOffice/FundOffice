@@ -2,7 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using FundOffice.Copilot.Models;
 using FundOffice.Copilot.Providers;
-using System.Collections.ObjectModel;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -13,6 +13,7 @@ using Vetting.Copilot.Data;
 using Vetting.Copilot.Models.Entities;
 using Vetting.Data;
 using Vetting.Entity;
+using Vetting.Logging;
 
 namespace Vetting.ViewModel;
 
@@ -52,7 +53,7 @@ public partial class ProviderRunViewModel : ObservableObject
     [ObservableProperty] public partial string Tip { get; set; } = "";
 
     // ── 日志 ──
-    public ObservableCollection<string> Logs { get; } = [];
+    private readonly ILogger _logger;
     private readonly string _logPath;
 
 
@@ -68,19 +69,7 @@ public partial class ProviderRunViewModel : ObservableObject
         VettingId = vettingId;
         AbsolutePath = absolutePath;
         _logPath = Path.Combine("files", "vetting", "logs", $"{fileName}_{providerId}.txt");
-    }
-
-    private void Log(string message)
-    {
-        Logs.Add(message);
-        // 追加写日志文件
-        try
-        {
-            var dir = Path.GetDirectoryName(_logPath)!;
-            Directory.CreateDirectory(dir);
-            File.AppendAllText(_logPath, $"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}");
-        }
-        catch { }
+        _logger = new VettingLogProvider(_logPath).CreateLogger(providerId);
     }
 
     // ── 解析 ──────────────────────────────────────────
@@ -93,19 +82,15 @@ public partial class ProviderRunViewModel : ObservableObject
         _sw.Restart();
         try
         {
-            // 清空日志文件
-            Logs.Clear();
-            try { File.WriteAllText(_logPath, ""); } catch { }
-
             // 记录解析前的文档结构
             var structure = FileRetry.Run(() => DocOps.ParseDocument(AbsolutePath), "解析文档");
             if (string.IsNullOrWhiteSpace(structure)) { Fail("无法解析文档"); return; }
 
             // 记录文档结构到日志
-            Log("=== 文档结构 ===");
-            Log(structure);
+            _logger.LogInformation("=== 文档结构 ===");
+            _logger.LogInformation("{Structure}", structure);
 
-            var sysPrompt = await TemplateGenerator.LoadSysptAsync();
+            var sysPrompt = await PromptService.LoadSysptAsync();
             var messages = new[]
             {
                 ChatMessage.System(sysPrompt),
@@ -164,13 +149,13 @@ public partial class ProviderRunViewModel : ObservableObject
 
             // 解析并收集警告
             var (operators, warnings) = OperatorParser.ParseWithWarnings(opsEl);
-            foreach (var w in warnings) Log($"⚠ {w}");
+            foreach (var w in warnings) _logger.LogWarning("⚠ {Warning}", w);
 
             // 记录解析结果到日志
-            Log("=== 解析结果 ===");
+            _logger.LogInformation("=== 解析结果 ===");
             foreach (var op in operators)
             {
-                Log(FormatOperator(op));
+                _logger.LogInformation("{Operator}", FormatOperator(op));
             }
 
             // 提取 Type z 的 question 保存为 FileSpecialQuestion
@@ -203,7 +188,7 @@ public partial class ProviderRunViewModel : ObservableObject
                 questionCount = idx;
             }
 
-            Log($"已保存到数据库 ({operators.Count} 操作, {questionCount} 个自定义问题)");
+            _logger.LogInformation("已保存到数据库 ({OperatorCount} 操作, {QuestionCount} 个自定义问题)", operators.Count, questionCount);
             _sw.Stop();
             ParseStatus = TaskStatus.Done;
             Elapsed = FormatElapsed(_sw.Elapsed);
@@ -229,15 +214,15 @@ public partial class ProviderRunViewModel : ObservableObject
 
             if (questions.Length == 0)
             {
-                Log("没有自定义问题");
+                _logger.LogInformation("没有自定义问题");
                 _sw.Stop(); AnswerStatus = TaskStatus.Done; Elapsed = FormatElapsed(_sw.Elapsed);
                 Tip = "无需回答";
                 return;
             }
 
             var qaList = db.QA.FindAll().ToArray();
-            var prompt = CustomQuestionAnswerer.BuildPrompt(qaList, questions, IsFullMode);
-            var systemPrompt = CustomQuestionAnswerer.GetSystemPrompt(IsFullMode);
+            var prompt = PromptService.BuildQAPrompt(qaList, questions, IsFullMode);
+            var systemPrompt = PromptService.GetQASystemPrompt(IsFullMode);
             var messages = new[]
             {
                 ChatMessage.System(systemPrompt),
@@ -284,7 +269,7 @@ public partial class ProviderRunViewModel : ObservableObject
                 var q = questions.FirstOrDefault(x => x.Index == idx);
                 if (q == null) continue;
                 var answer = prop.Value.GetString() ?? "";
-                var (processedAnswer, isInferred) = CustomQuestionAnswerer.ProcessAnswer(answer, IsFullMode);
+                var (processedAnswer, isInferred) = PromptService.ProcessAnswer(answer, IsFullMode);
                 answer = processedAnswer;
 
                 if (!string.IsNullOrWhiteSpace(answer))
@@ -304,12 +289,12 @@ public partial class ProviderRunViewModel : ObservableObject
                     db.SpecialAnswers.Insert(new SpecialAnswer { QuestionId = q.Id, Identifier = ProviderName, Value = answer });
                 }
 
-                Log($"{{{{a{idx}}}}}  {q.Question}\n    → {answer}");
+                _logger.LogInformation("{{a{Idx}}}  {Question}\n    → {Answer}", idx, q.Question, answer);
                 count++;
             }
 
             var tip = $"精确 {exactCount} 条" + (IsFullMode ? $"，推断 {inferredCount} 条" : "") + $"，共 {count} 条";
-            Log($"回答完成：{tip}");
+            _logger.LogInformation("回答完成：{Tip}", tip);
             _sw.Stop(); AnswerStatus = TaskStatus.Done; Elapsed = FormatElapsed(_sw.Elapsed);
             Tip = tip;
         }
@@ -317,7 +302,7 @@ public partial class ProviderRunViewModel : ObservableObject
         {
             _sw.Stop(); AnswerStatus = TaskStatus.Error;
             ErrorMessage = ex.Message; Elapsed = FormatElapsed(_sw.Elapsed);
-            Log($"错误: {ex.Message}");
+            _logger.LogError(ex, "错误: {Message}", ex.Message);
         }
     }
 
@@ -354,10 +339,10 @@ public partial class ProviderRunViewModel : ObservableObject
                     recommanded = rec?.FundIds?.Split(',').Select(x => int.TryParse(x, out var d) ? d : 0).Where(x => x > 0).ToArray() ?? [];
                 }
             }
-            if (json == null) { Log("无解析结果（请先解析）"); Fail("无解析结果"); return; }
+            if (json == null) { _logger.LogWarning("无解析结果（请先解析）"); Fail("无解析结果"); return; }
             using var jsonDoc = JsonDocument.Parse(json);
             var operators = OperatorParser.Parse(jsonDoc.RootElement.GetProperty("operations"));
-            Log($"已解析 {operators.Count} 个操作");
+            _logger.LogInformation("已解析 {Count} 个操作", operators.Count);
 
             // 收集 files 并直接映射（单 provider 无需投票）
             List<KeyValuePair<int, string>> fileMappings = [];
@@ -376,15 +361,15 @@ public partial class ProviderRunViewModel : ObservableObject
             var resolver = await Task.Run(() => DataResolver.Load(FileName, ProviderId, recommanded));
             var outPath = Path.Combine(finalDir, $"{FileName}");
             await Task.Run(() => FileRetry.Run(
-                () => DocOps.Fill(AbsolutePath, outPath, operators, resolver),
+                () => DocOps.Fill(AbsolutePath, outPath, operators, resolver, _logger),
                 "填充文档",
-                onRetry: msg => Log(msg)));
+                onRetry: msg => _logger.LogWarning("{Message}", msg)));
 
             // 复制附件
             if (fileMappings.Count > 0)
-                PredFiles.CopyMappedFiles(finalDir, fileMappings, onLog: msg => Log(msg));
+                PredFiles.CopyMappedFiles(finalDir, fileMappings, onLog: msg => _logger.LogInformation("{Message}", msg));
 
-            Log($"已生成: {outPath}");
+            _logger.LogInformation("已生成: {OutPath}", outPath);
             _sw.Stop(); FillStatus = TaskStatus.Done; Elapsed = FormatElapsed(_sw.Elapsed);
             Tip = "报告已导出";
         }
@@ -445,7 +430,7 @@ public partial class ProviderRunViewModel : ObservableObject
         if (FillStatus == TaskStatus.Running) FillStatus = TaskStatus.Error;
         ErrorMessage = message;
         Elapsed = FormatElapsed(_sw.Elapsed);
-        Log($"错误: {message}");
+        _logger.LogError("错误: {Message}", message);
     }
 
     private static string FormatElapsed(TimeSpan ts)

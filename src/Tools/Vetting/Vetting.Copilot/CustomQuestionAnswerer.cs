@@ -79,9 +79,9 @@ public class CustomQuestionAnswerer
             }
 
             var qaList = db.QA.FindAll().ToArray();
-            var prompt = BuildPrompt(qaList, questions, isFullMode);
+            var prompt = PromptService.BuildQAPrompt(qaList, questions, isFullMode);
 
-            var systemPrompt = GetSystemPrompt(isFullMode);
+            var systemPrompt = PromptService.GetQASystemPrompt(isFullMode);
             var messages = new[]
             {
                 ChatMessage.System(systemPrompt),
@@ -115,7 +115,7 @@ public class CustomQuestionAnswerer
                 var q = questions.FirstOrDefault(x => x.Index == idx);
                 if (q == null) continue;
                 var answer = prop.Value.GetString() ?? "";
-                var (processedAnswer, isInferred) = ProcessAnswer(answer, isFullMode);
+                var (processedAnswer, isInferred) = PromptService.ProcessAnswer(answer, isFullMode);
                 answer = processedAnswer;
 
                 answers.Add((idx, q.Question ?? "", answer));
@@ -178,55 +178,5 @@ public class CustomQuestionAnswerer
         }
 
         return result;
-    }
-
-    public static string GetSystemPrompt(bool isFullMode) => isFullMode
-        ? "你是一名尽调报告填写者。优先根据提供的历史问答资料精确回答问题；如果资料中没有相关信息，请以该公司运营的实际情况为背景，用肯定的语气给出合理的推断回答，并在该回答开头加上【推断】标记。回答要像直接填写尽调表格一样简洁明确，不要出现「根据资料」「资料显示」等引用性表述。"
-        : "你是一名尽职调查分析师，根据提供的历史问答资料，准确回答尽调问题。直接回答，不要废话。如果资料中没有相关信息，回答\"\"(空字符串)。";
-
-    /// <summary>处理 AI 返回的答案：检测【推断】标记，full 模式加（ai）前缀，strict 模式置空</summary>
-    public static (string answer, bool isInferred) ProcessAnswer(string answer, bool isFullMode)
-    {
-        if (answer.Contains("暂无相关信息")) answer = "";
-        if (string.IsNullOrWhiteSpace(answer)) return (answer, false);
-
-        var isInferred = answer.StartsWith("【推断】");
-        if (isInferred)
-        {
-            answer = answer["【推断】".Length..];
-            if (isFullMode) answer = $"（ai）{answer}";
-            else answer = "";
-        }
-        return (answer, isInferred);
-    }
-
-    public static string BuildPrompt(QA[] qaList, FileSpecialQuestion[] questions, bool isFullMode)
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine("## 历史问答资料");
-
-        // 检测是否包含占位符
-        bool hasPlaceholders = false;
-        foreach (var qa in qaList)
-        {
-            sb.AppendLine($"问: {qa.Question}");
-            sb.AppendLine($"答: {qa.Answer}");
-            sb.AppendLine();
-            if (!hasPlaceholders && (qa.Answer.Contains("{{") || qa.Answer.Contains("[img#")))
-                hasPlaceholders = true;
-        }
-
-        if (hasPlaceholders)
-            sb.AppendLine("⚠️ 注意: 上述资料中包含 `{{xx.}}` 模板占位符或 `[img#N]` 图片占位符，回答时必须原样保留这些占位符，不得替换、修改或省略。");
-
-        sb.AppendLine("## 待回答问题");
-        foreach (var q in questions)
-            sb.AppendLine($"{{a{q.Index}}}: {q.Question}");
-        sb.AppendLine();
-        sb.AppendLine("请严格按以下 JSON 格式回答:");
-        sb.AppendLine(@"{""answers"": {""a1"": ""回答内容"", ""a2"": ""回答内容""}}");
-        if (isFullMode)
-            sb.AppendLine(@"如果某问题的回答不是来自上面的历史问答资料，而是你根据专业判断得出的，请在该回答开头加上【推断】标记。例如: ""【推断】这是推断的回答内容""");
-        return sb.ToString();
     }
 }

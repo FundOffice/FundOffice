@@ -6,6 +6,7 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using A = DocumentFormat.OpenXml.Drawing;
 using DW = DocumentFormat.OpenXml.Drawing.Wordprocessing;
 using PIC = DocumentFormat.OpenXml.Drawing.Pictures;
+using Microsoft.Extensions.Logging;
 using Vetting.Copilot.Data;
 using Vetting.Copilot.Models.Info;
 
@@ -300,7 +301,7 @@ public static class DocOps
     }
 
     /// <summary>批量写入：单次打开文档，应用所有 set_cell/set_paragraph 操作，一次保存</summary>
-    public static void BatchWrite(string filePath, IEnumerable<(string tool, Dictionary<string, JsonElement> input)> operations)
+    public static void BatchWrite(string filePath, IEnumerable<(string tool, Dictionary<string, JsonElement> input)> operations, ILogger? logger = null)
     {
         using var doc = WordprocessingDocument.Open(filePath, true);
         var body = doc.MainDocumentPart!.Document.Body!;
@@ -325,7 +326,7 @@ public static class DocOps
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"DocOps.BatchWrite error: {ex}");
+                logger?.LogError(ex, "DocOps.BatchWrite error");
             }
         }
         doc.MainDocumentPart.Document.Save();
@@ -363,7 +364,7 @@ public static class DocOps
     /// <summary>
     /// 按 operator 列表直接填充文档（无占位符，直接写值）
     /// </summary>
-    public static void Fill(string templatePath, string outputPath, IReadOnlyList<FillOperator> operators, DataResolver resolver)
+    public static void Fill(string templatePath, string outputPath, IReadOnlyList<FillOperator> operators, DataResolver resolver, ILogger? logger = null)
     {
         var outDir = Path.GetDirectoryName(outputPath)!;
         Directory.CreateDirectory(outDir);
@@ -393,28 +394,28 @@ public static class DocOps
                         FillListExpand(tables, list, resolver, tableOffsets);
                         break;
                     case GridOp grid:
-                        FillGrid(tables, grid, resolver, tableOffsets);
+                        FillGrid(tables, grid, resolver, tableOffsets, logger);
                         break;
                     case ParagraphOp para:
                         FillParagraph(paragraphs, para, resolver, tables, tableOffsets);
                         break;
                     case UnknownTableOp unknown:
                         // Type g: 未知实体表格，无数据可填，记录日志供调试
-                        System.Diagnostics.Debug.WriteLine($"[Type g] 跳过未知表格 T[{unknown.Range.Table}]: {unknown.Description}");
+                        logger?.LogWarning("[Type g] 跳过未知表格 T[{Table}]: {Description}", unknown.Range.Table, unknown.Description);
                         break;
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"DocOps.Fill error ({op}): {ex}");
+                logger?.LogError(ex, "DocOps.Fill error ({Op})", op);
             }
         }
 
         // 处理图片占位符
         var imgCount = ImagePlaceholderRegex.Matches(body.InnerText).Count;
         if (imgCount > 0)
-            System.Diagnostics.Debug.WriteLine($"[图片处理] 发现 {imgCount} 个图片占位符");
-        ProcessImagePlaceholders(doc.MainDocumentPart, body);
+            logger?.LogInformation("[图片处理] 发现 {Count} 个图片占位符", imgCount);
+        ProcessImagePlaceholders(doc.MainDocumentPart, body, logger);
 
         doc.MainDocumentPart.Document.Save();
     }
@@ -537,7 +538,7 @@ public static class DocOps
         }
     }
 
-    private static void FillGrid(List<Table> tables, GridOp op, DataResolver resolver, Dictionary<int, int> offsets)
+    private static void FillGrid(List<Table> tables, GridOp op, DataResolver resolver, Dictionary<int, int> offsets, ILogger? logger = null)
     {
         var tableIdx = op.Range.Table;
         var table = tables.ElementAtOrDefault(tableIdx);
@@ -562,7 +563,7 @@ public static class DocOps
             var allColZero = op.Properties.All(p => p.Col == 0);
             if (allColZero && op.Properties.Count > 0)
             {
-                System.Diagnostics.Debug.WriteLine($"[跳过] Type d T[{tableIdx}] 所有 properties 的 col=0（行头列），请检查 AI 解析结果");
+                logger?.LogWarning("[跳过] Type d T[{Table}] 所有 properties 的 col=0（行头列），请检查 AI 解析结果", tableIdx);
                 return;
             }
         }
@@ -638,7 +639,7 @@ public static class DocOps
             // 如果 properties 没有提供有效的数据列，无法安全推导数据区边界（range.start 可能含行头列），跳过
             if (distinctCols.Count == 0)
             {
-                System.Diagnostics.Debug.WriteLine($"[跳过] Type e T[{tableIdx}] properties 无有效 col，无法定位数据列（可能缺少 col 字段或全部 col=0）");
+                logger?.LogWarning("[跳过] Type e T[{Table}] properties 无有效 col，无法定位数据列（可能缺少 col 字段或全部 col=0）", tableIdx);
                 return;
             }
 
@@ -825,7 +826,7 @@ public static class DocOps
     /// <summary>
     /// 处理文档中的图片占位符 [img#id]，在原位置替换为实际图片
     /// </summary>
-    private static void ProcessImagePlaceholders(MainDocumentPart mainPart, Body body)
+    private static void ProcessImagePlaceholders(MainDocumentPart mainPart, Body body, ILogger? logger = null)
     {
         // 预加载所有图片元数据
         var photoCache = new Dictionary<int, PhotoMap>();
@@ -838,7 +839,7 @@ public static class DocOps
         // 遍历所有段落
         foreach (var para in body.Elements<Paragraph>())
         {
-            ProcessParagraphImages(mainPart, para, photoCache);
+            ProcessParagraphImages(mainPart, para, photoCache, logger);
         }
 
         // 处理表格单元格中的段落
@@ -850,7 +851,7 @@ public static class DocOps
                 {
                     foreach (var para in cell.Elements<Paragraph>())
                     {
-                        ProcessParagraphImages(mainPart, para, photoCache);
+                        ProcessParagraphImages(mainPart, para, photoCache, logger);
                     }
                 }
             }
@@ -860,7 +861,7 @@ public static class DocOps
     /// <summary>
     /// 处理单个段落中的图片占位符
     /// </summary>
-    private static void ProcessParagraphImages(MainDocumentPart mainPart, Paragraph para, Dictionary<int, PhotoMap> photoCache)
+    private static void ProcessParagraphImages(MainDocumentPart mainPart, Paragraph para, Dictionary<int, PhotoMap> photoCache, ILogger? logger = null)
     {
         // 收集需要处理的 Run（从后往前处理，避免索引问题）
         var runs = para.Elements<Run>().ToList();
@@ -873,14 +874,14 @@ public static class DocOps
             var text = run.InnerText;
             if (!DataResolver.HasImagePlaceholders(text)) continue;
 
-            ProcessRunImages(mainPart, para, run, photoCache);
+            ProcessRunImages(mainPart, para, run, photoCache, logger);
         }
     }
 
     /// <summary>
     /// 处理单个 Run 中的图片占位符，将占位符替换为图片
     /// </summary>
-    private static void ProcessRunImages(MainDocumentPart mainPart, Paragraph para, Run run, Dictionary<int, PhotoMap> photoCache)
+    private static void ProcessRunImages(MainDocumentPart mainPart, Paragraph para, Run run, Dictionary<int, PhotoMap> photoCache, ILogger? logger = null)
     {
         var text = run.InnerText;
         if (string.IsNullOrEmpty(text)) return;
@@ -901,14 +902,14 @@ public static class DocOps
             if (!int.TryParse(match.Groups[1].Value, out var imgId)) continue;
             if (!photoCache.TryGetValue(imgId, out var photo))
             {
-                System.Diagnostics.Debug.WriteLine($"[img#{imgId}] PhotoMap 不存在，跳过");
+                logger?.LogWarning("[img#{ImgId}] PhotoMap 不存在，跳过", imgId);
                 continue;
             }
 
-            var drawing = CreateImageDrawing(mainPart, photo);
+            var drawing = CreateImageDrawing(mainPart, photo, logger);
             if (drawing == null)
             {
-                System.Diagnostics.Debug.WriteLine($"[img#{imgId}] CreateImageDrawing 返回 null，跳过");
+                logger?.LogWarning("[img#{ImgId}] CreateImageDrawing 返回 null，跳过", imgId);
                 continue;
             }
 
@@ -968,14 +969,14 @@ public static class DocOps
     /// <summary>
     /// 创建 OpenXML Drawing 元素，插入图片到文档
     /// </summary>
-    private static Drawing? CreateImageDrawing(MainDocumentPart mainPart, PhotoMap photo)
+    private static Drawing? CreateImageDrawing(MainDocumentPart mainPart, PhotoMap photo, ILogger? logger = null)
     {
-        if (photo.FileId == null) { System.Diagnostics.Debug.WriteLine($"[img#{photo.Id}] FileId 为 null"); return null; }
+        if (photo.FileId == null) { logger?.LogWarning("[img#{PhotoId}] FileId 为 null", photo.Id); return null; }
 
         // 从 FileStorage 读取图片
         using var db = new VettingDbContext();
         using var stream = db.GetPhotoStream(photo.FileId);
-        if (stream == null) { System.Diagnostics.Debug.WriteLine($"[img#{photo.Id}] GetPhotoStream 返回 null (FileId={photo.FileId})"); return null; }
+        if (stream == null) { logger?.LogWarning("[img#{PhotoId}] GetPhotoStream 返回 null (FileId={FileId})", photo.Id, photo.FileId); return null; }
 
         // 确定 ImagePartType
         var imagePartType = photo.ContentType switch
@@ -1062,4 +1063,3 @@ public static class DocOps
 
     #endregion
 }
-
