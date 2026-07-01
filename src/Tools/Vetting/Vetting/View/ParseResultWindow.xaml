@@ -306,7 +306,7 @@
                     <!--  展开区域：TextBox + 保存按钮  -->
                     <StackPanel Margin="0,5,0,0" Visibility="{Binding IsExpanded, Converter={StaticResource Boolean2VisibilityConverter}}">
                         <TextBox
-                            MinHeight="60"
+                            MaxHeight="120"
                             Margin="0,0,0,5"
                             AcceptsReturn="True"
                             Text="{Binding ManualAnswer, UpdateSourceTrigger=PropertyChanged}" />

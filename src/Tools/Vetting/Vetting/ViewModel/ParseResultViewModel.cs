@@ -309,6 +309,9 @@ public partial class OperationItemViewModel : ObservableObject
                     var existing = db.QA.FindOne(q => q.Question == z.Question);
                     if (existing != null)
                         ManualAnswer = existing.Answer ?? "";
+
+                    if (!string.IsNullOrWhiteSpace(ManualAnswer))
+                        IsExpanded = true;
                 }
                 break;
 
