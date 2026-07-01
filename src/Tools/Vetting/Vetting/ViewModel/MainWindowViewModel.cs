@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -16,6 +17,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable, IRecip
 {
     [ObservableProperty] public partial VettingReportViewModel? SelectedVetting { get; set; }
     [ObservableProperty] public partial string? SearchText { get; set; }
+    [ObservableProperty] public partial string? IP { get; set; }
 
     public const string AnswerModeStrict = "精确";
     public const string AnswerModeFull = "完整";
@@ -59,6 +61,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable, IRecip
 
         foreach (var report in _db.Reports.FindAll())
             VettingList.Add(new VettingReportViewModel(report));
+
+        _ = RefreshIP(); // 启动时获取 IP
     }
 
     partial void OnAnswerModeChanged(string value)
@@ -124,6 +128,20 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable, IRecip
 
     [RelayCommand]
     private void OpenDataCenter() => new DataCenterWindow { Owner = Application.Current.MainWindow, DataContext = new DataCenterViewModel() }.Show();
+
+    [RelayCommand]
+    private async Task RefreshIP()
+    {
+        try
+        {
+            using var http = new HttpClient();
+            IP = await http.GetStringAsync("https://ip.sb");
+        }
+        catch
+        {
+            IP = "获取失败";
+        }
+    }
 
     public void Receive(AIProviderChanged message)
     {
