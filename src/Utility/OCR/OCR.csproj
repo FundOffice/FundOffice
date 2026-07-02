@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MoT.Logg" Version="1.1.8" />
-    <PackageReference Include="RapidOCRSharpOnnx" Version="1.0.7" />
+    <PackageReference Include="MoT.Logg" Version="1.1.9" />
+    <PackageReference Include="RapidOCRSharpOnnx" Version="1.2.2" />
   </ItemGroup>
 	<ItemGroup>
 	  <None Update="modelfiles\ch_PP-LCNet_x0_25_textline_ori_cls_mobile.onnx">

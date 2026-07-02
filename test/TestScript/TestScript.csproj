@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CS-Script" Version="4.14.8" />
+    <PackageReference Include="CS-Script" Version="4.14.11" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="5.3.0" />
-    <PackageReference Include="MSTest" Version="4.0.2" />
+    <PackageReference Include="MSTest" Version="4.2.3" />
   </ItemGroup>
 
   <ItemGroup>
