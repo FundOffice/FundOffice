@@ -183,7 +183,7 @@ public partial class AddTokenProviderWindowViewModel : ObservableObject
         switch (Style)
         {
             case TokenProviderStyle.OpenAI:
-                return await FetchOpenAiModels(client);
+                return await FetchOpenAIModels(client);
 
             case TokenProviderStyle.Anthropic:
                 return await FetchAnthropicModels(client);
@@ -196,7 +196,7 @@ public partial class AddTokenProviderWindowViewModel : ObservableObject
         }
     }
 
-    private async Task<string[]> FetchOpenAiModels(HttpClient client)
+    private async Task<string[]> FetchOpenAIModels(HttpClient client)
     {
         var modelsUrl = _vm!.ModelsUrl;
 

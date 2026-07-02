@@ -370,6 +370,14 @@ FodyWeavers.xsd
 /src/Tools/TemplateBuilder/
 /src/Tools/TemplateBuilder/Program.cs
 /.qoder
+/test/TestAI/docx
+/test/TestAI/facts/XiaoMi
+/src/Tools/Vetting/test-files
+/src/Tools/Vetting/test-output
+/video
+*.db
+/src/Tools/Vetting/test-files2
+/src/Tools/Vetting/test-output2
 /test/TestAI
 /video
 /temp
