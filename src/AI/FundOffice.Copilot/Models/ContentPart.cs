@@ -51,3 +51,24 @@ public sealed record ToolResultContent(
     string Result,
     bool IsError = false
 ) : ContentPart;
+
+/// <summary>
+/// 文档内容（base64 编码）。
+///
+/// 用于在消息中携带文件内容，支持多模态模型直接处理文档。
+///
+/// 对应格式：
+///   OpenAI: { "type": "file", "file": { "filename": "...", "file_data": "data:{mediaType};base64,{data}" } }
+///   Anthropic: { "type": "document", "source": { "type": "base64", "media_type": "{mediaType}", "data": "{data}" } }
+///   Google: { "inline_data": { "mime_type": "{mediaType}", "data": "{data}" } }
+///
+/// 参数说明：
+///   MediaType - MIME 类型，如 "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+///   Data      - base64 编码的文件内容
+///   FileName  - 可选的文件名，OpenAI 格式需要
+/// </summary>
+public sealed record DocumentContent(
+    string MediaType,
+    string Data,
+    string? FileName = null
+) : ContentPart;

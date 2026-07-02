@@ -87,7 +87,9 @@ public abstract class TokenProviderBase : ITokenProvider
                     break;
 
                 case StreamComplete sc:
-                    finishReason = sc.FinishReason;
+                    // 只有当 finishReason 非空时才更新，避免 [DONE] 信号的 null 覆盖真实原因
+                    if (sc.FinishReason is not null)
+                        finishReason = sc.FinishReason;
                     break;
             }
         }

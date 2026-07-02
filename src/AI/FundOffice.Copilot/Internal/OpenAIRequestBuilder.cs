@@ -291,6 +291,18 @@ internal static class OpenAIRequestBuilder
                 writer.WriteString("text", text.Text);
                 writer.WriteEndObject();
             }
+            else if (part is DocumentContent doc)
+            {
+                // OpenAI file 格式：https://platform.openai.com/docs/api-reference/chat/create#chat-create-content
+                writer.WriteStartObject();
+                writer.WriteString("type", "file");
+                writer.WritePropertyName("file");
+                writer.WriteStartObject();
+                writer.WriteString("filename", doc.FileName ?? "document.docx");
+                writer.WriteString("file_data", $"data:{doc.MediaType};base64,{doc.Data}");
+                writer.WriteEndObject();
+                writer.WriteEndObject();
+            }
         }
         writer.WriteEndArray();
     }

@@ -198,6 +198,19 @@ internal static class AnthropicRequestBuilder
                 writer.WriteEndObject();
                 break;
 
+            case DocumentContent doc:
+                // Anthropic document 格式：https://docs.anthropic.com/en/docs/build-with-claude/pdf-support
+                writer.WriteStartObject();
+                writer.WriteString("type", "document");
+                writer.WritePropertyName("source");
+                writer.WriteStartObject();
+                writer.WriteString("type", "base64");
+                writer.WriteString("media_type", doc.MediaType);
+                writer.WriteString("data", doc.Data);
+                writer.WriteEndObject();
+                writer.WriteEndObject();
+                break;
+
             case ToolCallContent tcc:
                 writer.WriteStartObject();
                 writer.WriteString("type", "tool_use");

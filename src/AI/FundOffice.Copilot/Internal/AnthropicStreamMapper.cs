@@ -61,6 +61,7 @@ internal sealed class AnthropicStreamMapper
     private string? _currentBlockType;
     private string? _currentBlockId;
     private string? _currentBlockName;
+    private bool _hasFinishReason;
 
     /// <summary>
     /// 将一个 Anthropic SSE 事件映射为零个或多个 StreamingToken。
@@ -161,8 +162,11 @@ internal sealed class AnthropicStreamMapper
                             ? sr.GetString()
                             : null;
                         if (stopReason is not null)
+                        {
+                            _hasFinishReason = true;
                             yield return new StreamComplete(
                                 AnthropicRequestBuilder.NormalizeFinishReason(stopReason));
+                        }
                     }
                     if (root.TryGetProperty("usage", out var msgUsage))
                     {
@@ -175,8 +179,11 @@ internal sealed class AnthropicStreamMapper
                     break;
 
                 case "message_stop":
-                    // 消息完成，发出最终的 StreamComplete
-                    yield return new StreamComplete("stop");
+                    // 消息完成信号。不重复发送 StreamComplete，
+                    // 因为 message_delta 已经发送了含真实 stop_reason 的 StreamComplete。
+                    // 如果 message_delta 没有 stop_reason（异常情况），此处兜底。
+                    if (!_hasFinishReason)
+                        yield return new StreamComplete("stop");
                     break;
 
                 case "ping":
