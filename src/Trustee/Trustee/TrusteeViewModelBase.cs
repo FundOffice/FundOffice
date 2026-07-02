@@ -99,6 +99,9 @@ public abstract partial class TrusteeViewModelBase<T> : TrusteeViewModelBase, IT
         if(e.PropertyName == nameof(TrusteeViewModelBase.IsEnabled) && Assist.IsEnabled != IsEnabled)
         {
             Assist.IsEnabled = IsEnabled;
+
+            if (IsEnabled)
+                Assist.Initialize();
             SaveConfigOverride();
             WeakReferenceMessenger.Default.Send(new ToastMessage(ToastLevel.Information, $"托管API【{Title}】已{(IsEnabled?"启":"禁")}用"));
         }
