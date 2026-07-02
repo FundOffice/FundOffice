@@ -138,10 +138,15 @@ internal static class OpenAIRequestBuilder
     /// </summary>
     public static ChatResult ParseCompletion(JsonElement root)
     {
-        var choice = root.GetProperty("choices")[0];
-        var message = choice.GetProperty("message");
-        var role = message.GetProperty("role").GetString()!;
-        var finishReason = choice.GetProperty("finish_reason").GetString();
+        if (!root.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0)
+            return new ChatResult { Messages = [], FinishReason = "error" };
+
+        var choice = choices[0];
+        if (!choice.TryGetProperty("message", out var message))
+            return new ChatResult { Messages = [], FinishReason = "error" };
+
+        var role = message.TryGetProperty("role", out var roleEl) ? roleEl.GetString() : "assistant";
+        var finishReason = choice.TryGetProperty("finish_reason", out var fr) ? fr.GetString() : null;
 
         var contentParts = new List<ContentPart>();
 
@@ -158,10 +163,10 @@ internal static class OpenAIRequestBuilder
         {
             foreach (var tc in toolCalls.EnumerateArray())
             {
-                var id = tc.GetProperty("id").GetString()!;
-                var func = tc.GetProperty("function");
-                var funcName = func.GetProperty("name").GetString()!;
-                var funcArgs = func.GetProperty("arguments").GetString()!;
+                var id = tc.TryGetProperty("id", out var idEl) ? idEl.GetString() ?? "" : "";
+                if (!tc.TryGetProperty("function", out var func)) continue;
+                var funcName = func.TryGetProperty("name", out var nameEl) ? nameEl.GetString() ?? "" : "";
+                var funcArgs = func.TryGetProperty("arguments", out var argsEl) ? argsEl.GetString() ?? "{}" : "{}";
                 contentParts.Add(new ToolCallContent(id, funcName, funcArgs));
             }
         }

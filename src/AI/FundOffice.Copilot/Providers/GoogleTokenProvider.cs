@@ -89,9 +89,14 @@ public sealed class GoogleTokenProvider : TokenProviderBase
         {
             foreach (var part in firstMessage.Content ?? [])
             {
-                if (part is TextContent tc)
+                switch (part)
                 {
-                    yield return new TextDelta(tc.Text);
+                    case TextContent tc:
+                        yield return new TextDelta(tc.Text);
+                        break;
+                    case ToolCallContent tcc:
+                        yield return new ToolCallDelta(tcc.Id, tcc.FunctionName, tcc.ArgumentsJson);
+                        break;
                 }
             }
         }
@@ -287,6 +292,28 @@ public sealed class GoogleTokenProvider : TokenProviderBase
         }
         writer.WriteEndArray();
 
+        // tools（functionDeclarations）
+        if (tools is { Count: > 0 })
+        {
+            writer.WritePropertyName("tools");
+            writer.WriteStartArray();
+            writer.WriteStartObject();
+            writer.WritePropertyName("functionDeclarations");
+            writer.WriteStartArray();
+            foreach (var tool in tools)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("name", tool.Name);
+                writer.WriteString("description", tool.Description);
+                writer.WritePropertyName("parameters");
+                tool.ParametersSchema.WriteTo(writer);
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+        }
+
         writer.WriteEndObject();
         writer.Flush();
         return buffer.WrittenSpan.ToArray();
@@ -294,22 +321,35 @@ public sealed class GoogleTokenProvider : TokenProviderBase
 
     private static ChatResult ParseResponse(JsonElement root)
     {
-        var candidates = root.GetProperty("candidates");
-        if (candidates.ValueKind != JsonValueKind.Array || candidates.GetArrayLength() == 0)
+        if (!root.TryGetProperty("candidates", out var candidates)
+            || candidates.ValueKind != JsonValueKind.Array
+            || candidates.GetArrayLength() == 0)
             return new ChatResult { Messages = [], FinishReason = "error" };
 
         var candidate = candidates[0];
-        var content = candidate.GetProperty("content");
-        var parts = content.GetProperty("parts");
+
+        if (!candidate.TryGetProperty("content", out var content)
+            || !content.TryGetProperty("parts", out var parts)
+            || parts.ValueKind != JsonValueKind.Array)
+            return new ChatResult { Messages = [], FinishReason = "error" };
 
         var contentParts = new List<ContentPart>();
         foreach (var part in parts.EnumerateArray())
         {
+            // 文本内容
             if (part.TryGetProperty("text", out var textEl))
             {
                 var text = textEl.GetString();
                 if (!string.IsNullOrEmpty(text))
                     contentParts.Add(new TextContent(text));
+            }
+            // 工具调用（Gemini functionCall 格式）
+            else if (part.TryGetProperty("functionCall", out var fc))
+            {
+                var funcName = fc.TryGetProperty("name", out var nameEl) ? nameEl.GetString() ?? "" : "";
+                var argsJson = fc.TryGetProperty("args", out var argsEl) ? argsEl.GetRawText() : "{}";
+                // Gemini 没有 call id，用函数名 + 时间戳生成稳定 ID
+                contentParts.Add(new ToolCallContent($"call_{funcName}", funcName, argsJson));
             }
         }
 
@@ -326,6 +366,10 @@ public sealed class GoogleTokenProvider : TokenProviderBase
             if (usage.TryGetProperty("candidatesTokenCount", out var ct))
                 completionTokens = ct.GetInt32();
         }
+
+        // 如果包含 functionCall，覆盖 finishReason
+        if (contentParts.Any(p => p is ToolCallContent) && finishReason == "stop")
+            finishReason = "tool_calls";
 
         return new ChatResult
         {

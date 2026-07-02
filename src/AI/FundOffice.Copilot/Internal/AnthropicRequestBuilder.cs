@@ -307,22 +307,23 @@ internal static class AnthropicRequestBuilder
         {
             foreach (var block in content.EnumerateArray())
             {
-                var type = block.GetProperty("type").GetString();
+                var type = block.TryGetProperty("type", out var typeEl) ? typeEl.GetString() : null;
                 switch (type)
                 {
                     case "text":
-                        var text = block.GetProperty("text").GetString() ?? "";
+                        var text = block.TryGetProperty("text", out var textEl) ? textEl.GetString() ?? "" : "";
                         if (text.Length > 0)
                             contentParts.Add(new TextContent(text));
                         break;
 
                     case "tool_use":
-                        var id = block.GetProperty("id").GetString()!;
-                        var name = block.GetProperty("name").GetString()!;
-                        var input = block.GetProperty("input");
-                        // GetRawText() 获取原始 JSON 字符串，与 ToolCallContent.ArgumentsJson 格式一致
-                        var argsJson = input.GetRawText();
-                        contentParts.Add(new ToolCallContent(id, name, argsJson));
+                        var id = block.TryGetProperty("id", out var idEl) ? idEl.GetString() ?? "" : "";
+                        var name = block.TryGetProperty("name", out var nameEl) ? nameEl.GetString() ?? "" : "";
+                        if (block.TryGetProperty("input", out var input))
+                        {
+                            var argsJson = input.GetRawText();
+                            contentParts.Add(new ToolCallContent(id, name, argsJson));
+                        }
                         break;
                 }
             }

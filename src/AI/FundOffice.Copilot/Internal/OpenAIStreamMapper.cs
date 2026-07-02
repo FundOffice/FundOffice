@@ -110,7 +110,7 @@ internal static class OpenAIStreamMapper
                 foreach (var tc in toolCalls.EnumerateArray())
                 {
                     // index: 工具调用在本次响应中的序号（从 0 开始）
-                    var index = tc.GetProperty("index").GetInt32();
+                    var index = tc.TryGetProperty("index", out var idxEl) ? idxEl.GetInt32() : 0;
 
                     // id: 仅在该工具调用的第一个 delta 中出现（如 "call_abc123"）
                     var id = tc.TryGetProperty("id", out var idEl) ? idEl.GetString() : null;

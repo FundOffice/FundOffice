@@ -322,6 +322,18 @@ internal static class OpenAIResponsesRequestBuilder
                 writer.WriteString("text", text.Text);
                 writer.WriteEndObject();
             }
+            else if (part is DocumentContent doc)
+            {
+                // Responses API file 格式：与 Chat Completions 一致
+                writer.WriteStartObject();
+                writer.WriteString("type", "input_file");
+                writer.WritePropertyName("file");
+                writer.WriteStartObject();
+                writer.WriteString("filename", doc.FileName ?? "document.docx");
+                writer.WriteString("file_data", $"data:{doc.MediaType};base64,{doc.Data}");
+                writer.WriteEndObject();
+                writer.WriteEndObject();
+            }
         }
         writer.WriteEndArray();
     }

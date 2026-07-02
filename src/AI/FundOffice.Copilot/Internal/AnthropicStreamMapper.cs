@@ -104,16 +104,19 @@ internal sealed class AnthropicStreamMapper
                     // 一个新的内容块开始，记录类型和 ID
                     if (root.TryGetProperty("content_block", out var block))
                     {
-                        _currentBlockType = block.GetProperty("type").GetString();
+                        _currentBlockType = block.TryGetProperty("type", out var bt) ? bt.GetString() : null;
                         if (_currentBlockType == "tool_use")
                         {
                             // 工具调用块：记录 ID 和函数名，发出第一个 delta（空参数）
-                            _currentBlockId = block.GetProperty("id").GetString();
-                            _currentBlockName = block.GetProperty("name").GetString();
-                            yield return new ToolCallDelta(
-                                _currentBlockId!,
-                                _currentBlockName,
-                                "");
+                            _currentBlockId = block.TryGetProperty("id", out var bid) ? bid.GetString() : null;
+                            _currentBlockName = block.TryGetProperty("name", out var bname) ? bname.GetString() : null;
+                            if (_currentBlockId is not null)
+                            {
+                                yield return new ToolCallDelta(
+                                    _currentBlockId,
+                                    _currentBlockName,
+                                    "");
+                            }
                         }
                     }
                     break;
@@ -122,19 +125,19 @@ internal sealed class AnthropicStreamMapper
                     // 内容增量
                     if (root.TryGetProperty("delta", out var delta))
                     {
-                        var deltaType = delta.GetProperty("type").GetString();
+                        var deltaType = delta.TryGetProperty("type", out var dt) ? dt.GetString() : null;
                         switch (deltaType)
                         {
                             case "text_delta":
                                 // 文本增量
-                                var text = delta.GetProperty("text").GetString() ?? "";
+                                var text = delta.TryGetProperty("text", out var dtxt) ? dtxt.GetString() ?? "" : "";
                                 if (text.Length > 0)
                                     yield return new TextDelta(text);
                                 break;
 
                             case "input_json_delta":
-                                // 工具参数 JSON 增量，需要关联到当前工具调用
-                                var partialJson = delta.GetProperty("partial_json").GetString() ?? "";
+                                // 工具参数 JSON 境量，需要关联到当前工具调用
+                                var partialJson = delta.TryGetProperty("partial_json", out var pj) ? pj.GetString() ?? "" : "";
                                 if (_currentBlockId is not null)
                                 {
                                     yield return new ToolCallDelta(
