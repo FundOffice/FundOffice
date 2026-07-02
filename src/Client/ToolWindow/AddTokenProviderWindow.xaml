@@ -2,12 +2,11 @@
     x:Class="FMO.AddTokenProviderWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:ai="clr-namespace:FMO.AI;assembly=AI"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hc="https://handyorg.github.io/handycontrol"
     xmlns:local="clr-namespace:FMO"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="添加 AI 提供商"
+    Title="添加 AI 模型"
     Width="520"
     d:DataContext="{d:DesignInstance Type=local:AddTokenProviderWindowViewModel}"
     SizeToContent="Height"
@@ -26,29 +25,25 @@
         Orientation="Vertical"
         VerticalSpacing="8">
 
-        <!--  公司名: ListBox 铺开  -->
+        <!--  名称  -->
         <DockPanel>
-            <TextBlock Style="{StaticResource LabelText}" Text="公司名" />
-            <ListBox ItemsSource="{Binding Providers}" SelectedItem="{Binding SelectedCompany}">
-                <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel IsItemsHost="True" />
-                    </ItemsPanelTemplate>
-                </ListBox.ItemsPanel>
-
-            </ListBox>
+            <TextBlock Style="{StaticResource LabelText}" Text="名称" />
+            <hc:TextBox
+                HorizontalAlignment="Stretch"
+                hc:InfoElement.Placeholder="自定义名称"
+                Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
         </DockPanel>
 
-        <!--  API 风格 -->
+        <!--  Provider 类型  -->
         <DockPanel>
-            <TextBlock Style="{StaticResource LabelText}" Text="API 风格" />
-            <ListBox ItemsSource="{Binding AvailableStyles}" SelectedItem="{Binding Style}">
-                <ListBox.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel IsItemsHost="True" />
-                    </ItemsPanelTemplate>
-                </ListBox.ItemsPanel>
-            </ListBox>
+            <TextBlock Style="{StaticResource LabelText}" Text="类型" />
+            <ListBox
+                HorizontalAlignment="Stretch"
+                BorderThickness="0"
+                ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
+                ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
+                ItemsSource="{Binding ProviderTypes}"
+                SelectedItem="{Binding ProviderType}" />
         </DockPanel>
 
         <!--  URL  -->
@@ -56,8 +51,8 @@
             <TextBlock Style="{StaticResource LabelText}" Text="URL" />
             <hc:TextBox
                 HorizontalAlignment="Stretch"
-                hc:InfoElement.Placeholder="API 地址"
-                Text="{Binding Url, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                hc:InfoElement.Placeholder="API 基础地址（不含路径后缀）"
+                Text="{Binding BaseUrl, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
         </DockPanel>
 
         <!--  密钥 + 验证按钮  -->
@@ -68,12 +63,12 @@
                 Command="{Binding FetchModelsCommand}"
                 Content="验证"
                 DockPanel.Dock="Right"
-                Style="{StaticResource ButtonPrimary.Small}"
+                Style="{StaticResource ButtonPrimary}"
                 Visibility="{Binding HasKey, Converter={StaticResource Boolean2VisibilityConverter}}" />
             <hc:TextBox
                 HorizontalAlignment="Stretch"
                 hc:InfoElement.Placeholder="API Key"
-                Text="{Binding Key, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+                Text="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
         </DockPanel>
 
         <!--  模型选择  -->

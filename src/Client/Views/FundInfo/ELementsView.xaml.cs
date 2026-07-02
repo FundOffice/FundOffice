@@ -682,25 +682,25 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
             return;
         }
 
-        TokenProvider? provider;
+        TokenProviderConfig? config;
         using (var db = DbHelper.Base())
         {
-            provider = db.GetCollection<TokenProvider>().Query().ToEnumerable()
-                .Where(x => !string.IsNullOrWhiteSpace(x.Company)
-                    && !string.IsNullOrWhiteSpace(x.Url)
-                    && !string.IsNullOrWhiteSpace(x.Key)
+            config = db.GetCollection<TokenProviderConfig>().Query().ToEnumerable()
+                .Where(x => !string.IsNullOrWhiteSpace(x.Name)
+                    && !string.IsNullOrWhiteSpace(x.BaseUrl)
+                    && !string.IsNullOrWhiteSpace(x.ApiKey)
                     && !string.IsNullOrWhiteSpace(x.Model))
                 .OrderBy(_ => Random.Shared.Next())
                 .FirstOrDefault();
 
-            if (provider is null)
+            if (config is null)
             {
                 Toast.Warning("没有可用的 AI 提供商，请在平台设置中配置完整的提供商（地址、密钥、模型）");
                 return;
             }
         }
 
-        Toast.Info($"正在 AI [{provider.Company}] 解析合同要素...");
+        Toast.Info($"正在 AI [{config.Name}] 解析合同要素...");
         IsParsingContract = true;
         ParsedTokenCount = 0;
         ParseStatus = "发送中...";
@@ -713,7 +713,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
 
         try
         {
-            var parser = new FundDocxAiParser(provider, provider.Model);
+            var parser = new FundDocxAIParser(config.CreateAdapter());
             ParseStatus = "等待响应...";
             var result = await parser.ParseAsync(meta.GetFullPath(), progress);
             ParseStatus = "解析完成";
@@ -728,7 +728,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
                     FileHash = meta.Hash,
                     ParsedAt = DateTime.Now,
                     FundInfoJson = result.Json,
-                    Provider = provider.Company
+                    Provider = config.Name
                 });
                 LoadParseHistories(meta.Hash);
             }
@@ -825,7 +825,7 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         if (string.IsNullOrWhiteSpace(json)) return null;
         try
         {
-            var dto = JsonSerializer.Deserialize<AiParsedFundInfo>(json, FundDocxAiParser.JsonOptions);
+            var dto = JsonSerializer.Deserialize<AiParsedFundInfo>(json, FundDocxAIParser.JsonOptions);
             if (dto is null) return null;
             return AiParsedFundInfoConverter.ToFactors(dto);
         }

@@ -126,26 +126,38 @@
 
 
 
-        <DataTemplate DataType="{x:Type ai:TokenProviderViewModel}">
+        <DataTemplate DataType="{x:Type ai:TokenProviderConfig}">
             <DockPanel>
-                <hc:TextBox
+                <Button
+                    Margin="4,0,0,0"
+                    Command="{Binding DataContext.EditTokenProviderCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                    CommandParameter="{Binding}"
+                    Content="编辑"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource ButtonPrimary.Small}" />
+                <TextBlock
                     Width="100"
-                    hc:InfoElement.Placeholder="公司名"
-                    Text="{Binding Company}" />
-                <hc:TextBox
+                    Padding="4,0"
+                    VerticalAlignment="Center"
+                    Text="{Binding Company}"
+                    TextTrimming="CharacterEllipsis" />
+                <TextBlock
                     Width="200"
-                    hc:InfoElement.Placeholder="URL"
-                    Text="{Binding Url}" />
-                <hc:TextBox
-                    Width="220"
-                    hc:InfoElement.Placeholder="密钥"
-                    Text="{Binding Key}" />
-                <ListBox
-                    ItemContainerStyle="{StaticResource ListBoxItem.AllaysFocus}"
-                    ItemsPanel="{StaticResource StackHorizontalItemsPanelTemplate}"
-                    ItemsSource="{Binding Source={x:Static ai:TokenProviderViewModel.Styles}}"
-                    SelectedItem="{Binding Style}"
-                    Style="{StaticResource ListBox.Small}" />
+                    Padding="4,0"
+                    VerticalAlignment="Center"
+                    Text="{Binding BaseUrl}"
+                    TextTrimming="CharacterEllipsis" />
+                <TextBlock
+                    Width="150"
+                    Padding="4,0"
+                    VerticalAlignment="Center"
+                    Text="{Binding Model}"
+                    TextTrimming="CharacterEllipsis" />
+                <TextBlock
+                    Width="80"
+                    Padding="4,0"
+                    VerticalAlignment="Center"
+                    Text="{Binding ProviderType}" />
             </DockPanel>
         </DataTemplate>
 
@@ -429,6 +441,18 @@
                                     Style="{StaticResource ToggleButtonIcon.Small}"
                                     Visibility="Collapsed" />
 
+                                <!--  编辑按钮：hover时显示  -->
+                                <Button
+                                    x:Name="EditBtn"
+                                    Margin="4,0,0,0"
+                                    hc:IconElement.Geometry="{StaticResource f.pen}"
+                                    Command="{Binding DataContext.EditTokenProviderCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                    CommandParameter="{Binding}"
+                                    DockPanel.Dock="Right"
+                                    Foreground="RoyalBlue"
+                                    Style="{StaticResource ButtonIcon.Small}"
+                                    Visibility="Collapsed" />
+
                                 <!--  确认/取消按钮：待删除时显示  -->
                                 <Button
                                     x:Name="ConfirmBtn"
@@ -452,19 +476,21 @@
                                     x:Name="CompanyText"
                                     Margin="0,0,10,0"
                                     VerticalAlignment="Center"
-                                    Text="{Binding Company, TargetNullValue=未设置}" />
+                                    Text="{Binding Name, TargetNullValue=未设置}" />
                             </DockPanel>
                         </Border>
                         <DataTemplate.Triggers>
-                            <!--  hover 时显示删除按钮  -->
+                            <!--  hover 时显示删除和编辑按钮  -->
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="DeleteBtn" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="EditBtn" Property="Visibility" Value="Visible" />
                             </Trigger>
                             <!--  待删除状态：显示确认/取消，隐藏删除按钮和文字  -->
                             <DataTrigger Binding="{Binding ElementName=DeleteBtn, Path=IsChecked}" Value="True">
                                 <Setter TargetName="ConfirmBtn" Property="Visibility" Value="Visible" />
                                 <Setter TargetName="CancelBtn" Property="Visibility" Value="Visible" />
                                 <Setter TargetName="DeleteBtn" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="EditBtn" Property="Visibility" Value="Collapsed" />
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>

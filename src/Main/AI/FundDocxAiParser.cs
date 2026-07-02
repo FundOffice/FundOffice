@@ -1,4 +1,5 @@
 using FMO.Models;
+using FundOffice.Copilot.Providers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -7,7 +8,7 @@ namespace FMO.AI;
 /// <summary>
 /// AI 解析结果，包含原始 DTO 和提取的 Factors
 /// </summary>
-public class AiParseResult
+public class AIParseResult
 {
     public required string Json { get; set; }
 
@@ -31,10 +32,9 @@ public class AiParseResult
 /// 基金文档 AI 解析器
 /// 从 docx 文件中提取基金信息
 /// </summary>
-public class FundDocxAiParser
+public class FundDocxAIParser
 {
-    private readonly TokenProvider _provider;
-    private readonly string _model;
+    private readonly AIChatAdapter _adapter;
 
     public static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -45,10 +45,9 @@ public class FundDocxAiParser
         Converters = { new JsonStringEnumConverter(), new ConfidenceWrapperConverterFactory() },
     };
 
-    public FundDocxAiParser(TokenProvider provider, string model)
+    public FundDocxAIParser(AIChatAdapter adapter)
     {
-        _provider = provider ?? throw new ArgumentNullException(nameof(provider));
-        _model = model ?? throw new ArgumentNullException(nameof(model));
+        _adapter = adapter ?? throw new ArgumentNullException(nameof(adapter));
     }
 
     /// <summary>
@@ -57,20 +56,28 @@ public class FundDocxAiParser
     /// <param name="docxPath">docx 文件路径</param>
     /// <param name="progress">token 计数进度报告（已接收 token 数）</param>
     /// <returns>解析结果，失败返回 null</returns>
-    public async Task<AiParseResult?> ParseAsync(string docxPath, IProgress<int>? progress = null)
+    public async Task<AIParseResult?> ParseAsync(string docxPath, IProgress<int>? progress = null)
     {
         if (!File.Exists(docxPath))
             throw new FileNotFoundException("文件不存在", docxPath);
 
-        using var client = new HttpClient();
-        client.Timeout = TimeSpan.FromMinutes(5);
-
-        string prompt = FundDocxPrompt.Build();
-
-        // 调用 AI 接口（三层降级：文件上传 → base64 → 文本提取）
-        var response = await _provider.AskWithFileAsync(client, _model, prompt, docxPath, progress: progress);
-
-        return ProcessResponse(response);
+        try
+        {
+            // 调用 AI 接口（两层降级：base64 → 文本提取）
+            var response = await _adapter.AskWithFileAsync(docxPath, progress: progress);
+            return ProcessResponse(response);
+        }
+        catch (TokenProviderException ex)
+        {
+            SaveToTemp("", ex.Message);
+            return new AIParseResult
+            {
+                Json = "",
+                ParsedInfo = new AiParsedFundInfo(),
+                Factors = [],
+                Warnings = [$"AI 调用失败: {ex.Kind} - {ex.Message}"]
+            };
+        }
     }
 
     /// <summary>
@@ -79,27 +86,35 @@ public class FundDocxAiParser
     /// <param name="textContent">已提取的文档文本</param>
     /// <param name="progress">token 计数进度报告</param>
     /// <returns>解析结果，失败返回 null</returns>
-    public async Task<AiParseResult?> ParseFromTextAsync(string textContent, IProgress<int>? progress = null)
+    public async Task<AIParseResult?> ParseFromTextAsync(string textContent, IProgress<int>? progress = null)
     {
-        using var client = new HttpClient();
-        client.Timeout = TimeSpan.FromMinutes(5);
-
-        string prompt = FundDocxPrompt.Build();
-
-        var response = await _provider.AskAsync(client, _model, prompt, textContent, progress);
-
-        return ProcessResponse(response);
+        try
+        {
+            var response = await _adapter.AskFromTextAsync(textContent, progress);
+            return ProcessResponse(response);
+        }
+        catch (TokenProviderException ex)
+        {
+            SaveToTemp("", ex.Message);
+            return new AIParseResult
+            {
+                Json = "",
+                ParsedInfo = new AiParsedFundInfo(),
+                Factors = [],
+                Warnings = [$"AI 调用失败: {ex.Kind} - {ex.Message}"]
+            };
+        }
     }
 
     /// <summary>
     /// 统一处理 AI 响应，尽可能保留有效数据，错误记录到 Warnings
     /// </summary>
-    private static AiParseResult? ProcessResponse(string response)
+    private static AIParseResult? ProcessResponse(string response)
     {
         if (string.IsNullOrWhiteSpace(response))
         {
             SaveToTemp("", response);
-            return new AiParseResult
+            return new AIParseResult
             {
                 Json = "",
                 ParsedInfo = new AiParsedFundInfo(),
@@ -108,27 +123,15 @@ public class FundDocxAiParser
             };
         }
 
-        if (response.StartsWith("调用异常"))
-        {
-            SaveToTemp("", response);
-            return new AiParseResult
-            {
-                Json = "",
-                ParsedInfo = new AiParsedFundInfo(),
-                Factors = [],
-                Warnings = [response]
-            };
-        }
-
         return ParseResponse(response);
     }
 
-    private static AiParseResult ParseResponse(string response)
+    private static AIParseResult ParseResponse(string response)
     {
         var warnings = new List<string>();
 
         // 从 AI 返回中提取 JSON
-        var json = TokenProvider.ExtractJson(response);
+        var json = AIResponseHelper.ExtractJson(response);
 
         // 尝试整体反序列化
         AiParsedFundInfo? dto;
@@ -147,7 +150,7 @@ public class FundDocxAiParser
         if (dto == null)
         {
             SaveToTemp(json, response);
-            return new AiParseResult
+            return new AIParseResult
             {
                 Json = json,
                 ParsedInfo = new AiParsedFundInfo(),
@@ -159,7 +162,7 @@ public class FundDocxAiParser
         // 转换为 FundFactor[]
         var factors = AiParsedFundInfoConverter.ToFactors(dto);
 
-        return new AiParseResult
+        return new AIParseResult
         {
             Json = json,
             ParsedInfo = dto,

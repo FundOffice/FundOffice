@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Generators\AIGenerator\AIGenerator.csproj" OutputItemType="Analyzer" PrivateAssets="all" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\Utility\SourceGenerator\SourceGenerator.csproj" OutputItemType="Analyzer" PrivateAssets="all" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\AI\FundOffice.Copilot\FundOffice.Copilot.csproj" />
     <ProjectReference Include="..\Models\Models.csproj" />
   </ItemGroup>
 

@@ -176,7 +176,7 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
 
 
     [ObservableProperty]
-    public partial ObservableCollection<TokenProviderViewModel> AIProviders { get; set; }
+    public partial ObservableCollection<TokenProviderConfig> AIProviders { get; set; }
      
 
 
@@ -188,8 +188,7 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
         try
         {
             using var db = DbHelper.Base();
-            var enumerable = db.GetCollection<TokenProvider>().FindAll().ToArray();
-            AIProviders = [.. enumerable.Select(x => TokenProviderViewModel.Create(x)).OfType<TokenProviderViewModel>()];
+            AIProviders = new ObservableCollection<TokenProviderConfig>(db.GetCollection<TokenProviderConfig>().FindAll());
         }
         catch (Exception ex)
         {
@@ -297,14 +296,14 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
  
 
     [RelayCommand]
-    public void ConfirmDeleteTokenProvider(TokenProviderViewModel vm)
-    { 
+    public void ConfirmDeleteTokenProvider(TokenProviderConfig config)
+    {
         using var db = DbHelper.Base();
-        db.GetCollection<TokenProvider>().Delete(vm.Id);
+        db.GetCollection<TokenProviderConfig>().Delete(config.Id);
 
         for (int i = 0; i < AIProviders.Count; i++)
         {
-            if (AIProviders[i].Id == vm.Id)
+            if (AIProviders[i].Id == config.Id)
             {
                 AIProviders.RemoveAt(i);
                 return;
@@ -314,11 +313,11 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
 
 
 
-    private void AI_Changed(ValueChangeEventArgs<TokenProvider> args)
+    private void AI_Changed(ValueChangeEventArgs<TokenProviderConfig> args)
     {
         if (args.NewValue is null) return;
         using var db = DbHelper.Base();
-        db.GetCollection<TokenProvider>().Upsert(args.NewValue);
+        db.GetCollection<TokenProviderConfig>().Upsert(args.NewValue);
     }
 
     private void ESignSource_Filter(object sender, FilterEventArgs e)
@@ -429,6 +428,41 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
         if (wnd.ShowDialog() == true && wnd.DataContext is AddTokenProviderWindowViewModel vm && vm.IsConfirmed && vm.Result is not null)
         {
             AIProviders.Add(vm.Result);
+        }
+    }
+
+    [RelayCommand]
+    public void EditTokenProvider(TokenProviderConfig config)
+    {
+        var wnd = new AddTokenProviderWindow();
+        wnd.Owner = App.Current.MainWindow;
+        wnd.Title = "编辑 AI 提供商";
+
+        // 设置编辑模式
+        if (wnd.DataContext is AddTokenProviderWindowViewModel vm)
+        {
+            vm.Name = config.Name;
+            vm.BaseUrl = config.BaseUrl;
+            vm.ApiKey = config.ApiKey;
+            vm.ProviderType = config.ProviderType;
+            vm.SelectedModel = config.Model;
+            vm.IsEditMode = true;
+            vm.EditConfigId = config.Id;
+            vm.AvailableModels = [config.Model];
+            vm.HasModels = true;
+        }
+
+        if (wnd.ShowDialog() == true && wnd.DataContext is AddTokenProviderWindowViewModel vm2 && vm2.IsConfirmed && vm2.Result is not null)
+        {
+            // 更新列表中的项
+            for (int i = 0; i < AIProviders.Count; i++)
+            {
+                if (AIProviders[i].Id == config.Id)
+                {
+                    AIProviders[i] = vm2.Result;
+                    break;
+                }
+            }
         }
     }
 

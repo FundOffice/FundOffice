@@ -17,7 +17,7 @@ public partial class AIProviderItemViewModel : ObservableObject
     public string ProviderId => $"{Id.GetHashCode():x}";
 
     [ObservableProperty] public partial string Name { get; set; } = "新AI";
-    public string[] ProviderTypes { get; } = ["OpenAI", "Anthropic"];
+    public string[] ProviderTypes { get; } = ["OpenAI", "Anthropic", "Google"];
     [ObservableProperty] public partial string ProviderType { get; set; } = "OpenAI";
     [ObservableProperty] public partial string ApiKey { get; set; } = "";
     [ObservableProperty] public partial string BaseUrl { get; set; } = "";
@@ -131,6 +131,7 @@ public partial class AIProviderItemViewModel : ObservableObject
     private ITokenProvider CreateProvider(string? overrideModel = null) => ProviderType switch
     {
         "Anthropic" => new AnthropicTokenProvider(new AnthropicOptions { Identifier = ProviderId, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model }),
+        "Google" => new GoogleTokenProvider(new GoogleOptions { Identifier = ProviderId, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model }),
         _ => ApiVersion switch
         {
             OpenAIApiVersion.Responses => new OpenAIResponsesProvider(new OpenAIOptions { Identifier = ProviderId, ApiKey = ApiKey, BaseUrl = BaseUrl, Model = overrideModel ?? Model, ApiVersion = ApiVersion }),
