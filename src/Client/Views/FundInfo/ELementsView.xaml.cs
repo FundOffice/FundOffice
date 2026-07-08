@@ -1029,7 +1029,9 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
             html = html.Replace("###DATA###", json);
 
             // 读取模板 <div>...</div>
-            var templateFiles = new DirectoryInfo(@"files\brochure").GetFiles("*.html");
+            var templateFiles = new DirectoryInfo(@"files\brochure").GetFiles("*.html")
+                .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
 
             // 获取所有模板文件（按文件名排序，保证索引稳定）
             var listItemHtmlSb = new StringBuilder();       // 左侧文件名列表HTML

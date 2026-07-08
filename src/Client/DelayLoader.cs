@@ -600,7 +600,22 @@ internal class DelayLoader
             }
         }
 
+        ReleaseBrochureTemplate("BrochureA.html", "FMO.res.BrochureA.html");
+        ReleaseBrochureTemplate("BrochureB.html", "FMO.res.BrochureB.html");
+        ReleaseBrochureTemplate("BrochureC.html", "FMO.res.BrochureC.html");
 
 
+
+    }
+
+    private static void ReleaseBrochureTemplate(string fileName, string resourceName)
+    {
+        var target = Path.Combine("files", "brochure", fileName);
+        if (Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName) is not Stream stream)
+            return;
+
+        byte[] buffer = new byte[stream.Length];
+        stream.ReadExactly(buffer, 0, buffer.Length);
+        File.WriteAllBytes(target, buffer);
     }
 }

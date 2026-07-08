@@ -25,7 +25,7 @@ FundOffice 是面向私募基金管理人的中台运营桌面系统，连接管
 - 自动生成每日净值报表、模板化报表和运营提醒。
 - 提供费用计算器
 - AI 尽调
-- AI 宣传材料生成
+- AI 宣传材料生成  [演示文件](https://github.com/FundOffice/FundOffice/blob/master/readme/演示基金9号.png)
 - 协会学习辅助（自动答题）
 - 支持插件化扩展、任务调度、待办事项、数据触发器和源码生成器。
 

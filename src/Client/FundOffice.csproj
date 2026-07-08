@@ -145,8 +145,11 @@
   </ItemGroup>
   
   <ItemGroup>
+    <EmbeddedResource Include="res\BrochureB.html" />
     <EmbeddedResource Include="res\defaultBrochure.html" />
+    <EmbeddedResource Include="res\BrochureC.html" />
     <EmbeddedResource Include="res\onepage.html" />
+    <EmbeddedResource Include="res\BrochureA.html" />
   </ItemGroup>
   
   <ItemGroup>
