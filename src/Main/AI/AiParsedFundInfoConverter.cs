@@ -1,4 +1,6 @@
-﻿using FMO.Models;
+using FMO.Models;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace FMO.AI;
 
@@ -16,6 +18,12 @@ public static class AiParsedFundInfoConverter
     /// </summary>
     public static IFundFactor[] ToFactors(AiParsedFundInfo dto)
     {
+        var info = new ReadonlyFundInfo
+        {
+            ManagerProfile = dto.ManagerProfile,
+            AuditDate = dto.AuditDate,
+        };
+
         var factors = new List<IFundFactor>();
 
         // ===== 份额类别（必须先添加，FactorItem 依赖它）=====
@@ -171,6 +179,7 @@ public static class AiParsedFundInfoConverter
     {
         if (values == null || values.Length == 0) return;
 
+        // 如果只有一个值或所有值相同，使用 Singleton ShareId（FillBy 会自动处理）
         if (values.Length == 1)
         {
             factors.Add(MakeFactor(factorId, ShareClass.Singleton, values[0]));

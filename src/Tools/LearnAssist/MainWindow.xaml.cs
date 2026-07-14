@@ -118,47 +118,55 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
         Task.Run(async () =>
         {
-            Operator = await Playwright.CreateAsync();
-            Browser = await Operator.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel = "msedge", Headless = true });
-
-            if (File.Exists("files\\peixun\\learn.json"))
+            try
             {
-                Context = await Browser.NewContextAsync(new BrowserNewContextOptions { StorageStatePath = "files\\peixun\\learn.json" });
+                Operator = await Playwright.CreateAsync();
+                Browser = await Operator.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Channel = "msedge", Headless = true });
+
+                var cookie = new FileInfo("files\\peixun\\learn.json");
+                if (cookie.Exists)
+                {
+                    try { Context = await Browser.NewContextAsync(new BrowserNewContextOptions { StorageStatePath = cookie.FullName }); } catch { Context = await Browser.NewContextAsync(); }
+                }
+                else
+                    Context = await Browser.NewContextAsync();
+                var page = await Context.NewPageAsync();
+                await page.GotoAsync("https://peixun.amac.org.cn/");
+
+                await CheckLogin(page);
+
+                IsCheckingLogin = false;
+
+                if (!IsLogin)
+                    await ManualLogin();
+
+                IsLoadingClasses = true;
+                page = Context.Pages.First();
+
+                await GetClassInfo(page);
+
+                await GetCurrentYearLearn(page);
+                IsLoadingClasses = false;
+
+
+
+                // Classes.CollectionChanged += (s, e) => OnPropertyChanged(nameof(PeakedHour));
+
+                await App.Current.Dispatcher.BeginInvoke(() => CanStartLearn = true);
+
+                // 居中
+                await App.Current.Dispatcher.BeginInvoke(() =>
+                {
+                    var wnd = Application.Current.MainWindow;
+                    var screen = SystemParameters.WorkArea;
+                    wnd.Left = (screen.Width - wnd.Width) / 2 + screen.Left;
+                    wnd.Top = (screen.Height - wnd.Height) / 2 + screen.Top;
+                });
             }
-            else
-                Context = await Browser.NewContextAsync();
-            var page = await Context.NewPageAsync();
-            await page.GotoAsync("https://peixun.amac.org.cn/");
-
-            await CheckLogin(page);
-
-            IsCheckingLogin = false;
-
-            if (!IsLogin)
-                await ManualLogin();
-
-            IsLoadingClasses = true;
-            page = Context.Pages.First();
-
-            await GetClassInfo(page);
-
-            await GetCurrentYearLearn(page);
-            IsLoadingClasses = false;
-
-
-
-            // Classes.CollectionChanged += (s, e) => OnPropertyChanged(nameof(PeakedHour));
-
-            await App.Current.Dispatcher.BeginInvoke(() => CanStartLearn = true);
-
-            // 居中
-            await App.Current.Dispatcher.BeginInvoke(() =>
+            catch (Exception e)
             {
-                var wnd = Application.Current.MainWindow;
-                var screen = SystemParameters.WorkArea;
-                wnd.Left = (screen.Width - wnd.Width) / 2 + screen.Left;
-                wnd.Top = (screen.Height - wnd.Height) / 2 + screen.Top;
-            });
+                HandyControl.Controls.Growl.Error("初始化失败，请检查网络或重新启动程序");
+            }
 
         });
     }
