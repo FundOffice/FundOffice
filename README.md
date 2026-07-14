@@ -2,7 +2,8 @@
 
 FundOffice 是面向私募基金管理人的中台运营桌面系统，连接管理人内部数据、托管外包、基金业协会、电子签约平台和自动化任务。主程序是基于 WPF 的 Windows 客户端，程序集名为 `Thor`。
 
-仓库地址：[https://github.com/iyumot/FundMiddleOffice](https://github.com/iyumot/FundMiddleOffice)
+- 仓库地址：[https://github.com/iyumot/FundMiddleOffice](https://github.com/iyumot/FundMiddleOffice)
+- V2多人协作版本：[https://github.com/iyumot/FundMiddleOffice2](https://github.com/iyumot/FundMiddleOffice2)
 
 ## 核心能力
 
