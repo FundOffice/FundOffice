@@ -1,121 +1,204 @@
+using FMO.Models;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace FMO.AI;
 
 /// <summary>
-/// AI 解析中间层（internal），外部不感知
-/// 所有复杂类型以简单字符串形式表示，由 Converter 转换为 FundFactor[]
+/// 置信度包装器
 /// </summary>
-internal class AiParsedFundInfo
+public class ConfidenceWrapper<T>
+{
+    public T? Value { get; set; }
+    public double Confidence { get; set; }
+}
+
+/// <summary>
+/// ConfidenceWrapper 的 JSON 转换工厂，正确处理值类型的 null
+/// </summary>
+public class ConfidenceWrapperConverterFactory : JsonConverterFactory
+{
+    public override bool CanConvert(Type typeToConvert) =>
+        typeToConvert.IsGenericType && typeToConvert.GetGenericTypeDefinition() == typeof(ConfidenceWrapper<>);
+
+    public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
+    {
+        var innerType = typeToConvert.GetGenericArguments()[0];
+        return (JsonConverter)Activator.CreateInstance(typeof(ConfidenceWrapperConverter<>).MakeGenericType(innerType))!;
+    }
+}
+
+/// <summary>
+/// ConfidenceWrapper 的 JSON 转换器
+/// </summary>
+public class ConfidenceWrapperConverter<T> : JsonConverter<ConfidenceWrapper<T>>
+{
+    public override ConfidenceWrapper<T>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Null)
+            return null;
+
+        var result = new ConfidenceWrapper<T>();
+
+        using var doc = JsonDocument.ParseValue(ref reader);
+        var root = doc.RootElement;
+
+        if (root.TryGetProperty("Value", out var valueElement) && valueElement.ValueKind != JsonValueKind.Null)
+        {
+            result.Value = JsonSerializer.Deserialize<T>(valueElement.GetRawText(), options);
+        }
+
+        if (root.TryGetProperty("Confidence", out var confElement))
+        {
+            result.Confidence = confElement.GetDouble();
+        }
+
+        return result;
+    }
+
+    public override void Write(Utf8JsonWriter writer, ConfidenceWrapper<T> value, JsonSerializerOptions options)
+    {
+        writer.WriteStartObject();
+        writer.WritePropertyName("Value");
+        JsonSerializer.Serialize(writer, value.Value, options);
+        writer.WriteNumber("Confidence", value.Confidence);
+        writer.WriteEndObject();
+    }
+}
+
+/// <summary>
+/// AI 解析中间层（internal），所有字段与 FundElements 同构 + 置信度
+/// </summary>
+public class AiParsedFundInfo
 {
     // ===== ReadonlyFundInfo 自有字段 =====
-    public string? ManagerProfile { get; set; }
-    public string? AuditDate { get; set; }
+    public ConfidenceWrapper<string>? ManagerProfile { get; set; }
 
     // ===== 全局属性（非份额相关）=====
 
     /// <summary>基金全称</summary>
-    public string? FullName { get; set; }
+    public ConfidenceWrapper<string>? FullName { get; set; }
 
     /// <summary>基金简称</summary>
-    public string? ShortName { get; set; }
+    public ConfidenceWrapper<string>? ShortName { get; set; }
 
-    /// <summary>证券基金类型：固定收益类/权益类/期货和衍生品类/混合类</summary>
-    public string? SecurityFundType { get; set; }
+    /// <summary>证券基金类型</summary>
+    public ConfidenceWrapper<SecurityFundType>? SecurityFundType { get; set; }
 
-    /// <summary>运作方式：开放式/封闭式/其它</summary>
-    public string? FundMode { get; set; }
+    /// <summary>运作方式</summary>
+    public ConfidenceWrapper<FundModeInfo>? FundModeInfo { get; set; }
 
-    /// <summary>封闭期："X个月" 或 "无" 或 其它描述</summary>
-    public string? SealingRule { get; set; }
+    /// <summary>封闭期</summary>
+    public ConfidenceWrapper<SealingRule>? SealingRule { get; set; }
 
-    /// <summary>风险等级：R1/R2/R3/R4/R5</summary>
-    public string? RiskLevel { get; set; }
+    /// <summary>风险等级</summary>
+    public ConfidenceWrapper<RiskLevel>? RiskLevel { get; set; }
 
-    /// <summary>是否永续产品</summary>
-    public bool? DurationInfinity { get; set; }
+    /// <summary>存续期</summary>
+    public ConfidenceWrapper<FundDuration>? DurationInMonths { get; set; }
 
-    /// <summary>存续期月数（永续时填null）</summary>
-    public int? DurationMonths { get; set; }
+    /// <summary>结束日期</summary>
+    public ConfidenceWrapper<string>? ExpirationDate { get; set; }
 
-    /// <summary>结束日期 yyyy-MM-dd</summary>
-    public string? ExpirationDate { get; set; }
+    /// <summary>止损线</summary>
+    public ConfidenceWrapper<decimal>? StopLine { get; set; }
 
-    /// <summary>止损线（如 0.7）</summary>
-    public decimal? StopLine { get; set; }
+    /// <summary>预警线</summary>
+    public ConfidenceWrapper<decimal>? WarningLine { get; set; }
 
-    /// <summary>预警线（如 0.8）</summary>
-    public decimal? WarningLine { get; set; }
+    /// <summary>开放日规则（按份额，每份额一个 OpenRule[]）</summary>
+    public ConfidenceWrapper<OpenRule[][]>? FundOpenRule { get; set; }
 
-    /// <summary>开放日规则描述</summary>
-    public string? OpenRule { get; set; }
+    /// <summary>临时开放（按份额）</summary>
+    public ConfidenceWrapper<TemporarilyOpenInfo[]>? TemporarilyOpenInfo { get; set; }
 
-    /// <summary>临时开放信息描述</summary>
-    public string? TemporarilyOpenInfo { get; set; }
+    /// <summary>巨额赎回比例（小数）</summary>
+    public ConfidenceWrapper<decimal>? HugeRedemptionRatio { get; set; }
 
-    /// <summary>巨额赎回比例描述（如 "10%"）</summary>
-    public string? HugeRedemption { get; set; }
+    /// <summary>主募集账户</summary>
+    public ConfidenceWrapper<BankAccount>? CollectionAccount { get; set; }
 
-    /// <summary>主募集账户："户名：xxx\n账号：xxx\n开户行：xxx"</summary>
-    public string? CollectionAccount { get; set; }
+    /// <summary>托管机构（含费用信息）</summary>
+    public ConfidenceWrapper<AgencyInfo>? TrusteeInfo { get; set; }
 
-    /// <summary>主托管账户："户名：xxx\n账号：xxx\n开户行：xxx"</summary>
-    public string? CustodyAccount { get; set; }
+    /// <summary>外包机构（含费用信息）</summary>
+    public ConfidenceWrapper<AgencyInfo>? OutsourcingInfo { get; set; }
 
-    /// <summary>托管机构名称</summary>
-    public string? TrusteeName { get; set; }
+    /// <summary>管理费支付方式</summary>
+    public ConfidenceWrapper<FeePayInfo>? ManageFeePay { get; set; }
 
-    /// <summary>托管费："X%/年" 或 "固定X元/年" 或 "无"</summary>
-    public string? TrusteeFee { get; set; }
-
-    /// <summary>外包机构名称</summary>
-    public string? OutsourcingName { get; set; }
-
-    /// <summary>外包费："X%/年" 或 "固定X元/年" 或 "无"</summary>
-    public string? OutsourcingFee { get; set; }
-
-    /// <summary>管理费支付方式："按月支付"/"按季支付"/"其它描述"</summary>
-    public string? ManageFeePay { get; set; }
+    /// <summary>基金经理（结构化数组）</summary>
+    public ConfidenceWrapper<AiInvestmentManager[]>? InvestmentManagers { get; set; }
 
     /// <summary>基金经理（字符串描述）</summary>
-    public string? InvestmentManager { get; set; }
+    public ConfidenceWrapper<string>? InvestmentManager { get; set; }
 
     /// <summary>业绩比较基准</summary>
-    public string? PerformanceBenchmark { get; set; }
+    public ConfidenceWrapper<PerformanceBenchmark>? PerformanceBenchmark { get; set; }
 
     /// <summary>投资目标</summary>
-    public string? InvestmentObjective { get; set; }
+    public ConfidenceWrapper<string>? InvestmentObjective { get; set; }
 
     /// <summary>投资范围</summary>
-    public string? InvestmentScope { get; set; }
+    public ConfidenceWrapper<string>? InvestmentScope { get; set; }
 
     /// <summary>投资策略</summary>
-    public string? InvestmentStrategy { get; set; }
+    public ConfidenceWrapper<string>? InvestmentStrategy { get; set; }
 
-    /// <summary>冷静期："24小时" 或 其它描述</summary>
-    public string? CoolingPeriod { get; set; }
+    /// <summary>冷静期</summary>
+    public ConfidenceWrapper<CoolingPeriodInfo>? CoolingPeriod { get; set; }
 
-    /// <summary>回访："需要" 或 "不适用"</summary>
-    public string? Callback { get; set; }
+    /// <summary>回访</summary>
+    public ConfidenceWrapper<CallbackInfo>? Callback { get; set; }
 
-    // ===== 份额相关（string[]，压缩逻辑）=====
+    /// <summary>业绩报酬规则（全局）</summary>
+    public ConfidenceWrapper<PerformanceFeeRule>? PerformanceFeeRule { get; set; }
 
-    /// <summary>份额名称列表（如 ["A类", "B类"]）</summary>
-    public string[]? ShareClassNames { get; set; }
+    // ===== 份额相关（数组，压缩逻辑）=====
 
-    /// <summary>锁定期规则（按份额，压缩后可能为单元素）</summary>
-    public string[]? LockingRule { get; set; }
+    /// <summary>份额类别</summary>
+    public ConfidenceWrapper<AiShareClass[]>? ShareClasses { get; set; }
 
-    /// <summary>管理费（按份额）："X%/年" 或 "固定X元/年" 或 "无"</summary>
-    public string[]? ManageFee { get; set; }
+    /// <summary>锁定期规则（按份额）</summary>
+    public ConfidenceWrapper<SealingRule[]>? LockingRule { get; set; }
+
+    /// <summary>管理费（按份额）</summary>
+    public ConfidenceWrapper<FundFeeInfo[]>? ManageFee { get; set; }
 
     /// <summary>认购规则（按份额）</summary>
-    public string[]? SubscriptionRule { get; set; }
+    public ConfidenceWrapper<FundPurchaseRule[]>? SubscriptionRule { get; set; }
 
     /// <summary>申购规则（按份额）</summary>
-    public string[]? PurchaseRule { get; set; }
+    public ConfidenceWrapper<FundPurchaseRule[]>? PurchasRule { get; set; }
 
     /// <summary>赎回费（按份额）</summary>
-    public string[]? RedemptionFee { get; set; }
+    public ConfidenceWrapper<RedemptionFeeInfo[]>? RedemptionFee { get; set; }
 
     /// <summary>业绩报酬说明（按份额）</summary>
-    public string[]? PerformanceFeeStatement { get; set; }
+    public ConfidenceWrapper<string[]>? PerformanceFeeStatement { get; set; }
+
+    /// <summary>业绩报酬标准（按份额）</summary>
+    public ConfidenceWrapper<PerformanceFeeStandard[]>? PerformanceFeeStandard { get; set; }
+}
+
+/// <summary>
+/// AI 返回的份额类别（不含 Id 等内部字段）
+/// </summary>
+public class AiShareClass
+{
+    public string Name { get; set; } = "";
+    public string? Requirement { get; set; }
+}
+
+/// <summary>
+/// AI 返回的基金经理（日期为可空字符串）
+/// </summary>
+public class AiInvestmentManager
+{
+    public int PersonId { get; set; }
+    public int FundId { get; set; }
+    public string Name { get; set; } = "";
+    public string? Profile { get; set; }
+    public string? Start { get; set; }
+    public string? End { get; set; }
 }

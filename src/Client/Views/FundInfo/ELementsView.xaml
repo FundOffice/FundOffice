@@ -20,7 +20,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <DataTemplate x:Key="DefaultCopyable">
-                <shared:CopyableTextBlock Text="{Binding}" TextWrapping="Wrap" />
+                <shared:CopyableTextBlock Text="{Binding ., Converter={StaticResource ObjectDisplayConverter}}" TextWrapping="Wrap" />
             </DataTemplate>
 
             <!--<DataTemplate x:Key="FactorEditTemplate">
@@ -39,6 +39,19 @@
                 <Setter Property="MinHeight" Value="24" />
 
                 <Setter Property="ContentTemplate" Value="{StaticResource DefaultCopyable}" />
+            </Style>
+
+
+
+
+            <Style x:Key="CategoryTab" TargetType="TextBlock">
+                <Setter Property="MaxWidth" Value="20" />
+                <Setter Property="Margin" Value="8" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Foreground" Value="White" />
+                <Setter Property="TextWrapping" Value="Wrap" />
             </Style>
 
 
@@ -67,24 +80,27 @@
                                     </Grid.ColumnDefinitions>
 
                                     <!--  🔹 Header：支持 Header + HeaderTemplate  -->
-                                    <hc:SimplePanel VerticalAlignment="Center">
-                                        <TextBlock
-                                            Width="14"
-                                            VerticalAlignment="Center"
-                                            Text="{TemplateBinding Header}"
-                                            TextElement.FontWeight="Medium"
-                                            TextWrapping="Wrap" />
 
-                                        <Viewbox
-                                            Height="7.5"
-                                            Margin="-5,0"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Top"
-                                            Visibility="{Binding Modifier.IsInherited, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}">
-                                            <Path Data="{StaticResource f.arrow-turn-down}" Fill="Brown" />
-                                        </Viewbox>
-                                    </hc:SimplePanel>
+                                    <Border Margin="0,0,10,0" Background="SaddleBrown">
+                                        <hc:SimplePanel x:Name="headerPanel" VerticalAlignment="Center">
+                                            <TextBlock
+                                                Width="14"
+                                                VerticalAlignment="Center"
+                                                Style="{StaticResource CategoryTab}"
+                                                Text="{TemplateBinding Header}"
+                                                TextElement.FontWeight="Medium"
+                                                TextWrapping="Wrap" />
 
+                                            <Viewbox
+                                                Height="9"
+                                                Margin="0,0,3,0"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Top"
+                                                Visibility="{Binding Modifier.IsInherited, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                                <Path Data="{StaticResource f.arrow-turn-down}" Fill="White" />
+                                            </Viewbox>
+                                        </hc:SimplePanel>
+                                    </Border>
 
                                     <!--  🔹 内容区域：根据 IsReadOnly 切换模板  -->
 
@@ -152,6 +168,9 @@
                             <!--  🔑 状态驱动触发器  -->
                             <ControlTemplate.Triggers>
 
+                                <Trigger Property="Header" Value="{x:Null}">
+                                    <Setter TargetName="headerPanel" Property="Visibility" Value="Collapsed" />
+                                </Trigger>
 
                                 <Trigger Property="IsMouseOver" Value="True">
                                     <Setter TargetName="clpanel" Property="Visibility" Value="Visible" />
@@ -191,452 +210,217 @@
 
 
 
-
-
-
-
-
-            <Style x:Key="CategoryTab" TargetType="TextBlock">
-                <Setter Property="MaxWidth" Value="20" />
-                <Setter Property="Margin" Value="8" />
-                <Setter Property="FontWeight" Value="Bold" />
-                <Setter Property="HorizontalAlignment" Value="Center" />
-                <Setter Property="VerticalAlignment" Value="Center" />
-                <Setter Property="Foreground" Value="White" />
-                <Setter Property="TextWrapping" Value="Wrap" />
-            </Style>
-
-
-
         </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid Margin="0,10">
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
 
-            <Grid Margin="0,0,15,0" Background="Transparent">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition />
-                </Grid.ColumnDefinitions>
+            <shared:TwoColumnPanel ColumnSpacing="20" ItemSpacing="15">
 
-                <StackPanel>
-                    <StackPanel.Resources>
-                        <Style TargetType="Separator">
-                            <Setter Property="Margin" Value="0,10" />
-                        </Style>
-                    </StackPanel.Resources>
+                <!--#region 基本要素-->
+                <DockPanel>
+                    <Border Margin="0,0,10,0" Background="Green">
+                        <TextBlock Style="{StaticResource CategoryTab}" Text="基本要素" />
+                    </Border>
 
-                    <!--#region 基本要素-->
-                    <DockPanel>
-                        <Border Margin="0,0,10,0" Background="Green">
-                            <TextBlock Style="{StaticResource CategoryTab}" Text="基本要素" />
-                        </Border>
+                    <StackPanel>
+                        <shared:ModifiableControl
+                            EditTemplate="{StaticResource DT.TextBox.Center}"
+                            Header="基金全称"
+                            Modifier="{Binding FullName}" />
 
-                        <StackPanel>
+
+                        <DockPanel>
                             <shared:ModifiableControl
+                                MinWidth="300"
                                 EditTemplate="{StaticResource DT.TextBox.Center}"
-                                Header="基金全称"
-                                Modifier="{Binding FullName}" />
+                                Header="基金简称"
+                                Modifier="{Binding ShortName}" />
+
+                            <shared:ModifiableControl
+                                Margin="10,0"
+                                HorizontalAlignment="Left"
+                                EditTemplate="{StaticResource DT.SecurityFundType}"
+                                Header="基金类型"
+                                Modifier="{Binding SecurityFundType}" />
+                        </DockPanel>
 
 
-                            <DockPanel>
-                                <shared:ModifiableControl
-                                    MinWidth="300"
-                                    EditTemplate="{StaticResource DT.TextBox.Center}"
-                                    Header="基金简称"
-                                    Modifier="{Binding ShortName}" />
-
-                                <shared:ModifiableControl
-                                    Margin="10,0"
-                                    HorizontalAlignment="Left"
-                                    EditTemplate="{StaticResource DT.SecurityFundType}"
-                                    Header="基金类型"
-                                    Modifier="{Binding SecurityFundType}" />
-                            </DockPanel>
-
-
-                            <!--  风险等级 止损预警  -->
-                            <DockPanel Margin="{StaticResource LineSpacing}" LastChildFill="False">
-
-                                <shared:ModifiableControl
-                                    HorizontalAlignment="Left"
-                                    EditTemplate="{StaticResource DT.RiskLevel}"
-                                    Header="风险等级"
-                                    Modifier="{Binding RiskLevel}" />
-
-                                <shared:ModifiableControl
-                                    Margin="20,0"
-                                    HorizontalAlignment="Left"
-                                    Header="存续期"
-                                    Modifier="{Binding DurationInMonths}" />
-
-
-                                <shared:ModifiableControl
-                                    Margin="10,0"
-                                    HorizontalAlignment="Left"
-                                    EditTemplate="{StaticResource DT.ExpirationDate}"
-                                    Header="到期日"
-                                    Modifier="{Binding ExpirationDate}" />
-
-
-
-                            </DockPanel>
-
-
-                            <!--  开放日  -->
-                            <hc:UniformSpacingPanel Margin="{StaticResource LineSpacing}" Spacing="10">
-
-                                <shared:ModifiableControl
-                                    HorizontalAlignment="Left"
-                                    EditTemplate="{StaticResource DT.FundMode}"
-                                    Header="运作方式"
-                                    Modifier="{Binding FundModeInfo}" />
-
-                                <shared:ModifiableControl
-                                    HorizontalAlignment="Left"
-                                    Header="封闭期"
-                                    Modifier="{Binding SealingRule}"
-                                    Visibility="{Binding DataContext.IsSealingFund, RelativeSource={RelativeSource AncestorType=local:ElementsView}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-
-                                <shared:FactorModifiableControl
-                                    HorizontalAlignment="Left"
-                                    Header="锁定期"
-                                    Modifier="{Binding LockingRule}" />
-
-
-
-                            </hc:UniformSpacingPanel>
-
-                            <DockPanel DockPanel.Dock="Top" LastChildFill="False">
-                                <TextBlock
-                                    Margin="0,0,10,0"
-                                    VerticalAlignment="Center"
-                                    Foreground="Gray"
-                                    Text="基金份额" />
-
-                                <Viewbox
-                                    Grid.Column="1"
-                                    Height="7.5"
-                                    VerticalAlignment="Top"
-                                    Visibility="{Binding IsSharesInherited, Converter={StaticResource Boolean2VisibilityConverter}}">
-                                    <Path Data="{StaticResource f.arrow-turn-down}" Fill="Brown" />
-                                </Viewbox>
-
-
-                                <Button
-                                    hc:IconElement.Geometry="{StaticResource f.pencil}"
-                                    Command="{Binding ModifyInheritCommand}"
-                                    Style="{StaticResource ButtonIcon.Small}"
-                                    ToolTip="修改"
-                                    Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
-
-
-                                <ListBox
-                                    VerticalAlignment="Center"
-                                    VerticalContentAlignment="Center"
-                                    BorderThickness="0"
-                                    ItemsSource="{Binding Shares}"
-                                    Style="{StaticResource ListBoxCustom}">
-                                    <ListBox.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel IsItemsHost="True" />
-                                        </ItemsPanelTemplate>
-                                    </ListBox.ItemsPanel>
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <DockPanel Margin="5,0">
-                                                <TextBlock Text="{Binding Name}" />
-                                                <TextBlock x:Name="tb" Text=" ：" />
-                                                <TextBlock
-                                                    x:Name="tb2"
-                                                    MinWidth="80"
-                                                    Text="{Binding Requirement}"
-                                                    TextWrapping="Wrap" />
-                                            </DockPanel>
-
-                                            <DataTemplate.Triggers>
-                                                <DataTrigger Binding="{Binding Items.Count, RelativeSource={RelativeSource AncestorType=ListBox}}" Value="1">
-                                                    <Setter TargetName="tb" Property="Visibility" Value="Collapsed" />
-                                                    <Setter TargetName="tb2" Property="Visibility" Value="Collapsed" />
-                                                </DataTrigger>
-
-                                            </DataTemplate.Triggers>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-
-                            </DockPanel>
-                        </StackPanel>
-                    </DockPanel>
-                    <!--#endregion-->
-
-                    <Separator />
-
-
-                    <!--#region 费用相关-->
-                    <DockPanel>
-                        <DockPanel.Resources>
-                            <Style TargetType="Separator">
-                                <Setter Property="Margin" Value="0,3" />
-                            </Style>
-                        </DockPanel.Resources>
-                        <Border Margin="0,0,10,0" Background="Blue">
-                            <TextBlock Style="{StaticResource CategoryTab}" Text="费用相关" />
-                        </Border>
-
-                        <StackPanel>
-
-
-                            <shared:FactorModifiableControl
-                                EditTemplate="{StaticResource DT.Fee}"
-                                Header="管理费"
-                                Modifier="{Binding ManageFee}" />
+                        <!--  风险等级 止损预警  -->
+                        <DockPanel Margin="{StaticResource LineSpacing}" LastChildFill="False">
 
                             <shared:ModifiableControl
                                 HorizontalAlignment="Left"
-                                EditTemplate="{StaticResource DT.FeePay}"
-                                Header="支付方式"
-                                Modifier="{Binding ManageFeePay}" />
+                                EditTemplate="{StaticResource DT.RiskLevel}"
+                                Header="风险等级"
+                                Modifier="{Binding RiskLevel}" />
 
-                            <Separator />
-
-                            <shared:FactorModifiableControl
-                                EditTemplate="{StaticResource DT.Subscription}"
-                                Header="认购规则"
-                                Modifier="{Binding SubscriptionRule}" />
-
-                            <Separator />
-
-                            <shared:FactorModifiableControl
-                                EditTemplate="{StaticResource DT.Purchase}"
-                                Header="申购规则"
-                                Modifier="{Binding PurchasRule}" />
-
-                            <Separator />
-
-
-                            <shared:FactorModifiableControl
-                                EditTemplate="{StaticResource DT.RedemptionFee}"
-                                Header="赎回费"
-                                Modifier="{Binding RedemptionFee}" />
-
-                            <Separator />
-
-                            <shared:FactorModifiableControl
-                                EditTemplate="{StaticResource DT.LongText}"
-                                Header="业绩报酬"
-                                Modifier="{Binding PerformanceFeeStatement}" />
-
-
-                            <Separator />
-
-
-                            <!--  费用  -->
                             <shared:ModifiableControl
+                                Margin="20,0"
                                 HorizontalAlignment="Left"
-                                EditTemplate="{StaticResource DT.Agency}"
-                                Header="托管机构"
-                                Modifier="{Binding TrusteeInfo}" />
-
+                                Header="存续期"
+                                Modifier="{Binding DurationInMonths}" />
 
 
                             <shared:ModifiableControl
+                                Margin="10,0"
                                 HorizontalAlignment="Left"
-                                EditTemplate="{StaticResource DT.Agency}"
-                                Header="外包机构"
-                                Modifier="{Binding OutsourcingInfo}" />
+                                EditTemplate="{StaticResource DT.ExpirationDate}"
+                                Header="到期日"
+                                Modifier="{Binding ExpirationDate}" />
 
 
 
-                        </StackPanel>
+                        </DockPanel>
 
 
+                        <!--  开放日  -->
+                        <hc:UniformSpacingPanel Margin="{StaticResource LineSpacing}" Spacing="10">
 
-                    </DockPanel>
-                    <!--#endregion-->
+                            <shared:ModifiableControl
+                                HorizontalAlignment="Left"
+                                EditTemplate="{StaticResource DT.FundMode}"
+                                Header="运作方式"
+                                Modifier="{Binding FundModeInfo}" />
 
-                    <Separator />
-
-
-                    <!--#region 申赎相关-->
-                    <DockPanel>
-                        <Border Margin="0,0,10,0" Background="Orange">
-                            <TextBlock Style="{StaticResource CategoryTab}" Text="申赎相关" />
-                        </Border>
-                        <StackPanel>
-
-                            <shared:FactorModifiableControl
-                                ContentTemplate="{StaticResource DT.OpenRules}"
-                                Header="开放规则"
-                                Modifier="{Binding FundOpenRule}" />
+                            <shared:ModifiableControl
+                                HorizontalAlignment="Left"
+                                Header="封闭期"
+                                Modifier="{Binding SealingRule}"
+                                Visibility="{Binding DataContext.IsSealingFund, RelativeSource={RelativeSource AncestorType=local:ElementsView}, Converter={StaticResource Boolean2VisibilityReConverter}}" />
 
 
                             <shared:FactorModifiableControl
                                 HorizontalAlignment="Left"
-                                Header="临时开放"
-                                Modifier="{Binding TemporarilyOpenInfo}" />
+                                Header="锁定期"
+                                Modifier="{Binding LockingRule}" />
 
 
-                            <!--  巨额赎回  -->
+
+                        </hc:UniformSpacingPanel>
+
+                        <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+                            <TextBlock
+                                Margin="0,0,10,0"
+                                VerticalAlignment="Center"
+                                Foreground="Gray"
+                                Text="基金份额" />
+
+                            <Viewbox
+                                Grid.Column="1"
+                                Height="7.5"
+                                VerticalAlignment="Top"
+                                Visibility="{Binding IsSharesInherited, Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <Path Data="{StaticResource f.arrow-turn-down}" Fill="Brown" />
+                            </Viewbox>
+
+
+                            <Button
+                                hc:IconElement.Geometry="{StaticResource f.pencil}"
+                                Command="{Binding ModifyInheritCommand}"
+                                Style="{StaticResource ButtonIcon.Small}"
+                                ToolTip="修改"
+                                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+
+                            <ListBox
+                                VerticalAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                BorderThickness="0"
+                                ItemsSource="{Binding Shares}"
+                                Style="{StaticResource ListBoxCustom}">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel IsItemsHost="True" />
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="5,0">
+                                            <TextBlock Text="{Binding Name}" />
+                                            <TextBlock x:Name="tb" Text=" ：" />
+                                            <TextBlock
+                                                x:Name="tb2"
+                                                MinWidth="80"
+                                                Text="{Binding Requirement}"
+                                                TextWrapping="Wrap" />
+                                        </DockPanel>
+
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Items.Count, RelativeSource={RelativeSource AncestorType=ListBox}}" Value="1">
+                                                <Setter TargetName="tb" Property="Visibility" Value="Collapsed" />
+                                                <Setter TargetName="tb2" Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                        </DockPanel>
+                    </StackPanel>
+                </DockPanel>
+                <!--#endregion-->
+
+
+                <!--#region 投资相关-->
+                <DockPanel>
+                    <Border Margin="0,0,10,0" Background="Orange">
+                        <TextBlock Style="{StaticResource CategoryTab}" Text="投资相关" />
+                    </Border>
+
+                    <hc:UniformSpacingPanel Orientation="Vertical" VerticalSpacing="5">
+
+                        <DockPanel>
 
                             <shared:ModifiableControl
                                 HorizontalAlignment="Left"
-                                Header="巨额赎回"
-                                Modifier="{Binding HugeRedemption}" />
-
-
-
-                            <!--  冷静期  -->
-                            <shared:ModifiableControl
-                                HorizontalAlignment="Left"
-                                Header="冷静期"
-                                Modifier="{Binding CoolingPeriod}" />
-
-
-                            <!--  回访  -->
-                            <shared:ModifiableControl
-                                HorizontalAlignment="Left"
-                                Header="回访"
-                                Modifier="{Binding Callback}" />
-
-
-                        </StackPanel>
-                    </DockPanel>
-                    <!--#endregion-->
-
-
-                    <Separator />
-
-
-                    <!--  账户  -->
-                    <DockPanel Margin="{StaticResource LineSpacing}">
-                        <Border Margin="0,0,10,0" Background="SaddleBrown">
-                            <TextBlock Style="{StaticResource CategoryTab}" Text="账户信息" />
-                        </Border>
-
-                        <TextBlock
-                            Margin="10"
-                            DockPanel.Dock="Right"
-                            Foreground="Gray"
-                            IsHitTestVisible="False"
-                            Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}">
-                            <Run>可复制后点击绿色按键</Run>
-                            <LineBreak />
-                            <Run>自动识别账户信息</Run>
-                            <LineBreak />
-                            <LineBreak />
-                            <Run>账户 | 账户名称：xxxxxx</Run>
-                            <LineBreak />
-                            <Run>账号：00000</Run>
-                            <LineBreak />
-                            <Run>开户行：xxxx</Run>
-                            <LineBreak />
-                            <Run>.....</Run>
-                        </TextBlock>
-
-                        <StackPanel>
-
+                                EditTemplate="{StaticResource DT.StopLine}"
+                                Header="止损线"
+                                Modifier="{Binding StopLine}" />
 
                             <shared:ModifiableControl
                                 HorizontalAlignment="Left"
-                                Header="募集账户"
-                                Modifier="{Binding CollectionAccount}"
-                                Style="{StaticResource Modifiable.Bank}" />
-
-                            <Separator />
-
-                            <shared:ModifiableControl
-                                HorizontalAlignment="Left"
-                                Header="托管账户"
-                                Modifier="{Binding CustodyAccount}"
-                                Style="{StaticResource Modifiable.Bank}" />
+                                EditTemplate="{StaticResource DT.StopLine}"
+                                Header="预警线"
+                                Modifier="{Binding WarningLine}" />
+                        </DockPanel>
 
 
 
-                            <!--<shared:ChangeableContainer
-                                Binding="{Binding CollectionAccount}"
-                                ContentTemplate="{StaticResource DT.Bank}"
-                                EditTemplate="{StaticResource CT.Bank}" />
+
+                        <shared:ModifiableControl
+                            HorizontalContentAlignment="Stretch"
+                            EditTemplate="{StaticResource DT.LongText}"
+                            Header="投资目标"
+                            Modifier="{Binding InvestmentObjective}" />
 
 
-                            <shared:ChangeableContainer
-                                Binding="{Binding CustodyAccount}"
-                                ContentTemplate="{StaticResource DT.Bank}"
-                                EditTemplate="{StaticResource CT.Bank}" />-->
+                        <shared:ModifiableControl
+                            HorizontalContentAlignment="Stretch"
+                            EditTemplate="{StaticResource DT.LongText}"
+                            Header="投资范围"
+                            Modifier="{Binding InvestmentScope}" />
 
-                        </StackPanel>
-                    </DockPanel>
+                        <Separator />
 
-                </StackPanel>
-
-
-                <StackPanel Grid.Column="2">
-
-
-                    <!--#region 投资相关-->
-                    <DockPanel>
-                        <Border Margin="0,0,10,0" Background="Orange">
-                            <TextBlock Style="{StaticResource CategoryTab}" Text="投资相关" />
-                        </Border>
-
-                        <hc:UniformSpacingPanel Orientation="Vertical" VerticalSpacing="5">
-
-                            <DockPanel>
-
-                                <shared:ModifiableControl
-                                    HorizontalAlignment="Left"
-                                    EditTemplate="{StaticResource DT.StopLine}"
-                                    Header="止损线"
-                                    Modifier="{Binding StopLine}" />
-
-                                <shared:ModifiableControl
-                                    HorizontalAlignment="Left"
-                                    EditTemplate="{StaticResource DT.StopLine}"
-                                    Header="预警线"
-                                    Modifier="{Binding WarningLine}" />
-                            </DockPanel>
+                        <shared:ModifiableControl
+                            HorizontalContentAlignment="Stretch"
+                            EditTemplate="{StaticResource DT.LongText}"
+                            Header="投资策略"
+                            Modifier="{Binding InvestmentStrategy}" />
 
 
-                            <shared:ModifiableControl
-                                Margin="0,0,30,0"
-                                HorizontalContentAlignment="Stretch"
-                                Header="业绩比较基准"
-                                Modifier="{Binding PerformanceBenchmark}" />
+                        <Separator />
 
-                            <shared:ModifiableControl
-                                HorizontalContentAlignment="Stretch"
-                                EditTemplate="{StaticResource DT.LongText}"
-                                Header="投资目标"
-                                Modifier="{Binding InvestmentObjective}" />
+                        <shared:ModifiableControl
+                            HorizontalContentAlignment="Stretch"
+                            EditTemplate="{StaticResource DT.LongText}"
+                            Header="投资经理"
+                            Modifier="{Binding InvestmentManager}" />
 
-
-                            <shared:ModifiableControl
-                                HorizontalContentAlignment="Stretch"
-                                EditTemplate="{StaticResource DT.LongText}"
-                                Header="投资范围"
-                                Modifier="{Binding InvestmentScope}" />
-
-                            <Separator />
-
-                            <shared:ModifiableControl
-                                HorizontalContentAlignment="Stretch"
-                                EditTemplate="{StaticResource DT.LongText}"
-                                Header="投资策略"
-                                Modifier="{Binding InvestmentStrategy}" />
-
-
-                            <Separator />
-
-                            <shared:ModifiableControl
-                                HorizontalContentAlignment="Stretch"
-                                EditTemplate="{StaticResource DT.LongText}"
-                                Header="投资经理"
-                                Modifier="{Binding InvestmentManager}" />
-
-                            <!--<shared:ChangeableContainer
+                        <!--<shared:ChangeableContainer
                                 HorizontalContentAlignment="Stretch"
                                 Binding="{Binding InvestmentObjective}"
                                 ContentTemplate="{StaticResource DT.InvestmentObjective}" />
@@ -677,17 +461,191 @@
                                 HorizontalContentAlignment="Stretch"
                                 Binding="{Binding InvestmentManagers}"
                                 ContentTemplate="{StaticResource DT.LongText}" />-->
-                        </hc:UniformSpacingPanel>
-                    </DockPanel>
-                    <!--#endregion-->
+                    </hc:UniformSpacingPanel>
+                </DockPanel>
+                <!--#endregion-->
 
 
-                    <Separator />
+                <!--#region 费用相关-->
+                <DockPanel>
+                    <DockPanel.Resources>
+                        <Style TargetType="Separator">
+                            <Setter Property="Margin" Value="0,3" />
+                        </Style>
+                    </DockPanel.Resources>
+                    <Border Margin="0,0,10,0" Background="Blue">
+                        <TextBlock Style="{StaticResource CategoryTab}" Text="费用相关" />
+                    </Border>
+
+                    <StackPanel>
+
+
+                        <shared:FactorModifiableControl
+                            EditTemplate="{StaticResource DT.Fee}"
+                            Header="管理费"
+                            Modifier="{Binding ManageFee}" />
+
+                        <shared:ModifiableControl
+                            HorizontalAlignment="Left"
+                            EditTemplate="{StaticResource DT.FeePay}"
+                            Header="支付方式"
+                            Modifier="{Binding ManageFeePay}" />
+
+                        <Separator />
+
+                        <shared:FactorModifiableControl
+                            EditTemplate="{StaticResource DT.Subscription}"
+                            Header="认购规则"
+                            Modifier="{Binding SubscriptionRule}" />
+
+                        <Separator />
+
+                        <shared:FactorModifiableControl
+                            EditTemplate="{StaticResource DT.Purchase}"
+                            Header="申购规则"
+                            Modifier="{Binding PurchasRule}" />
+
+                        <Separator />
+
+
+                        <shared:FactorModifiableControl
+                            EditTemplate="{StaticResource DT.RedemptionFee}"
+                            Header="赎回费"
+                            Modifier="{Binding RedemptionFee}" />
+
+
+                        <Separator />
+
+
+                        <!--  费用  -->
+                        <shared:ModifiableControl
+                            HorizontalAlignment="Left"
+                            EditTemplate="{StaticResource DT.Agency}"
+                            Header="托管机构"
+                            Modifier="{Binding TrusteeInfo}" />
 
 
 
-                </StackPanel>
-            </Grid>
+                        <shared:ModifiableControl
+                            HorizontalAlignment="Left"
+                            EditTemplate="{StaticResource DT.Agency}"
+                            Header="外包机构"
+                            Modifier="{Binding OutsourcingInfo}" />
+
+
+
+                    </StackPanel>
+
+
+
+                </DockPanel>
+                <!--#endregion-->
+
+
+                <DockPanel>
+
+                    <Border Margin="0,0,10,0" Background="SandyBrown">
+                        <TextBlock Style="{StaticResource CategoryTab}" Text="业绩报酬" />
+                    </Border>
+
+                    <StackPanel>
+                        <shared:ModifiableControl
+                            Margin="0,0,30,0"
+                            HorizontalContentAlignment="Stretch"
+                            Header="业绩比较基准"
+                            Modifier="{Binding PerformanceBenchmark}" />
+
+
+                        <!--<shared:FactorModifiableControl
+                                EditTemplate="{StaticResource DT.LongText}"
+                                Header="业绩报酬"
+                                Modifier="{Binding PerformanceFeeStatement}" />-->
+
+                        <shared:ModifiableControl
+                            HorizontalAlignment="Left"
+                            Header="业绩报酬规则"
+                            Modifier="{Binding PerformanceFeeRule}"
+                            Visibility="{Binding HasPerformanceFeeStandard, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                        <Separator Margin="70,4" Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                        <shared:FactorModifiableControl Header="业绩报酬标准" Modifier="{Binding PerformanceFeeStandard}" />
+                    </StackPanel>
+
+                </DockPanel>
+
+
+                <!--#region 申赎相关-->
+                <DockPanel>
+                    <Border Margin="0,0,10,0" Background="Orange">
+                        <TextBlock Style="{StaticResource CategoryTab}" Text="申赎相关" />
+                    </Border>
+                    <StackPanel>
+
+                        <shared:FactorModifiableControl
+                            ContentTemplate="{StaticResource DT.OpenRules}"
+                            Header="开放规则"
+                            Modifier="{Binding FundOpenRule}" />
+
+
+                        <shared:FactorModifiableControl
+                            HorizontalAlignment="Left"
+                            Header="临时开放"
+                            Modifier="{Binding TemporarilyOpenInfo}" />
+
+
+                        <!--  巨额赎回  -->
+
+                        <shared:ModifiableControl
+                            HorizontalAlignment="Left"
+                            Header="巨额赎回"
+                            Modifier="{Binding HugeRedemption}" />
+
+
+
+                        <!--  冷静期  -->
+                        <shared:ModifiableControl
+                            HorizontalAlignment="Left"
+                            Header="冷静期"
+                            Modifier="{Binding CoolingPeriod}" />
+
+
+                        <!--  回访  -->
+                        <shared:ModifiableControl
+                            HorizontalAlignment="Left"
+                            Header="回访"
+                            Modifier="{Binding Callback}" />
+
+
+                    </StackPanel>
+                </DockPanel>
+                <!--#endregion-->
+
+
+                <!--  募集账户  -->
+
+                <shared:ModifiableControl
+                    HorizontalAlignment="Left"
+                    Header="募集账户"
+                    Modifier="{Binding CollectionAccount}"
+                    Style="{StaticResource Modifiable.Bank}" />
+
+
+                <!--  托管账户  -->
+
+                <shared:ModifiableControl
+                    HorizontalAlignment="Left"
+                    Header="托管账户"
+                    Modifier="{Binding CustodyAccount}"
+                    Style="{StaticResource Modifiable.Bank}" />
+
+
+
+
+
+
+
+            </shared:TwoColumnPanel>
 
 
 
@@ -826,11 +784,89 @@
                 Style="{StaticResource RainbowGlowIconButton}"
                 Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityConverter}}" />
 
+            <Border
+                BorderBrush="Gray"
+                BorderThickness="1"
+                CornerRadius="5">
+                <DockPanel>
+                    <ComboBox
+                        Width="160"
+                        Margin="10,0"
+                        VerticalAlignment="Center"
+                        BorderThickness="0"
+                        ItemsSource="{Binding ParseHistories}"
+                        SelectedItem="{Binding SelectedParseHistory}"
+                        Visibility="{Binding CanShowParseHistories, Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock VerticalAlignment="Center" Text="{Binding Provider}" />
+                                    <TextBlock
+                                        Margin="5,0"
+                                        VerticalAlignment="Center"
+                                        Text="{Binding ParsedAt, StringFormat={}{0:MM-dd HH:mm}}" />
+                                    <Button
+                                        Margin="8,0,0,0"
+                                        hc:IconElement.Geometry="{StaticResource f.eye}"
+                                        Command="{Binding DataContext.ViewParseJsonCommand, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                        CommandParameter="{Binding}"
+                                        Foreground="Gray"
+                                        Style="{StaticResource ButtonIcon.Small}"
+                                        ToolTip="查看解析 JSON" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <Button
+                        hc:IconElement.Geometry="{StaticResource f.check}"
+                        Command="{Binding ApplySelectedParseHistoryCommand}"
+                        Foreground="DodgerBlue"
+                        Style="{StaticResource ButtonIcon}"
+                        ToolTip="应用选中的历史解析结果"
+                        Visibility="{Binding HasSelectedParseHistory, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                    <Button
+                        hc:IconElement.Geometry="{StaticResource f.brain}"
+                        Command="{Binding ParseContractElementsCommand}"
+                        Foreground="Goldenrod"
+                        Style="{StaticResource ButtonIcon}"
+                        ToolTip="AI 解析合同要素"
+                        Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+                    <hc:LoadingCircle
+                        Width="18"
+                        Height="18"
+                        Margin="10,0"
+                        Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                    <TextBlock
+                        Margin="10,0"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        Foreground="Gray"
+                        Text="{Binding ParseStatus}"
+                        Visibility="{Binding IsParsingContract, Converter={StaticResource Boolean2VisibilityConverter}}" />
+
+                </DockPanel>
+            </Border>
+
+
             <Button
+                hc:IconElement.Geometry="{StaticResource f.rotate-left}"
+                Command="{Binding CancelAllCommand}"
+                Foreground="Red"
+                Style="{StaticResource ButtonIcon}"
+                ToolTip="还原所有设置"
+                Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
+            <Button
+                Margin="-8,0,0,0"
                 hc:IconElement.Geometry="{StaticResource f.floppy-disk}"
                 Command="{Binding SaveCommand}"
                 Style="{StaticResource ButtonIcon}"
                 Visibility="{Binding IsReadOnly, Converter={StaticResource Boolean2VisibilityReConverter}}" />
+
             <ToggleButton IsChecked="{Binding IsReadOnly}" Style="{StaticResource ToggleButtonFlip}">
                 <hc:StatusSwitchElement.CheckedElement>
                     <Viewbox Width="16" Height="16">

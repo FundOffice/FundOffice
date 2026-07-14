@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MoT.Logg" Version="1.1.8" />
+    <PackageReference Include="MoT.Logg" Version="1.1.9" />
   </ItemGroup>
 
 </Project>

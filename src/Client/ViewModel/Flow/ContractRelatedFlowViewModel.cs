@@ -9,10 +9,11 @@ using FMO.Utilities;
 using MoT;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
+using Utilities;
 
 namespace FMO;
 
- 
+
 
 public abstract partial class ContractRelatedFlowViewModel : FlowViewModel, IElementChangable//, IFileSetter
 {

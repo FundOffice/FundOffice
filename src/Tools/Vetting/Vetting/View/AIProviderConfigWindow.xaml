@@ -1,0 +1,193 @@
+<Window
+    x:Class="Vetting.View.AIProviderConfigWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:vm="clr-namespace:Vetting.ViewModel"
+    x:Name="root"
+    Title="AI设置"
+    Width="500"
+    Height="400"
+    WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <Style
+            x:Key="listitem"
+            BasedOn="{StaticResource ListBoxItemBaseStyle}"
+            TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+    </Window.Resources>
+    <Window.DataContext>
+        <vm:AIProviderConfigViewModel />
+    </Window.DataContext>
+
+    <DockPanel Margin="5">
+        <GroupBox DockPanel.Dock="Top">
+            <GroupBox.Header>
+                <DockPanel>
+                    <TextBlock VerticalAlignment="Center" Text="AI 接口列表" />
+
+                    <Button
+                        Margin="10,0,5,0"
+                        Command="{Binding AddProviderCommand}"
+                        Content="添加"
+                        Style="{StaticResource ButtonPrimary.Small}" />
+                    <Button
+                        Margin="10,0,5,0"
+                        Command="{Binding ExportConfigCommand}"
+                        Content="导出"
+                        Style="{StaticResource ButtonPrimary.Small}" />
+                    <Button
+                        Command="{Binding ImportConfigCommand}"
+                        Content="导入"
+                        Style="{StaticResource ButtonPrimary.Small}" />
+                </DockPanel>
+            </GroupBox.Header>
+
+            <ListBox
+                ItemContainerStyle="{StaticResource listitem}"
+                ItemsSource="{Binding Providers}"
+                SelectedItem="{Binding SelectedProvider}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel Background="Transparent">
+                            <Button
+                                x:Name="del"
+                                Command="{Binding DataContext.DeleteProviderCommand, ElementName=root}"
+                                CommandParameter="{Binding}"
+                                Content="删除"
+                                DockPanel.Dock="Right"
+                                Style="{StaticResource ButtonDanger.Small}"
+                                Visibility="Hidden" />
+                            <TextBlock
+                                Margin="5,0"
+                                VerticalAlignment="Center"
+                                DockPanel.Dock="Right"
+                                Text="{Binding ProviderType}" />
+
+
+                            <TextBlock
+                                Margin="5,0,20,0"
+                                VerticalAlignment="Center"
+                                DockPanel.Dock="Right"
+                                Text="{Binding Model}" />
+
+                            <TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
+                        </DockPanel>
+                        <DataTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="del" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </GroupBox>
+
+        <Separator Margin="10" DockPanel.Dock="Top" />
+
+        <hc:UniformSpacingPanel
+            DataContext="{Binding SelectedProvider}"
+            Orientation="Vertical"
+            Spacing="8"
+            Visibility="{Binding ., Converter={StaticResource Object2VisibilityConverter}}">
+
+            <DockPanel LastChildFill="False">
+
+
+                <hc:TextBox
+                    MinWidth="200"
+                    hc:InfoElement.Title="厂商"
+                    hc:InfoElement.TitlePlacement="Left"
+                    hc:InfoElement.TitleWidth="60"
+                    Text="{Binding Name, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+
+
+
+                <TextBlock
+                    Margin="30,0,0,0"
+                    VerticalAlignment="Center"
+                    Text="API 风格" />
+
+                <ListBox
+                    Margin="10,0,0,0"
+                    ItemsPanel="{StaticResource UniformHorizontalItemsPanelTemplate}"
+                    ItemsSource="{Binding ProviderTypes}"
+                    SelectedItem="{Binding ProviderType}" />
+
+            </DockPanel>
+
+            <DockPanel LastChildFill="False">
+                <DockPanel.Style>
+                    <Style TargetType="DockPanel">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ProviderType}" Value="OpenAI">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DockPanel.Style>
+
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Text="API 版本" />
+
+                <ListBox
+                    Margin="10,0,0,0"
+                    ItemsPanel="{StaticResource UniformHorizontalItemsPanelTemplate}"
+                    ItemsSource="{Binding ApiVersions}"
+                    SelectedItem="{Binding ApiVersion}" />
+            </DockPanel>
+
+
+            <hc:PasswordBox
+                hc:InfoElement.Title="API Key"
+                hc:InfoElement.TitlePlacement="Left"
+                hc:InfoElement.TitleWidth="60"
+                IsSafeEnabled="False"
+                ShowEyeButton="True"
+                UnsafePassword="{Binding ApiKey, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+
+            <hc:TextBox
+                hc:InfoElement.Title="Base URL"
+                hc:InfoElement.TitlePlacement="Left"
+                Text="{Binding BaseUrl, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+
+            <DockPanel>
+                <Button
+                    HorizontalAlignment="Left"
+                    Command="{Binding SaveCommand}"
+                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                    Content="保存"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource ButtonSuccess}" />
+                <Button
+                    Margin="10,0,10,0"
+                    HorizontalAlignment="Left"
+                    Command="{Binding TestConnectivityCommand}"
+                    Content="连通测试"
+                    DockPanel.Dock="Right"
+                    Style="{StaticResource ButtonDashedPrimary}" />
+
+                <Button
+                    HorizontalAlignment="Left"
+                    Command="{Binding FetchModelsCommand}"
+                    Content="获取模型"
+                    DockPanel.Dock="Right" />
+                <hc:ComboBox
+                    hc:InfoElement.Title="模型"
+                    hc:InfoElement.TitlePlacement="Left"
+                    hc:InfoElement.TitleWidth="60"
+                    IsEditable="True"
+                    ItemsSource="{Binding AvailableModels}"
+                    Text="{Binding Model, UpdateSourceTrigger=PropertyChanged, Delay=200}" />
+
+            </DockPanel>
+            <TextBlock
+                Margin="10,0"
+                Foreground="Red"
+                Text="{Binding StatusMessage}" />
+        </hc:UniformSpacingPanel>
+    </DockPanel>
+</Window>

@@ -14,4 +14,5 @@
   <Project Path="TestMeishi/TestMeishi.csproj" Id="1627b383-c8e7-4307-acbc-d8c0d4140085" />
   <Project Path="TestScript/TestScript.csproj" Id="bf12e278-00e6-4762-b360-9118af803319" />
   <Project Path="TestSimple/TestSimple.csproj" Id="0ba4a74e-eccb-45c9-8d0c-ac3986b21eec" />
+  <Project Path="TestCopilot/TestCopilot.csproj" Id="a1b2c3d4-e5f6-7890-abcd-ef1234567890" />
 </Solution>

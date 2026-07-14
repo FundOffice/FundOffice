@@ -158,7 +158,7 @@ public partial class TrusteeWorker : ObservableObject
 
 
         Trustees = [.. trustees];
-        foreach (var t in trustees)
+        foreach (var t in trustees.Where(x=>x.IsEnabled))
             t.Initialize();
 
 

@@ -1,11 +1,10 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 
 namespace FMO.Models;
 
 public class FundFeeInfo : IEquatable<FundFeeInfo>
 {
     public FundFeeType Type { get; set; }
-
 
     public bool HasFee { get; set; }
 
@@ -18,7 +17,6 @@ public class FundFeeInfo : IEquatable<FundFeeInfo>
     /// </summary>
     public decimal GuaranteedFee { get; set; }
 
-
     /// <summary>
     /// 特殊类型
     /// </summary>
@@ -28,27 +26,37 @@ public class FundFeeInfo : IEquatable<FundFeeInfo>
 
     public bool Equals(FundFeeInfo? other)
     {
-        return Type == other?.Type && HasFee == other?.HasFee && Fee == other?.Fee && HasGuaranteedFee == other?.HasGuaranteedFee && GuaranteedFee == other?.GuaranteedFee && Other == other?.Other;
+        if (other is null) return false;
+        if (HasFee != other.HasFee) return false;
+        if (!HasFee) return true;
+        if (Type != other.Type) return false;
+        if (Fee != other.Fee) return false;
+        if (Type == FundFeeType.Other && Other != other.Other) return false;
+        if (HasGuaranteedFee != other.HasGuaranteedFee) return false;
+        if (HasGuaranteedFee && GuaranteedFee != other.GuaranteedFee) return false;
+        return true;
     }
 
     public override string ToString() => !HasFee ? "-" : Type switch { FundFeeType.Fix => $"固定费用：{Fee}元 / 年", FundFeeType.Ratio => $"{Fee}% / 年", FundFeeType.Other => Other, _ => $"未设置" } + (GuaranteedFee > 0 ? $" 有保底：{GuaranteedFee} / 年" : "");
 }
 
-
-public class PartRedemptionFee
+public class PartRedemptionFee : IEquatable<PartRedemptionFee>
 {
     public int? Month { get; set; }
 
     public bool Include { get; set; }
 
     public decimal? Fee { get; set; }
+
+    public bool Equals(PartRedemptionFee? other) =>
+        other is not null && Month == other.Month && Include == other.Include && Fee == other.Fee;
+
+    public override int GetHashCode() => HashCode.Combine(Month, Include, Fee);
 }
 
-
-public class RedemptionFeeInfo
+public class RedemptionFeeInfo : IEquatable<RedemptionFeeInfo>
 {
     public FundFeeType Type { get; set; }
-
 
     public bool HasFee { get; set; }
 
@@ -61,6 +69,20 @@ public class RedemptionFeeInfo
 
     public List<PartRedemptionFee>? Parts { get; set; }
 
+    public bool Equals(RedemptionFeeInfo? other)
+    {
+        if (other is null) return false;
+        if (HasFee != other.HasFee) return false;
+        if (!HasFee) return true; // 不收费用 → 全同
+        if (Type != other.Type) return false;
+        if (Type == FundFeeType.Other && Other != other.Other) return false;
+        if (Type == FundFeeType.ByTime)
+            return Parts?.Count is null or 0 ? other.Parts?.Count is null or 0 : Parts.SequenceEqual(other.Parts ?? []);
+        if (Fee != other.Fee) return false;
+        return true;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Type, HasFee, Fee, Other, Parts?.Count);
 
     public override string? ToString()
     {
@@ -92,7 +114,7 @@ public class RedemptionFeeInfo
     }
 }
 
-public class HugeRedemptionRule
+public class HugeRedemptionRule : IEquatable<HugeRedemptionRule>
 {
     public bool Has { get; set; }
 
@@ -106,8 +128,20 @@ public class HugeRedemptionRule
     /// </summary>
     public bool HasRuleForInvestor { get; set; }
 
-
     public decimal RatioPerInvestor { get; set; }
+
+    public bool Equals(HugeRedemptionRule? other)
+    {
+        if (other is null) return false;
+        if (Has != other.Has) return false;
+        if (!Has) return true;
+        if (Ratio != other.Ratio) return false;
+        if (HasRuleForInvestor != other.HasRuleForInvestor) return false;
+        if (HasRuleForInvestor && RatioPerInvestor != other.RatioPerInvestor) return false;
+        return true;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Has, Ratio, HasRuleForInvestor, RatioPerInvestor);
 
     public override string ToString() => Has switch
     {
@@ -115,7 +149,6 @@ public class HugeRedemptionRule
         _ => "未设置"
     };
 }
-
 
 /// <summary>
 /// 证券投资基金类型
@@ -156,7 +189,6 @@ public enum SecurityFundType
     //FundOfFunds = 5
 }
 
-
 [TypeConverter(nameof(EnumDescriptionTypeConverter))]
 public enum FundMode
 {
@@ -167,29 +199,30 @@ public enum FundMode
     [Description("其它")] Other,
 }
 
-
-
 /// <summary>
 /// 类型：开放 封闭
 /// </summary>
-public class FundModeInfo
+public class FundModeInfo : IEquatable<FundModeInfo>
 {
     public FundMode Mode { get; set; }
 
     public string? Other { get; set; }
 
+    public bool Equals(FundModeInfo? other) =>
+        other is not null && Mode == other.Mode && (Mode != FundMode.Other || Other == other.Other);
+
+    public override int GetHashCode() => HashCode.Combine(Mode, Other);
+
     public override string ToString() => Mode switch { FundMode.Open => "开放式", FundMode.Close => "封闭式", FundMode.Other => Other ?? "未设置", _ => "未设置" };
 }
-
 
 #region 封闭、锁定
 
 [TypeConverter(nameof(EnumDescriptionTypeConverter))]
 public enum SealingType
 {
-    None,
-
-    [Description("无")] No,
+    [Description("无")] None,
+    [Description("无")] No = None,
 
     [Description("有")] Has,
 
@@ -199,7 +232,7 @@ public enum SealingType
 /// <summary>
 /// 封闭、锁定
 /// </summary>
-public class SealingRule
+public class SealingRule : IEquatable<SealingRule>
 {
     /// <summary>
     /// 封闭类型
@@ -216,12 +249,22 @@ public class SealingRule
     /// </summary>
     public string? Extra { get; set; }
 
+    public bool Equals(SealingRule? other)
+    {
+        if (other is null) return false;
+        if (Type != other.Type) return false;
+        if (Type is SealingType.No) return true;
+        if (Type == SealingType.Has) return Month == other.Month;
+        if (Type == SealingType.Other) return Extra == other.Extra;
+        return false;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Type, Month, Extra);
+
     public override string ToString() => Type switch { SealingType.Has => $"{Month}个月", SealingType.No => "无", _ => Extra ?? "未设置" };
 }
 
 #endregion
-
-
 
 [TypeConverter(typeof(EnumDescriptionTypeConverter))]
 public enum RiskLevel
@@ -235,9 +278,7 @@ public enum RiskEvaluation
     [Description("未选择")] Unk, C1, C2, C3, C4, C5
 }
 
-
-
-public class FundPurchaseRule
+public class FundPurchaseRule : IEquatable<FundPurchaseRule>
 {
     /// <summary>
     /// 起投
@@ -269,7 +310,6 @@ public class FundPurchaseRule
     /// </summary>
     public FundFeeType Type { get; set; }
 
-
     public decimal Fee { get; set; }
 
     public bool HasGuaranteedFee { get; set; }
@@ -279,7 +319,6 @@ public class FundPurchaseRule
     /// </summary>
     public decimal GuaranteedFee { get; set; }
 
-
     /// <summary>
     /// 特殊类型
     /// </summary>
@@ -288,6 +327,43 @@ public class FundPurchaseRule
     public FundFeePayType PayMethod { get; set; }
 
     public string? PayOther { get; set; }
+
+    public bool Equals(FundPurchaseRule? other)
+    {
+        if (other is null) return false;
+        if (MinDeposit != other.MinDeposit) return false;
+        if (AdditionalDeposit != other.AdditionalDeposit) return false;
+        if (HasRequirement != other.HasRequirement) return false;
+        if (HasRequirement && Statement != other.Statement) return false;
+        if (HasFee != other.HasFee) return false;
+        if (!HasFee) return true;
+        if (Type != other.Type) return false;
+        if (Fee != other.Fee) return false;
+        if (Type == FundFeeType.Other && Other != other.Other) return false;
+        if (HasGuaranteedFee != other.HasGuaranteedFee) return false;
+        if (HasGuaranteedFee && GuaranteedFee != other.GuaranteedFee) return false;
+        if (PayMethod != other.PayMethod) return false;
+        if (PayMethod == FundFeePayType.Other && PayOther != other.PayOther) return false;
+        return true;
+    }
+
+    public override int GetHashCode()
+    {
+        var h = new HashCode();
+        h.Add(MinDeposit);
+        h.Add(AdditionalDeposit);
+        h.Add(HasRequirement);
+        h.Add(Statement);
+        h.Add(HasFee);
+        h.Add(Type);
+        h.Add(Fee);
+        h.Add(HasGuaranteedFee);
+        h.Add(GuaranteedFee);
+        h.Add(Other);
+        h.Add(PayMethod);
+        h.Add(PayOther);
+        return h.ToHashCode();
+    }
 
     public override string ToString()
     {
@@ -301,16 +377,19 @@ public class FundPurchaseRule
 /// <summary>
 /// 存续期
 /// </summary>
-public class FundDuration
+public class FundDuration : IEquatable<FundDuration>
 {
     /// <summary>
     /// 永续
     /// </summary>
     public bool Infinity { get; set; }
 
-
     public int Month { get; set; }
 
+    public bool Equals(FundDuration? other) =>
+        other is not null && Infinity == other.Infinity && (Infinity || Month == other.Month);
+
+    public override int GetHashCode() => HashCode.Combine(Infinity, Month);
 
     public override string ToString()
     {
@@ -319,13 +398,11 @@ public class FundDuration
 
 }
 
-
-
 #region OpenRule
 
 public enum SequenceOrder { Ascend, Descend }
 
-public class OpenRule : ICloneable
+public class OpenRule : ICloneable, IEquatable<OpenRule>
 {
     static string[] weekhead = ["一", "二", "三", "四", "五",];
 
@@ -391,6 +468,83 @@ public class OpenRule : ICloneable
     /// </summary>
     public bool CrossWeek { get; set; }
 
+    public bool Equals(OpenRule? other)
+    {
+        if (other is null) return false;
+        if (Type != other.Type) return false;
+        if (AllowBuy != other.AllowBuy) return false;
+        if (AllowSell != other.AllowSell) return false;
+
+        // 封闭类型无需比较其它字段
+        if (Type == FundOpenType.Closed || Type == FundOpenType.Daily)
+            return TradeOrNatural == other.TradeOrNatural; // Daily 也要比交易日/自然日
+
+        // 通用字段
+        if (TradeOrNatural != other.TradeOrNatural) return false;
+        if (Postpone != other.Postpone) return false;
+        if (CrossWeek != other.CrossWeek) return false;
+        if (DayOrder != other.DayOrder) return false;
+
+        // Dates 始终相关
+        if (!ArrayEqual(Dates, other.Dates)) return false;
+
+        if (Type == FundOpenType.Weekly)
+        {
+            // 周频：Dates 已经对比过（代表星期几），WeekOrder 在 DayOrder 中
+            return true;
+        }
+
+        if (Type == FundOpenType.Monthly)
+        {
+            // 月频：Weeks 可能用于"第N周"
+            if (!ArrayEqual(Weeks, other.Weeks)) return false;
+            if (WeekOrder != other.WeekOrder) return false;
+            return true;
+        }
+
+        if (Type == FundOpenType.Quarterly)
+        {
+            if (!ArrayEqual(Months, other.Months)) return false;
+            if (!ArrayEqual(Weeks, other.Weeks)) return false;
+            if (WeekOrder != other.WeekOrder) return false;
+            return true;
+        }
+
+        if (Type == FundOpenType.Yearly)
+        {
+            if (!ArrayEqual(Quarters, other.Quarters)) return false;
+            if (!ArrayEqual(Months, other.Months)) return false;
+            if (!ArrayEqual(Weeks, other.Weeks)) return false;
+            if (WeekOrder != other.WeekOrder) return false;
+            return true;
+        }
+
+        return true;
+    }
+
+    private static bool ArrayEqual(int[]? a, int[]? b)
+    {
+        if (a is null && b is null) return true;
+        if (a is null || b is null) return false;
+        return a.SequenceEqual(b);
+    }
+
+    public override int GetHashCode()
+    {
+        var h = new HashCode();
+        h.Add(Type);
+        h.Add(AllowBuy);
+        h.Add(AllowSell);
+        h.Add(TradeOrNatural);
+        h.Add(Postpone);
+        h.Add(CrossWeek);
+        h.Add(DayOrder);
+        h.Add(Dates?.Length ?? 0);
+        h.Add(Weeks?.Length ?? 0);
+        h.Add(Months?.Length ?? 0);
+        h.Add(Quarters?.Length ?? 0);
+        return h.ToHashCode();
+    }
 
     private string WeekStr()
     {
@@ -412,7 +566,6 @@ public class OpenRule : ICloneable
                 return $"倒数第{string.Join('、', days!.Select(x => x))}个自然日";
         }
     }
-
 
     private string MonthStr()
     {
@@ -439,7 +592,6 @@ public class OpenRule : ICloneable
     public override string ToString()
     {
         var pos = AllowBuy && AllowSell ? "" : AllowBuy ? "开放申购" : "开放赎回";
-
 
         switch (Type)
         {
@@ -546,7 +698,6 @@ public class OpenRule : ICloneable
         ////////////////////////////////////////////////////////
         ///
 
-
         // 周
         if (Type switch { FundOpenType.Yearly or FundOpenType.Quarterly or FundOpenType.Monthly => true, _ => false })
         {
@@ -635,7 +786,6 @@ public class OpenRule : ICloneable
                                 }
                             }
                         }
-
 
                     }
                     else if (Dates?.Length > 0) //月的第n个交易日
@@ -757,7 +907,6 @@ public class OpenRule : ICloneable
                             }
                         }
 
-
                     }
                     else if (Dates?.Length > 0) //月的第n个交易日
                     {
@@ -871,7 +1020,6 @@ public class OpenRule : ICloneable
 
                         }
 
-
                     }
                     else if (Dates?.Length > 0) //月的第n个交易日
                     {
@@ -975,14 +1123,12 @@ public class OpenRule : ICloneable
                         if (Array.BinarySearch(Dates, dw.Key) < 0) // 星期几不符合
                             continue;
 
-
                         foreach (var w in dw) //第N周N
                         {
                             w.Type = OpenType.Fixed;
                         }
 
                     }
-
 
                     // 非交易日及顺延
                     var chk = result.Where(x => !x.Flag.HasFlag(DayFlag.Trade) && x.Type == OpenType.Fixed).ToArray();
@@ -1009,7 +1155,6 @@ public class OpenRule : ICloneable
         }
         return result.ToArray();
     }
-
 
     public static DateOpenInfo[] ApplyMany(int year, params OpenRule[]? rules)
     {
@@ -1140,12 +1285,10 @@ public enum OpenType
     Postpone
 }
 
-
 public interface IDate
 {
     public DateOnly Date { get; }
 }
-
 
 [Flags]
 public enum OpenTradeType
@@ -1206,14 +1349,10 @@ public class FundOpenDay : IDate
 
 #endregion
 
-
-
-
-
 /// <summary>
 /// 临时开放
 /// </summary>
-public class TemporarilyOpenInfo
+public class TemporarilyOpenInfo : IEquatable<TemporarilyOpenInfo>
 {
     public bool IsAllowed { get; set; }
 
@@ -1226,13 +1365,21 @@ public class TemporarilyOpenInfo
 
     public bool AllowRedemption { get; set; }
 
+    public bool Equals(TemporarilyOpenInfo? other)
+    {
+        if (other is null) return false;
+        if (IsAllowed != other.IsAllowed) return false;
+        if (!IsAllowed) return true; // 不允许临开 → 全同
+        if (IsLimited != other.IsLimited) return false;
+        if (AllowPurchase != other.AllowPurchase) return false;
+        if (AllowRedemption != other.AllowRedemption) return false;
+        return true;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(IsAllowed, IsLimited, AllowPurchase, AllowRedemption);
 
     public override string ToString() => !IsAllowed ? "不允许临开" : (IsLimited ? "仅合同变更、法规变更时，" : "") + $"允许{(AllowPurchase ? "申购" : "")}{(AllowRedemption ? "赎回" : "")}";
 }
-
-
-
-
 
 [TypeConverter(typeof(EnumDescriptionTypeConverter))]
 public enum CoolingPeriodType
@@ -1242,13 +1389,16 @@ public enum CoolingPeriodType
     [Description("其它")] Other
 }
 
-
-public class CoolingPeriodInfo
+public class CoolingPeriodInfo : IEquatable<CoolingPeriodInfo>
 {
     public CoolingPeriodType Type { get; set; }
 
     public string? Other { get; set; }
 
+    public bool Equals(CoolingPeriodInfo? other) =>
+        other is not null && Type == other.Type && (Type != CoolingPeriodType.Other || Other == other.Other);
+
+    public override int GetHashCode() => HashCode.Combine(Type, Other);
 
     public override string ToString()
     {
@@ -1262,32 +1412,52 @@ public class CoolingPeriodInfo
 }
 
 
-public class CallbackInfo
+/// <summary>
+/// 无条件回访：IsRequired=true OnlyAfterMandatory=false
+/// 在强制要求前不回访：IsRequired=true OnlyAfterMandatory=true
+/// 不回访：IsRequired=false
+/// </summary>
+public class CallbackInfo : IEquatable<CallbackInfo>
 {
+    /// <summary>
+    /// 需要回访
+    /// </summary>
     public bool IsRequired { get; set; }
 
-    public override string ToString()
-    {
-        return IsRequired ? "需要回访" : "不适用";
-    }
-}
+    /// <summary>
+    /// 在强制要求前不回访
+    /// </summary>
+    public bool OnlyAfterMandatory { get; set; }
 
+    public bool Equals(CallbackInfo? other)
+    {
+        if (other is null) return false;
+        if (IsRequired != other.IsRequired) return false;
+        if (!IsRequired) return true; // 不回访时 OnlyAfterMandatory 无意义
+        return OnlyAfterMandatory == other.OnlyAfterMandatory;
+    }
+
+    public override int GetHashCode()
+    {
+        if (!IsRequired) return HashCode.Combine(IsRequired);
+        return HashCode.Combine(IsRequired, OnlyAfterMandatory);
+    }
+
+    public override string ToString() => IsRequired && !OnlyAfterMandatory ? "需要回访" : IsRequired ? "在强制要求前不回访" : "不适用";
+}
 
 /// <summary>
 /// 托管、外包、投顾
 /// </summary>
-public class AgencyInfo
+public class AgencyInfo : IEquatable<AgencyInfo>
 {
     public bool HasAgency { get; set; }
 
     public string? Name { get; set; }
 
-
     public bool HasFee { get; set; }
 
-
     public FundFeeType FeeType { get; set; }
-
 
     public decimal Fee { get; set; }
 
@@ -1298,17 +1468,32 @@ public class AgencyInfo
     /// </summary>
     public decimal GuaranteedFee { get; set; }
 
-
     /// <summary>
     /// 特殊类型
     /// </summary>
     public string? Other { get; set; }
 
+    public bool Equals(AgencyInfo? other)
+    {
+        if (other is null) return false;
+        if (HasAgency != other.HasAgency) return false;
+        if (!HasAgency) return true; // 无机构 → 全同
+        if (Name != other.Name) return false;
+        if (HasFee != other.HasFee) return false;
+        if (!HasFee) return true; // 无费用 → 全同
+        if (FeeType != other.FeeType) return false;
+        if (Fee != other.Fee) return false;
+        if (FeeType == FundFeeType.Other && Other != other.Other) return false;
+        if (HasGuaranteedFee != other.HasGuaranteedFee) return false;
+        if (HasGuaranteedFee && GuaranteedFee != other.GuaranteedFee) return false;
+        return true;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(HasAgency, Name, HasFee, FeeType, Fee, HasGuaranteedFee, GuaranteedFee, Other);
 
     public override string ToString()
     {
         if (!HasAgency || string.IsNullOrWhiteSpace(Name)) return "未设置";
-
 
         return $"{Name}，费用：{FeeInfo()}";
     }
@@ -1317,23 +1502,22 @@ public class AgencyInfo
 
 }
 
-
 /// <summary>
 /// 结构化基金
 /// </summary>
-public class StructureInfo
+public class StructureInfo : IEquatable<StructureInfo>
 {
     public bool IsStructured { get; set; }
 
+    public bool Equals(StructureInfo? other) => other is not null && IsStructured == other.IsStructured;
+
+    public override int GetHashCode() => IsStructured.GetHashCode();
 
 }
 
-
-
-public class FundInvestmentManager
+public class FundInvestmentManager : IEquatable<FundInvestmentManager>
 {
     public int Id { get; set; }
-
 
     /// <summary>
     /// ParticipantId
@@ -1352,77 +1536,276 @@ public class FundInvestmentManager
     /// </summary>
     public string? Profile { get; set; }
 
-
     public DateOnly Start { get; set; }
 
     public DateOnly End { get; set; }
+
+    public bool Equals(FundInvestmentManager? other)
+    {
+        if (other is null) return false;
+        // 只比较业务属性，跳过数据库标识字段（Id, PersonId, FundId）
+        return Name == other.Name
+            && Profile == other.Profile
+            && Start == other.Start
+            && End == other.End;
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Name, Profile, Start, End);
+
+    public override string ToString() => $"{Name}：{Profile}";
+}
+
+#region 业绩报酬
+/// <summary>
+/// 收益率计算方式（分级计提中 R 的含义）
+/// </summary>
+[TypeConverter(nameof(EnumDescriptionTypeConverter))]
+public enum PerformanceFeeReturnType
+{
+    /// <summary>
+    /// 实际收益率：不考虑持有期限
+    /// </summary>
+    [Description("实际收益率")]
+    Actual,
+
+    /// <summary>
+    /// 年化收益率：按持有天数折算为年化
+    /// </summary>
+    [Description("年化收益率")]
+    Annualized,
+}
+
+/// <summary>
+/// 高水位类型（基金净值追踪维度）
+/// </summary>
+[TypeConverter(nameof(EnumDescriptionTypeConverter))]
+public enum HighWaterMarkType
+{
+    [Description("无")] None,
+    [Description("整体高水位")] Aggregate,
+    [Description("整体高水位+赎回补提")] AggregateWithSupplementary,
+    [Description("单人高水位")] PerInvestor,
+}
+
+/// <summary>
+/// 业绩报酬计提方式（扣净值/扣份额）
+/// </summary>
+[TypeConverter(nameof(EnumDescriptionTypeConverter))]
+public enum PerformanceFeeDeductionType
+{
+    [Description("扣除净值")] NavDeduction,
+    [Description("扣除份额")] ShareDeduction,
+}
+
+/// <summary>
+/// 业绩报酬计提触发时点
+/// </summary>
+[Flags]
+[TypeConverter(nameof(EnumDescriptionTypeConverter))]
+public enum PerformanceFeeTrigger
+{
+    None = 0,
+    [Description("赎回")] Redemption = 1,
+    [Description("分红")] Distribution = 2,
+    [Description("清算")] Liquidation = 4,
+    [Description("开放日")] OpenDay = 8,
+}
+
+/// <summary>
+/// 业绩报酬分级计提档位
+/// 每项的 LowerBound 从前一项的 UpperBound 推导；第一项从 0 开始
+/// </summary>
+public class PerformanceFeeTier : IEquatable<PerformanceFeeTier>
+{
+    /// <summary>
+    /// 收益率上限（%）；null 表示无上限（最后一项）
+    /// </summary>
+    public decimal? UpperBound { get; set; }
+
+    /// <summary>
+    /// 上限是否包含（true: ≤, false: &lt;）
+    /// </summary>
+    public bool Include { get; set; }
+
+    /// <summary>
+    /// 该档计提比例（%）
+    /// </summary>
+    public decimal Rate { get; set; }
+
+    public bool Equals(PerformanceFeeTier? other) =>
+        other is not null && UpperBound == other.UpperBound && Include == other.Include && Rate == other.Rate;
+
+    public override int GetHashCode() => HashCode.Combine(UpperBound, Include, Rate);
+}
+
+/// <summary>
+/// 业绩报酬规则
+/// </summary>
+/// <summary>
+/// 业绩报酬计提方法
+/// </summary>
+public enum PerformanceFeeMethod
+{
+    /// <summary>基于历史峰值的"奖惩对称"模式，仅对超过基金历史最高净值的部分计提报酬</summary>
+    [Description("单客户高水位法")] HighWaterMarkPerInvestor,
+
+
+    /// <summary>基于历史峰值的"奖惩对称"模式，仅对超过基金历史最高净值的部分计提报酬</summary>
+    [Description("整体高水位法")] HighWaterMark,
+
+
+    /// <summary>股权、创投类私募基金通常采用，在项目退出/基金清算/分红分配时统一计提</summary>
+    [Description("整体收益法")] OverallReturn,
+
+    /// <summary>特殊计提方式</summary>
+    [Description("特殊计提法")] Special,
 }
 
 
 
 
 
+public class PerformanceFeeRule : IEquatable<PerformanceFeeRule>
+{
 
+    /// <summary>
+    /// 计提方法
+    /// </summary>
+    public PerformanceFeeMethod Method { get; set; }
 
+    /// <summary>
+    /// 扣减方式（扣净值/扣份额）
+    /// </summary>
+    public PerformanceFeeDeductionType DeductionType { get; set; }
 
+    /// <summary>
+    /// 计提触发时点（可多选）
+    /// </summary>
+    public PerformanceFeeTrigger Trigger { get; set; } = PerformanceFeeTrigger.Redemption | PerformanceFeeTrigger.Distribution | PerformanceFeeTrigger.Liquidation;
 
+    /// <summary>
+    /// 特殊计提方式描述
+    /// </summary>
+    public string? SpecialMethod { get; set; }
 
+    /// <summary>
+    /// 补充说明
+    /// </summary>
+    public string? Remark { get; set; }
 
+    public bool Equals(PerformanceFeeRule? other)
+    {
+        if (other is null) return false;
+        if (Method != other.Method) return false;
+        if (DeductionType != other.DeductionType) return false;
+        if (Trigger != other.Trigger) return false;
+        if (Method == PerformanceFeeMethod.Special && SpecialMethod != other.SpecialMethod) return false;
+        if (Remark != other.Remark) return false;
+        return true;
+    }
 
+    public override int GetHashCode() => HashCode.Combine(Method, DeductionType, Trigger, SpecialMethod, Remark);
+
+    public override string ToString()
+    {
+        var parts = new List<string>();
+
+        switch (Method)
+        {
+            case PerformanceFeeMethod.HighWaterMarkPerInvestor:
+                parts.Add("单人高水位法");
+                break;
+            case PerformanceFeeMethod.HighWaterMark:
+                parts.Add("整体高水位法");
+                break;
+            case PerformanceFeeMethod.OverallReturn:
+                parts.Add("整体收益法");
+                break;
+            case PerformanceFeeMethod.Special:
+                parts.Add("特殊计提法");
+                if (!string.IsNullOrWhiteSpace(SpecialMethod)) parts.Add(SpecialMethod);
+                break;
+        }
+
+        // 计提时点
+        var triggers = new List<string>();
+        if (Trigger.HasFlag(PerformanceFeeTrigger.Redemption)) triggers.Add("赎回");
+        if (Trigger.HasFlag(PerformanceFeeTrigger.Distribution)) triggers.Add("分红");
+        if (Trigger.HasFlag(PerformanceFeeTrigger.Liquidation)) triggers.Add("清盘");
+        if (Trigger.HasFlag(PerformanceFeeTrigger.OpenDay)) triggers.Add("开放日");
+        if (triggers.Count > 0) parts.Add(string.Join("/", triggers) + "时提取");
+
+        // 扣减方式：仅扣份额时显示
+        if (DeductionType == PerformanceFeeDeductionType.ShareDeduction) parts.Add("扣份额");
+
+        if (!string.IsNullOrWhiteSpace(Remark)) parts.Add(Remark);
+
+        return string.Join("，", parts);
+    }
+}
 
 /// <summary>
-/// 已在其它地方定义
+/// 业绩报酬计费标准（份额相关：收益率类型 + 分级计提档位）
 /// </summary>
-//public class BankAccount
-//{
-//    public int Id { get; set; }
+public class PerformanceFeeStandard : IEquatable<PerformanceFeeStandard>
+{
+    /// <summary>
+    /// 是否收取业绩报酬
+    /// </summary>
+    public bool Has { get; set; }
 
 
-//    // public int OwnerId { get; set; }
+    /// <summary>
+    /// 收益率计算方式（分级计提中 R 的含义：实际收益率/年化收益率）
+    /// </summary>
+    public PerformanceFeeReturnType ReturnType { get; set; }
+
+    /// <summary>
+    /// 计提档位。单档时为单一比例，多档时为分级计提
+    /// </summary>
+    public List<PerformanceFeeTier>? Tiers { get; set; }
+
+    public bool Equals(PerformanceFeeStandard? other)
+    {
+        if (other is null) return false;
+        if (Has != other.Has) return false;
+        if (!Has) return true; // 不收取 → 全同
+        if (ReturnType != other.ReturnType) return false;
+        return (Tiers ?? []).SequenceEqual(other.Tiers ?? []);
+    }
+
+    public override int GetHashCode() => HashCode.Combine(Has, ReturnType, Tiers?.Count);
+
+    public override string ToString()
+    {
+        if (!Has) return "不计提";
+
+        if (Tiers is not { Count: > 0 }) return "费用异常";
+
+        if (Tiers.Count == 1 && !Tiers[0].UpperBound.HasValue)
+            return $"计提：{Tiers[0].Rate}%";
+
+        var rType = ReturnType == PerformanceFeeReturnType.Annualized ? "年化" : "实际";
+        var parts = new List<string>();
+        decimal? lowerBound = 0m;
+
+        for (int i = 0; i < Tiers.Count; i++)
+        {
+            var tier = Tiers[i];
+            var op = tier.Include ? "≤" : "<";
+            var lb = $"{lowerBound}%";
+
+            if (tier.UpperBound.HasValue)
+                parts.Add($"{lb}≤R{op}{tier.UpperBound}%：{tier.Rate}%");
+            else
+                parts.Add($"R≥{lb}：{tier.Rate}%");
+
+            lowerBound = tier.UpperBound;
+        }
+
+        return $"分级计提（{rType}收益率R）：" + string.Join("；", parts);
+    }
+}
 
 
-
-//    /// <summary>
-//    /// 户名
-//    /// </summary>
-//    public string? Name { get; set; }
-
-//    /// <summary>
-//    /// 账号
-//    /// </summary>
-//    public string? Number { get; set; }
-
-//    /// <summary>
-//    /// 银行
-//    /// </summary>
-//    public string? Bank { get; set; }
-
-//    /// <summary>
-//    /// 银行-支行
-//    /// </summary>
-//    public string? Branch { get; set; }
-
-//    /// <summary>
-//    /// 开户行
-//    /// </summary>
-//    public string? BankOfDeposit { get => Bank + Branch; set => SetDeposit(value); }
-
-
-//    public string? LargePayNo { get; set; }
-
-//    /// <summary>
-//    /// swift
-//    /// </summary>
-//    public string? SwiftCode { get; set; }
-
-//    /// <summary>
-//    /// 银行地址
-//    /// </summary>
-//    public string? BankAddress { get; set; }
-
-//    /// <summary>
-//    /// 注销
-//    /// </summary>
-//    public bool IsClosed { get; set; }
-//}
-
+#endregion

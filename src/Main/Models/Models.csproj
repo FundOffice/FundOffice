@@ -9,13 +9,7 @@
 
   <ItemGroup>
     <Compile Remove="FileStorageInfo.cs" />
-    <Compile Remove="Fund\FundAccountType.cs" />
     <Compile Remove="IdGenerator.cs" />
-    <Compile Remove="Investor\Customer.cs" />
-    <Compile Remove="LegalEntity\LegalEntity.cs" />
-    <Compile Remove="Manager\InstitutionFiles.cs" />
-    <Compile Remove="Month.cs" />
-    <Compile Remove="TradingDay.cs" />
   </ItemGroup>
 
   <ItemGroup> 
@@ -34,7 +28,7 @@
 
   <ItemGroup>
     <PackageReference Include="LiteDB" Version="5.0.21" />
-    <PackageReference Include="MoT.Logg" Version="1.1.8" />
+    <PackageReference Include="MoT.Logg" Version="1.1.9" />
   </ItemGroup>
 
   <ItemGroup>

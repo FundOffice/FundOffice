@@ -176,118 +176,148 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
 
 
     [ObservableProperty]
-    public partial ObservableCollection<ModifiableViewModel<TokenProvider, TokenProviderViewModel>> AIProviders { get; set; }
-
-    [ObservableProperty]
-    public partial bool ShowAICompanyList { get; set; }
-
-    public string[] AICompany { get; } = TokenProviderViewModel.Providers;
+    public partial ObservableCollection<TokenProviderConfig> AIProviders { get; set; }
+     
 
 
     public PlatformPageViewModel()
     {
         WeakReferenceMessenger.Default.RegisterAll(this);
 
-        using var db = DbHelper.Base();
-        AIProviders = [.. db.GetCollection<TokenProvider>().FindAll().Select(x => new ModifiableViewModel<TokenProvider, TokenProviderViewModel>() { OldValue = x, NewValue = TokenProviderViewModel.Create(x) })];
-
-        foreach (var item in AIProviders)
-            item.Changed += AI_Changed;
-        AIProviders.CollectionChanged += (s, e) =>
+        // AI 提供商
+        try
         {
-            if (e.NewItems is not null)
-                foreach (ModifiableViewModel<TokenProvider, TokenProviderViewModel> item in e.NewItems)
-                    item.Changed += AI_Changed;
-
-            if (e.OldItems is not null)
-                foreach (ModifiableViewModel<TokenProvider, TokenProviderViewModel> item in e.OldItems)
-                    item.Changed -= AI_Changed;
-        };
-
-
-        ESignViewModels = SigningGalley.ViewModels;
-        ESignSource.Source = ESignViewModels;
-        //ESignSource.Filter += ESignSource_Filter;
-
-        ESigningButtons = [
-            new((Geometry)App.Current.Resources["f.user-group"], SyncSigningCustmersOnceCommand, nameof(ESigningWorker.SyncCustmersOnce), "同步投资人信息"),
-            new((Geometry)App.Current.Resources["f.file-shield"], SyncSigningQualificationsOnceCommand, nameof(ESigningWorker.SyncQualificationsOnce), "同步合格投资人认定"),
-            new((Geometry)App.Current.Resources["f.file-signature"], SyncSigningOrdersOnceCommand, nameof(ESigningWorker.SyncOrdersOnce), "同步交易订单"),  ];
-
-
-
-        ///// 协会平台账号
-        var acc = db.GetCollection<AmacAccount>().FindAll().ToList();
-
-        string[] ids = ["ambers", "human", "peixun", "xinpi"];
-
-        acc = acc.Where(x => ids.Contains(x.Id)).ToList();
-
-        foreach (var item in ids)
+            using var db = DbHelper.Base();
+            AIProviders = new ObservableCollection<TokenProviderConfig>(db.GetCollection<TokenProviderConfig>().FindAll());
+        }
+        catch (Exception ex)
         {
-            if (acc.All(x => x.Id != item))
-                acc.Add(new AmacAccount(item, "", "", false));
+            Logg.Error($"加载 AI 提供商失败: {ex}");
+            AIProviders = [];
         }
 
-        AmacAccounts = acc.Select(x => new AmacAccountViewModel(x)).ToArray();
-
-        ids = ["pmg", "pof"];
-        var dacc = db.GetCollection<AmacReportAccount>().FindAll().ToList();
-        foreach (var item in ids)
+        // 电签
+        try
         {
-            if (dacc.All(x => x.Id != item))
-                dacc.Add(new AmacReportAccount(item, "", "", "", false));
+            ESignViewModels = SigningGalley.ViewModels;
+            ESignSource.Source = ESignViewModels;
+
+            ESigningButtons = [
+                new((Geometry)App.Current.Resources["f.user-group"], SyncSigningCustmersOnceCommand, nameof(ESigningWorker.SyncCustmersOnce), "同步投资人信息"),
+                new((Geometry)App.Current.Resources["f.file-shield"], SyncSigningQualificationsOnceCommand, nameof(ESigningWorker.SyncQualificationsOnce), "同步合格投资人认定"),
+                new((Geometry)App.Current.Resources["f.file-signature"], SyncSigningOrdersOnceCommand, nameof(ESigningWorker.SyncOrdersOnce), "同步交易订单"),  ];
+        }
+        catch (Exception ex)
+        {
+            Logg.Error($"加载电签模块失败: {ex}");
+            ESignViewModels = [];
+            ESigningButtons = [];
         }
 
-        DirectAccounts = dacc.Select(x => new AmacDirectViewModel(x)).ToArray();
-
-
-        Trustees2 = TrusteeGallay.TrusteeViewModels;
-        var work = TrusteeGallay.Worker;
-        TrusteeAPIButtons = [
-            new((Geometry)App.Current.Resources["f.calendar"], QueryOpenDaysOnceCommand, nameof(TrusteeWorker.QueryOpenDaysOnce), "同步开放日"),
-            new((Geometry)App.Current.Resources["f.table-cells"], QueryNetValueOnceCommand, nameof(TrusteeWorker.QueryNetValueOnce), "同步净值"),
-            new((Geometry)App.Current.Resources["f.hand-holding-dollar"], QueryRaisingBalanceOnceCommand, nameof(TrusteeWorker.QueryRaisingBalanceOnce), "同步募集户余额"),
-            new((Geometry)App.Current.Resources["f.tornado"], QueryRaisingAccountTransctionOnceCommand,  nameof(TrusteeWorker.QueryRaisingAccountTransctionOnce),"同步募集户流水"),
-            new((Geometry)App.Current.Resources["f.file-circle-plus"], QueryTransferRequestOnceCommand, nameof(TrusteeWorker.QueryTransferRequestOnce), "同步交易申请"),
-            new((Geometry)App.Current.Resources["f.clipboard-check"], QueryTransferRecordOnceCommand, nameof(QueryTransferRecordOnce), "同步交易确认"),
-            new((Geometry)App.Current.Resources["f.file-invoice-dollar"], QueryDailyFeeOnceCommand, nameof(QueryDailyFeeOnce), "同步每日计提费用"), ];
-
-
-
-
-
-
-        using var pdb = DbHelper.Platform();
-        var config = pdb.GetCollection<TrusteeUnifiedConfig>().FindOne(_ => true);
-        if (config is not null)
+        // 协会平台账号
+        try
         {
-            ProxyViewModel.User = config.ProxyUser;
-            ProxyViewModel.Password = config.ProxyPassword;
-            ProxyViewModel.Address = config.ProxyUrl;
+            using var db = DbHelper.Base();
+            var acc = db.GetCollection<AmacAccount>().FindAll().ToList();
 
-            UseProxyForTrustee = config.UseProxy;
+            string[] ids = ["ambers", "human", "peixun", "xinpi"];
+            acc = acc.Where(x => ids.Contains(x.Id)).ToList();
+            foreach (var item in ids)
+            {
+                if (acc.All(x => x.Id != item))
+                    acc.Add(new AmacAccount(item, "", "", false));
+            }
+            AmacAccounts = acc.Select(x => new AmacAccountViewModel(x)).ToArray();
+
+            ids = ["pmg", "pof"];
+            var dacc = db.GetCollection<AmacReportAccount>().FindAll().ToList();
+            foreach (var item in ids)
+            {
+                if (dacc.All(x => x.Id != item))
+                    dacc.Add(new AmacReportAccount(item, "", "", "", false));
+            }
+            DirectAccounts = dacc.Select(x => new AmacDirectViewModel(x)).ToArray();
         }
-        ProxyViewModel.ProxyChecked += (e) =>
+        catch (Exception ex)
         {
-            IsTrusteeProxyAvailiable = e;
-            if (e) ShowProxyConfig = false;
+            Logg.Error($"加载协会账号失败: {ex}");
+            AmacAccounts = [];
+            DirectAccounts = [];
+        }
 
-            if (e) UpdateProxy();
-        };
+        // 托管
+        try
+        {
+            Trustees2 = TrusteeGallay.TrusteeViewModels;
+            TrusteeAPIButtons = [
+                new((Geometry)App.Current.Resources["f.calendar"], QueryOpenDaysOnceCommand, nameof(TrusteeWorker.QueryOpenDaysOnce), "同步开放日"),
+                new((Geometry)App.Current.Resources["f.table-cells"], QueryNetValueOnceCommand, nameof(TrusteeWorker.QueryNetValueOnce), "同步净值"),
+                new((Geometry)App.Current.Resources["f.hand-holding-dollar"], QueryRaisingBalanceOnceCommand, nameof(TrusteeWorker.QueryRaisingBalanceOnce), "同步募集户余额"),
+                new((Geometry)App.Current.Resources["f.tornado"], QueryRaisingAccountTransctionOnceCommand,  nameof(TrusteeWorker.QueryRaisingAccountTransctionOnce),"同步募集户流水"),
+                new((Geometry)App.Current.Resources["f.file-circle-plus"], QueryTransferRequestOnceCommand, nameof(TrusteeWorker.QueryTransferRequestOnce), "同步交易申请"),
+                new((Geometry)App.Current.Resources["f.clipboard-check"], QueryTransferRecordOnceCommand, nameof(QueryTransferRecordOnce), "同步交易确认"),
+                new((Geometry)App.Current.Resources["f.file-invoice-dollar"], QueryDailyFeeOnceCommand, nameof(QueryDailyFeeOnce), "同步每日计提费用"), ];
+        }
+        catch (Exception ex)
+        {
+            Logg.Error($"加载托管模块失败: {ex}");
+            Trustees2 = [];
+            TrusteeAPIButtons = [];
+        }
+
+        // 代理配置
+        try
+        {
+            using var pdb = DbHelper.Platform();
+            var config = pdb.GetCollection<TrusteeUnifiedConfig>().FindOne(_ => true);
+            if (config is not null)
+            {
+                ProxyViewModel.User = config.ProxyUser;
+                ProxyViewModel.Password = config.ProxyPassword;
+                ProxyViewModel.Address = config.ProxyUrl;
+                UseProxyForTrustee = config.UseProxy;
+            }
+            ProxyViewModel.ProxyChecked += (e) =>
+            {
+                IsTrusteeProxyAvailiable = e;
+                if (e) ShowProxyConfig = false;
+                if (e) UpdateProxy();
+            };
+        }
+        catch (Exception ex)
+        {
+            Logg.Error($"加载代理配置失败: {ex}");
+        }
 
         Task.Run(async () => await UpdateLocalIP());
-
-
-
         TrusteeWorkLogSource.GroupDescriptions.Add(new PropertyGroupDescription("Time.Date"));
     }
 
-    private void AI_Changed(ValueChangeEventArgs<TokenProvider> args)
+ 
+
+    [RelayCommand]
+    public void ConfirmDeleteTokenProvider(TokenProviderConfig config)
+    {
+        using var db = DbHelper.Base();
+        db.GetCollection<TokenProviderConfig>().Delete(config.Id);
+
+        for (int i = 0; i < AIProviders.Count; i++)
+        {
+            if (AIProviders[i].Id == config.Id)
+            {
+                AIProviders.RemoveAt(i);
+                return;
+            }
+        }
+    }
+
+
+
+    private void AI_Changed(ValueChangeEventArgs<TokenProviderConfig> args)
     {
         if (args.NewValue is null) return;
         using var db = DbHelper.Base();
-        db.GetCollection<TokenProvider>().Upsert(args.NewValue);
+        db.GetCollection<TokenProviderConfig>().Upsert(args.NewValue);
     }
 
     private void ESignSource_Filter(object sender, FilterEventArgs e)
@@ -391,11 +421,49 @@ public partial class PlatformPageViewModel : ObservableObject, IRecipient<Truste
     }
 
     [RelayCommand]
-    public void AddTokenProvider(string company)
+    public void AddTokenProvider()
     {
-        ShowAICompanyList = false;
-        var vm = TokenProviderViewModel.Create(company);
-        AIProviders.Add(new ModifiableViewModel<TokenProvider, TokenProviderViewModel>() { OldValue = null, NewValue = vm });
+        var wnd = new AddTokenProviderWindow();
+        wnd.Owner = App.Current.MainWindow;
+        if (wnd.ShowDialog() == true && wnd.DataContext is AddTokenProviderWindowViewModel vm && vm.IsConfirmed && vm.Result is not null)
+        {
+            AIProviders.Add(vm.Result);
+        }
+    }
+
+    [RelayCommand]
+    public void EditTokenProvider(TokenProviderConfig config)
+    {
+        var wnd = new AddTokenProviderWindow();
+        wnd.Owner = App.Current.MainWindow;
+        wnd.Title = "编辑 AI 提供商";
+
+        // 设置编辑模式
+        if (wnd.DataContext is AddTokenProviderWindowViewModel vm)
+        {
+            vm.Name = config.Name;
+            vm.BaseUrl = config.BaseUrl;
+            vm.ApiKey = config.ApiKey;
+            vm.ProviderType = config.ProviderType;
+            vm.SelectedModel = config.Model;
+            vm.IsEditMode = true;
+            vm.EditConfigId = config.Id;
+            vm.AvailableModels = [config.Model];
+            vm.HasModels = true;
+        }
+
+        if (wnd.ShowDialog() == true && wnd.DataContext is AddTokenProviderWindowViewModel vm2 && vm2.IsConfirmed && vm2.Result is not null)
+        {
+            // 更新列表中的项
+            for (int i = 0; i < AIProviders.Count; i++)
+            {
+                if (AIProviders[i].Id == config.Id)
+                {
+                    AIProviders[i] = vm2.Result;
+                    break;
+                }
+            }
+        }
     }
 
 
@@ -719,4 +787,3 @@ public partial class AmacDirectViewModel : ObservableObject
 
 
 
- 

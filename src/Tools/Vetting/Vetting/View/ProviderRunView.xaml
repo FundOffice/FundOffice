@@ -1,0 +1,147 @@
+<UserControl
+    x:Class="Vetting.View.ProviderRunView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hc="https://handyorg.github.io/handycontrol"
+    xmlns:local="clr-namespace:Vetting.View"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="40"
+    d:DesignWidth="600"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <local:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <Border
+        Padding="4,2"
+        BorderBrush="{DynamicResource BorderBrush}"
+        BorderThickness="0,0,0,1">
+        <DockPanel>
+            <!--  右侧：Tip + 图标按钮  -->
+            <StackPanel
+                VerticalAlignment="Center"
+                DockPanel.Dock="Right"
+                IsEnabled="{Binding IsBusy, Converter={StaticResource Boolean2BooleanReConverter}}"
+                Orientation="Horizontal">
+                <TextBlock
+                    Margin="8,0"
+                    VerticalAlignment="Center"
+                    FontSize="11"
+                    Foreground="Gray"
+                    Text="{Binding Tip}" />
+
+                <Button
+                    Margin="2,0"
+                    Padding="4,2"
+                    Command="{Binding RunParseCommand}"
+                    Content="解析"
+                    FontSize="14"
+                    Style="{StaticResource ButtonPrimary}"
+                    ToolTip="查看解析结果" />
+
+
+                <!--  查看解析结果  -->
+                <Button
+                    Margin="2,0"
+                    Padding="2"
+                    Command="{Binding ViewParseResultCommand}"
+                    Content="🔍"
+                    FontSize="14"
+                    ToolTip="查看解析结果" />
+
+                <!--  AI 回答  -->
+                <Button
+                    Margin="2,0"
+                    Padding="2"
+                    Command="{Binding RunAnswerCommand}"
+                    Content="🤖"
+                    FontSize="14"
+                    ToolTip="AI 回答" />
+
+                <Rectangle
+                    Width="2"
+                    Margin="5,0"
+                    Fill="Gray" />
+
+                <!--  导出报告  -->
+                <Button
+                    Margin="2,0"
+                    Padding="2"
+                    Command="{Binding RunFillCommand}"
+                    Content="📄"
+                    FontSize="14"
+                    Style="{StaticResource ButtonSuccess}"
+                    ToolTip="导出报告" />
+
+                <Button
+                    Margin="2,0"
+                    Padding="2"
+                    Command="{Binding OpenFolderCommand}"
+                    Content="📂"
+                    ToolTip="打开报告" />
+
+
+
+                <Rectangle
+                    Width="2"
+                    Margin="5,0"
+                    Fill="Gray" />
+
+                <!--  查看日志  -->
+                <Button
+                    Margin="2,0"
+                    Padding="2"
+                    Command="{Binding ViewLogCommand}"
+                    Content="📋"
+                    FontSize="14"
+                    ToolTip="查看日志" />
+            </StackPanel>
+
+            <!--  左侧：状态 + 名称 + 进度  -->
+            <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                <!--  解析完成  -->
+                <TextBlock
+                    Margin="0,0,4,0"
+                    Foreground="Green"
+                    Text="✔"
+                    Visibility="{Binding ParseStatus, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Done}" />
+                <!--  解析运行中  -->
+                <hc:CircleProgressBar
+                    Width="16"
+                    Height="16"
+                    Margin="0,0,4,0"
+                    ArcThickness="2"
+                    IsIndeterminate="True"
+                    Visibility="{Binding ParseStatus, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Running}" />
+
+                <!--  解析待定  -->
+                <Ellipse
+                    Width="8"
+                    Height="8"
+                    Margin="0,0,4,0"
+                    Fill="Gray"
+                    Visibility="{Binding ParseStatus, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Pending}" />
+                <!--  解析错误  -->
+                <TextBlock
+                    Foreground="Red"
+                    Text="✖"
+                    Visibility="{Binding ParseStatus, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter=Error}" />
+
+                <TextBlock FontWeight="SemiBold" Text="{Binding ProviderName}" />
+
+                <TextBlock
+                    Margin="8,0"
+                    Foreground="Gray"
+                    Text="{Binding UsageText}" />
+
+                <TextBlock
+                    Margin="4,0"
+                    Foreground="Gray"
+                    Text="{Binding Elapsed}" />
+
+                <TextBlock Foreground="Red" Text="{Binding ErrorMessage}" />
+            </StackPanel>
+        </DockPanel>
+    </Border>
+</UserControl>

@@ -37,7 +37,7 @@ public class BankAccountStringConverter : TypeConverter
 
 
 [TypeConverter(typeof(BankAccountStringConverter))]
-public class BankAccount
+public class BankAccount : IEquatable<BankAccount>
 {
     public int Id { get; set; }
 
@@ -88,6 +88,23 @@ public class BankAccount
     /// 注销
     /// </summary>
     public bool IsClosed { get; set; }
+
+    public bool Equals(BankAccount? other)
+    {
+        if (other is null) return false;
+        // 比较业务字段，跳过 DB 标识（Id）和计算字段（BankOfDeposit = Bank + Branch）
+        return Name == other.Name
+            && Number == other.Number
+            && Bank == other.Bank
+            && Branch == other.Branch
+            && LargePayNo == other.LargePayNo
+            && SwiftCode == other.SwiftCode
+            && BankAddress == other.BankAddress
+            && IsClosed == other.IsClosed;
+    }
+
+    public override int GetHashCode() =>
+        HashCode.Combine(Name, Number, Bank, Branch, LargePayNo, SwiftCode, BankAddress, IsClosed);
 
 
     private void SetDeposit(string? str)

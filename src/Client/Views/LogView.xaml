@@ -14,29 +14,22 @@
     <UserControl.DataContext>
         <local:LogViewModel />
     </UserControl.DataContext>
-    <Grid>
+    <DockPanel>
+        <ListBox
+            Width="160"
+            Margin="0,0,4,0"
+            BorderThickness="0,0,1,0"
+            DisplayMemberPath="DisplayName"
+            DockPanel.Dock="Left"
+            ItemsSource="{Binding Categories}"
+            SelectedItem="{Binding SelectedCategory}" />
         <DataGrid
             local:InfiniteScrollExtension.Command="{Binding ScrollToEndCommand}"
-            AutoGenerateColumns="False"
+            AutoGenerateColumns="True"
+            AutoGeneratingColumn="DataGrid_AutoGeneratingColumn"
             IsReadOnly="True"
-            ItemsSource="{Binding CommonLogs}"
+            ItemsSource="{Binding LogItems}"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-            Style="{StaticResource DataGrid.Small}">
-
-
-            <DataGrid.RowDetailsTemplate>
-                <DataTemplate>
-                    <shared:CopyableTextBlock
-                        Margin="8"
-                        Foreground="Black"
-                        Text="{Binding Exception}" />
-                </DataTemplate>
-            </DataGrid.RowDetailsTemplate>
-            <DataGrid.Columns>
-                <DataGridTextColumn Binding="{Binding Timestamp, StringFormat=yyyy-MM-dd HH:mm:ss}" Header="时间" />
-                <DataGridTextColumn Binding="{Binding Caller}" Header="Method" />
-                <DataGridTextColumn Binding="{Binding Message}" Header="Log" />
-            </DataGrid.Columns>
-        </DataGrid>
-    </Grid>
+            Style="{StaticResource DataGrid.Small}" />
+    </DockPanel>
 </UserControl>

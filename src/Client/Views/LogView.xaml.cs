@@ -1,6 +1,9 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FMO.ESigning;
+using FMO.Trustee;
 using MoT;
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
@@ -20,41 +23,95 @@ public partial class LogView : UserControl
     {
         InitializeComponent();
     }
+
+    private void DataGrid_AutoGeneratingColumn(object? sender, DataGridAutoGeneratingColumnEventArgs e)
+    {
+        if (e.PropertyType == typeof(DateTime) || e.PropertyType == typeof(DateTime?))
+        {
+            if (e.Column is DataGridTextColumn textColumn)
+                textColumn.Binding = new System.Windows.Data.Binding(e.PropertyName) { StringFormat = "yyyy-MM-dd HH:mm:ss:fff" };
+        }
+    }
 }
+
+
+public record LogCategory(string DisplayName, Type LogType);
 
 
 public partial class LogViewModel : ObservableObject
 {
+    /// <summary>
+    /// 所有可查看的日志类型
+    /// </summary>
+    public static LogCategory[] AllCategories =
+    [
+        new("LogEvent", typeof(LogEvent)),
+        new("TrusteeCallHistory", typeof(TrusteeCallHistory)),
+        new("SigningCallHistory", typeof(SigningCallHistory)),
+        new("SigningWorkerLoopHistory", typeof(SigningWorkerLoopHistory)),
+    ];
+
 
     [ObservableProperty]
-    public partial ObservableCollection<LogEvent> CommonLogs { get; set; } = [];
+    public partial LogCategory[] Categories { get; set; } = AllCategories;
+
+    [ObservableProperty]
+    public partial LogCategory? SelectedCategory { get; set; }
+
+    [ObservableProperty]
+    public partial ArrayList LogItems { get; set; } = [];
+
+    private int _loadedCount;
 
     public LogViewModel()
     {
-        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs.db");
+        SelectedCategory = Categories.FirstOrDefault();
+    }
+
+    partial void OnSelectedCategoryChanged(LogCategory? value)
+    {
+        if (value is null) return;
+        LoadData();
+    }
+
+    private void LoadData(int skip = 0, int take = 100)
+    {
+        if (SelectedCategory is null) return;
 
         try
         {
-            CommonLogs = [.. Logg.Read().OrderByDescending(x => x.Timestamp).Take(100).ToArray()];
-            //CommonLogs = [.. db.GetCollection("Logg").Query().OrderByDescending(x => x["_t"].AsDateTime).Limit(100).ToEnumerable().Select(x => To(x))];
+            var data = SelectedCategory.LogType.Name switch
+            {
+                nameof(LogEvent) => (IList)Logg.Read().OrderByDescending(x => x.Timestamp).Skip(skip).Take(take).ToArray(),
+                nameof(TrusteeCallHistory) => (IList)Logg.Read<TrusteeCallHistory>().OrderByDescending(x => x.Time).Skip(skip).Take(take).ToArray(),
+                nameof(SigningCallHistory) => (IList)Logg.Read<SigningCallHistory>().OrderByDescending(x => x.Time).Skip(skip).Take(take).ToArray(),
+                nameof(SigningWorkerLoopHistory) => (IList)Logg.Read<SigningWorkerLoopHistory>().OrderByDescending(x => x.Time).Skip(skip).Take(take).ToArray(),
+                _ => new ArrayList()
+            };
+
+            if (skip == 0)
+            {
+                LogItems = new ArrayList(data);
+                _loadedCount = data.Count;
+            }
+            else
+            {
+                foreach (var item in data)
+                    LogItems.Add(item);
+                _loadedCount += data.Count;
+            }
         }
         catch (Exception e)
         {
             Logg.Error(e);
         }
     }
-     
 
     [RelayCommand]
     public void ScrollToEnd()
     {
-        var data = Logg.Read().OrderByDescending(x => x.Timestamp).Skip(CommonLogs.Count).Take(100).ToArray();
-
-        foreach (var item in data)
-            CommonLogs.Add(item);
+        LoadData(skip: _loadedCount, take: 100);
     }
-
-    public record LogMessage(DateTime Time, string File, string Method, int Line, string Message);
 }
 
 public static class InfiniteScrollExtension

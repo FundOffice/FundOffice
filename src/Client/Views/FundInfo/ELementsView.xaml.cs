@@ -1,13 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-
+using FMO.AI;
 using FMO.Models;
 using FMO.Shared;
 using FMO.Utilities;
 using MoT;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -129,6 +131,54 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
     public partial bool IsReadOnly { get; set; } = true;
 
     /// <summary>
+    /// 正在 AI 解析合同要素
+    /// </summary>
+    [ObservableProperty]
+    public partial bool IsParsingContract { get; set; }
+
+    /// <summary>
+    /// AI 解析进度状态文字
+    /// </summary>
+    [ObservableProperty]
+    public partial string ParseStatus { get; set; } = "";
+
+    /// <summary>
+    /// AI 解析已接收的 token 数
+    /// </summary>
+    [ObservableProperty]
+    public partial int ParsedTokenCount { get; set; }
+
+    /// <summary>
+    /// 当前合同文件关联的 AI 解析历史记录
+    /// </summary>
+    [ObservableProperty]
+    public partial ObservableCollection<ContractParseHistory> ParseHistories { get; set; } = new();
+
+    /// <summary>
+    /// 是否有可显示的历史解析记录
+    /// </summary>
+    [ObservableProperty]
+    public partial bool HasParseHistories { get; set; }
+
+    /// <summary>
+    /// 当前是否满足显示历史解析记录的条件（有历史且处于编辑模式）
+    /// </summary>
+    [ObservableProperty]
+    public partial bool CanShowParseHistories { get; set; }
+
+    /// <summary>
+    /// 用户选中的历史解析记录
+    /// </summary>
+    [ObservableProperty]
+    public partial ContractParseHistory? SelectedParseHistory { get; set; }
+
+    /// <summary>
+    /// 是否已选中一条历史解析记录
+    /// </summary>
+    [ObservableProperty]
+    public partial bool HasSelectedParseHistory { get; set; }
+
+    /// <summary>
     /// 
     /// </summary> 
     public int FundId { get; init; }
@@ -175,6 +225,13 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
     public partial ShareFactorViewModel<RedemptionFeeInfo?, RedemptionFeeInfoViewMdoel>? RedemptionFee { get; set; } = null!;
 
     [ObservableProperty]
+    public partial FactorModifiableViewModel<PerformanceFeeRule?, PerformanceFeeRuleViewModel> PerformanceFeeRule { get; set; } = null!;
+
+    [ObservableProperty]
+    public partial ShareFactorViewModel<PerformanceFeeStandard?, PerformanceFeeStandardViewModel> PerformanceFeeStandard { get; set; } = null!;
+
+
+    [ObservableProperty]
     public partial ShareFactorViewModel<OpenRule[]?, FundOpenRuleViewModel>? FundOpenRule { get; set; } = null!;
 
 
@@ -214,6 +271,67 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
     public string? FundCode { get; private set; }
 
 
+
+    /// <summary>
+    /// 是否有任何份额收取业绩报酬
+    /// </summary>
+    public bool HasPerformanceFeeStandard => PerformanceFeeStandard?.Data.Any(d => d.NewValue?.Has == true) ?? false;
+
+    partial void OnPerformanceFeeStandardChanged(ShareFactorViewModel<PerformanceFeeStandard?, PerformanceFeeStandardViewModel> value)
+    {
+        if (value?.Data is not null)
+        {
+            value.Data.CollectionChanged += (s, e) =>
+            {
+                OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                if (e.NewItems is not null)
+                    foreach (FactorModifiableViewModel<PerformanceFeeStandard?, PerformanceFeeStandardViewModel> d in e.NewItems)
+                    {
+                        // 1. 订阅 NewValue 内部属性变化（Has）
+                        if (d.NewValue is INotifyPropertyChanged npc)
+                            npc.PropertyChanged += (s, e) =>
+                            {
+                                OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                            };
+                        // 2. 订阅 NewValue 本身被替换的情况（如 Reset）
+                        d.PropertyChanged += (s, e) =>
+                        {
+                            if (e.PropertyName == nameof(d.NewValue))
+                            {
+                                OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                                // NewValue 被替换，重新订阅新实例
+                                if (d.NewValue is INotifyPropertyChanged newNpc)
+                                    newNpc.PropertyChanged += (s, e) =>
+                                    {
+                                        OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                                    };
+                            }
+                        };
+                    }
+            };
+            foreach (var d in value.Data)
+            {
+                if (d.NewValue is INotifyPropertyChanged npc)
+                    npc.PropertyChanged += (s, e) =>
+                    {
+                        OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                    };
+                d.PropertyChanged += (s, e) =>
+                {
+                    if (e.PropertyName == nameof(d.NewValue))
+                    {
+                        OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                        // NewValue 被替换，重新订阅新实例
+                        if (d.NewValue is INotifyPropertyChanged newNpc)
+                            newNpc.PropertyChanged += (s, e) =>
+                            {
+                                OnPropertyChanged(nameof(HasPerformanceFeeStandard));
+                            };
+                    }
+                };
+            }
+        }
+    }
     #endregion
 
     //private void FillBy(FundFactors factors, int flowId)
@@ -268,7 +386,11 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
         var flow = db.GetCollection<FundFlow>().FindById(newValue);
         bool isori = flow is ContractFinalizeFlow;
 
-
+        var fileHash = (flow as ContractFlow)?.ContractFile?.File?.Hash;
+        if (!string.IsNullOrWhiteSpace(fileHash))
+            LoadParseHistories(fileHash);
+        else
+            ParseHistories.Clear();
 
         //IFundFactor[] factories = db.GetCollection<IFundFactor>().Query().Where(x => x.FundId == FundId).Where(LiteDB.Query.In(nameof(IFundFactor.FlowId), flowIds.Select(x=> new LiteDB.BsonValue(x)))).ToArray();
         FundFactors factors = db.QueryFactor(Id);
@@ -520,6 +642,330 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
 
 
     [RelayCommand]
+    protected void CancelAll()
+    {
+        var ps = GetType().GetProperties();
+        foreach (var p in ps)
+        {
+            if (p.PropertyType.IsAssignableTo(typeof(IValueModifier)) && p.GetValue(this) is IValueModifier v && v.CanConfirm)
+                v.Reset();
+
+            if (p.PropertyType.IsGenericType && p.PropertyType.GetGenericTypeDefinition() == typeof(ShareFactorViewModel<,>))
+            {
+                var obj = p.GetValue(this);
+                if (obj is not null)
+                {
+                    var pi = obj.GetType().GetProperty("Data");
+                    if (pi!.GetValue(obj, null) is IEnumerable<IValueModifier> e)
+                        foreach (var item in e)
+                            item.Reset();
+                }
+            }
+        }
+        WeakReferenceMessenger.Default.Send(new FundAccountChangedMessage(FundId, FundAccountType.Collection));
+        WeakReferenceMessenger.Default.Send(new FundAccountChangedMessage(FundId, FundAccountType.Custody));
+    }
+
+    [RelayCommand]
+    public async Task ParseContractElements()
+    {
+        FileMeta? meta;
+        using (var db = DbHelper.Base())
+        {
+            var flow = db.GetCollection<FundFlow>().FindById(FlowId) as ContractFlow;
+            meta = flow?.ContractFile?.File;
+        }
+
+        if (meta?.Exists is not true)
+        {
+            Toast.Warning("无合同文件或文件已删除");
+            return;
+        }
+
+        TokenProviderConfig? config;
+        using (var db = DbHelper.Base())
+        {
+            config = db.GetCollection<TokenProviderConfig>().Query().ToEnumerable()
+                .Where(x => !string.IsNullOrWhiteSpace(x.Name)
+                    && !string.IsNullOrWhiteSpace(x.BaseUrl)
+                    && !string.IsNullOrWhiteSpace(x.ApiKey)
+                    && !string.IsNullOrWhiteSpace(x.Model))
+                .OrderBy(_ => Random.Shared.Next())
+                .FirstOrDefault();
+
+            if (config is null)
+            {
+                Toast.Warning("没有可用的 AI 提供商，请在平台设置中配置完整的提供商（地址、密钥、模型）");
+                return;
+            }
+        }
+
+        Toast.Info($"正在 AI [{config.Name}] 解析合同要素...");
+        IsParsingContract = true;
+        ParsedTokenCount = 0;
+        ParseStatus = "发送中...";
+
+        var progress = new Progress<int>(count =>
+        {
+            ParsedTokenCount = count;
+            ParseStatus = $"接收中... {count} tokens";
+        });
+
+        try
+        {
+            var parser = new FundDocxAIParser(config.CreateAdapter());
+            ParseStatus = "等待响应...";
+            var result = await parser.ParseAsync(meta.GetFullPath(), progress);
+            ParseStatus = "解析完成";
+
+            if (result is null) return;
+
+            if (result.Factors.Length > 0)
+            {
+                using var db = DbHelper.Base();
+                db.GetCollection<ContractParseHistory>().Insert(new ContractParseHistory
+                {
+                    FileHash = meta.Hash,
+                    ParsedAt = DateTime.Now,
+                    FundInfoJson = result.Json,
+                    Provider = config.Name
+                });
+                LoadParseHistories(meta.Hash);
+            }
+
+            await App.Current.Dispatcher.InvokeAsync(() =>
+            {
+                ApplyParsedFactors(result.Factors);
+                if (result.Warnings.Count > 0)
+                    Toast.Warning($"以下字段解析可能不准确：\n{string.Join("\n", result.Warnings)}");
+            });
+        }
+        catch (HttpRequestException ex)
+        {
+            Logg.Error($"AI 解析合同要素网络错误: {ex}");
+            Toast.Error($"网络请求失败：{ex.Message}，请检查网络连接或 AI 服务地址");
+        }
+        catch (TaskCanceledException)
+        {
+            Logg.Error("AI 解析合同要素超时");
+            Toast.Error("AI 请求超时（5分钟），请检查网络连接或稍后重试");
+        }
+        catch (System.IO.InvalidDataException ex)
+        {
+            Logg.Error(ex, $"AI 配置错误");
+            Toast.Error($"AI 配置错误：{ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Logg.Error(ex, $"AI 解析合同要素失败");
+            Toast.Error($"AI 解析失败: {ex.Message}");
+        }
+        finally
+        {
+            IsParsingContract = false;
+            ParseStatus = "";
+        }
+    }
+
+    private void LoadParseHistories(string fileHash)
+    {
+        using var db = DbHelper.Base();
+        var list = db.GetCollection<ContractParseHistory>()
+            .Query()
+            .Where(x => x.FileHash == fileHash)
+            .OrderByDescending(x => x.ParsedAt)
+            .ToList();
+
+        ParseHistories.Clear();
+        foreach (var item in list)
+            ParseHistories.Add(item);
+
+        HasParseHistories = ParseHistories.Count > 0;
+        CanShowParseHistories = HasParseHistories && !IsReadOnly;
+    }
+
+    partial void OnIsReadOnlyChanged(bool oldValue, bool newValue)
+    {
+        CanShowParseHistories = HasParseHistories && !newValue;
+        if (newValue)
+            SelectedParseHistory = null;
+    }
+
+    partial void OnSelectedParseHistoryChanged(ContractParseHistory? oldValue, ContractParseHistory? newValue)
+    {
+        HasSelectedParseHistory = newValue is not null;
+    }
+
+    [RelayCommand]
+    private void ApplySelectedParseHistory()
+    {
+        if (SelectedParseHistory is null) return;
+
+        var factors = JsonToFactors(SelectedParseHistory.FundInfoJson);
+        if (factors is null || factors.Length == 0)
+        {
+            Toast.Warning("该历史记录无法解析出有效要素");
+            return;
+        }
+
+        ApplyParsedFactors(factors);
+        Toast.Success("已应用选中的历史解析结果");
+    }
+
+    [RelayCommand]
+    private void ViewParseJson(ContractParseHistory? history)
+    {
+        if (history is null) return;
+        var wnd = new ContractParseJsonViewWindow(history) { Owner = App.Current.MainWindow };
+        wnd.Show();
+    }
+
+    private static IFundFactor[]? JsonToFactors(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        try
+        {
+            var dto = JsonSerializer.Deserialize<AiParsedFundInfo>(json, FundDocxAIParser.JsonOptions);
+            if (dto is null) return null;
+            return AiParsedFundInfoConverter.ToFactors(dto);
+        }
+        catch (Exception ex)
+        {
+            Logg.Warning($"反序列化历史解析记录失败: {ex.Message}");
+            return null;
+        }
+    }
+
+    private static void ApplyToSingleton<T>(FactorModifiableViewModel<T>? vm, IFundFactor? factor)
+    {
+        if (vm is null) return;
+        try
+        {
+            if (factor is FundFactor<T> f) vm.NewValue = f.Data;
+        }
+        catch (Exception ex)
+        {
+            Logg.Warning($"写入 {vm.FactorId} 失败: {ex.Message}");
+        }
+    }
+
+    private static void ApplyToSingleton<T, TVm>(FactorModifiableViewModel<T?, TVm>? vm, IFundFactor? factor)
+        where TVm : IViewModel<T?, TVm>
+    {
+        if (vm is null) return;
+        try
+        {
+            if (factor is FundFactor<T> f) vm.NewValue = TVm.Trans(f.Data);
+        }
+        catch (Exception ex)
+        {
+            Logg.Warning($"写入 {vm.FactorId} 失败: {ex.Message}");
+        }
+    }
+
+    private static void ApplyShareFactors<T>(ShareFactorViewModel<T>? vm, IEnumerable<IFundFactor> factors)
+    {
+        if (vm is null) return;
+        try
+        {
+            var list = factors.OfType<FundFactor<T>>().ToList();
+            if (list.Count == 0) return;
+
+            var data = vm.Data.ToList();
+            if (list.Count == 1 && list[0].ShareId == ShareClass.Singleton)
+            {
+                foreach (var item in data)
+                    item.NewValue = list[0].Data;
+                return;
+            }
+
+            var used = new HashSet<int>();
+            foreach (var item in data)
+            {
+                var match = list.FirstOrDefault(f =>
+                    f.ShareId != ShareClass.Singleton &&
+                    ShareNamesEqual(GetShareName(vm.Classes, f.ShareId), item.ShareName) &&
+                    !used.Contains(f.GetHashCode()));
+                if (match is not null)
+                {
+                    item.NewValue = match.Data;
+                    used.Add(match.GetHashCode());
+                }
+            }
+            for (int i = 0, j = 0; i < data.Count && j < list.Count; i++, j++)
+            {
+                if (!used.Contains(list[j].GetHashCode()))
+                    data[i].NewValue = list[j].Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logg.Warning($"写入 {vm.FactorId} 失败: {ex.Message}");
+        }
+    }
+
+    private static void ApplyShareFactors<T, TVm>(ShareFactorViewModel<T?, TVm>? vm, IEnumerable<IFundFactor> factors)
+        where TVm : IViewModel<T?, TVm>
+    {
+        if (vm is null) return;
+        try
+        {
+            var list = factors.OfType<FundFactor<T>>().ToList();
+            if (list.Count == 0) return;
+
+            var data = vm.Data.ToList();
+            if (list.Count == 1 && list[0].ShareId == ShareClass.Singleton)
+            {
+                foreach (var item in data)
+                    item.NewValue = TVm.Trans(list[0].Data);
+                return;
+            }
+
+            var used = new HashSet<int>();
+            foreach (var item in data)
+            {
+                var match = list.FirstOrDefault(f =>
+                    f.ShareId != ShareClass.Singleton &&
+                    ShareNamesEqual(GetShareName(vm.Classes, f.ShareId), item.ShareName) &&
+                    !used.Contains(f.GetHashCode()));
+                if (match is not null)
+                {
+                    item.NewValue = TVm.Trans(match.Data);
+                    used.Add(match.GetHashCode());
+                }
+            }
+            for (int i = 0, j = 0; i < data.Count && j < list.Count; i++, j++)
+            {
+                if (!used.Contains(list[j].GetHashCode()))
+                    data[i].NewValue = TVm.Trans(list[j].Data);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logg.Warning($"写入 {vm.FactorId} 失败: {ex.Message}");
+        }
+    }
+
+    private static string? GetShareName(ShareClass[] classes, int shareId)
+        => classes.FirstOrDefault(c => c.Id == shareId)?.Name;
+
+    private static bool ShareNamesEqual(string? name1, string? name2)
+    {
+        if (name1 is null || name2 is null) return false;
+        var a = name1.Trim();
+        var b = name2.Trim();
+        if (string.Equals(a, b, StringComparison.OrdinalIgnoreCase)) return true;
+
+        // 兼容 "A" 与 "A类" / "A類"，仅去掉末尾的类/類 后缀
+        if (a.EndsWith("类") || a.EndsWith("類"))
+            a = a[..^1];
+        if (b.EndsWith("类") || b.EndsWith("類"))
+            b = b[..^1];
+        return string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+    [RelayCommand]
     public void GenerateBrochure()
     {
         try
@@ -583,7 +1029,9 @@ public partial class ElementsViewModel : ObservableObject, IRecipient<ElementCha
             html = html.Replace("###DATA###", json);
 
             // 读取模板 <div>...</div>
-            var templateFiles = new DirectoryInfo(@"files\brochure").GetFiles("*.html");
+            var templateFiles = new DirectoryInfo(@"files\brochure").GetFiles("*.html")
+                .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
 
             // 获取所有模板文件（按文件名排序，保证索引稳定）
             var listItemHtmlSb = new StringBuilder();       // 左侧文件名列表HTML

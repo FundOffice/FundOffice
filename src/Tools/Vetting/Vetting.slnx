@@ -1,3 +1,6 @@
 <Solution>
-  <Project Path="Vetting/Vetting.csproj" />
+  <Project Path="..\..\AI\FundOffice.Copilot\FundOffice.Copilot.csproj" />
+  <Project Path="Vetting.Copilot\Vetting.Copilot.csproj" />
+  <Project Path="Vetting.Copilot.Tests\Vetting.Copilot.Tests.csproj" />
+  <Project Path="Vetting\Vetting.csproj" />
 </Solution>

@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -139,7 +139,7 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
 
             // [修改点 1] 增加对 Value 类型因子的查找
             var singletonBase = FindTypeGlobally(compilation, "SingletonFactorItem");
-            var singletonValueBase = FindTypeGlobally(compilation, "SingletonValueFactorItem");
+            var singletonValueBase = FindTypeGlobally(compilation, "SingletonValueFactorItem") ?? compilation.GetTypeByMetadataName("FMO.Models.SingletonValueFactorItem`1");
             var factorBase = FindTypeGlobally(compilation, "FactorItem");
             var valueFactorBase = FindTypeGlobally(compilation, "ValueFactorItem");
 
@@ -390,6 +390,26 @@ public class ElementsViewModelGenerator : IIncrementalGenerator
             }
             fillBySb.AppendLine("   }");
 
+            var applySb = new StringBuilder();
+            applySb.AppendLine("");
+            applySb.AppendLine("    public void ApplyParsedFactors(global::FMO.Models.IFundFactor[] factors)");
+            applySb.AppendLine("    {");
+            applySb.AppendLine("        var map = factors.ToLookup(x => x.FactorId);");
+            applySb.AppendLine("");
+
+            foreach (var p in propsForFillBy)
+            {
+                if (p.IsSingleton)
+                {
+                    applySb.AppendLine($"        ApplyToSingleton({p.Name}, map[{factorFieldsFullName}.{p.Name}].FirstOrDefault());");
+                }
+                else
+                {
+                    applySb.AppendLine($"        ApplyShareFactors({p.Name}, map[{factorFieldsFullName}.{p.Name}]);");
+                }
+            }
+            applySb.AppendLine("    }");
+
             var inpcInheritance = debug.NeedsINPC ? " : global::System.ComponentModel.INotifyPropertyChanged" : "";
             var inpcBlock = debug.NeedsINPC ? """
 
@@ -440,6 +460,7 @@ public partial class ElementsViewModel{{inpcInheritance}}
 {{inpcBlock}}
 {{sb.ToString()}}
 {{fillBySb.ToString()}}
+{{applySb.ToString()}}
 }
 """ : $$"""
 {{debugComments.ToString()}}
@@ -452,6 +473,7 @@ public partial class ElementsViewModel{{inpcInheritance}}
 {{inpcBlock}}
 {{sb.ToString()}}
 {{fillBySb.ToString()}}
+{{applySb.ToString()}}
 }
 """;
 

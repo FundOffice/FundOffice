@@ -10,7 +10,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
-using System.Windows.Documents;
 
 namespace FMO.Trustee;
 
@@ -60,13 +59,45 @@ public partial class CMS : TrusteeApiBase
 
     public override async Task<ReturnWrap<TransferRequest>> QueryTransferRequests(DateOnly begin, DateOnly end, string? fundCode = null)
     {
-        var data = await SyncWork<TransferRequest, TransferRequestJson>(1007, new { beginDate = $"{begin:yyyyMMdd}", endDate = $"{end:yyyyMMdd}", fundCode = fundCode }, x => x.ToObject());
-         
+        if (begin > end)
+            return new(ReturnCode.ParameterInvalid, []);
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var historyEnd = end >= today ? today.AddDays(-1) : end;
+        var data = new List<TransferRequest>();
+
+        if (begin <= historyEnd)
+        {
+            var historyData = await SyncWork<TransferRequest, TransferRequestJson>(1007, new { beginDate = $"{begin:yyyyMMdd}", endDate = $"{historyEnd:yyyyMMdd}", fundCode }, x => x.ToObject());
+            if (historyData.Code != ReturnCode.Success)
+                return historyData;
+
+            if (historyData.Data is not null)
+                data.AddRange(historyData.Data);
+        }
+
+        if (begin <= today && end >= today)
+        {
+            var todayData = await QueryTransferRequestsToday(fundCode);
+            if (todayData.Code != ReturnCode.Success)
+                return new(todayData.Code, data);
+
+            if (todayData.Data is not null)
+                data.AddRange(todayData.Data);
+        }
+
         // 子产品 映射
-        if (data.Code == ReturnCode.Success && data.Data is not null)
-            await MapCode(data.Data);
-        return data;
+        if (data.Count > 0)
+            await MapCode(data);
+
+        return new(ReturnCode.Success, data);
     }
+
+    private async Task<ReturnWrap<TransferRequest>> QueryTransferRequestsToday(string? fundCode = null)
+    {
+        return await SyncWork<TransferRequest, TransferRequestTodayJson>(1120, new { fundCode }, x => x.ToObject());
+    }
+
 
 
 
