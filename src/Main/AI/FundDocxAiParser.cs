@@ -148,7 +148,6 @@ public class FundDocxAIParser
         }
 
         // 反序列化为内部 DTO
-        var dto = JsonSerializer.Deserialize<AiParsedFundInfo>(json, _jsonOptions);
         if (dto == null)
         {
             SaveToTemp(json, response);

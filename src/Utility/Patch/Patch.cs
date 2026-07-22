@@ -67,7 +67,7 @@ public static partial class DatabaseAssist
         [153] = AddCodeToShareClass,
         [154] = ModifyTokenTable,
         [155] = InitFundFlowAndFactor,
-        [156] = MigrateTokenProviderToConfig,
+        //[156] = MigrateTokenProviderToConfig,
         //[157] = UpdateTAFlowId,
     };
 
@@ -95,43 +95,43 @@ public static partial class DatabaseAssist
     /// <summary>
     /// 迁移 TokenProvider 到 TokenProviderConfig
     /// </summary>
-    private static void MigrateTokenProviderToConfig(BaseDatabase database)
-    {
-        var oldDocs = database.GetCollection("TokenProvider").FindAll().ToArray();
-        if (oldDocs.Length == 0) return;
+    //private static void MigrateTokenProviderToConfig(BaseDatabase database)
+    //{
+    //    var oldDocs = database.GetCollection("TokenProvider").FindAll().ToArray();
+    //    if (oldDocs.Length == 0) return;
 
-        var newConfigs = new List<TokenProviderConfig>();
-        foreach (var doc in oldDocs)
-        {
-            // 从 _type discriminator 映射到 AIProviderType
-            var typeStr = doc["_type"].AsString ?? "OpenAITokenProvider";
-            var providerType = typeStr switch
-            {
-                "AnthropicTokenProvider" => AIProviderType.Anthropic,
-                "GoogleTokenProvider" => AIProviderType.Google,
-                _ => AIProviderType.OpenAI  // OpenAI + 所有中国提供商
-            };
+    //    var newConfigs = new List<TokenProviderConfig>();
+    //    foreach (var doc in oldDocs)
+    //    {
+    //        // 从 _type discriminator 映射到 AIProviderType
+    //        var typeStr = doc["_type"].AsString ?? "OpenAITokenProvider";
+    //        var providerType = typeStr switch
+    //        {
+    //            "AnthropicTokenProvider" => AIProviderType.Anthropic,
+    //            "GoogleTokenProvider" => AIProviderType.Google,
+    //            _ => AIProviderType.OpenAI  // OpenAI + 所有中国提供商
+    //        };
 
-            // 从完整 URL 提取 base URL
-            var fullUrl = doc["Url"].AsString ?? "";
-            var baseUrl = TokenProviderConfig.NormalizeBaseUrl(fullUrl, providerType);
+    //        // 从完整 URL 提取 base URL
+    //        var fullUrl = doc["Url"].AsString ?? "";
+    //        var baseUrl = TokenProviderConfig.NormalizeBaseUrl(fullUrl, providerType);
 
-            var config = new TokenProviderConfig
-            {
-                Id = doc["Id"].AsInt32,
-                Name = doc["Company"].AsString ?? "",
-                BaseUrl = baseUrl,
-                ApiKey = doc["Key"].AsString ?? "",
-                Model = doc["Model"].AsString ?? "",
-                ProviderType = providerType
-            };
+    //        var config = new TokenProviderConfig
+    //        {
+    //            Id = doc["Id"].AsInt32,
+    //            Name = doc["Company"].AsString ?? "",
+    //            BaseUrl = baseUrl,
+    //            ApiKey = doc["Key"].AsString ?? "",
+    //            Model = doc["Model"].AsString ?? "",
+    //            ProviderType = providerType
+    //        };
 
-            newConfigs.Add(config);
-        }
+    //        newConfigs.Add(config);
+    //    }
 
-        database.DropCollection("TokenProvider");
-        database.GetCollection<TokenProviderConfig>().Insert(newConfigs);
-    }
+    //    database.DropCollection("TokenProvider");
+    //    database.GetCollection<TokenProviderConfig>().Insert(newConfigs);
+    //}
 
     private static void AddCodeToShareClass(BaseDatabase db)
     {

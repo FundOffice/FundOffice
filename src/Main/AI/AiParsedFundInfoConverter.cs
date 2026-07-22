@@ -20,8 +20,6 @@ public static class AiParsedFundInfoConverter
     {
         var info = new ReadonlyFundInfo
         {
-            ManagerProfile = dto.ManagerProfile,
-            AuditDate = dto.AuditDate,
         };
 
         var factors = new List<IFundFactor>();
